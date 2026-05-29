@@ -1,37 +1,53 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-} from '@tanstack/solid-router'
-import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
+import { GridBackground } from "@ec/ui/ui/grid-background";
+import { NoHydration } from "@solidjs/web";
+import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
+import { type Element, Loading } from "solid-js";
+import styleCss from "../styles.css?url";
 
-import { HydrationScript } from 'solid-js/web'
-import { Suspense } from 'solid-js'
-
-import styleCss from '../styles.css?url'
-
-export const Route = createRootRouteWithContext()({
+// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
+export const Route = createRootRoute({
   head: () => ({
-    links: [{ rel: 'stylesheet', href: styleCss }],
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Eliana Corré" },
+      {
+        name: "description",
+        content: "Artiste peintre à l'île de la Réunion vous présente l'ensemble de ses collections.",
+      },
+      {
+        name: "keywords",
+        content:
+          "artiste peintre, Eliana Corré, tableaux personnalisés, animaux totems, art contemporain, peinture nature, œuvres sur mesure, art réconfortant, peinture animale, portfolio artiste",
+      },
+      { name: "author", content: "Eliana Corré" },
+      { name: "robots", content: "index, follow" },
+    ],
+    links: [{ rel: "stylesheet", href: styleCss }],
   }),
-  shellComponent: RootComponent,
-})
+  shellComponent: RootDocument,
+});
 
-function RootComponent() {
+// LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
+function RootDocument(props: { children: Element }) {
   return (
-    <html>
+    <html lang="fr">
       <head>
-        <HydrationScript />
-        <HeadContent />
+        <NoHydration>
+          <HeadContent />
+        </NoHydration>
       </head>
       <body>
-        <Suspense>
-          <Outlet />
-          <TanStackRouterDevtools />
-        </Suspense>
+        <GridBackground />
+        <main class="relative mt-20 flex-1 sm:mt-28 md:mt-40">
+          <Loading>{props.children}</Loading>
+        </main>
+        <section class="relative flex justify-between bg-neutral-700 p-4 text-white">
+          <span>© 2025 Eliana Corré</span>
+          <Link to="/mentions-legales">Mentions légales</Link>
+        </section>
         <Scripts />
       </body>
     </html>
-  )
+  );
 }

@@ -5,6 +5,14 @@
     "ultracite/biome/solid",
     "ultracite/biome/tanstack"
   ],
+  "files": {
+    "includes": [
+      "!packages/kobalte2/src",
+      "!packages/solid-presence2/src",
+      "!packages/solid-prevent-scroll2/src",
+      "!packages/solid-primitives2/src"
+    ]
+  },
   "formatter": { "lineWidth": 140 },
   "css": {
     "parser": {

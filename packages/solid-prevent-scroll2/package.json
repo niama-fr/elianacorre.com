@@ -1,0 +1,17 @@
+{
+  "name": "@ec/solid-prevent-scroll2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "solid": "./src/index.jsx",
+      "default": "./src/index.js"
+    }
+  },
+  "peerDependencies": {
+    "solid-js": "^2.0.0-beta.14"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@ec/solid-primitives2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./event-listener": {
+      "types": "./src/event-listener/index.d.ts",
+      "default": "./src/event-listener/index.js"
+    },
+    "./keyed": {
+      "types": "./src/keyed/index.d.ts",
+      "default": "./src/keyed/index.js"
+    },
+    "./map": {
+      "types": "./src/map/index.d.ts",
+      "default": "./src/map/index.js"
+    },
+    "./media": {
+      "types": "./src/media/index.d.ts",
+      "default": "./src/media/index.js"
+    },
+    "./props": {
+      "types": "./src/props/index.d.ts",
+      "default": "./src/props/index.js"
+    },
+    "./refs": {
+      "types": "./src/refs/index.d.ts",
+      "default": "./src/refs/index.js"
+    },
+    "./rootless": {
+      "types": "./src/rootless/index.d.ts",
+      "default": "./src/rootless/index.js"
+    },
+    "./static-store": {
+      "types": "./src/static-store/index.d.ts",
+      "default": "./src/static-store/index.js"
+    },
+    "./trigger": {
+      "types": "./src/trigger/index.d.ts",
+      "default": "./src/trigger/index.js"
+    },
+    "./utils": {
+      "types": "./src/utils/index.d.ts",
+      "default": "./src/utils/index.js"
+    }
+  },
+  "peerDependencies": {
+    "solid-js": "^2.0.0-beta.14"
+  }
+}
