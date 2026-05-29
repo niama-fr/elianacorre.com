@@ -1,9 +1,4 @@
-import {
-	type Accessor,
-	type Setter,
-	createContext,
-	useContext,
-} from "solid-js";
+import { type Accessor, type Setter, createContext, useContext } from "solid-js";
 
 import type { DialogIntlTranslations } from "./dialog.intl";
 

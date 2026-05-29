@@ -1,16 +1,10 @@
-import { callHandler, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
+import type { ValidComponent, JSX } from "@solidjs/web";
 import {
-	type Accessor,
-	type Component,
-	JSX,
-	type Setter,
-	type ValidComponent,
-	batch,
-	createEffect,
-	createMemo,
-	createSignal,
-	splitProps,
-} from "solid-js";
+	splitProps, batch, createEffect } from "@ec/kobalte2/utils/solid-compat";
+import {
+	callHandler, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
+import {
+	type Accessor, type Component, type Setter, createMemo, createSignal } from "solid-js";
 import createPresence from "@ec/solid-presence2";
 import type {
 	MenubarRootCommonProps,
@@ -200,7 +194,7 @@ export function NavigationMenuRoot<T extends ValidComponent = "ul">(
 	};
 
 	return (
-		<NavigationMenuContext.Provider value={context}>
+		<NavigationMenuContext value={context}>
 			<Popper
 				anchorRef={rootRef}
 				contentRef={viewportRef}
@@ -224,6 +218,6 @@ export function NavigationMenuRoot<T extends ValidComponent = "ul">(
 					/>
 				</nav>
 			</Popper>
-		</NavigationMenuContext.Provider>
+		</NavigationMenuContext>
 	);
 }

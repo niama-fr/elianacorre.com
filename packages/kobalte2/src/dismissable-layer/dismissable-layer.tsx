@@ -1,3 +1,6 @@
+import type { ValidComponent } from "@solidjs/web";
+import {
+	splitProps, createEffect, on, onMount } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -12,16 +15,10 @@
  * https://github.com/chakra-ui/zag/blob/d1dbf9e240803c9e3ed81ebef363739be4273de0/packages/utilities/dismissable/src/dismissable-layer.ts
  */
 
-import { contains, getDocument, mergeRefs } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type ValidComponent,
-	createEffect,
-	on,
-	onCleanup,
-	onMount,
-	splitProps,
-} from "solid-js";
+	contains, getDocument, mergeRefs } from "@ec/kobalte2/utils";
+import {
+	type Accessor, onCleanup } from "solid-js";
 
 import {
 	type ElementOf,
@@ -263,12 +260,12 @@ export function DismissableLayer<T extends ValidComponent = "div">(
 	};
 
 	return (
-		<DismissableLayerContext.Provider value={context}>
+		<DismissableLayerContext value={context}>
 			<Polymorphic<DismissableLayerRenderProps>
 				as="div"
 				ref={mergeRefs((el) => (ref = el), local.ref)}
 				{...others}
 			/>
-		</DismissableLayerContext.Provider>
+		</DismissableLayerContext>
 	);
 }

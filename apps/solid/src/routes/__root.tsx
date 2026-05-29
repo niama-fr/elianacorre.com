@@ -2,7 +2,9 @@ import { GridBackground } from "@ec/ui/ui/grid-background";
 import { NoHydration } from "@solidjs/web";
 import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
 import { type Element, Loading } from "solid-js";
+import { readRootLayout } from "@/functions/layouts";
 import styleCss from "../styles.css?url";
+import { Header } from "./-header";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createRootRoute({
@@ -25,11 +27,14 @@ export const Route = createRootRoute({
     ],
     links: [{ rel: "stylesheet", href: styleCss }],
   }),
+  loader: () => readRootLayout(),
   shellComponent: RootDocument,
 });
 
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function RootDocument(props: { children: Element }) {
+  const data = Route.useLoaderData();
+
   return (
     <html lang="fr">
       <head>
@@ -39,6 +44,7 @@ function RootDocument(props: { children: Element }) {
       </head>
       <body>
         <GridBackground />
+        <Header data={data} />
         <main class="relative mt-20 flex-1 sm:mt-28 md:mt-40">
           <Loading>{props.children}</Loading>
         </main>

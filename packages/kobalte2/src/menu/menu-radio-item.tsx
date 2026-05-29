@@ -1,5 +1,9 @@
-import { OverrideComponentProps, mergeDefaultProps } from "@ec/kobalte2/utils";
-import { type Component, type ValidComponent, splitProps } from "solid-js";
+import type { ValidComponent } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
+import {
+	OverrideComponentProps, mergeDefaultProps } from "@ec/kobalte2/utils";
+import { type Component } from "solid-js";
 import type { ElementOf, PolymorphicProps } from "../polymorphic";
 
 import {

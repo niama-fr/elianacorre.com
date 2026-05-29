@@ -1,9 +1,11 @@
 import type { Accessor, Setter } from "solid-js";
+import type { JSX } from "@solidjs/web";
 
-export type { EffectOptions, OnOptions } from "solid-js";
+export type { EffectOptions } from "solid-js";
 
 // TODO delete in next major version
-export type { ResolvedJSXElement, ResolvedChildren } from "solid-js/types/reactive/signal.js";
+export type { ResolvedChildren } from "solid-js";
+export type ResolvedJSXElement = JSX.Element;
 
 /**
  * Can be single or in an array

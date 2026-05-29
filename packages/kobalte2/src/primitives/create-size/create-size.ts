@@ -1,3 +1,4 @@
+import { createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from corvu.
  * MIT Licensed, Copyright (c) 2024 Jasmin Noetzli.
@@ -6,7 +7,7 @@
  * https://github.com/corvudev/corvu/blob/main/packages%2Futils%2Fsrc%2Fcreate%2Fsize.ts
  */
 
-import { type Accessor, createEffect, createSignal, onCleanup } from "solid-js";
+import { type Accessor, createSignal, onCleanup } from "solid-js";
 
 export function createSize(ref: Accessor<HTMLElement | undefined>) {
 	const [height, setHeight] = createSignal(0);

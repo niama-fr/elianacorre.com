@@ -1,16 +1,14 @@
-import { mergeDefaultProps } from "@ec/kobalte2/utils";
+import type { ValidComponent } from "@solidjs/web";
+import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 import {
-	type ValidComponent,
-	createEffect,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	mergeDefaultProps } from "@ec/kobalte2/utils";
+import {
+	onCleanup } from "solid-js";
 
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { useDialogContext } from "./dialog-context";
 
 export interface DialogDescriptionOptions {}
@@ -39,8 +37,7 @@ export function DialogDescription<T extends ValidComponent = "p">(
 
 	const mergedProps = mergeDefaultProps(
 		{
-			id: context.generateId("description"),
-		},
+			id: context.generateId("description") },
 		props as DialogDescriptionProps,
 	);
 

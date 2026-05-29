@@ -1,21 +1,22 @@
 import { accessWith, isObject, type SetterParam } from "@ec/solid-primitives2/utils";
 import {
   type Accessor,
-  batch,
   createMemo,
   createSignal,
   type EffectFunction,
-  getListener,
+  getObserver,
   getOwner,
   type MemoOptions,
   type NoInfer,
-  onMount,
+  onSettled,
   runWithOwner,
   sharedConfig,
   type Signal,
   untrack,
 } from "solid-js";
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
+
+const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }).context);
 
 export type StaticStoreSetter<T extends object> = {
   (setter: (prev: T) => Partial<T>): T;
@@ -54,8 +55,8 @@ export function createStaticStore<T extends object>(
   const getValue = (key: keyof T): T[keyof T] => {
     let signal = cache[key];
     if (!signal) {
-      if (!getListener()) return copy[key];
-      cache[key] = signal = createSignal(copy[key], { internal: true });
+      if (!getObserver()) return copy[key];
+      cache[key] = signal = createSignal(() => copy[key], { ownedWrite: true });
       delete copy[key];
     }
     return signal[0]();
@@ -78,9 +79,7 @@ export function createStaticStore<T extends object>(
         const entries = untrack(
           () => Object.entries(accessWith(a, store) as Partial<T>) as [any, any][],
         );
-        batch(() => {
-          for (const [key, value] of entries) setValue(key, () => value);
-        });
+        for (const [key, value] of entries) setValue(key, () => value);
       } else setValue(a, b);
       return store;
     },
@@ -104,9 +103,11 @@ export function createHydratableStaticStore<T extends object>(
 ): ReturnType<typeof createStaticStore<T>> {
   if (isServer) return createStaticStore(serverValue);
 
-  if (sharedConfig.context) {
+  if (hasHydrationContext()) {
     const [state, setState] = createStaticStore(serverValue);
-    onMount(() => setState(update()));
+    onSettled(() => {
+      setState(update());
+    });
     return [state, setState];
   }
 
@@ -147,22 +148,27 @@ export function createDerivedStaticStore<T extends object>(
   options?: MemoOptions<T>,
 ): T {
   const o = getOwner(),
-    fnMemo = createMemo(fn, value, options),
-    store = { ...untrack(fnMemo) },
+    fnMemo = createMemo(fn as () => T, options as never) as Accessor<T>,
+    store = { ...untrack(fnMemo) } as T,
     cache: Partial<Record<keyof T, Accessor<T[keyof T]>>> = {};
 
-  for (const key in store)
+  for (const key in store) {
+    const storeKey = key as keyof T;
     Object.defineProperty(store, key, {
       get() {
-        let keyMemo = cache[key];
+        let keyMemo = cache[storeKey];
         if (!keyMemo) {
-          if (!getListener()) return fnMemo()[key];
-          runWithOwner(o, () => (cache[key] = keyMemo = createMemo(() => fnMemo()[key])));
+          if (!getObserver()) return fnMemo()[storeKey];
+          runWithOwner(
+            o,
+            () => (cache[storeKey] = keyMemo = createMemo(() => fnMemo()[storeKey])),
+          );
         }
         return keyMemo!();
       },
       enumerable: true,
     });
+  }
 
   return store;
 }

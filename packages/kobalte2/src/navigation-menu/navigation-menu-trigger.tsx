@@ -1,10 +1,10 @@
-import { callHandler } from "@ec/kobalte2/utils";
+import type { ValidComponent, JSX } from "@solidjs/web";
 import {
-	type Component,
-	type JSX,
-	type ValidComponent,
-	splitProps,
-} from "solid-js";
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
+import {
+	callHandler } from "@ec/kobalte2/utils";
+import {
+	type Component } from "solid-js";
 
 import type {
 	MenuTriggerCommonProps,

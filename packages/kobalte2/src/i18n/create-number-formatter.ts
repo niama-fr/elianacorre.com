@@ -6,10 +6,7 @@
  * https://github.com/adobe/react-spectrum/blob/b35d5c02fe900badccd0cf1a8f23bb593419f238/packages/@react-aria/i18n/src/useNumberFormatter.ts
  */
 
-import {
-	type NumberFormatOptions,
-	NumberFormatter,
-} from "@internationalized/number";
+import { type NumberFormatOptions, NumberFormatter, } from "@internationalized/number";
 import { type MaybeAccessor, access } from "@ec/kobalte2/utils";
 import { type Accessor, createMemo } from "solid-js";
 

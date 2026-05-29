@@ -1,3 +1,4 @@
+import { createEffect, on } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,14 +7,10 @@
  * https://github.com/adobe/react-spectrum/blob/bfce84fee12a027d9cbc38b43e1747e3e4b4b169/packages/@react-stately/collections/src/useCollection.ts
  */
 
-import { access } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	createEffect,
-	createMemo,
-	createSignal,
-	on,
-} from "solid-js";
+	access } from "@ec/kobalte2/utils";
+import {
+	type Accessor, createMemo, createSignal } from "solid-js";
 
 import type { Collection, CollectionBase, CollectionNode } from "./types";
 import { buildNodes } from "./utils";

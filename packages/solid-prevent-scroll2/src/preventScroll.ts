@@ -10,8 +10,8 @@ import {
   createEffect,
   createSignal,
   createUniqueId,
-  mergeProps,
   onCleanup,
+  merge,
 } from 'solid-js'
 import type { Axis } from './corvu/types'
 import { contains } from './corvu/dom'
@@ -42,7 +42,7 @@ const createPreventScroll = (props: {
   restoreScrollPosition?: MaybeAccessor<boolean>
   allowPinchZoom?: MaybeAccessor<boolean>
 }) => {
-  const defaultedProps = mergeProps(
+  const defaultedProps = merge(
     {
       element: null,
       enabled: true,
@@ -61,22 +61,32 @@ const createPreventScroll = (props: {
   let currentTouchStartAxis: Axis | null = null
   let currentTouchStartDelta: number | null = null
 
-  createEffect(() => {
-    if (!access(defaultedProps.enabled)) return
+  createEffect(
+    () => access(defaultedProps.enabled),
+    (enabled) => {
+    if (!enabled) return
 
     setPreventScrollStack((stack) => [...stack, preventScrollId])
 
-    onCleanup(() => {
+    return () => {
       setPreventScrollStack((stack) =>
         stack.filter((id) => id !== preventScrollId),
       )
-    })
-  })
+    }
+    },
+  )
 
-  createEffect(() => {
+  createEffect(
+    () => ({
+      enabled: access(defaultedProps.enabled),
+      hideScrollbar: access(defaultedProps.hideScrollbar),
+      preventScrollbarShift: access(defaultedProps.preventScrollbarShift),
+      preventScrollbarShiftMode: access(defaultedProps.preventScrollbarShiftMode),
+    }),
+    (options) => {
     if (
-      !access(defaultedProps.enabled) ||
-      !access(defaultedProps.hideScrollbar)
+      !options.enabled ||
+      !options.hideScrollbar
     )
       return
 
@@ -84,12 +94,12 @@ const createPreventScroll = (props: {
 
     const scrollbarWidth = window.innerWidth - body.offsetWidth
 
-    if (access(defaultedProps.preventScrollbarShift)) {
+    if (options.preventScrollbarShift) {
       const style: Partial<CSSStyleDeclaration> = { overflow: 'hidden' }
       const properties: { key: string; value: string }[] = []
 
       if (scrollbarWidth > 0) {
-        if (access(defaultedProps.preventScrollbarShiftMode) === 'padding') {
+        if (options.preventScrollbarShiftMode === 'padding') {
           style.paddingRight = `calc(${
             window.getComputedStyle(body).paddingRight
           } + ${scrollbarWidth}px)`
@@ -131,10 +141,16 @@ const createPreventScroll = (props: {
         },
       })
     }
-  })
+    },
+  )
 
-  createEffect(() => {
-    if (!isActive(preventScrollId) || !access(defaultedProps.enabled)) return
+  createEffect(
+    () => ({
+      active: isActive(preventScrollId),
+      enabled: access(defaultedProps.enabled),
+    }),
+    ({ active, enabled }) => {
+    if (!active || !enabled) return
 
     document.addEventListener('wheel', maybePreventWheel, {
       passive: false,
@@ -146,20 +162,21 @@ const createPreventScroll = (props: {
       passive: false,
     })
 
-    onCleanup(() => {
+    return () => {
       document.removeEventListener('wheel', maybePreventWheel)
       document.removeEventListener('touchstart', logTouchStart)
       document.removeEventListener('touchmove', maybePreventTouch)
-    })
-  })
+    }
+    },
+  )
 
-  const logTouchStart = (event: TouchEvent) => {
+  function logTouchStart(event: TouchEvent) {
     currentTouchStart = getTouchXY(event)
     currentTouchStartAxis = null
     currentTouchStartDelta = null
   }
 
-  const maybePreventWheel = (event: WheelEvent) => {
+  function maybePreventWheel(event: WheelEvent) {
     const target = event.target as HTMLElement
     const wrapper = access(defaultedProps.element)
 
@@ -179,7 +196,7 @@ const createPreventScroll = (props: {
     }
   }
 
-  const maybePreventTouch = (event: TouchEvent) => {
+  function maybePreventTouch(event: TouchEvent) {
     const wrapper = access(defaultedProps.element)
     const target = event.target as HTMLElement
 

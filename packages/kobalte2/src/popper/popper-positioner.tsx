@@ -1,12 +1,14 @@
-import { mergeRefs } from "@ec/kobalte2/utils";
-import { type JSX, type ValidComponent, splitProps } from "solid-js";
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
+import {
+	mergeRefs } from "@ec/kobalte2/utils";
 
 import { combineStyle } from "@ec/solid-primitives2/props";
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { usePopperContext } from "./popper-context";
 
 export interface PopperPositionerOptions {}
@@ -51,8 +53,7 @@ export function PopperPositioner<T extends ValidComponent = "div">(
 					position: "absolute",
 					top: 0,
 					left: 0,
-					"min-width": "max-content",
-				},
+					"min-width": "max-content" },
 				local.style,
 			)}
 			{...others}

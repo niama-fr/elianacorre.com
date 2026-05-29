@@ -1,10 +1,6 @@
 import type { Orientation } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type Setter,
-	createContext,
-	useContext,
-} from "solid-js";
+	type Accessor, type Setter, createContext, useContext } from "solid-js";
 
 export interface MenubarDataSet {
 	"data-expanded": string | undefined;

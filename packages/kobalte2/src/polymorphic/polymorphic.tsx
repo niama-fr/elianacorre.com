@@ -1,13 +1,11 @@
+import type { ValidComponent, JSX, ComponentProps } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
 /* @refresh reload */
 
-import type { OverrideProps } from "@ec/kobalte2/utils";
-import {
-	type ComponentProps,
-	type JSX,
-	type ValidComponent,
-	splitProps,
-} from "solid-js";
-import { Dynamic } from "solid-js/web";
+import type {
+	OverrideProps } from "@ec/kobalte2/utils";
+import { Dynamic } from "@solidjs/web";
 
 export type { OverrideComponentProps, OverrideProps } from "@ec/kobalte2/utils";
 

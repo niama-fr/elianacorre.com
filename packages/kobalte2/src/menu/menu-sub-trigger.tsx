@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps, createEffect, on } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -13,30 +16,16 @@
  */
 
 import {
-	type Orientation,
-	callHandler,
-	composeEventHandlers,
-	focusWithoutScrolling,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	type Orientation, callHandler, composeEventHandlers, focusWithoutScrolling, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
 import {
-	type JSX,
-	type ValidComponent,
-	createEffect,
-	createUniqueId,
-	on,
-	onCleanup,
-	splitProps,
-} from "solid-js";
-import { isServer } from "solid-js/web";
+	createUniqueId, onCleanup } from "solid-js";
+import { isServer } from "@solidjs/web";
 
 import { type Direction, useLocale } from "../i18n";
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { createSelectableItem } from "../selection";
 import { type MenuDataSet, useMenuContext } from "./menu-context";
 import { useMenuRootContext } from "./menu-root-context";
@@ -100,8 +89,7 @@ const SUB_OPEN_KEYS = {
 			...SELECTION_KEYS,
 			orientation === "horizontal" ? "ArrowLeft" : "ArrowUp",
 		];
-	},
-};
+	} };
 
 /**
  * An item that opens a submenu.
@@ -116,8 +104,7 @@ export function MenuSubTrigger<T extends ValidComponent = "div">(
 
 	const mergedProps = mergeDefaultProps(
 		{
-			id: rootContext.generateId(`sub-trigger-${createUniqueId()}`),
-		},
+			id: rootContext.generateId(`sub-trigger-${createUniqueId()}`) },
 		props as MenuSubTriggerProps,
 	);
 
@@ -176,8 +163,7 @@ export function MenuSubTrigger<T extends ValidComponent = "div">(
 			selectionManager: parentSelectionManager,
 			shouldSelectOnPressUp: true,
 			allowsDifferentPressOrigin: true,
-			disabled: () => local.disabled,
-		},
+			disabled: () => local.disabled },
 		() => ref,
 	);
 
@@ -255,8 +241,7 @@ export function MenuSubTrigger<T extends ValidComponent = "div">(
 			parentMenuContext?.setPointerGraceIntent({
 				area: getPointerGraceArea(context.currentPlacement(), e, contentEl),
 				// Safe because sub menu always open "left" or "right".
-				side: context.currentPlacement().split("-")[0] as Side,
-			});
+				side: context.currentPlacement().split("-")[0] as Side });
 
 			window.clearTimeout(parentMenuContext?.pointerGraceTimeoutId());
 
@@ -332,8 +317,7 @@ export function MenuSubTrigger<T extends ValidComponent = "div">(
 			type: "item",
 			key: key(),
 			textValue: local.textValue ?? ref?.textContent ?? "",
-			disabled: local.disabled ?? false,
-		});
+			disabled: local.disabled ?? false });
 
 		onCleanup(unregister);
 	});

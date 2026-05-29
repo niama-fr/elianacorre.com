@@ -1,3 +1,4 @@
+import { createComputed } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,8 +7,9 @@
  * https://github.com/adobe/react-spectrum/blob/bfce84fee12a027d9cbc38b43e1747e3e4b4b169/packages/@react-stately/list/src/useListState.ts
  */
 
-import { access } from "@ec/kobalte2/utils";
-import { type Accessor, createComputed } from "solid-js";
+import {
+	access } from "@ec/kobalte2/utils";
+import { type Accessor } from "solid-js";
 
 import {
 	type Collection,

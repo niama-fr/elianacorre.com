@@ -1,5 +1,5 @@
 import { access, type MaybeAccessor } from '../reactivity'
-import { createEffect, onCleanup } from 'solid-js'
+import { createEffect } from 'solid-js'
 
 const activeStyles = new Map<
   string,
@@ -26,10 +26,12 @@ const createStyle = (props: {
   properties?: MaybeAccessor<{ key: string; value: string }[]>
   cleanup?: () => void
 }) => {
-  createEffect(() => {
-    const style = access(props.style) ?? {}
-    const properties = access(props.properties) ?? []
-
+  createEffect(
+    () => ({
+      properties: access(props.properties) ?? [],
+      style: access(props.style) ?? {},
+    }),
+    ({ properties, style }) => {
     const originalStyles: Partial<CSSStyleDeclaration> = {}
     for (const key in style) {
       originalStyles[key] = props.element.style[key]
@@ -46,13 +48,13 @@ const createStyle = (props: {
       })
     }
 
-    Object.assign(props.element.style, props.style)
+    Object.assign(props.element.style, style)
 
     for (const property of properties) {
       props.element.style.setProperty(property.key, property.value)
     }
 
-    onCleanup(() => {
+    return () => {
       const activeStyle = activeStyles.get(props.key)
       if (!activeStyle) return
       if (activeStyle.activeCount !== 1) {
@@ -74,8 +76,9 @@ const createStyle = (props: {
         props.element.removeAttribute('style')
       }
       props.cleanup?.()
-    })
-  })
+    }
+    },
+  )
 }
 
 export default createStyle

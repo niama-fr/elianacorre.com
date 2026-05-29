@@ -1,9 +1,7 @@
+import { splitProps } from "@ec/kobalte2/utils/solid-compat";
 import {
-	type Orientation,
-	createGenerateId,
-	mergeDefaultProps,
-} from "@ec/kobalte2/utils";
-import { type ParentProps, createUniqueId, splitProps } from "solid-js";
+	type Orientation, createGenerateId, mergeDefaultProps, } from "@ec/kobalte2/utils";
+import { type ParentProps, createUniqueId } from "solid-js";
 
 import { useOptionalMenubarContext } from "../menubar/menubar-context";
 import { createDisclosureState } from "../primitives";
@@ -102,12 +100,12 @@ export function MenuRoot(props: MenuRootProps) {
 	};
 
 	return (
-		<MenuRootContext.Provider value={context}>
+		<MenuRootContext value={context}>
 			<Menu
 				open={disclosureState.isOpen()}
 				onOpenChange={disclosureState.setIsOpen}
 				{...others}
 			/>
-		</MenuRootContext.Provider>
+		</MenuRootContext>
 	);
 }

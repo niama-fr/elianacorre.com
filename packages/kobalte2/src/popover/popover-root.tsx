@@ -1,3 +1,4 @@
+import { splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from ariakit.
  * MIT Licensed, Copyright (c) Diego Haz.
@@ -6,15 +7,10 @@
  * https://github.com/ariakit/ariakit/blob/232bc79018ec20967fec1e097a9474aba3bb5be7/packages/ariakit/src/popover/popover-state.ts
  */
 
-import { createGenerateId, mergeDefaultProps } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type ParentProps,
-	createMemo,
-	createSignal,
-	createUniqueId,
-	splitProps,
-} from "solid-js";
+	createGenerateId, mergeDefaultProps } from "@ec/kobalte2/utils";
+import {
+	type Accessor, type ParentProps, createMemo, createSignal, createUniqueId } from "solid-js";
 
 import createPresence from "@ec/solid-presence2";
 import { Popper, type PopperRootOptions } from "../popper";
@@ -162,8 +158,8 @@ export function PopoverRoot(props: PopoverRootProps) {
 	};
 
 	return (
-		<PopoverContext.Provider value={context}>
+		<PopoverContext value={context}>
 			<Popper anchorRef={anchorRef} contentRef={contentRef} {...others} />
-		</PopoverContext.Provider>
+		</PopoverContext>
 	);
 }

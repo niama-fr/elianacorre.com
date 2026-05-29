@@ -1,20 +1,11 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
 import {
-	type Orientation,
-	composeEventHandlers,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	splitProps, createEffect, on } from "@ec/kobalte2/utils/solid-compat";
+import {
+	type Orientation, composeEventHandlers, mergeRefs, } from "@ec/kobalte2/utils";
 import { combineStyle } from "@ec/solid-primitives2/props";
 import {
-	type Component,
-	type JSX,
-	Show,
-	type ValidComponent,
-	createEffect,
-	createMemo,
-	createSignal,
-	on,
-	splitProps,
-} from "solid-js";
+	type Component, Show, createMemo, createSignal } from "solid-js";
 import {
 	DismissableLayer,
 	type DismissableLayerRenderProps,

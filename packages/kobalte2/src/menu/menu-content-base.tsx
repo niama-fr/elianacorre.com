@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps, createEffect, onMount } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,24 +10,9 @@
  */
 
 import {
-	type Orientation,
-	callHandler,
-	composeEventHandlers,
-	contains,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	type Orientation, callHandler, composeEventHandlers, contains, mergeDefaultProps, mergeRefs, } from "@ec/kobalte2/utils";
 import {
-	type Component,
-	type JSX,
-	Show,
-	type ValidComponent,
-	createEffect,
-	createUniqueId,
-	onCleanup,
-	onMount,
-	splitProps,
-} from "solid-js";
+	type Component, Show, createUniqueId, onCleanup } from "solid-js";
 
 import { combineStyle } from "@ec/solid-primitives2/props";
 import {

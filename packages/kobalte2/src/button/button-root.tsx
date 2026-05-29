@@ -1,3 +1,5 @@
+import type { ValidComponent } from "@solidjs/web";
+import { splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -12,14 +14,14 @@
  * https://github.com/ariakit/ariakit/blob/8a13899ff807bbf39f3d89d2d5964042ba4d5287/packages/ariakit/src/button/button.ts
  */
 
-import { mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
-import { type ValidComponent, createMemo, splitProps } from "solid-js";
+import {
+	mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
+import { createMemo } from "solid-js";
 
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { createTagName } from "../primitives";
 import { isButton } from "./is-button";
 

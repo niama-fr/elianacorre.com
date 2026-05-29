@@ -2,16 +2,17 @@ import { chain, arrayEquals } from "@ec/solid-primitives2/utils";
 import {
   type Accessor,
   children,
-  createComputed,
+  createEffect,
   createMemo,
-  type JSX,
   onCleanup,
   untrack,
 } from "solid-js";
-import { isServer } from "solid-js/web";
+import type { JSX } from "@solidjs/web";
+import { isServer } from "@solidjs/web";
 
 // TODO delete in next major version
-export type { ResolvedChildren, ResolvedJSXElement } from "solid-js/types/reactive/signal.js";
+export type { ResolvedChildren } from "solid-js";
+export type ResolvedJSXElement = JSX.Element;
 
 /**
  * Type for the `ref` prop
@@ -139,7 +140,7 @@ export function resolveElements(
   const children = createMemo(fn);
   const memo = createMemo(() =>
     getResolvedElements(children(), isServer ? serverPredicate : predicate),
-  ) as ResolveChildrenReturn<Element>;
+  ) as unknown as ResolveChildrenReturn<Element>;
   memo.toArray = () => {
     const value = memo();
     return Array.isArray(value) ? value : value ? [value] : [];
@@ -235,11 +236,13 @@ export function Refs(props: { ref: Ref<Element[]>; children: JSX.Element }): JSX
 
   let prev: Element[] = [];
 
-  createComputed(() => {
-    const els = resolved.toArray().filter(defaultElementPredicate);
+  createEffect(
+    () => resolved.toArray().filter(defaultElementPredicate),
+    (els) => {
     if (!arrayEquals(prev, els)) untrack(() => cb(els));
     prev = els;
-  }, []);
+    },
+  );
   onCleanup(() => prev.length && cb([]));
 
   return resolved as unknown as JSX.Element;
@@ -267,11 +270,13 @@ export function Ref(props: { ref: Ref<Element | undefined>; children: JSX.Elemen
 
   let prev: Element | undefined;
 
-  createComputed(() => {
-    const el = resolved.toArray().find(defaultElementPredicate);
+  createEffect(
+    () => resolved.toArray().find(defaultElementPredicate),
+    (el) => {
     if (el !== prev) untrack(() => cb(el));
     prev = el;
-  });
+    },
+  );
 
   onCleanup(() => prev && cb(undefined));
 

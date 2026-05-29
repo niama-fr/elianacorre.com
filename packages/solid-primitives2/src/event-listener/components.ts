@@ -1,4 +1,4 @@
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
 import { keys } from "@ec/solid-primitives2/utils";
 import { type Component } from "solid-js";
 import { makeEventListener } from "./eventListener.js";

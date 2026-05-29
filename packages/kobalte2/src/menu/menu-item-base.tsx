@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,22 +10,9 @@
  */
 
 import {
-	callHandler,
-	composeEventHandlers,
-	createGenerateId,
-	focusWithoutScrolling,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	callHandler, composeEventHandlers, createGenerateId, focusWithoutScrolling, mergeDefaultProps, mergeRefs, } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type JSX,
-	type ValidComponent,
-	createMemo,
-	createSignal,
-	createUniqueId,
-	splitProps,
-} from "solid-js";
+	type Accessor, createMemo, createSignal, createUniqueId } from "solid-js";
 
 import {
 	type ElementOf,
@@ -279,7 +269,7 @@ export function MenuItemBase<T extends ValidComponent = "div">(
 	};
 
 	return (
-		<MenuItemContext.Provider value={context}>
+		<MenuItemContext value={context}>
 			<Polymorphic<MenuItemBaseRenderProps>
 				as="div"
 				ref={mergeRefs((el) => (ref = el), local.ref)}
@@ -309,6 +299,6 @@ export function MenuItemBase<T extends ValidComponent = "div">(
 				{...dataset()}
 				{...others}
 			/>
-		</MenuItemContext.Provider>
+		</MenuItemContext>
 	);
 }

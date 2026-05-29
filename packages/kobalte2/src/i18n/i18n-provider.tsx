@@ -1,3 +1,4 @@
+import type { JSX } from "@solidjs/web";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,7 +7,7 @@
  * https://github.com/adobe/react-spectrum/blob/b35d5c02fe900badccd0cf1a8f23bb593419f238/packages/@react-aria/i18n/src/context.tsx
  */
 
-import { type Accessor, type JSX, createContext, useContext } from "solid-js";
+import { type Accessor, createContext, useContext } from "solid-js";
 
 import { createDefaultLocale } from "./create-default-locale";
 import { type Direction, getReadingDirection } from "./utils";
@@ -44,9 +45,9 @@ export function I18nProvider(props: I18nProviderProps) {
 	};
 
 	return (
-		<I18nContext.Provider value={context}>
+		<I18nContext value={context}>
 			{props.children}
-		</I18nContext.Provider>
+		</I18nContext>
 	);
 }
 

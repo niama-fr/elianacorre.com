@@ -1,4 +1,6 @@
-import { type ComponentProps, type ValidComponent, mergeProps } from "solid-js";
+import type { ValidComponent, ComponentProps } from "@solidjs/web";
+import {
+	mergeProps } from "@ec/kobalte2/utils/solid-compat";
 
 /**
  * Allows for extending a set of props (`Source`) by an overriding set of props (`Override`),

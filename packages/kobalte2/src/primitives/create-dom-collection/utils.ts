@@ -1,3 +1,4 @@
+import { createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from ariakit.
  * MIT Licensed, Copyright (c) Diego Haz.
@@ -6,8 +7,9 @@
  * https://github.com/ariakit/ariakit/blob/da142672eddefa99365773ced72171facc06fdcb/packages/ariakit/src/collection/collection-state.ts
  */
 
-import { getDocument } from "@ec/kobalte2/utils";
-import { type Accessor, createEffect, onCleanup } from "solid-js";
+import {
+	getDocument } from "@ec/kobalte2/utils";
+import { type Accessor, onCleanup } from "solid-js";
 
 import type { DomCollectionItem } from "./types";
 

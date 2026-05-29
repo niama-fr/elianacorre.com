@@ -1,3 +1,6 @@
+import type { ValidComponent } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -7,13 +10,10 @@
  * https://github.com/adobe/react-spectrum/blob/70e7caf1946c423bc9aa9cb0e50dbdbe953d239b/packages/@react-stately/radio/src/useRadioGroupState.ts
  */
 
-import { mergeDefaultProps } from "@ec/kobalte2/utils";
 import {
-	type Component,
-	type ValidComponent,
-	createUniqueId,
-	splitProps,
-} from "solid-js";
+	mergeDefaultProps } from "@ec/kobalte2/utils";
+import {
+	type Component, createUniqueId } from "solid-js";
 
 import type { ElementOf, PolymorphicProps } from "../polymorphic";
 import { createControllableSignal } from "../primitives";
@@ -99,12 +99,12 @@ export function MenuRadioGroup<
 	};
 
 	return (
-		<MenuRadioGroupContext.Provider value={context}>
+		<MenuRadioGroupContext value={context}>
 			<MenuGroup<
 				Component<Omit<MenuRadioGroupRenderProps, keyof MenuGroupRenderProps>>
 			>
 				{...others}
 			/>
-		</MenuRadioGroupContext.Provider>
+		</MenuRadioGroupContext>
 	);
 }

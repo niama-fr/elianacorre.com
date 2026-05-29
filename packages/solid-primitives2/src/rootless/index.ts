@@ -8,10 +8,9 @@ import {
   type Accessor,
   createSignal,
   type Signal,
-  batch,
   type Setter,
 } from "solid-js";
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
 import {
   type AnyFunction,
   asArray,
@@ -20,6 +19,8 @@ import {
   createMicrotask,
   trueFn,
 } from "@ec/solid-primitives2/utils";
+
+const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }).context);
 
 /**
  * Creates a reactive **sub root**, that will be automatically disposed when it's owner does.
@@ -36,14 +37,14 @@ import {
  *    return [dispose, memo]
  * }, owner, owner2);
  */
-export function createSubRoot<T>(fn: (dispose: VoidFunction) => T, ...owners: (typeof Owner)[]): T {
+export function createSubRoot<T>(fn: (dispose: VoidFunction) => T, ...owners: (Owner | null)[]): T {
   if (owners.length === 0) owners = [getOwner()];
   return createRoot(dispose => {
     asArray(access(owners)).forEach(
       owner => owner && runWithOwner(owner, onCleanup.bind(void 0, dispose)),
     );
     return fn(dispose);
-  }, owners[0]);
+  });
 }
 
 /** @deprecated Renamed to `createSubRoot` */
@@ -135,7 +136,9 @@ export function createSingletonRoot<T>(
     });
 
     if (!disposeRoot) {
-      createRoot(dispose => (value = factory((disposeRoot = dispose))), detachedOwner);
+      runWithOwner(detachedOwner, () => {
+        createRoot(dispose => (value = factory((disposeRoot = dispose))));
+      });
     }
 
     return value!;
@@ -161,7 +164,10 @@ export const createSharedRoot = createSingletonRoot;
 export function createHydratableSingletonRoot<T>(factory: (dispose: VoidFunction) => T): () => T {
   const owner = getOwner();
   const singleton = createSingletonRoot(factory, owner);
-  return () => (isServer || sharedConfig.context ? createRoot(factory, owner) : singleton());
+  return () =>
+    isServer || hasHydrationContext()
+      ? runWithOwner(owner, () => createRoot(factory))
+      : singleton();
 }
 
 /**
@@ -238,7 +244,7 @@ export function createRootPool<TArg, TResult>(
   // don't cache roots on the server
   if (isServer) {
     const owner = getOwner();
-    return args => createRoot(dispose => factory(() => args, trueFn, dispose), owner);
+    return args => runWithOwner(owner, () => createRoot(dispose => factory(() => args, trueFn, dispose)));
   }
 
   type Root = {
@@ -310,11 +316,9 @@ export function createRootPool<TArg, TResult>(
     if (length) {
       root = pool[--length]!;
       pool[length] = undefined!;
-      batch(() => {
-        root.set(() => arg);
-        root.setA(true);
-      });
-    } else root = createRoot(dispose => mapRoot(dispose, createSignal(arg)), owner);
+      root.set(() => arg);
+      root.setA(true);
+    } else root = runWithOwner(owner, () => createRoot(dispose => mapRoot(dispose, createSignal(() => arg))));
 
     onCleanup(() => cleanupRoot(root));
 

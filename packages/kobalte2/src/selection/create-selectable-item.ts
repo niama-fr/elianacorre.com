@@ -1,3 +1,6 @@
+import type { JSX } from "@solidjs/web";
+import {
+	createEffect, on } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -7,17 +10,9 @@
  */
 
 import {
-	type MaybeAccessor,
-	access,
-	focusWithoutScrolling,
-} from "@ec/kobalte2/utils";
+	type MaybeAccessor, access, focusWithoutScrolling, } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type JSX,
-	createEffect,
-	createMemo,
-	on,
-} from "solid-js";
+	type Accessor, createMemo } from "solid-js";
 
 import type { MultipleSelectionManager } from "./types";
 import { isCtrlKeyPressed, isNonContiguousSelectionModifier } from "./utils";

@@ -1,3 +1,6 @@
+import type { ValidComponent } from "@solidjs/web";
+import {
+	splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,19 +10,9 @@
  */
 
 import {
-	contains,
-	focusWithoutScrolling,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	contains, focusWithoutScrolling, mergeDefaultProps, mergeRefs, } from "@ec/kobalte2/utils";
 import {
-	type Component,
-	Show,
-	type ValidComponent,
-	createEffect,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	type Component, Show, onCleanup } from "solid-js";
 
 import createPreventScroll from "@ec/solid-prevent-scroll2";
 import {

@@ -1,3 +1,4 @@
+import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,20 +8,9 @@
  */
 
 import {
-	focusWithoutScrolling,
-	mergeDefaultProps,
-	removeItemFromArray,
-} from "@ec/kobalte2/utils";
+	focusWithoutScrolling, mergeDefaultProps, removeItemFromArray, } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type ParentProps,
-	Show,
-	createEffect,
-	createMemo,
-	createSignal,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	type Accessor, type ParentProps, Show, createMemo, createSignal, onCleanup } from "solid-js";
 
 import createPresence from "@ec/solid-presence2";
 import { createListState } from "../list";
@@ -302,7 +292,7 @@ export function Menu(props: MenuProps) {
 
 	return (
 		<DomCollectionProvider>
-			<MenuContext.Provider value={context}>
+			<MenuContext value={context}>
 				<Show
 					when={optionalNavigationMenuContext === undefined}
 					fallback={others.children}
@@ -314,7 +304,7 @@ export function Menu(props: MenuProps) {
 						{...others}
 					/>
 				</Show>
-			</MenuContext.Provider>
+			</MenuContext>
 		</DomCollectionProvider>
 	);
 }

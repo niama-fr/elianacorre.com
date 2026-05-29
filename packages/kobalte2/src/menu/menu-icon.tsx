@@ -1,5 +1,6 @@
+import type { JSX, ValidComponent } from "@solidjs/web";
 import { mergeDefaultProps } from "@ec/kobalte2/utils";
-import type { JSX, ValidComponent } from "solid-js";
+
 
 import {
 	type ElementOf,

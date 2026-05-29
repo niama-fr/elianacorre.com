@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps, createEffect, on } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -7,22 +10,9 @@
  */
 
 import {
-	type Orientation,
-	callHandler,
-	mergeDefaultProps,
-	mergeRefs,
-	scrollIntoViewport,
-} from "@ec/kobalte2/utils";
+	type Orientation, callHandler, mergeDefaultProps, mergeRefs, scrollIntoViewport, } from "@ec/kobalte2/utils";
 import {
-	type Component,
-	type JSX,
-	type ValidComponent,
-	createEffect,
-	createMemo,
-	on,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	type Component, createMemo, onCleanup } from "solid-js";
 
 import * as Button from "../button";
 import { useLocale } from "../i18n/i18n-provider";

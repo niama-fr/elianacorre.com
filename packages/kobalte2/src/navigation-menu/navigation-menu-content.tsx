@@ -1,16 +1,10 @@
-import { callHandler } from "@ec/kobalte2/utils";
+import type { ValidComponent, JSX } from "@solidjs/web";
 import {
-	type Component,
-	type JSX,
-	type ValidComponent,
-	batch,
-	createEffect,
-	createSignal,
-	on,
-	onCleanup,
-	onMount,
-	splitProps,
-} from "solid-js";
+	splitProps, batch, createEffect, on, onMount } from "@ec/kobalte2/utils/solid-compat";
+import {
+	callHandler } from "@ec/kobalte2/utils";
+import {
+	type Component, createSignal, onCleanup } from "solid-js";
 
 import {
 	MenuContent,

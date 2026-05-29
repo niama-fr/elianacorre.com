@@ -1,4 +1,5 @@
-import { type JSX, mergeProps, type MergeProps } from "solid-js";
+import type { JSX } from "@solidjs/web";
+import { merge, type Merge } from "solid-js";
 import { access, chain, reverseChain, type MaybeAccessor } from "@ec/solid-primitives2/utils";
 import { propTraps } from "./propTraps.js";
 
@@ -104,17 +105,17 @@ export type CombinePropsOptions = {
 export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(
   sources: T,
   options?: CombinePropsOptions,
-): MergeProps<T>;
+): Merge<T>;
 export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(
   ...sources: T
-): MergeProps<T>;
+): Merge<T>;
 export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
   ...args: T | [sources: T, options?: CombinePropsOptions]
-): MergeProps<T> {
+): Merge<T> {
   const restArgs = Array.isArray(args[0]);
   const sources = (restArgs ? args[0] : args) as T;
 
-  if (sources.length === 1) return sources[0] as MergeProps<T>;
+  if (sources.length === 1) return sources[0] as Merge<T>;
 
   const chainFn =
     restArgs && (args[1] as CombinePropsOptions | undefined)?.reverseEventHandlers
@@ -149,12 +150,12 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
     }
   }
 
-  const merge = mergeProps(...sources) as unknown as MergeProps<T>;
+  const merged = merge(...sources) as unknown as Merge<T>;
 
   return new Proxy(
     {
       get(key) {
-        if (typeof key !== "string") return Reflect.get(merge, key);
+        if (typeof key !== "string") return Reflect.get(merged, key);
 
         // Combine style prop
         if (key === "style") return reduce(sources, "style", combineStyle);
@@ -172,7 +173,7 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
         // Chain event listeners
         if (key[0] === "o" && key[1] === "n" && key[2]) {
           const callbacks = listeners[key.toLowerCase()];
-          return callbacks ? chainFn(callbacks) : Reflect.get(merge, key);
+          return callbacks ? chainFn(callbacks) : Reflect.get(merged, key);
         }
 
         // Merge classes or classNames
@@ -182,13 +183,13 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
         // Merge classList objects, keys in the last object overrides all previous ones.
         if (key === "classList") return reduce(sources, key, (a, b) => ({ ...a, ...b }));
 
-        return Reflect.get(merge, key);
+        return Reflect.get(merged, key);
       },
       has(key) {
-        return Reflect.has(merge, key);
+        return Reflect.has(merged, key);
       },
       keys() {
-        return Object.keys(merge);
+        return Object.keys(merged);
       },
     },
     propTraps,

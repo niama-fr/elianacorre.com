@@ -1,12 +1,15 @@
-import { callHandler, mergeRefs } from "@ec/kobalte2/utils";
-import { type JSX, Show, type ValidComponent, splitProps } from "solid-js";
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
+import {
+	callHandler, mergeRefs } from "@ec/kobalte2/utils";
+import { Show } from "solid-js";
 
 import { combineStyle } from "@ec/solid-primitives2/props";
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { useDialogContext } from "./dialog-context";
 
 export interface DialogOverlayOptions {}

@@ -1,3 +1,5 @@
+import type { ValidComponent } from "@solidjs/web";
+import { splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,14 +8,13 @@
  * https://github.com/adobe/react-spectrum/blob/6b51339cca0b8344507d3c8e81e7ad05d6e75f9b/packages/@react-aria/separator/src/useSeparator.ts
  */
 
-import { type Orientation, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
-import { type ValidComponent, splitProps } from "solid-js";
+import {
+	type Orientation, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
 
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { createTagName } from "../primitives";
 
 export interface SeparatorRootOptions {
@@ -45,8 +46,7 @@ export function SeparatorRoot<T extends ValidComponent = "hr">(
 
 	const mergedProps = mergeDefaultProps(
 		{
-			orientation: "horizontal",
-		},
+			orientation: "horizontal" },
 		props as SeparatorRootProps,
 	);
 

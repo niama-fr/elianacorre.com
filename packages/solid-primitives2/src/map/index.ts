@@ -1,4 +1,4 @@
-import { type Accessor, batch } from "solid-js";
+import { type Accessor } from "solid-js";
 import { TriggerCache } from "@ec/solid-primitives2/trigger";
 
 const $OBJECT = Symbol("track-object");
@@ -85,16 +85,14 @@ export class ReactiveMap<K, V> extends Map<K, V> {
     const result = super.set(key, value);
 
     if (hasChanged || hadNoKey) {
-      batch(() => {
-        if (hadNoKey) {
-          this.#keyTriggers.dirty($OBJECT);
-          this.#keyTriggers.dirty(key);
-        }
-        if (hasChanged) {
-          this.#valueTriggers.dirty($OBJECT);
-          this.#valueTriggers.dirty(key);
-        }
-      });
+      if (hadNoKey) {
+        this.#keyTriggers.dirty($OBJECT);
+        this.#keyTriggers.dirty(key);
+      }
+      if (hasChanged) {
+        this.#valueTriggers.dirty($OBJECT);
+        this.#valueTriggers.dirty(key);
+      }
     }
 
     return result;
@@ -105,15 +103,13 @@ export class ReactiveMap<K, V> extends Map<K, V> {
     const result = super.delete(key);
 
     if (result) {
-      batch(() => {
-        this.#keyTriggers.dirty($OBJECT);
-        this.#valueTriggers.dirty($OBJECT);
-        this.#keyTriggers.dirty(key);
+      this.#keyTriggers.dirty($OBJECT);
+      this.#valueTriggers.dirty($OBJECT);
+      this.#keyTriggers.dirty(key);
 
-        if (isDefined) {
-          this.#valueTriggers.dirty(key);
-        }
-      });
+      if (isDefined) {
+        this.#valueTriggers.dirty(key);
+      }
     }
 
     return result;
@@ -121,16 +117,14 @@ export class ReactiveMap<K, V> extends Map<K, V> {
 
   clear(): void {
     if (super.size === 0) return;
-    batch(() => {
-      this.#keyTriggers.dirty($OBJECT);
-      this.#valueTriggers.dirty($OBJECT);
-      for (const key of super.keys()) {
-        this.#keyTriggers.dirty(key);
-        this.#valueTriggers.dirty(key);
-      }
+    this.#keyTriggers.dirty($OBJECT);
+    this.#valueTriggers.dirty($OBJECT);
+    for (const key of super.keys()) {
+      this.#keyTriggers.dirty(key);
+      this.#valueTriggers.dirty(key);
+    }
 
-      super.clear();
-    });
+    super.clear();
   }
 }
 
@@ -173,10 +167,8 @@ export class ReactiveWeakMap<K extends object, V> extends WeakMap<K, V> {
     const result = super.set(key, value);
 
     if (hasChanged || hadNoKey) {
-      batch(() => {
-        if (hadNoKey) this.#keyTriggers.dirty(key);
-        if (hasChanged) this.#valueTriggers.dirty(key);
-      });
+      if (hadNoKey) this.#keyTriggers.dirty(key);
+      if (hasChanged) this.#valueTriggers.dirty(key);
     }
 
     return result;
@@ -186,10 +178,8 @@ export class ReactiveWeakMap<K extends object, V> extends WeakMap<K, V> {
     const result = super.delete(key);
 
     if (result) {
-      batch(() => {
-        this.#keyTriggers.dirty(key);
-        if (isDefined) this.#valueTriggers.dirty(key);
-      });
+      this.#keyTriggers.dirty(key);
+      if (isDefined) this.#valueTriggers.dirty(key);
     }
 
     return result;

@@ -1,3 +1,6 @@
+import type { JSX } from "@solidjs/web";
+import {
+	mergeProps, createEffect, on } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from mantinedev.
  * MIT Licensed, Copyright (c) 2021 Vitaly Rtishchev.
@@ -6,18 +9,11 @@
  * https://github.com/mantinedev/mantine/blob/8546c580fdcaa9653edc6f4813103349a96cfb09/src/mantine-core/src/Transition/use-transition.ts
  */
 
-import { type MaybeAccessor, access, createMediaQuery } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type JSX,
-	createEffect,
-	createMemo,
-	createSignal,
-	mergeProps,
-	on,
-	onCleanup,
-} from "solid-js";
-import { isServer } from "solid-js/web";
+	type MaybeAccessor, access, createMediaQuery } from "@ec/kobalte2/utils";
+import {
+	type Accessor, createMemo, createSignal, onCleanup } from "solid-js";
+import { isServer } from "@solidjs/web";
 
 import {
 	type TransitionPhase,

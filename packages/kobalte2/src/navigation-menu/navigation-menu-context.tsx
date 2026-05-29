@@ -1,9 +1,4 @@
-import {
-	type Accessor,
-	type Setter,
-	createContext,
-	useContext,
-} from "solid-js";
+import { type Accessor, type Setter, createContext, useContext } from "solid-js";
 import type { Placement } from "../popper/utils";
 
 export interface NavigationMenuDataSet {

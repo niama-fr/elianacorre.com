@@ -1,3 +1,4 @@
+import type { ValidComponent } from "@solidjs/web";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -7,18 +8,16 @@
  */
 
 import { createGenerateId, mergeDefaultProps } from "@ec/kobalte2/utils";
-import { type ValidComponent, createSignal, createUniqueId } from "solid-js";
+import { createSignal, createUniqueId } from "solid-js";
 
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { createRegisterId } from "../primitives";
 import {
 	MenuGroupContext,
-	type MenuGroupContextValue,
-} from "./menu-group-context";
+	type MenuGroupContextValue } from "./menu-group-context";
 import { useMenuRootContext } from "./menu-root-context";
 
 export interface MenuGroupOptions {}
@@ -46,8 +45,7 @@ export function MenuGroup<T extends ValidComponent = "div">(
 
 	const mergedProps = mergeDefaultProps(
 		{
-			id: rootContext.generateId(`group-${createUniqueId()}`),
-		},
+			id: rootContext.generateId(`group-${createUniqueId()}`) },
 		props as MenuGroupProps,
 	);
 
@@ -55,17 +53,16 @@ export function MenuGroup<T extends ValidComponent = "div">(
 
 	const context: MenuGroupContextValue = {
 		generateId: createGenerateId(() => mergedProps.id!),
-		registerLabelId: createRegisterId(setLabelId),
-	};
+		registerLabelId: createRegisterId(setLabelId) };
 
 	return (
-		<MenuGroupContext.Provider value={context}>
+		<MenuGroupContext value={context}>
 			<Polymorphic<MenuGroupRenderProps>
 				as="div"
 				role="group"
 				aria-labelledby={labelId()}
 				{...mergedProps}
 			/>
-		</MenuGroupContext.Provider>
+		</MenuGroupContext>
 	);
 }

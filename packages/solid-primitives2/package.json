@@ -50,6 +50,9 @@
       "default": "./src/utils/immutable/index.ts"
     }
   },
+  "dependencies": {
+    "@solidjs/web": "^2.0.0-beta.14"
+  },
   "peerDependencies": {
     "solid-js": "^2.0.0-beta.14"
   }

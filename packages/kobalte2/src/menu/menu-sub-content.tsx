@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,18 +10,9 @@
  */
 
 import {
-	type Orientation,
-	OverrideComponentProps,
-	callHandler,
-	contains,
-	focusWithoutScrolling,
-} from "@ec/kobalte2/utils";
+	type Orientation, OverrideComponentProps, callHandler, contains, focusWithoutScrolling, } from "@ec/kobalte2/utils";
 import {
-	type Component,
-	type JSX,
-	type ValidComponent,
-	splitProps,
-} from "solid-js";
+	type Component } from "solid-js";
 
 import { type Direction, useLocale } from "../i18n";
 import type { ElementOf, PolymorphicProps } from "../polymorphic";

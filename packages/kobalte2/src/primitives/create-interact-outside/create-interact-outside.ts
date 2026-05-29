@@ -1,3 +1,4 @@
+import { createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -13,16 +14,9 @@
  */
 
 import {
-	type MaybeAccessor,
-	access,
-	composeEventHandlers,
-	contains,
-	getDocument,
-	isCtrlKey,
-	noop,
-} from "@ec/kobalte2/utils";
-import { type Accessor, createEffect, onCleanup } from "solid-js";
-import { isServer } from "solid-js/web";
+	type MaybeAccessor, access, composeEventHandlers, contains, getDocument, isCtrlKey, noop, } from "@ec/kobalte2/utils";
+import { type Accessor, onCleanup } from "solid-js";
+import { isServer } from "@solidjs/web";
 
 import { DATA_TOP_LAYER_ATTR } from "../../dismissable-layer/layer-stack";
 

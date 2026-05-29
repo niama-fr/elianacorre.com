@@ -3,18 +3,17 @@ import {
   createMemo,
   createRoot,
   createSignal,
-  type JSX,
-  on,
   onCleanup,
   type Setter,
   untrack,
   $TRACK,
   mapArray,
-  type AccessorArray,
 } from "solid-js";
-import { isServer } from "solid-js/web";
+import type { JSX } from "@solidjs/web";
+import { isServer } from "@solidjs/web";
 
 const FALLBACK = Symbol("fallback");
+type AccessorArray<S> = { [K in keyof S]: Accessor<S[K]> };
 
 function dispose(list: Iterable<{ dispose: VoidFunction }>) {
   for (const o of list) o.dispose();
@@ -114,10 +113,10 @@ export function keyArray<T, U, K>(
 
   function addNewItem(list: U[], item: T, i: number, key: K): void {
     createRoot(dispose => {
-      const [getItem, setItem] = createSignal(item);
+      const [getItem, setItem] = createSignal(() => item);
       const save = { setItem, dispose } as Save;
       if (mapFn.length > 1) {
-        const [index, setIndex] = createSignal(i);
+        const [index, setIndex] = createSignal(() => i);
         save.setIndex = setIndex;
         save.mapped = mapFn(getItem, index);
       } else save.mapped = (mapFn as any)(getItem);
@@ -285,10 +284,15 @@ export function Rerun<
 >(props: { on: S; children: RerunChildren<S> }): JSX.Element;
 export function Rerun(props: { on: any; children: RerunChildren<any> }): JSX.Element {
   const key = typeof props.on === "function" || Array.isArray(props.on) ? props.on : () => props.on;
+  let prevInput: unknown;
   return createMemo(
-    on(key, (a, b) => {
+    () => {
+      const input = Array.isArray(key) ? key.map(accessor => accessor()) : key();
       const child = props.children;
-      return typeof child === "function" && child.length > 0 ? (child as any)(a, b) : child;
-    }),
+      const result =
+        typeof child === "function" && child.length > 0 ? (child as any)(input, prevInput) : child;
+      prevInput = input;
+      return result;
+    },
   ) as unknown as JSX.Element;
 }

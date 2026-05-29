@@ -1,3 +1,4 @@
+import { createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from ariakit.
  * MIT Licensed, Copyright (c) Diego Haz.
@@ -7,25 +8,10 @@
  */
 
 import {
-	type Middleware,
-	arrow,
-	autoUpdate,
-	computePosition,
-	flip,
-	hide,
-	offset,
-	platform,
-	shift,
-	size,
-} from "@floating-ui/dom";
+	type Middleware, arrow, autoUpdate, computePosition, flip, hide, offset, platform, shift, size, } from "@floating-ui/dom";
 import { mergeDefaultProps } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type ParentProps,
-	createEffect,
-	createSignal,
-	onCleanup,
-} from "solid-js";
+	type Accessor, type ParentProps, createSignal, onCleanup } from "solid-js";
 
 import { useLocale } from "../i18n";
 import { PopperContext, type PopperContextValue } from "./popper-context";
@@ -373,8 +359,8 @@ export function PopperRoot(props: PopperRootProps) {
 	};
 
 	return (
-		<PopperContext.Provider value={context}>
+		<PopperContext value={context}>
 			{mergedProps.children}
-		</PopperContext.Provider>
+		</PopperContext>
 	);
 }

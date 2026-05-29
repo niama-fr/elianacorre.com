@@ -1,3 +1,6 @@
+import type { JSX } from "@solidjs/web";
+import {
+	mergeProps, createEffect, on, onMount } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -7,24 +10,9 @@
  */
 
 import {
-	type MaybeAccessor,
-	type Orientation,
-	access,
-	callHandler,
-	createEventListener,
-	focusWithoutScrolling,
-	getFocusableTreeWalker,
-	scrollIntoView,
-} from "@ec/kobalte2/utils";
+	type MaybeAccessor, type Orientation, access, callHandler, createEventListener, focusWithoutScrolling, getFocusableTreeWalker, scrollIntoView, } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type JSX,
-	createEffect,
-	createMemo,
-	mergeProps,
-	on,
-	onMount,
-} from "solid-js";
+	type Accessor, createMemo } from "solid-js";
 
 import { useLocale } from "../i18n";
 import { createTypeSelect } from "./create-type-select";

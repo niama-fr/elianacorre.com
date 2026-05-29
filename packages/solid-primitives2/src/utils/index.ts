@@ -4,16 +4,16 @@ import {
   createSignal,
   type Accessor,
   untrack,
-  type AccessorArray,
+  type ComputeFunction,
   type EffectFunction,
   type NoInfer,
   type SignalOptions,
   sharedConfig,
-  onMount,
+  onSettled,
   DEV,
-  equalFn,
+  isEqual,
 } from "solid-js";
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
 import type {
   AnyClass,
   MaybeAccessor,
@@ -40,10 +40,12 @@ export const trueFn: () => boolean = () => true;
 export const falseFn: () => boolean = () => false;
 
 /** @deprecated use {@link equalFn} from "solid-js" */
-export const defaultEquals = equalFn;
+export const defaultEquals = isEqual;
 
 export const EQUALS_FALSE_OPTIONS = { equals: false } as const satisfies SignalOptions<unknown>;
-export const INTERNAL_OPTIONS = { internal: true } as const satisfies SignalOptions<unknown>;
+export const INTERNAL_OPTIONS = { ownedWrite: true } as const satisfies SignalOptions<unknown>;
+export type AccessorArray<S> = readonly Accessor<any>[];
+const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }).context);
 
 /**
  * Check if the value is an instance of ___
@@ -156,17 +158,17 @@ export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
   initialValue: Next,
-): EffectFunction<undefined | NoInfer<Next>, NoInfer<Next>>;
+): ComputeFunction<undefined | NoInfer<Next>, NoInfer<Next>>;
 export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
   initialValue?: undefined,
-): EffectFunction<undefined | NoInfer<Next>>;
+): ComputeFunction<undefined | NoInfer<Next>>;
 export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
   initialValue?: Next,
-): EffectFunction<undefined | NoInfer<Next>> {
+): ComputeFunction<undefined | NoInfer<Next>> {
   const isArray = Array.isArray(deps);
   let prevInput: S;
   let shouldDefer = true;
@@ -175,7 +177,7 @@ export function defer<S, Next extends Prev, Prev = Next>(
     if (isArray) {
       input = Array(deps.length) as S;
       for (let i = 0; i < deps.length; i++) (input as any[])[i] = deps[i]();
-    } else input = deps();
+    } else input = (deps as Accessor<S>)();
     if (shouldDefer) {
       shouldDefer = false;
       prevInput = input;
@@ -254,14 +256,16 @@ export function createHydratableSignal<T>(
   options?: SignalOptions<T>,
 ): ReturnType<typeof createSignal<T>> {
   if (isServer) {
-    return createSignal(serverValue, options);
+    return createSignal(() => serverValue, options as never) as ReturnType<typeof createSignal<T>>;
   }
-  if (sharedConfig.context) {
-    const [state, setState] = createSignal(serverValue, options);
-    onMount(() => setState(() => update()));
-    return [state, setState];
+  if (hasHydrationContext()) {
+    const [state, setState] = createSignal(() => serverValue, options as never);
+    onSettled(() => {
+      setState(() => update());
+    });
+    return [state, setState] as ReturnType<typeof createSignal<T>>;
   }
-  return createSignal(update(), options);
+  return createSignal(() => update(), options as never) as ReturnType<typeof createSignal<T>>;
 }
 
 /** @deprecated use {@link createHydratableSignal} instead */

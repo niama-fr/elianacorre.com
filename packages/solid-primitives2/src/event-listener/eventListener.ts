@@ -7,7 +7,7 @@ import {
   tryOnCleanup,
 } from "@ec/solid-primitives2/utils";
 import { type Accessor, createEffect, createRenderEffect, createSignal } from "solid-js";
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
 import type {
   EventListenerDirectiveProps,
   EventMapOf,
@@ -111,16 +111,24 @@ export function createEventListener(
   if (isServer) return;
 
   const attachListeners = () => {
+    const cleanups: VoidFunction[] = [];
     asArray(access(targets)).forEach(el => {
-      if (el) asArray(access(type)).forEach(type => makeEventListener(el, type, handler, options));
+      if (el)
+        asArray(access(type)).forEach(type => {
+          cleanups.push(makeEventListener(el, type, handler, options));
+        });
     });
+    return () => {
+      for (const cleanup of cleanups) cleanup();
+    };
   };
 
   // if the target is an accessor the listeners will be added on the first effect (onMount)
   // so that when passed a jsx ref it will be availabe
-  if (typeof targets === "function") createEffect(attachListeners);
+  if (typeof targets === "function")
+    createEffect(() => [access(targets), access(type)] as const, attachListeners);
   // if the target prop is NOT an accessor, the event listeners can be added right away
-  else createRenderEffect(attachListeners);
+  else createRenderEffect(() => undefined, attachListeners);
 }
 
 // Possible targets prop shapes:
@@ -192,10 +200,10 @@ export function createEventSignal(
  * <button use:eventListener={["click", () => {...}]}>Click me!</button>
  */
 export const eventListener: Directive<EventListenerDirectiveProps> = (target, props) => {
-  createEffect(() => {
-    const [type, handler, options] = props();
-    makeEventListener(target, type, handler, options);
-  });
+  createEffect(
+    () => props(),
+    ([type, handler, options]) => makeEventListener(target, type, handler, options),
+  );
 };
 
 // // /* TypeCheck */

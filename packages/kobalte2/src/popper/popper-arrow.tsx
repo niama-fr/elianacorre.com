@@ -1,3 +1,6 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
+import {
+	splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from ariakit.
  * MIT Licensed, Copyright (c) Diego Haz.
@@ -7,15 +10,10 @@
  * https://github.com/ariakit/ariakit/blob/a178c2f2dcc6571ba338fd74c79e3b0eab2a27c5/packages/ariakit/src/popover/__popover-arrow-path.ts
  */
 
-import { getWindow, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type JSX,
-	type ValidComponent,
-	createEffect,
-	createSignal,
-	splitProps,
-} from "solid-js";
+	getWindow, mergeDefaultProps, mergeRefs } from "@ec/kobalte2/utils";
+import {
+	type Accessor, createSignal } from "solid-js";
 
 import { combineStyle } from "@ec/solid-primitives2/props";
 import {

@@ -1,3 +1,5 @@
+import type { ValidComponent } from "@solidjs/web";
+import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,19 +8,15 @@
  * https://github.com/adobe/react-spectrum/blob/e6808d1b5e80cef7af7e63974f658043593b2e1e/packages/@react-aria/menu/src/useMenuSection.ts
  */
 
-import { mergeDefaultProps } from "@ec/kobalte2/utils";
 import {
-	type ValidComponent,
-	createEffect,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	mergeDefaultProps } from "@ec/kobalte2/utils";
+import {
+	onCleanup } from "solid-js";
 
 import {
 	type ElementOf,
 	Polymorphic,
-	type PolymorphicProps,
-} from "../polymorphic";
+	type PolymorphicProps } from "../polymorphic";
 import { useMenuGroupContext } from "./menu-group-context";
 
 export interface MenuGroupLabelOptions {}
@@ -48,8 +46,7 @@ export function MenuGroupLabel<T extends ValidComponent = "span">(
 
 	const mergedProps = mergeDefaultProps(
 		{
-			id: context.generateId("label"),
-		},
+			id: context.generateId("label") },
 		props as MenuGroupLabelProps,
 	);
 

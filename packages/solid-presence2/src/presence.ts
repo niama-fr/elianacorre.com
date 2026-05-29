@@ -45,9 +45,11 @@ const createPresence = (props: {
 
   let animationName = 'none'
 
-  createEffect((prevShow) => {
-    const show = access(props.show)
-
+  createEffect(
+    (prevShow) => access(props.show),
+    (show, prevShow) => {
+      if (prevShow === undefined) return
+  
     untrack(() => {
       if (prevShow === show) return show
 
@@ -71,13 +73,12 @@ const createPresence = (props: {
         }
       }
     })
+    },
+  )
 
-    return show
-  })
-
-  createEffect(() => {
-    const element = access(props.element)
-
+  createEffect(
+    () => access(props.element),
+    (element) => {
     if (!element) return
 
     const handleAnimationStart = (event: AnimationEvent) => {
@@ -104,12 +105,13 @@ const createPresence = (props: {
     element.addEventListener('animationcancel', handleAnimationEnd)
     element.addEventListener('animationend', handleAnimationEnd)
 
-    onCleanup(() => {
+    return () => {
       element.removeEventListener('animationstart', handleAnimationStart)
       element.removeEventListener('animationcancel', handleAnimationEnd)
       element.removeEventListener('animationend', handleAnimationEnd)
-    })
-  })
+    }
+    },
+  )
 
   return {
     present: () => presentState() === 'present' || presentState() === 'hiding',

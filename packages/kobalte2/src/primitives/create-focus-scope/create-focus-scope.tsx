@@ -1,3 +1,4 @@
+import { createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -14,19 +15,9 @@
  */
 
 import {
-	type MaybeAccessor,
-	access,
-	contains,
-	focusWithoutScrolling,
-	getActiveElement,
-	getAllTabbableIn,
-	getDocument,
-	isFocusable,
-	removeItemFromArray,
-	visuallyHiddenStyles,
-} from "@ec/kobalte2/utils";
-import { type Accessor, createEffect, createSignal, onCleanup } from "solid-js";
-import { isServer } from "solid-js/web";
+	type MaybeAccessor, access, contains, focusWithoutScrolling, getActiveElement, getAllTabbableIn, getDocument, isFocusable, removeItemFromArray, visuallyHiddenStyles, } from "@ec/kobalte2/utils";
+import { type Accessor, createSignal, onCleanup } from "solid-js";
+import { isServer } from "@solidjs/web";
 
 import { DATA_TOP_LAYER_ATTR } from "../../dismissable-layer/layer-stack";
 

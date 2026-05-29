@@ -1,3 +1,4 @@
+import { splitProps, mergeProps } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from react-spectrum.
  * Apache License Version 2.0, Copyright 2020 Adobe.
@@ -6,8 +7,9 @@
  * https://github.com/adobe/react-spectrum/blob/8f2f2acb3d5850382ebe631f055f88c704aa7d17/packages/@react-stately/list/src/useSingleSelectListState.ts
  */
 
-import { access } from "@ec/kobalte2/utils";
-import { type Accessor, createMemo, mergeProps, splitProps } from "solid-js";
+import {
+	access } from "@ec/kobalte2/utils";
+import { type Accessor, createMemo } from "solid-js";
 
 import {
 	type CollectionBase,
@@ -67,15 +69,19 @@ export function createSingleSelectListState(
 		allowDuplicateSelectionEvents: true,
 		selectedKeys,
 		onSelectionChange: (keys: Set<string>) => {
-			const key = (keys as Set<string>).values().next().value;
+			const key = (keys as Set<string>).values().next().value as
+				| string
+				| undefined;
 
 			// Always fire onSelectionChange, even if the key is the same
 			// as the current key (createControllableSignal does not).
-			if (key === selectedKey()) {
+			if (key !== undefined && key === selectedKey()) {
 				props.onSelectionChange?.(key);
 			}
 
-			setSelectedKey(key);
+			if (key !== undefined) {
+				setSelectedKey(key);
+			}
 		},
 	} as Partial<CreateListStateProps>);
 

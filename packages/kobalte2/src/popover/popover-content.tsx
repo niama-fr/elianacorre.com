@@ -1,19 +1,10 @@
+import type { ValidComponent, JSX } from "@solidjs/web";
 import {
-	OverrideComponentProps,
-	contains,
-	focusWithoutScrolling,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 import {
-	type Component,
-	type JSX,
-	Show,
-	type ValidComponent,
-	createEffect,
-	onCleanup,
-	splitProps,
-} from "solid-js";
+	OverrideComponentProps, contains, focusWithoutScrolling, mergeDefaultProps, mergeRefs, } from "@ec/kobalte2/utils";
+import {
+	type Component, Show, onCleanup } from "solid-js";
 
 import { combineStyle } from "@ec/solid-primitives2/props";
 import createPreventScroll from "@ec/solid-prevent-scroll2";

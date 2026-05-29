@@ -1,3 +1,6 @@
+import type { ValidComponent } from "@solidjs/web";
+import {
+	splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
 /*
  * Portions of this file are based on code from radix-ui-primitives.
  * MIT Licensed, Copyright (c) 2022 WorkOS.
@@ -7,25 +10,10 @@
  */
 
 import {
-	type Orientation,
-	OverrideComponentProps,
-	contains,
-	createGenerateId,
-	mergeDefaultProps,
-	mergeRefs,
-} from "@ec/kobalte2/utils";
+	type Orientation, OverrideComponentProps, contains, createGenerateId, mergeDefaultProps, mergeRefs, } from "@ec/kobalte2/utils";
 import {
-	type Accessor,
-	type Setter,
-	type ValidComponent,
-	createEffect,
-	createMemo,
-	createSignal,
-	createUniqueId,
-	onCleanup,
-	splitProps,
-} from "solid-js";
-import { isServer } from "solid-js/web";
+	type Accessor, type Setter, createMemo, createSignal, createUniqueId, onCleanup } from "solid-js";
+import { isServer } from "@solidjs/web";
 
 import {
 	type ElementOf,
@@ -247,7 +235,7 @@ export function MenubarRoot<T extends ValidComponent = "div">(
 	});
 
 	return (
-		<MenubarContext.Provider value={context}>
+		<MenubarContext value={context}>
 			<Polymorphic<MenubarRootRenderProps>
 				as="div"
 				ref={mergeRefs((el) => (ref = el), local.ref)}
@@ -256,6 +244,6 @@ export function MenubarRoot<T extends ValidComponent = "div">(
 				aria-orientation={local.orientation!}
 				{...others}
 			/>
-		</MenubarContext.Provider>
+		</MenubarContext>
 	);
 }

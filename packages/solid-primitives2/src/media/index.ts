@@ -1,5 +1,5 @@
 import { type Accessor } from "solid-js";
-import { isServer } from "solid-js/web";
+import { isServer } from "@solidjs/web";
 import { makeEventListener } from "@ec/solid-primitives2/event-listener";
 import { entries, noop, createHydratableSignal } from "@ec/solid-primitives2/utils";
 import { createHydratableStaticStore } from "@ec/solid-primitives2/static-store";
@@ -158,7 +158,14 @@ export function createBreakpoints<T extends Breakpoints>(
 
   return Object.defineProperty(matches, "key", {
     enumerable: false,
-    get: () => Object.keys(matches).findLast(token => matches[token]) as keyof T,
+    get: () => {
+      const tokens = Object.keys(matches);
+      for (let i = tokens.length - 1; i >= 0; i--) {
+        const token = tokens[i] as keyof T;
+        if (matches[token]) return token;
+      }
+      return undefined as unknown as keyof T;
+    },
   });
 }
 
