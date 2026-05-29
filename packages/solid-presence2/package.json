@@ -6,9 +6,9 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "solid": "./src/index.jsx",
-      "default": "./src/index.js"
+      "types": "./src/index.ts",
+      "solid": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   },
   "peerDependencies": {

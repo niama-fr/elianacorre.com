@@ -1,6 +1,6 @@
 # @ec/solid-primitives2 Fork Notes
 
-This package vendors the compiled ESM/declaration output for the Solid Primitives packages currently used by `@ec/kobalte2`.
+This package vendors source files for the Solid Primitives packages currently used by `@ec/kobalte2`.
 
 Included public subpaths:
 
@@ -17,5 +17,5 @@ Included public subpaths:
 
 Current state:
 
-- Source is copied from installed Solid Primitives packages and not yet adapted for Solid 2 runtime semantics.
+- Source is copied from `solidjs-community/solid-primitives` tag `@solid-primitives/utils@6.4.0` and not yet adapted for Solid 2 runtime semantics.
 - Internal `@solid-primitives/*` imports were rewritten to `@ec/solid-primitives2/*`.

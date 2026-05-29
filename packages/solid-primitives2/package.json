@@ -6,44 +6,48 @@
   "sideEffects": false,
   "exports": {
     "./event-listener": {
-      "types": "./src/event-listener/index.d.ts",
-      "default": "./src/event-listener/index.js"
+      "types": "./src/event-listener/index.ts",
+      "default": "./src/event-listener/index.ts"
     },
     "./keyed": {
-      "types": "./src/keyed/index.d.ts",
-      "default": "./src/keyed/index.js"
+      "types": "./src/keyed/index.ts",
+      "default": "./src/keyed/index.ts"
     },
     "./map": {
-      "types": "./src/map/index.d.ts",
-      "default": "./src/map/index.js"
+      "types": "./src/map/index.ts",
+      "default": "./src/map/index.ts"
     },
     "./media": {
-      "types": "./src/media/index.d.ts",
-      "default": "./src/media/index.js"
+      "types": "./src/media/index.ts",
+      "default": "./src/media/index.ts"
     },
     "./props": {
-      "types": "./src/props/index.d.ts",
-      "default": "./src/props/index.js"
+      "types": "./src/props/index.ts",
+      "default": "./src/props/index.ts"
     },
     "./refs": {
-      "types": "./src/refs/index.d.ts",
-      "default": "./src/refs/index.js"
+      "types": "./src/refs/index.ts",
+      "default": "./src/refs/index.ts"
     },
     "./rootless": {
-      "types": "./src/rootless/index.d.ts",
-      "default": "./src/rootless/index.js"
+      "types": "./src/rootless/index.ts",
+      "default": "./src/rootless/index.ts"
     },
     "./static-store": {
-      "types": "./src/static-store/index.d.ts",
-      "default": "./src/static-store/index.js"
+      "types": "./src/static-store/index.ts",
+      "default": "./src/static-store/index.ts"
     },
     "./trigger": {
-      "types": "./src/trigger/index.d.ts",
-      "default": "./src/trigger/index.js"
+      "types": "./src/trigger/index.ts",
+      "default": "./src/trigger/index.ts"
     },
     "./utils": {
-      "types": "./src/utils/index.d.ts",
-      "default": "./src/utils/index.js"
+      "types": "./src/utils/index.ts",
+      "default": "./src/utils/index.ts"
+    },
+    "./utils/immutable": {
+      "types": "./src/utils/immutable/index.ts",
+      "default": "./src/utils/immutable/index.ts"
     }
   },
   "peerDependencies": {
