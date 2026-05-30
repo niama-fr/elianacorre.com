@@ -1,6 +1,8 @@
-export * from "./eventListener.js";
-export * from "./eventListenerMap.js";
-export * from "./components.js";
-export * from "./eventListenerStack.js";
-export * from "./callbackWrappers.js";
-export * from "./types.js";
+/** biome-ignore-all lint/performance/noBarrelFile: <explanation> */
+
+export * from "./callbackWrappers";
+export * from "./components";
+export * from "./eventListener";
+export * from "./eventListenerMap";
+export * from "./eventListenerStack";
+export * from "./types";

@@ -33,6 +33,10 @@
       "types": "./src/rootless/index.ts",
       "default": "./src/rootless/index.ts"
     },
+    "./scroll": {
+      "types": "./src/scroll/index.ts",
+      "default": "./src/scroll/index.ts"
+    },
     "./static-store": {
       "types": "./src/static-store/index.ts",
       "default": "./src/static-store/index.ts"

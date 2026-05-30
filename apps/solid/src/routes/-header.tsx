@@ -1,16 +1,18 @@
+// import { useStore } from "@tanstack/solid-store";
+
+import { useWindowScrollPosition } from "@ec/solid-primitives2/scroll";
+import { Image } from "@ec/unpic-solid2";
 import type { ComponentProps } from "@solidjs/web";
 import { Link } from "@tanstack/solid-router";
-// import { useStore } from "@tanstack/solid-store";
-// import { Image } from "@unpic/react";
 import { cva } from "class-variance-authority";
-import { type Accessor, For } from "solid-js";
+import { type Accessor, createEffect, createMemo, For } from "solid-js";
 // import { motion, type Transition, useMotionValueEvent, useScroll } from "motion/react";
 // import { type PropsWithChildren, useCallback } from "react";
 import type { ReadRootLayoutProps } from "@/functions/layouts";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const HEADER = {
-  base: cva("fixed z-50", { variants: { isScrolled: { false: "inset-x-0 top-0", true: "inset-x-4 top-5 md:inset-x-20" } } }),
+  base: cva("fixed inset-x-0 top-0 z-50 data-scrolled:inset-x-4 data-scrolled:top-5 md:data-scrolled:inset-x-20"),
   content: cva(
     `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 
     transition-[box-shadow,background-color] duration-1000
@@ -41,6 +43,11 @@ export const HEADER = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
+  const scroll = useWindowScrollPosition();
+  const isScrolled = createMemo(() => scroll.y > 1);
+
+  createEffect(() => scroll.y, console.log);
+
   // const { scrollY } = useScroll();
   // const isScrolled = useStore(store, (state) => state.isScrolled);
 
@@ -49,16 +56,19 @@ export function Header(_: HeaderProps) {
   // const handleOnMouseLeave = useCallback(() => setHeaderHoveredId(), []);
 
   return (
-    <header class={HEADER.base()}>
+    <header class={HEADER.base()} data-scrolled={isScrolled}>
       <div class={HEADER.content()}>
         <Link to="/">
           <HeaderLogo>
-            {/* <Image
-              {...logoImg}
+            <Image
+              alt={_.data().logoImg.alt}
               background="transparent"
               breakpoints={[80, 96, 160, 192, 320]}
+              height={_.data().logoImg.height}
               sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
-            />  */}
+              src={_.data().logoImg.src}
+              width={_.data().logoImg.width}
+            />
           </HeaderLogo>
         </Link>
         <div class={HEADER.navs()}>
