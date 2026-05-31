@@ -1,8 +1,10 @@
 import { createEventListener } from "@ec/solid-primitives2/event-listener";
 import { createHydratableSingletonRoot } from "@ec/solid-primitives2/rootless";
-import { createDerivedStaticStore } from "@ec/solid-primitives2/static-store";
+import { createStaticStore } from "@ec/solid-primitives2/static-store";
 import { isServer } from "@solidjs/web";
-import { type Accessor, createSignal, onSettled, sharedConfig } from "solid-js";
+import { type Accessor, onSettled, sharedConfig } from "solid-js";
+
+const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }).context);
 
 export function getScrollParent(node: Element | null): Element {
   if (isServer) {
@@ -70,20 +72,22 @@ export function createScrollPosition(target?: Accessor<Element | Window | undefi
   target = target || window;
 
   const isFn = typeof target === "function",
-    isHydrating = sharedConfig.context,
+    isHydrating = hasHydrationContext(),
     getTargetPos = isFn
       ? () => getScrollPosition((target as Extract<typeof target, Function>)())
       : () => getScrollPosition(target as Element | Window),
-    // changing the calc signal will trigger the derived store to update
-    [calc, setCalc] = createSignal(isHydrating ? () => FALLBACK_SCROLL_POSITION : getTargetPos, {
-      equals: false,
-    }),
-    trigger = () => setCalc(() => getTargetPos),
-    pos = createDerivedStaticStore(() => calc()());
+    [pos, setPos] = createStaticStore<Position>(
+      isHydrating ? { ...FALLBACK_SCROLL_POSITION } : getTargetPos(),
+    ),
+    trigger = () => {
+      setPos(getTargetPos());
+    };
 
   // update the position on mount if we are hydrating (initial pos is null)
   // or if target is a function (which means it could be a ref that will be populated onMount)
-  if (isHydrating || isFn) onSettled(trigger);
+  if (isHydrating || isFn) {
+    onSettled(trigger);
+  }
 
   createEventListener(target, "scroll", trigger, { passive: true });
 

@@ -9,9 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as QuiSuisJeRouteImport } from './routes/qui-suis-je'
+import { Route as OeuvresRouteImport } from './routes/oeuvres'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as IndexRouteImport } from './routes/index'
 
+const QuiSuisJeRoute = QuiSuisJeRouteImport.update({
+  id: '/qui-suis-je',
+  path: '/qui-suis-je',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OeuvresRoute = OeuvresRouteImport.update({
+  id: '/oeuvres',
+  path: '/oeuvres',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
   id: '/mentions-legales',
   path: '/mentions-legales',
@@ -26,31 +38,53 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/oeuvres': typeof OeuvresRoute
+  '/qui-suis-je': typeof QuiSuisJeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/oeuvres': typeof OeuvresRoute
+  '/qui-suis-je': typeof QuiSuisJeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/mentions-legales': typeof MentionsLegalesRoute
+  '/oeuvres': typeof OeuvresRoute
+  '/qui-suis-je': typeof QuiSuisJeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/mentions-legales'
+  fullPaths: '/' | '/mentions-legales' | '/oeuvres' | '/qui-suis-je'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mentions-legales'
-  id: '__root__' | '/' | '/mentions-legales'
+  to: '/' | '/mentions-legales' | '/oeuvres' | '/qui-suis-je'
+  id: '__root__' | '/' | '/mentions-legales' | '/oeuvres' | '/qui-suis-je'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
+  OeuvresRoute: typeof OeuvresRoute
+  QuiSuisJeRoute: typeof QuiSuisJeRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
+    '/qui-suis-je': {
+      id: '/qui-suis-je'
+      path: '/qui-suis-je'
+      fullPath: '/qui-suis-je'
+      preLoaderRoute: typeof QuiSuisJeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oeuvres': {
+      id: '/oeuvres'
+      path: '/oeuvres'
+      fullPath: '/oeuvres'
+      preLoaderRoute: typeof OeuvresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mentions-legales': {
       id: '/mentions-legales'
       path: '/mentions-legales'
@@ -71,6 +105,8 @@ declare module '@tanstack/solid-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
+  OeuvresRoute: OeuvresRoute,
+  QuiSuisJeRoute: QuiSuisJeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

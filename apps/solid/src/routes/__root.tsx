@@ -1,7 +1,7 @@
 import { GridBackground } from "@ec/ui/ui/grid-background";
 import { NoHydration } from "@solidjs/web";
 import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
-import { type Element, Loading } from "solid-js";
+import { createSignal, type Element, Loading, onSettled } from "solid-js";
 import { readRootLayout } from "@/functions/layouts";
 import styleCss from "../styles.css?url";
 import { Header } from "./-header";
@@ -34,6 +34,14 @@ export const Route = createRootRoute({
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function RootDocument(props: { children: Element }) {
   const data = Route.useLoaderData();
+  const [isScrolled, setIsScrolled] = createSignal(false);
+
+  onSettled(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 1);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  });
 
   return (
     <html lang="fr">
@@ -42,7 +50,7 @@ function RootDocument(props: { children: Element }) {
           <HeadContent />
         </NoHydration>
       </head>
-      <body>
+      <body class="group/body" data-scrolled={isScrolled()}>
         <GridBackground />
         <Header data={data} />
         <main class="relative mt-20 flex-1 sm:mt-28 md:mt-40">
