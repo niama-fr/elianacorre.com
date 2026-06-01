@@ -1,15 +1,13 @@
-// import { useStore } from "@tanstack/solid-store";
-
 import { Image } from "@ec/unpic-solid2";
-import { Link } from "@tanstack/solid-router";
+import { Link, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
-import { type Accessor, For } from "solid-js";
-// import { motion, type Transition, useMotionValueEvent, useScroll } from "motion/react";
-// import { type PropsWithChildren, useCallback } from "react";
+import { type Accessor, createEffect, createMemo, For } from "solid-js";
 import type { ReadRootLayoutProps } from "@/functions/layouts";
+import { createHeaderStain, createHeaderStainTarget, HeaderStainContext, stainIdFromNav, stainIdFromSocial } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const HEADER_TRANSITION = "duration-1000 ease-in-out motion-reduce:transition-none";
+const HASH_PREFIX_RE = /^#/;
 
 export const HEADER = {
   base: cva(
@@ -37,79 +35,109 @@ export const HEADER = {
     sm:flex`),
   social: cva("relative p-2"),
   socials: cva("flex items-center"),
-  stain: cva("absolute inset-0 rounded-full", {
-    variants: { intent: { primary: "bg-primary/40", secondary: "bg-accent" } },
-    defaultVariants: { intent: "secondary" },
-  }),
+  stain: cva(
+    `pointer-events-none absolute top-0 left-0 rounded-full
+    transition-[background-color,height,opacity,transform,width] ${HEADER_TRANSITION} duration-300!`,
+    {
+      variants: { intent: { primary: "bg-primary/40", secondary: "bg-accent" } },
+      defaultVariants: { intent: "secondary" },
+    }
+  ),
   stainContent: cva("relative z-10"),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
-  // const handleOnMouseLeave = useCallback(() => setHeaderHoveredId(), []);
+  let contentRef: HTMLDivElement | undefined;
+  const logoImg = createMemo(() => _.data().logoImg);
+  const navs = createMemo(() => _.data().navs);
+  const socials = createMemo(() => _.data().socials);
+  const location = useLocation({ select: ({ hash, pathname }) => ({ hash, pathname }) });
+  const stain = createHeaderStain();
+  stain.observeContainer(() => contentRef);
+
+  createEffect(
+    () => navs().find((nav) => isHeaderNavActive(nav, location())),
+    (activeNav) => stain.setActive(activeNav ? stainIdFromNav(activeNav) : undefined)
+  );
 
   return (
-    <header class={HEADER.base()}>
-      <div class={HEADER.content()}>
-        <Link to="/">
-          <button class={HEADER.logo()} type="button">
+    <HeaderStainContext value={stain.context}>
+      <header class={HEADER.base()}>
+        <div
+          class={HEADER.content()}
+          onPointerLeave={() => stain.setHovered()}
+          ref={(element) => {
+            contentRef = element;
+          }}
+        >
+          <Link aria-label="Accueil" class={HEADER.logo()} to="/">
             <div class={HEADER.logoContent()}>
               <Image
-                alt={_.data().logoImg.alt}
+                alt={logoImg().alt}
                 background="transparent"
                 breakpoints={[80, 96, 160, 192, 320]}
-                height={_.data().logoImg.height}
+                height={logoImg().height}
                 sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
-                src={_.data().logoImg.src}
-                width={_.data().logoImg.width}
+                src={logoImg().src}
+                width={logoImg().width}
               />
             </div>
-          </button>
-        </Link>
-        <div aria-hidden="true" class={HEADER.stain()} />
-        <div class={HEADER.navs()}>
-          <For each={_.data().navs}>{(nav) => <Link {...nav}>{({ isActive }) => <HeaderNav isActive={isActive} nav={nav} />}</Link>}</For>
-        </div>
-        <div class={HEADER.icons()}>
-          <div class={HEADER.socials()}>
-            <For each={_.data().socials}>{(social) => <HeaderSocial social={social} />}</For>
+          </Link>
+          <div aria-hidden="true" class={HEADER.stain({ intent: stain.intent() })} style={stain.style()} />
+          <div class={HEADER.navs()}>
+            <For each={navs()}>{(nav) => <HeaderNavLink nav={nav} />}</For>
           </div>
-          {/* <Burger navs={navs} /> */}
+          <div class={HEADER.icons()}>
+            <div class={HEADER.socials()}>
+              <For each={socials()}>{(social) => <HeaderSocial social={social} />}</For>
+            </div>
+            {/* <Burger navs={navs} /> */}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </HeaderStainContext>
   );
 }
 export type HeaderProps = { data: Accessor<ReadRootLayoutProps> };
 
 // NAV -------------------------------------------------------------------------------------------------------------------------------------
-export function HeaderNav(_: HeaderNavProps) {
-  // const { key, text } = nav;
-  // const isVisible = useStore(store, ({ headerHoveredId }) => headerHoveredId === key || (!headerHoveredId && isActive));
-
-  // const handleOnMouseEnter = useCallback(() => setHeaderHoveredId(key), [key]);
+export function HeaderNavLink({ nav }: HeaderNavLinkProps) {
+  const stainId = () => stainIdFromNav(nav);
+  const hash = "hash" in nav ? nav.hash : undefined;
+  const activeOptions = "activeOptions" in nav ? nav.activeOptions : undefined;
+  const stain = createHeaderStainTarget<HTMLAnchorElement>(stainId);
 
   return (
-    <button class={HEADER.nav()} type="button">
-      {/* {isVisible ? <div class={HEADER.stain()} /> : null} */}
-      <span class={HEADER.stainContent()}>{_.nav.text}</span>
-    </button>
+    <Link activeOptions={activeOptions} class={HEADER.nav()} hash={hash} to={nav.to} {...stain}>
+      <span class={HEADER.stainContent()}>{nav.text}</span>
+    </Link>
   );
 }
-export type HeaderNavProps = { isActive: boolean; nav: ReturnType<HeaderProps["data"]>["navs"][number] };
+export type HeaderNavLinkProps = { nav: ReturnType<HeaderProps["data"]>["navs"][number] };
+
+const isHeaderNavActive = (nav: HeaderNavLinkProps["nav"], location: HeaderLocation) => {
+  const navHash = "hash" in nav ? nav.hash : undefined;
+
+  if (navHash) {
+    return nav.to === location.pathname && normalizeHash(navHash) === normalizeHash(location.hash);
+  }
+
+  return nav.to === location.pathname && !location.hash;
+};
+
+const normalizeHash = (hash?: string) => hash?.replace(HASH_PREFIX_RE, "") ?? "";
+type HeaderLocation = { hash: string; pathname: string };
 
 // SOCIAL ----------------------------------------------------------------------------------------------------------------------------------
-export function HeaderSocial(_: HeaderSocialProps) {
-  // const { href, icon, text } = social;
-  // const isHovered = useStore(store, ({ headerHoveredId }) => headerHoveredId === key);
-
-  // const handleOnMouseEnter = useCallback(() => setHeaderHoveredId(key), [key]);
+export function HeaderSocial({ social }: HeaderSocialProps) {
+  const stainId = () => stainIdFromSocial(social);
+  const stain = createHeaderStainTarget<HTMLAnchorElement>(stainId);
 
   return (
-    <a aria-label={_.social.text} class={HEADER.social()} href={_.social.href}>
-      {/* {isHovered ? <div class={HEADER.stain({ intent: "primary" })} /> : null} */}
+    <a aria-label={social.text} class={HEADER.social()} href={social.href} {...stain}>
       <span class={HEADER.stainContent()}>
-        <span class={HEADER.icon({ className: _.social.icon })} />
+        <span class={HEADER.icon({ className: social.icon })} />
       </span>
     </a>
   );
