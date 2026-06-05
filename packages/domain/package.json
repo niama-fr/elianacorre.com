@@ -1,0 +1,14 @@
+{
+  "name": "@ec/domain",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@unpic/placeholder": "^0.1.2"
+  },
+  "peerDependencies": {
+    "@tanstack/solid-router": "^2.0.0-beta.21"
+  }
+}

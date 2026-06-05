@@ -8,20 +8,23 @@
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "deploy": "pnpm run build && wrangler deploy"
+    "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "^1.26.0",
+    "@cloudflare/vite-plugin": "^1.39.2",
+    "@ec/domain": "workspace:*",
     "@ec/solid-primitives2": "workspace:*",
     "@ec/ui": "workspace:*",
     "@ec/unpic-solid2": "workspace:*",
+    "@fontsource-variable/dancing-script": "^5.2.8",
+    "@fontsource-variable/lexend": "^5.2.11",
     "@solidjs/web": "^2.0.0-beta.14",
     "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/router-plugin": "^1.168.13",
-    "@tanstack/solid-router": "^2.0.0-beta.19",
-    "@tanstack/solid-router-devtools": "^2.0.0-beta.15",
-    "@tanstack/solid-router-ssr-query": "^2.0.0-beta.20",
-    "@tanstack/solid-start": "^2.0.0-beta.20",
+    "@tanstack/router-plugin": "^1.168.14",
+    "@tanstack/solid-router": "^2.0.0-beta.21",
+    "@tanstack/solid-router-devtools": "^2.0.0-beta.17",
+    "@tanstack/solid-router-ssr-query": "^2.0.0-beta.22",
+    "@tanstack/solid-start": "^2.0.0-beta.22",
     "@unpic/placeholder": "^0.1.2",
     "class-variance-authority": "^0.7.1",
     "solid-js": "^2.0.0-beta.14",
@@ -32,15 +35,9 @@
     "@tanstack/devtools-vite": "latest",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.2",
-    "vite": "^8.0.15",
+    "vite": "^8.0.16",
     "vite-plugin-solid": "^3.0.0-next.5",
-    "vitest": "^4.1.5",
-    "wrangler": "^4.70.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
+    "vitest": "^4.1.8",
+    "wrangler": "^4.97.0"
   }
 }

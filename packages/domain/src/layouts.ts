@@ -3,13 +3,15 @@ import { readImageBySlug } from "./images";
 import { readAllSets } from "./sets";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
+const navs = linkOptions([
+  { key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je", hash: undefined },
+  { key: "oeuvres", text: "Œuvres", to: "/oeuvres", hash: undefined },
+  { key: "contact", text: "Contact", to: "/", hash: "contact", activeOptions: { includeHash: true } },
+]);
+
 export const readRootLayout = () => ({
   logoImg: readImageBySlug("logo"),
-  navs: linkOptions([
-    { key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je" },
-    { key: "oeuvres", text: "Œuvres", to: "/oeuvres" },
-    { key: "contact", text: "Contact", to: "/", hash: "contact", activeOptions: { includeHash: true } },
-  ]),
+  navs,
   socials: [
     { key: "instagram", icon: "icon-[line-md--instagram]", text: "Instagram", href: "https://instagram.com/elianacorre" },
     // { key: "youtube", icon: "icon-[line-md--youtube-filled]", text: "Youtube", href: "https://youtube.com/@elianacorre" },
