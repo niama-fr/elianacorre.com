@@ -38,14 +38,13 @@ function IndexPage() {
     <>
       <Hero class={{ aside: "flex" }} image={data().hero.image} title={data().hero.title}>
         <HeroContent>{data().hero.content}</HeroContent>
-        {/* <BtnLink href="/#contact">{data().hero.button}</BtnLink>  */}
         <Link class={BTN.base()} hash="contact" to="/">
           <BtnContent>{data().hero.button}</BtnContent>
         </Link>
       </Hero>
       <Section class={{ base: "lg:-mt-20" }} intent="secondary">
         <SectionMain>
-          <SectionTitle intent="secondary" title={data().works.title} />
+          <SectionTitle title={data().works.title} />
           <WorksGrid works={data().works.items} />
         </SectionMain>
       </Section>
@@ -56,8 +55,8 @@ function IndexPage() {
           <h4 class={QUOTE.author()}>{data().quote.author}</h4>
         </div>
       </section>
-      <Section id="contact" intent="primary">
-        <SectionImage image={data().contact.image} reverse />
+      <Section id="contact" intent="primary" reverse>
+        <SectionImage image={data().contact.image} />
         <SectionMain>
           <SectionTitle title={data().contact.title} />
           <SectionContent>{data().contact.content}</SectionContent>
