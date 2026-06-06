@@ -2,7 +2,7 @@ import type { Works } from "@ec/domain/works";
 import { Image } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
 import { createMemo, For } from "solid-js";
-import { ImageZoom } from "@/components/image-zoom";
+// import { ImageZoom } from "@/components/image-zoom";
 import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -28,14 +28,18 @@ export function WorksGrid(_: WorksGridProps) {
       <For each={_.works}>
         {(work) => (
           <li class={cn(WORKS_GRID.item(), C().item)}>
-            <ImageZoom zoomImg={{ ...work.image, sizes: "100vw" }}>
-              <Image
-                {...work.image}
-                breakpoints={[300, 384, 470, 600, 768, 940]}
-                class={cn(WORKS_GRID.img(), C().img)}
-                sizes="(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw"
-              />
-            </ImageZoom>
+            {/* <ImageZoom zoomImg={{ ...work.image, sizes: "100vw" }}> */}
+            <Image
+              alt={work.image.alt}
+              background={work.image.background}
+              breakpoints={[300, 384, 470, 600, 768, 940]}
+              class={cn(WORKS_GRID.img(), C().img)}
+              height={work.image.height}
+              sizes="(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw"
+              src={work.image.src}
+              width={work.image.width}
+            />
+            {/* </ImageZoom> */}
             <div class={cn(WORKS_GRID.infos(), C().infos)}>
               <h3 class="text-center font-bold font-heading text-4xl">{work.title}</h3>
             </div>

@@ -9,6 +9,10 @@
       "types": "./src/event-listener/index.ts",
       "default": "./src/event-listener/index.ts"
     },
+    "./intersection-observer": {
+      "types": "./src/intersection-observer/index.ts",
+      "default": "./src/intersection-observer/index.ts"
+    },
     "./keyed": {
       "types": "./src/keyed/index.ts",
       "default": "./src/keyed/index.ts"

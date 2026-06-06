@@ -3,6 +3,7 @@ import { BTN, BtnContent } from "@ec/ui/btn";
 import { GridBackground } from "@ec/ui/grid-background";
 import { Hero, HeroContent } from "@ec/ui/hero";
 import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from "@ec/ui/section";
+import { WorksGrid } from "@ec/ui/works-grid";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 
@@ -45,7 +46,7 @@ function IndexPage() {
       <Section class={{ base: "lg:-mt-20" }} intent="secondary">
         <SectionMain>
           <SectionTitle intent="secondary" title={data().works.title} />
-          {/* <WorksGrid works={data().works.items} />  */}
+          <WorksGrid works={data().works.items} />
         </SectionMain>
       </Section>
       <section class={QUOTE.base()}>
