@@ -1,55 +1,55 @@
 // import { Dialog, DialogContent, DialogTrigger } from "@ec/ui/dialog";
-import { Dialog } from "@ec/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@ec/ui/dialog";
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import type { ComponentProps } from "@solidjs/web";
-import { createMemo, createSignal, omit } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 import { cn } from "@/lib/utils";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function ImageZoom(props: ImageZoomProps) {
-  const rest = omit(props, "class", "img", "unzoomLabel", "zoomImg", "zoomLabel");
+  // const rest = omit(props, "class", "img", "unzoomLabel", "zoomImg", "zoomLabel");
   const img = createMemo(() => props.img);
   const zoomImg = createMemo(() => props.zoomImg);
   const C = createMemo(() => props.class ?? {});
-  const [open, setOpen] = createSignal(false);
+  // const [open, setOpen] = createSignal(false);
   const [zoomLoaded, setZoomLoaded] = createSignal(false);
 
-  const openZoom = () => {
-    setZoomLoaded(false);
-    setOpen(true);
-  };
-  const closeZoom = () => setOpen(false);
+  // const openZoom = () => {
+  //   setZoomLoaded(false);
+  //   setOpen(true);
+  // };
+  // const closeZoom = () => setOpen(false);
 
   return (
     <Dialog>
-      {/*<DialogTrigger>
-          <Image {...img()} class={cn(IMAGE_ZOOM.triggerImage, props.img.class, C().triggerImage)} />
-        </DialogTrigger>
-        <DialogContent> */}
-      <button
-        aria-label={props.unzoomLabel ?? "Minimiser l'image"}
-        class={cn(IMAGE_ZOOM.backdrop, C().backdrop)}
-        onClick={closeZoom}
-        type="button"
-      />
-      <button
-        aria-label={props.unzoomLabel ?? "Minimiser l'image"}
-        class={cn(IMAGE_ZOOM.closeButton, C().closeButton)}
-        onClick={closeZoom}
-        type="button"
-      >
-        <span aria-hidden="true">×</span>
-      </button>
-      <figure class={cn(IMAGE_ZOOM.figure, C().figure)}>
-        <Image {...img()} class={cn(IMAGE_ZOOM.fallbackImage, zoomLoaded() && "opacity-0", C().fallbackImage)} />
-        <Image
-          {...zoomImg()}
-          class={cn(IMAGE_ZOOM.zoomImage, props.zoomImg.class, zoomLoaded() && "opacity-100", C().zoomImage)}
-          loading="eager"
-          onLoad={() => setZoomLoaded(true)}
+      <DialogTrigger>
+        <Image {...img()} class={cn(IMAGE_ZOOM.triggerImage, props.img.class, C().triggerImage)} />
+      </DialogTrigger>
+      <DialogContent>
+        {/* <button
+          aria-label={props.unzoomLabel ?? "Minimiser l'image"}
+          class={cn(IMAGE_ZOOM.backdrop, C().backdrop)}
+          onClick={closeZoom}
+          type="button"
         />
-      </figure>
-      {/* </DialogContent> */}
+        <button
+          aria-label={props.unzoomLabel ?? "Minimiser l'image"}
+          class={cn(IMAGE_ZOOM.closeButton, C().closeButton)}
+          onClick={closeZoom}
+          type="button"
+        >
+          <span aria-hidden="true">×</span>
+        </button> */}
+        <figure class={cn(IMAGE_ZOOM.figure, C().figure)}>
+          <Image {...img()} class={cn(IMAGE_ZOOM.fallbackImage, zoomLoaded() && "opacity-0", C().fallbackImage)} />
+          <Image
+            {...zoomImg()}
+            class={cn(IMAGE_ZOOM.zoomImage, props.zoomImg.class, zoomLoaded() && "opacity-100", C().zoomImage)}
+            loading="eager"
+            onLoad={() => setZoomLoaded(true)}
+          />
+        </figure>
+      </DialogContent>
     </Dialog>
   );
 }
