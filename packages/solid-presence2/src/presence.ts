@@ -1,13 +1,5 @@
-import { access, type MaybeAccessor } from './corvu/reactivity'
-import {
-  type Accessor,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  type Setter,
-  untrack,
-} from 'solid-js'
+import { type Accessor, createEffect, createMemo, createSignal, type Setter, untrack } from "solid-js";
+import { access, type MaybeAccessor } from "./corvu/reactivity";
 
 /**
  * Manages the presence of an element in the DOM while being aware of pending animations.
@@ -22,102 +14,91 @@ import {
  * ```
  */
 const createPresence = (props: {
-  show: MaybeAccessor<boolean>
-  element: MaybeAccessor<HTMLElement | null>
+  show: MaybeAccessor<boolean>;
+  element: MaybeAccessor<HTMLElement | null>;
 }): {
-  present: Accessor<boolean>
-  state: Accessor<'present' | 'hiding' | 'hidden'>
-  setState: Setter<'present' | 'hiding' | 'hidden'>
+  present: Accessor<boolean>;
+  state: Accessor<"present" | "hiding" | "hidden">;
+  setState: Setter<"present" | "hiding" | "hidden">;
 } => {
   const refStyles = createMemo(() => {
-    const element = access(props.element)
-    if (!element) return
-    return getComputedStyle(element)
-  })
+    const element = access(props.element);
+    if (!element) return;
+    return getComputedStyle(element);
+  });
 
-  const getAnimationName = () => {
-    return refStyles()?.animationName ?? 'none'
-  }
+  const getAnimationName = () => refStyles()?.animationName ?? "none";
 
-  const [presentState, setPresentState] = createSignal<
-    'present' | 'hiding' | 'hidden'
-  >(access(props.show) ? 'present' : 'hidden')
+  const [presentState, setPresentState] = createSignal<"present" | "hiding" | "hidden">(access(props.show) ? "present" : "hidden", {
+    ownedWrite: true,
+  });
 
-  let animationName = 'none'
+  let animationName = "none";
 
   createEffect(
-    (prevShow) => access(props.show),
+    (_prevShow) => access(props.show),
     (show, prevShow) => {
-      if (prevShow === undefined) return
-  
-    untrack(() => {
-      if (prevShow === show) return show
+      if (prevShow === undefined) return;
 
-      const prevAnimationName = animationName
-      const currentAnimationName = getAnimationName()
+      untrack(() => {
+        if (prevShow === show) return show;
 
-      if (show) {
-        setPresentState('present')
-      } else if (
-        currentAnimationName === 'none' ||
-        refStyles()?.display === 'none'
-      ) {
-        setPresentState('hidden')
-      } else {
-        const isAnimating = prevAnimationName !== currentAnimationName
+        const prevAnimationName = animationName;
+        const currentAnimationName = getAnimationName();
 
-        if (prevShow === true && isAnimating) {
-          setPresentState('hiding')
+        if (show) {
+          setPresentState("present");
+        } else if (currentAnimationName === "none" || refStyles()?.display === "none") {
+          setPresentState("hidden");
         } else {
-          setPresentState('hidden')
+          const isAnimating = prevAnimationName !== currentAnimationName;
+
+          if (prevShow === true && isAnimating) {
+            setPresentState("hiding");
+          } else {
+            setPresentState("hidden");
+          }
         }
-      }
-    })
-    },
-  )
+      });
+    }
+  );
 
   createEffect(
     () => access(props.element),
     (element) => {
-    if (!element) return
+      if (!element) return;
 
-    const handleAnimationStart = (event: AnimationEvent) => {
-      if (event.target === element) {
-        animationName = getAnimationName()
-      }
+      const handleAnimationStart = (event: AnimationEvent) => {
+        if (event.target === element) {
+          animationName = getAnimationName();
+        }
+      };
+
+      const handleAnimationEnd = (event: AnimationEvent) => {
+        const currentAnimationName = getAnimationName();
+        const isCurrentAnimation = currentAnimationName.includes(event.animationName);
+        if (event.target === element && isCurrentAnimation && presentState() === "hiding") {
+          setPresentState("hidden");
+        }
+      };
+
+      element.addEventListener("animationstart", handleAnimationStart);
+      element.addEventListener("animationcancel", handleAnimationEnd);
+      element.addEventListener("animationend", handleAnimationEnd);
+
+      return () => {
+        element.removeEventListener("animationstart", handleAnimationStart);
+        element.removeEventListener("animationcancel", handleAnimationEnd);
+        element.removeEventListener("animationend", handleAnimationEnd);
+      };
     }
-
-    const handleAnimationEnd = (event: AnimationEvent) => {
-      const currentAnimationName = getAnimationName()
-      const isCurrentAnimation = currentAnimationName.includes(
-        event.animationName,
-      )
-      if (
-        event.target === element &&
-        isCurrentAnimation &&
-        presentState() === 'hiding'
-      ) {
-        setPresentState('hidden')
-      }
-    }
-
-    element.addEventListener('animationstart', handleAnimationStart)
-    element.addEventListener('animationcancel', handleAnimationEnd)
-    element.addEventListener('animationend', handleAnimationEnd)
-
-    return () => {
-      element.removeEventListener('animationstart', handleAnimationStart)
-      element.removeEventListener('animationcancel', handleAnimationEnd)
-      element.removeEventListener('animationend', handleAnimationEnd)
-    }
-    },
-  )
+  );
 
   return {
-    present: () => presentState() === 'present' || presentState() === 'hiding',
+    present: () => presentState() === "present" || presentState() === "hiding",
     state: presentState,
     setState: setPresentState,
-  }
-}
+  };
+};
 
-export default createPresence
+export default createPresence;

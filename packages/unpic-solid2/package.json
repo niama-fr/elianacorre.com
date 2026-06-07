@@ -17,10 +17,10 @@
     }
   },
   "dependencies": {
-    "@solidjs/web": "^2.0.0-beta.14",
+    "@solidjs/web": "2.0.0-beta.14",
     "@unpic/core": "^1.0.3"
   },
   "peerDependencies": {
-    "solid-js": "^2.0.0-beta.14"
+    "solid-js": "2.0.0-beta.14"
   }
 }
