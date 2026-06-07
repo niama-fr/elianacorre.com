@@ -4,6 +4,8 @@ import { createMemo, omit } from "solid-js";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export default function Image(props: ImageProps): JSX.Element {
+  if (!props.src) return null;
+
   const rest = omit(
     props,
     "alt",
