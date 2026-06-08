@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTrigger } from "@ec/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTrigger } from "@ec/ui/dialog";
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import type { ComponentProps } from "@solidjs/web";
 import { createMemo, createSignal, omit } from "solid-js";
@@ -25,7 +25,7 @@ export function ImageZoom(props: ImageZoomProps) {
         />
       </DialogTrigger>
       <DialogContent class={cn(IMAGE_ZOOM.dialog, C().dialog)} showCloseButton={false}>
-        {/* <DialogClose aria-label={props.unzoomLabel ?? "Minimiser l'image"} class={cn(IMAGE_ZOOM.backdrop, C().backdrop)} />
+        <DialogClose aria-label={props.unzoomLabel ?? "Minimiser l'image"} class={cn(IMAGE_ZOOM.backdrop, C().backdrop)} />
         <DialogClose aria-label={props.unzoomLabel ?? "Minimiser l'image"} class={cn(IMAGE_ZOOM.closeButton, C().closeButton)}>
           <span aria-hidden="true">×</span>
         </DialogClose>
@@ -51,7 +51,7 @@ export function ImageZoom(props: ImageZoomProps) {
             src={props.zoomImg.src}
             width={props.zoomImg.width}
           />
-        </figure> */}
+        </figure>
       </DialogContent>
     </Dialog>
   );
