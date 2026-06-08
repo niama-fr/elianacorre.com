@@ -1,8 +1,11 @@
 import type { Accessor, ComputeFunction, EffectFunction, EffectOptions, NoInfer } from "solid-js";
 import {
+  getOwner,
   merge,
   omit,
+  onCleanup,
   onSettled,
+  runWithOwner,
   createEffect as solidCreateEffect,
   createRenderEffect as solidCreateRenderEffect,
   untrack,
@@ -11,8 +14,28 @@ import {
 type PropertyKeyOf<T> = Extract<keyof T, PropertyKey>;
 
 export const mergeProps = merge;
-export const onMount = onSettled;
 export const batch = <T>(fn: () => T): T => fn();
+
+export function onMount(fn: () => undefined | VoidFunction): void {
+  const owner = getOwner();
+  let disposed = false;
+  let cleanup: undefined | VoidFunction;
+
+  onCleanup(() => {
+    disposed = true;
+    cleanup?.();
+  });
+
+  onSettled(() => {
+    queueMicrotask(() => {
+      if (disposed) {
+        return;
+      }
+
+      cleanup = owner ? runWithOwner(owner, fn) : fn();
+    });
+  });
+}
 
 // biome-ignore lint/suspicious/noExplicitAny: This mirrors Solid 1's loose `on` array dependency typing for Kobalte compatibility.
 export type AccessorArray<_S> = readonly Accessor<any>[];

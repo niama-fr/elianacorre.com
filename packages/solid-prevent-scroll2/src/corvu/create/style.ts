@@ -1,5 +1,4 @@
 import { access, type MaybeAccessor } from '../reactivity'
-import { createEffect } from 'solid-js'
 
 const activeStyles = new Map<
   string,
@@ -26,59 +25,53 @@ const createStyle = (props: {
   properties?: MaybeAccessor<{ key: string; value: string }[]>
   cleanup?: () => void
 }) => {
-  createEffect(
-    () => ({
-      properties: access(props.properties) ?? [],
-      style: access(props.style) ?? {},
-    }),
-    ({ properties, style }) => {
-    const originalStyles: Partial<CSSStyleDeclaration> = {}
-    for (const key in style) {
-      originalStyles[key] = props.element.style[key]
-    }
+  const properties = access(props.properties) ?? []
+  const style = access(props.style) ?? {}
+  const originalStyles: Partial<CSSStyleDeclaration> = {}
+  for (const key in style) {
+    originalStyles[key] = props.element.style[key]
+  }
 
+  const activeStyle = activeStyles.get(props.key)
+  if (activeStyle) {
+    activeStyle.activeCount++
+  } else {
+    activeStyles.set(props.key, {
+      activeCount: 1,
+      originalStyles,
+      properties: properties.map((property) => property.key),
+    })
+  }
+
+  Object.assign(props.element.style, style)
+
+  for (const property of properties) {
+    props.element.style.setProperty(property.key, property.value)
+  }
+
+  return () => {
     const activeStyle = activeStyles.get(props.key)
-    if (activeStyle) {
-      activeStyle.activeCount++
-    } else {
-      activeStyles.set(props.key, {
-        activeCount: 1,
-        originalStyles,
-        properties: properties.map((property) => property.key),
-      })
+    if (!activeStyle) return
+    if (activeStyle.activeCount !== 1) {
+      activeStyle.activeCount--
+      return
+    }
+    activeStyles.delete(props.key)
+
+    for (const [key, value] of Object.entries(activeStyle.originalStyles)) {
+      // @ts-expect-error: `key` is valid in this context.
+      props.element.style[key] = value
     }
 
-    Object.assign(props.element.style, style)
-
-    for (const property of properties) {
-      props.element.style.setProperty(property.key, property.value)
+    for (const property of activeStyle.properties) {
+      props.element.style.removeProperty(property)
     }
 
-    return () => {
-      const activeStyle = activeStyles.get(props.key)
-      if (!activeStyle) return
-      if (activeStyle.activeCount !== 1) {
-        activeStyle.activeCount--
-        return
-      }
-      activeStyles.delete(props.key)
-
-      for (const [key, value] of Object.entries(activeStyle.originalStyles)) {
-        // @ts-expect-error: `key` is valid in this context.
-        props.element.style[key] = value
-      }
-
-      for (const property of activeStyle.properties) {
-        props.element.style.removeProperty(property)
-      }
-
-      if (props.element.style.length === 0) {
-        props.element.removeAttribute('style')
-      }
-      props.cleanup?.()
+    if (props.element.style.length === 0) {
+      props.element.removeAttribute('style')
     }
-    },
-  )
+    props.cleanup?.()
+  }
 }
 
 export default createStyle

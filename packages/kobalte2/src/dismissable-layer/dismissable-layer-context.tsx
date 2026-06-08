@@ -1,11 +1,9 @@
-import { createContext, useContext } from "solid-js";
+import { createContext } from "solid-js";
 
+// CONTEXT ----------------------------------------------------------------------------------------------------------------------------------
+export const DismissableLayerContext = createContext<DismissableLayerContextValue>();
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type DismissableLayerContextValue = {
   registerNestedLayer: (element: Element) => () => void;
 };
-
-export const DismissableLayerContext = createContext<DismissableLayerContextValue | null>(null);
-
-export function useOptionalDismissableLayerContext() {
-  return useContext(DismissableLayerContext) ?? undefined;
-}

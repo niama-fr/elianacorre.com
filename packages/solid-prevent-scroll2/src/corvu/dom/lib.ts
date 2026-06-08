@@ -54,7 +54,9 @@ const callEventHandler = <T, E extends Event>(
  * @param target - The target element.
  * @returns Whether the wrapper contains the target element.
  */
-const contains = (wrapper: HTMLElement, target: HTMLElement) => {
+const contains = (wrapper: HTMLElement, target: unknown) => {
+  if (!(target instanceof HTMLElement)) return false
+
   if (wrapper.contains(target)) return true
   let currentElement: HTMLElement | null = target
   while (currentElement) {

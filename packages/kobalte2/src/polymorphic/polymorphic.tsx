@@ -1,68 +1,33 @@
-import type { ValidComponent, JSX, ComponentProps } from "@solidjs/web";
-import {
-	splitProps } from "@ec/kobalte2/utils/solid-compat";
-/* @refresh reload */
-
-import type {
-	OverrideProps } from "@ec/kobalte2/utils";
+import type { OverrideProps } from "@ec/kobalte2/utils";
+import type { ComponentProps, JSX, ValidComponent } from "@solidjs/web";
 import { Dynamic } from "@solidjs/web";
+import { omit } from "solid-js";
 
+// ROOT ------------------------------------------------------------------------------------------------------------------------------------
+export function Polymorphic<RenderProps>(_: RenderProps & PolymorphicAttributes<ValidComponent>): JSX.Element {
+  const rest = omit(_, "as");
+  if (!_.as) throw new Error("[kobalte]: Polymorphic is missing the required `as` prop.");
+  return <Dynamic {...rest} component={_.as} />;
+}
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type { OverrideComponentProps, OverrideProps } from "@ec/kobalte2/utils";
 
-/* -------------------------------------------------------------------------------------------------
- * Polymorphic
- * -----------------------------------------------------------------------------------------------*/
+type EmptyProps = Record<never, never>;
 
-export type ElementOf<T> = T extends HTMLElement
-	? T
-	: T extends keyof HTMLElementTagNameMap
-		? HTMLElementTagNameMap[T]
-		: any;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type ElementOf<T> = T extends HTMLElement ? T : T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : any;
 
-/**
- * Polymorphic attribute.
- */
-export interface PolymorphicAttributes<T extends ValidComponent> {
-	as?: T | keyof JSX.HTMLElementTags;
-}
+export type PolymorphicAttributes<T extends ValidComponent> = { as?: T | keyof JSX.HTMLElementTags };
 
-/**
- * Props used by a polymorphic component.
- */
-export type PolymorphicProps<
-	T extends ValidComponent,
-	Props extends {} = {},
-> = OverrideProps<
-	ComponentProps<T>, // Override props from custom/tag component with our own
-	Props & // Accept custom props of our own component
-		PolymorphicAttributes<T>
+export type PolymorphicProps<T extends ValidComponent, Props extends {} = EmptyProps> = OverrideProps<
+  ComponentProps<T>, // Override props from custom/tag component with our own
+  Props & // Accept custom props of our own component
+    PolymorphicAttributes<T>
 >;
 
-/**
- * Helper type to get the exact props in Polymnorphic `as` callback.
- */
-export type PolymorphicCallbackProps<
-	CustomProps extends {},
-	Options extends {},
-	RenderProps extends {},
-> = Omit<CustomProps, keyof Options | keyof RenderProps> & RenderProps;
-
-/**
- * A utility component that render its `as` prop.
- */
-export function Polymorphic<RenderProps>(
-	props: RenderProps & PolymorphicAttributes<ValidComponent>,
-): JSX.Element {
-	const [local, others] = splitProps(props, ["as"]);
-
-	if (!local.as) {
-		throw new Error(
-			"[kobalte]: Polymorphic is missing the required `as` prop.",
-		);
-	}
-
-	return (
-		// @ts-ignore: Props are valid but not worth calculating
-		<Dynamic {...others} component={local.as} />
-	);
-}
+export type PolymorphicCallbackProps<CustomProps extends {}, Options extends {}, RenderProps extends {}> = Omit<
+  CustomProps,
+  keyof Options | keyof RenderProps
+> &
+  RenderProps;

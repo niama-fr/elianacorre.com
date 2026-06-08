@@ -1,22 +1,15 @@
-import type { ComponentProps } from "@solidjs/web";
-import { Portal } from "@solidjs/web";
-import { Show } from "solid-js";
+import type { JSX } from "@solidjs/web";
+import { Show, useContext } from "solid-js";
+import { DialogContext } from "./dialog-context";
 
-import { DialogContext, useDialogContext } from "./dialog-context";
-
-export interface DialogPortalProps extends ComponentProps<typeof Portal> {}
-
-/**
- * Portals its children into the `body` when the dialog is open.
- */
+// PORTAL ----------------------------------------------------------------------------------------------------------------------------------
 export function DialogPortal(props: DialogPortalProps) {
-  const context = useDialogContext();
+  const context = useContext(DialogContext);
 
   return (
     <Show when={context.contentPresent() || context.overlayPresent()}>
-      <Portal {...props}>
-        <DialogContext value={context}>{props.children}</DialogContext>
-      </Portal>
+      <DialogContext value={context}>{props.children}</DialogContext>
     </Show>
   );
 }
+export type DialogPortalProps = { children?: JSX.Element };

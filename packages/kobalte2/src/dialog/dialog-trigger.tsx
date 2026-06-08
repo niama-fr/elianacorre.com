@@ -1,76 +1,49 @@
-import type { ValidComponent, JSX } from "@solidjs/web";
-import {
-	splitProps } from "@ec/kobalte2/utils/solid-compat";
-/*
- * Portions of this file are based on code from react-spectrum.
- * Apache License Version 2.0, Copyright 2020 Adobe.
- *
- * Credits to the React Spectrum team:
- * https://github.com/adobe/react-spectrum/blob/810579b671791f1593108f62cdc1893de3a220e3/packages/@react-aria/overlays/src/useOverlayTrigger.ts
- */
-
-import {
-	callHandler, mergeRefs } from "@ec/kobalte2/utils";
-import {
-	type Component } from "solid-js";
-
-import * as Button from "../button";
+import { callHandler, mergeRefs } from "@ec/kobalte2/utils";
+import type { JSX, ValidComponent } from "@solidjs/web";
+import { type Component, omit, useContext } from "solid-js";
+import { Button, type ButtonRootCommonProps, type ButtonRootRenderProps } from "../button";
 import type { ElementOf, PolymorphicProps } from "../polymorphic";
-import { useDialogContext } from "./dialog-context";
+import { DialogContext } from "./dialog-context";
 
-export interface DialogTriggerOptions {}
+// TRIGGER ---------------------------------------------------------------------------------------------------------------------------------
+export function DialogTrigger<T extends ValidComponent = "button">(_: PolymorphicProps<T, DialogTriggerProps<T>>) {
+  const context = useContext(DialogContext);
 
-export interface DialogTriggerCommonProps<T extends HTMLElement = HTMLElement>
-	extends Button.ButtonRootCommonProps<T> {
-	onClick: JSX.EventHandlerUnion<T, MouseEvent>;
+  const rest = omit(_ as DialogTriggerProps, "ref", "onClick");
+
+  const onClick: JSX.EventHandlerUnion<HTMLElement, MouseEvent> = (e) => {
+    callHandler(e, _.onClick);
+    context.toggle();
+  };
+
+  return (
+    <Button<Component<Omit<DialogTriggerRenderProps, keyof ButtonRootRenderProps>>>
+      aria-controls={context.isOpen() ? context.contentId() : undefined}
+      aria-expanded={context.isOpen()}
+      aria-haspopup="dialog"
+      data-closed={context.isOpen() ? undefined : ""}
+      data-expanded={context.isOpen() ? "" : undefined}
+      onClick={onClick}
+      ref={mergeRefs(context.setTriggerRef, _.ref)}
+      {...rest}
+    />
+  );
 }
 
-export interface DialogTriggerRenderProps
-	extends DialogTriggerCommonProps,
-		Button.ButtonRootRenderProps {
-	"aria-haspopup": "dialog";
-	"aria-expanded": boolean;
-	"aria-controls": string | undefined;
-	"data-expanded": string | undefined;
-	"data-closed": string | undefined;
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+export type DialogTriggerOptions = Record<never, never>;
+
+export interface DialogTriggerCommonProps<T extends HTMLElement = HTMLElement> extends ButtonRootCommonProps<T> {
+  onClick: JSX.EventHandlerUnion<T, MouseEvent>;
 }
 
-export type DialogTriggerProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = DialogTriggerOptions & Partial<DialogTriggerCommonProps<ElementOf<T>>>;
-
-/**
- * The button that opens the dialog.
- */
-export function DialogTrigger<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, DialogTriggerProps<T>>,
-) {
-	const context = useDialogContext();
-
-	const [local, others] = splitProps(props as DialogTriggerProps, [
-		"ref",
-		"onClick",
-	]);
-
-	const onClick: JSX.EventHandlerUnion<HTMLElement, MouseEvent> = (e) => {
-		callHandler(e, local.onClick);
-		context.toggle();
-	};
-
-	return (
-		<Button.Root<
-			Component<
-				Omit<DialogTriggerRenderProps, keyof Button.ButtonRootRenderProps>
-			>
-		>
-			ref={mergeRefs(context.setTriggerRef, local.ref)}
-			aria-haspopup="dialog"
-			aria-expanded={context.isOpen()}
-			aria-controls={context.isOpen() ? context.contentId() : undefined}
-			data-expanded={context.isOpen() ? "" : undefined}
-			data-closed={!context.isOpen() ? "" : undefined}
-			onClick={onClick}
-			{...others}
-		/>
-	);
+export interface DialogTriggerRenderProps extends DialogTriggerCommonProps, ButtonRootRenderProps {
+  "aria-controls": string | undefined;
+  "aria-expanded": boolean;
+  "aria-haspopup": "dialog";
+  "data-closed": string | undefined;
+  "data-expanded": string | undefined;
 }
+
+export type DialogTriggerProps<T extends ValidComponent | HTMLElement = HTMLElement> = DialogTriggerOptions &
+  Partial<DialogTriggerCommonProps<ElementOf<T>>>;

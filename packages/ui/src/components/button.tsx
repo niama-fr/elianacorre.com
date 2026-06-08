@@ -1,4 +1,4 @@
-import { type ButtonRootProps, Root } from "@ec/kobalte2/button";
+import { Button as Button_, type ButtonRootProps } from "@ec/kobalte2/button";
 import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
 import type { ComponentProps, ValidComponent } from "@solidjs/web";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -41,7 +41,7 @@ type ButtonProps<T extends ValidComponent = "button"> = PolymorphicProps<T, Butt
 
 const Button = <T extends ValidComponent = "button">(_: ButtonProps<T>) => {
   const rest = omit(_ as ButtonProps, "variant", "size", "class");
-  return <Root class={cn(buttonVariants({ variant: _.variant, size: _.size }), _.class)} data-slot="button" {...rest} />;
+  return <Button_ class={cn(buttonVariants({ variant: _.variant, size: _.size }), _.class)} data-slot="button" {...rest} />;
 };
 
 export { Button, type ButtonProps, buttonVariants };

@@ -1,71 +1,52 @@
-import type { ValidComponent, JSX } from "@solidjs/web";
-import {
-	splitProps } from "@ec/kobalte2/utils/solid-compat";
-import {
-	callHandler, mergeRefs } from "@ec/kobalte2/utils";
-import { Show } from "solid-js";
-
+import { callHandler, mergeRefs } from "@ec/kobalte2/utils";
 import { combineStyle } from "@ec/solid-primitives2/props";
-import {
-	type ElementOf,
-	Polymorphic,
-	type PolymorphicProps } from "../polymorphic";
-import { useDialogContext } from "./dialog-context";
+import type { JSX, ValidComponent } from "@solidjs/web";
+import { omit, Show, useContext } from "solid-js";
+import { type ElementOf, Polymorphic, type PolymorphicProps } from "../polymorphic";
+import { DialogContext } from "./dialog-context";
 
-export interface DialogOverlayOptions {}
+// OVERLAY ---------------------------------------------------------------------------------------------------------------------------------
+export function DialogOverlay<T extends ValidComponent = "div">(_: PolymorphicProps<T, DialogOverlayProps<T>>) {
+  const context = useContext(DialogContext);
 
-export interface DialogOverlayCommonProps<T extends HTMLElement = HTMLElement> {
-	ref: T | ((el: T) => void);
-	onPointerDown: JSX.EventHandlerUnion<T, PointerEvent>;
-	style: JSX.CSSProperties | string;
+  const rest = omit(_ as DialogOverlayProps, "ref", "style", "onPointerDown");
+
+  const onPointerDown: JSX.EventHandlerUnion<HTMLElement, PointerEvent> = (e) => {
+    callHandler(e, _.onPointerDown);
+
+    // fixes a firefox issue that starts text selection https://bugzilla.mozilla.org/show_bug.cgi?id=1675846
+    if (e.target === e.currentTarget) e.preventDefault();
+  };
+
+  return (
+    <Show when={context.overlayPresent()}>
+      <Polymorphic<DialogOverlayRenderProps>
+        as="div"
+        data-closed={context.isOpen() ? undefined : ""}
+        data-expanded={context.isOpen() ? "" : undefined}
+        onPointerDown={onPointerDown}
+        ref={mergeRefs(context.setOverlayRef, _.ref)}
+        // We re-enable pointer-events prevented by `Dialog.Content` to allow scrolling.
+        style={combineStyle({ "pointer-events": "auto" }, _.style)}
+        {...rest}
+      />
+    </Show>
+  );
 }
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+export type DialogOverlayOptions = Record<never, never>;
+
+export type DialogOverlayCommonProps<T extends HTMLElement = HTMLElement> = {
+  onPointerDown: JSX.EventHandlerUnion<T, PointerEvent>;
+  ref: T | ((el: T) => void);
+  style: JSX.CSSProperties | string;
+};
 
 export interface DialogOverlayRenderProps extends DialogOverlayCommonProps {
-	"data-expanded": string | undefined;
-	"data-closed": string | undefined;
+  "data-closed": string | undefined;
+  "data-expanded": string | undefined;
 }
 
-export type DialogOverlayProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = DialogOverlayOptions & Partial<DialogOverlayCommonProps<ElementOf<T>>>;
-
-/**
- * A layer that covers the inert portion of the view when the dialog is open.
- */
-export function DialogOverlay<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, DialogOverlayProps<T>>,
-) {
-	const context = useDialogContext();
-
-	const [local, others] = splitProps(props as DialogOverlayProps, [
-		"ref",
-		"style",
-		"onPointerDown",
-	]);
-
-	const onPointerDown: JSX.EventHandlerUnion<HTMLElement, PointerEvent> = (
-		e,
-	) => {
-		callHandler(e, local.onPointerDown);
-
-		// fixes a firefox issue that starts text selection https://bugzilla.mozilla.org/show_bug.cgi?id=1675846
-		if (e.target === e.currentTarget) {
-			e.preventDefault();
-		}
-	};
-
-	return (
-		<Show when={context.overlayPresent()}>
-			<Polymorphic<DialogOverlayRenderProps>
-				as="div"
-				ref={mergeRefs(context.setOverlayRef, local.ref)}
-				// We re-enable pointer-events prevented by `Dialog.Content` to allow scrolling.
-				style={combineStyle({ "pointer-events": "auto" }, local.style)}
-				data-expanded={context.isOpen() ? "" : undefined}
-				data-closed={!context.isOpen() ? "" : undefined}
-				onPointerDown={onPointerDown}
-				{...others}
-			/>
-		</Show>
-	);
-}
+export type DialogOverlayProps<T extends ValidComponent | HTMLElement = HTMLElement> = DialogOverlayOptions &
+  Partial<DialogOverlayCommonProps<ElementOf<T>>>;

@@ -1,47 +1,25 @@
 import type { ValidComponent } from "@solidjs/web";
-import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
-import {
-	mergeDefaultProps } from "@ec/kobalte2/utils";
-import {
-	onCleanup } from "solid-js";
+import { createEffect, merge, omit, useContext } from "solid-js";
+import { Polymorphic, type PolymorphicProps } from "../polymorphic";
+import { DialogContext } from "./dialog-context";
 
-import {
-	type ElementOf,
-	Polymorphic,
-	type PolymorphicProps } from "../polymorphic";
-import { useDialogContext } from "./dialog-context";
+// TITLE -----------------------------------------------------------------------------------------------------------------------------------
+export function DialogTitle<T extends ValidComponent = "h2">(props: PolymorphicProps<T, DialogTitleProps>) {
+  const context = useContext(DialogContext);
 
-export interface DialogTitleOptions {}
+  const _ = merge({ id: context.generateId("title") }, props as DialogTitleProps);
+  const rest = omit(_, "id");
 
-export interface DialogTitleCommonProps<T extends HTMLElement = HTMLElement> {
-	id: string;
+  createEffect(
+    () => undefined,
+    () => () => context.registerTitleId(_.id)
+  );
+
+  return <Polymorphic<DialogTitleRenderProps> as="h2" id={_.id} {...rest} />;
 }
 
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+export type DialogTitleOptions = Record<never, never>;
+export type DialogTitleCommonProps = { id: string };
 export interface DialogTitleRenderProps extends DialogTitleCommonProps {}
-
-export type DialogTitleProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = DialogTitleOptions & Partial<DialogTitleCommonProps<ElementOf<T>>>;
-
-/**
- * An accessible title to be announced when the dialog is open.
- */
-export function DialogTitle<T extends ValidComponent = "h2">(
-	props: PolymorphicProps<T, DialogTitleProps<T>>,
-) {
-	const context = useDialogContext();
-
-	const mergedProps = mergeDefaultProps(
-		{
-			id: context.generateId("title") },
-		props as DialogTitleProps,
-	);
-
-	const [local, others] = splitProps(mergedProps, ["id"]);
-
-	createEffect(() => onCleanup(context.registerTitleId(local.id)));
-
-	return (
-		<Polymorphic<DialogTitleRenderProps> as="h2" id={local.id} {...others} />
-	);
-}
+export type DialogTitleProps = DialogTitleOptions & Partial<DialogTitleCommonProps>;

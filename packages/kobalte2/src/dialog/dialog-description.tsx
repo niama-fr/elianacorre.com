@@ -1,55 +1,25 @@
 import type { ValidComponent } from "@solidjs/web";
-import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
-import {
-	mergeDefaultProps } from "@ec/kobalte2/utils";
-import {
-	onCleanup } from "solid-js";
+import { createEffect, merge, omit, useContext } from "solid-js";
+import { Polymorphic, type PolymorphicProps } from "../polymorphic";
+import { DialogContext } from "./dialog-context";
 
-import {
-	type ElementOf,
-	Polymorphic,
-	type PolymorphicProps } from "../polymorphic";
-import { useDialogContext } from "./dialog-context";
+// DESCRIPTION -----------------------------------------------------------------------------------------------------------------------------
+export function DialogDescription<T extends ValidComponent = "p">(props: PolymorphicProps<T, DialogDescriptionProps>) {
+  const context = useContext(DialogContext);
 
-export interface DialogDescriptionOptions {}
+  const _ = merge({ id: context.generateId("description") }, props as DialogDescriptionProps);
+  const rest = omit(_, "id");
 
-export interface DialogDescriptionCommonProps<
-	T extends HTMLElement = HTMLElement,
-> {
-	id: string;
+  createEffect(
+    () => undefined,
+    () => () => context.registerDescriptionId(_.id)
+  );
+
+  return <Polymorphic<DialogDescriptionRenderProps> as="p" id={_.id} {...rest} />;
 }
+export type DialogDescriptionProps = DialogDescriptionOptions & Partial<DialogDescriptionCommonProps>;
 
-export interface DialogDescriptionRenderProps
-	extends DialogDescriptionCommonProps {}
-
-export type DialogDescriptionProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = DialogDescriptionOptions &
-	Partial<DialogDescriptionCommonProps<ElementOf<T>>>;
-
-/**
- * An optional accessible description to be announced when the dialog is open.
- */
-export function DialogDescription<T extends ValidComponent = "p">(
-	props: PolymorphicProps<T, DialogDescriptionProps<T>>,
-) {
-	const context = useDialogContext();
-
-	const mergedProps = mergeDefaultProps(
-		{
-			id: context.generateId("description") },
-		props as DialogDescriptionProps,
-	);
-
-	const [local, others] = splitProps(mergedProps, ["id"]);
-
-	createEffect(() => onCleanup(context.registerDescriptionId(local.id!)));
-
-	return (
-		<Polymorphic<DialogDescriptionRenderProps>
-			as="p"
-			id={local.id}
-			{...others}
-		/>
-	);
-}
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+export type DialogDescriptionOptions = Record<never, never>;
+export type DialogDescriptionCommonProps = { id: string };
+export interface DialogDescriptionRenderProps extends DialogDescriptionCommonProps {}

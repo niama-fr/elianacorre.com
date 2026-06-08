@@ -1,14 +1,5 @@
-import { createEffect } from "@ec/kobalte2/utils/solid-compat";
-/*
- * Portions of this file are based on code from ariakit.
- * MIT Licensed, Copyright (c) Diego Haz.
- *
- * Credits to the ariakit team:
- * https://github.com/ariakit/ariakit/blob/8a13899ff807bbf39f3d89d2d5964042ba4d5287/packages/ariakit-react-utils/src/hooks.ts
- */
-
 import { isString } from "@ec/kobalte2/utils";
-import { type Accessor, type Component, createSignal } from "solid-js";
+import { type Accessor, type Component, createEffect, createSignal } from "solid-js";
 
 /**
  * Returns the tag name by parsing an element ref.
@@ -24,9 +15,12 @@ export function createTagName(ref: Accessor<HTMLElement | undefined>, fallback?:
     ownedWrite: true,
   });
 
-  createEffect(() => {
-    setTagName(ref()?.tagName.toLowerCase() || stringOrUndefined(fallback?.()));
-  });
+  createEffect(
+    () => [fallback?.(), ref()] as const,
+    ([fallback, ref]) => {
+      setTagName(ref?.tagName.toLowerCase() ?? stringOrUndefined(fallback));
+    }
+  );
 
   return tagName;
 }

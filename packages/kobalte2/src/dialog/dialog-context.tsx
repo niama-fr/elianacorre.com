@@ -1,7 +1,10 @@
-import { type Accessor, createContext, type Setter, useContext } from "solid-js";
-
+import { type Accessor, createContext, type Setter } from "solid-js";
 import type { DialogIntlTranslations } from "./dialog.intl";
 
+// CONTEXT ----------------------------------------------------------------------------------------------------------------------------------
+export const DialogContext = createContext<DialogContextValue>();
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type DialogContextValue = {
   translations: Accessor<DialogIntlTranslations>;
   isOpen: Accessor<boolean>;
@@ -25,15 +28,3 @@ export type DialogContextValue = {
   registerTitleId: (id: string) => () => void;
   registerDescriptionId: (id: string) => () => void;
 };
-
-export const DialogContext = createContext<DialogContextValue | null>(null);
-
-export function useDialogContext() {
-  const context = useContext(DialogContext);
-
-  if (context === null) {
-    throw new Error("[kobalte]: `useDialogContext` must be used within a `Dialog` component");
-  }
-
-  return context;
-}

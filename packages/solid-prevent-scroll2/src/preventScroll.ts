@@ -118,7 +118,7 @@ const createPreventScroll = (props: {
       const offsetTop = window.scrollY
       const offsetLeft = window.scrollX
 
-      createStyle({
+      return createStyle({
         key: 'prevent-scroll',
         element: body,
         style,
@@ -133,7 +133,7 @@ const createPreventScroll = (props: {
         },
       })
     } else {
-      createStyle({
+      return createStyle({
         key: 'prevent-scroll',
         element: body,
         style: {
