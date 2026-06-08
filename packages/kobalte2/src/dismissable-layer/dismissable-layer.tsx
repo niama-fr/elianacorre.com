@@ -1,6 +1,6 @@
 import { contains, getDocument, mergeRefs } from "@ec/kobalte2/utils";
 import type { ValidComponent } from "@solidjs/web";
-import { type Accessor, createEffect, omit, onSettled, useContext } from "solid-js";
+import { type Accessor, createEffect, omit, onSettled, untrack, useContext } from "solid-js";
 import { type ElementOf, Polymorphic, type PolymorphicProps } from "../polymorphic";
 import {
   createEscapeKeyDown,
@@ -14,7 +14,7 @@ import { layerStack } from "./layer-stack";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function DismissableLayer<T extends ValidComponent = "div">(_: PolymorphicProps<T, DismissableLayerProps<T>>) {
-  let ref: HTMLElement | undefined;
+  let ref!: HTMLElement;
 
   const parentContext = useContext(DismissableLayerContext);
 
@@ -32,6 +32,7 @@ export function DismissableLayer<T extends ValidComponent = "div">(_: Polymorphi
   );
 
   const nestedLayers = new Set<Element>([]);
+  const disableOutsidePointerEvents = untrack(() => _.disableOutsidePointerEvents);
 
   const registerNestedLayer = (element: Element) => {
     nestedLayers.add(element);
@@ -80,14 +81,12 @@ export function DismissableLayer<T extends ValidComponent = "div">(_: Polymorphi
   });
 
   onSettled(() => {
-    if (!ref) return;
-    layerStack.addLayer({ dismiss: _.onDismiss, isPointerBlocking: _.disableOutsidePointerEvents, node: ref });
+    layerStack.addLayer({ dismiss: _.onDismiss, isPointerBlocking: disableOutsidePointerEvents, node: ref });
     const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref);
     layerStack.assignPointerEventToLayers();
     layerStack.disableBodyPointerEvents(ref);
 
     return () => {
-      if (!ref) return;
       layerStack.removeLayer(ref);
       unregisterFromParentLayer?.();
       layerStack.assignPointerEventToLayers();
@@ -96,10 +95,8 @@ export function DismissableLayer<T extends ValidComponent = "div">(_: Polymorphi
   });
 
   createEffect(
-    () => [ref, _.disableOutsidePointerEvents] as const,
-    ([ref, disableOutsidePointerEvents]) => {
-      if (!ref) return;
-
+    () => _.disableOutsidePointerEvents,
+    (disableOutsidePointerEvents) => {
       const layer = layerStack.find(ref);
 
       if (layer && layer.isPointerBlocking !== disableOutsidePointerEvents) {
