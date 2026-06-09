@@ -28,25 +28,23 @@ export function WorksGrid(_: WorksGridProps) {
         {(work) => (
           <li class={cn(WORKS_GRID.item(), C().item)}>
             <ImageZoom
-              class={{ trigger: "absolute inset-0", triggerImage: cn(WORKS_GRID.img(), C().img) }}
-              img={{
-                alt: work.image.alt,
-                background: work.image.background,
-                breakpoints: [300, 384, 470, 600, 768, 940],
-                height: work.image.height,
-                sizes:
-                  "(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw",
-                src: work.image.src,
-                width: work.image.width,
-              }}
-              zoomImg={{
-                alt: work.image.alt,
-                background: work.image.background,
-                height: work.image.height,
-                sizes: "100vw",
-                src: work.image.src,
-                width: work.image.width,
-              }}
+              // class={{ trigger: "absolute inset-0", triggerImage: cn(WORKS_GRID.img(), C().img) }}
+              alt={work.image.alt}
+              background={work.image.background}
+              breakpoints={[300, 384, 470, 600, 768, 940]}
+              class={WORKS_GRID.img()}
+              height={work.image.height}
+              sizes="(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw"
+              src={work.image.src}
+              width={work.image.width}
+              // zoomImg={{
+              //   alt: work.image.alt,
+              //   background: work.image.background,
+              //   height: work.image.height,
+              //   sizes: "100vw",
+              //   src: work.image.src,
+              //   width: work.image.width,
+              // }}
             />
             <div class={cn(WORKS_GRID.infos(), C().infos)}>
               <h3 class="text-center font-bold font-heading text-4xl">{work.title}</h3>

@@ -4,4 +4,4 @@
 @import "@fontsource-variable/lexend";
 
 @source "./**/*.{ts,tsx}";
-@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../packages/ui/src/components/**/*.{ts,tsx}";
