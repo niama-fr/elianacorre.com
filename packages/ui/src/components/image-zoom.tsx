@@ -19,8 +19,7 @@ const IMAGE_ZOOM = {
   }),
   trigger: cva("size-full cursor-zoom-in object-cover"),
   wrapper: cva("fixed origin-top-left cursor-zoom-out overflow-hidden transition-transform duration-300 ease-out"),
-  // wrapper: cva("fixed origin-top-left cursor-zoom-out overflow-hidden transition-all duration-300 ease-out"),
-  zoomed: cva("size-full object-cover"),
+  zoomed: cva("origin-top-left object-cover transition-[width,height,transform] duration-300 ease-out"),
 } as const;
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
@@ -48,7 +47,7 @@ export function ImageZoom(_: ImageZoomProps) {
   );
 
   const ratio = createMemo(() => _.aspectRatio ?? (_.width ?? 0) / (_.height ?? 1));
-  const style = createMemo(() => {
+  const zoom = createMemo(() => {
     const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
     const height = width / ratio();
     const translateX = window.innerWidth / 2 - (rect().left + width / 2);
@@ -56,16 +55,21 @@ export function ImageZoom(_: ImageZoomProps) {
     const scaleX = rect().width / width;
     const scaleY = rect().height / height;
     return {
-      height: `${height}px`,
-      // height: phase() === "open" ? `${height}px` : `${rect().height}px`,
-      left: `${rect().left}px`,
-      top: `${rect().top}px`,
-      transform:
-        phase() === "open" // ? `translate3d(${translateX}px, ${translateY}px, 0)` : "translate3d(0, 0, 0)",
-          ? `translate3d(${translateX}px, ${translateY}px, 0) scale(1)`
-          : `translate3d(0, 0, 0) scale(${scaleX}, ${scaleY})`,
-      width: `${width}px`,
-      // width: phase() === "open" ? `${width}px` : `${rect().width}px`,
+      image: {
+        height: phase() === "open" ? `${height}px` : `${rect().height}px`,
+        transform: phase() === "open" ? "scale(1)" : `scale(${1 / scaleX}, ${1 / scaleY})`,
+        width: phase() === "open" ? `${width}px` : `${rect().width}px`,
+      },
+      wrapper: {
+        height: `${height}px`,
+        left: `${rect().left}px`,
+        top: `${rect().top}px`,
+        transform:
+          phase() === "open"
+            ? `translate3d(${translateX}px, ${translateY}px, 0) scale(1)`
+            : `translate3d(0, 0, 0) scale(${scaleX}, ${scaleY})`,
+        width: `${width}px`,
+      },
     };
   });
 
@@ -109,7 +113,10 @@ export function ImageZoom(_: ImageZoomProps) {
     }
   );
 
-  onSettled(() => () => cancelAnimationFrame(openFrame));
+  onSettled(() => () => {
+    cancelAnimationFrame(openFrame);
+    window.clearTimeout(closeTimeout);
+  });
 
   return (
     <Dialog onOpenChange={(open) => (open ? openZoom() : closeZoom())} open={phase() !== "idle"}>
@@ -130,24 +137,10 @@ export function ImageZoom(_: ImageZoomProps) {
         <div
           class={cn(IMAGE_ZOOM.wrapper(), _.wrapperClass)}
           onTransitionEnd={() => phase() === "closing" && finishClose()}
-          style={style()}
+          style={zoom().wrapper}
         >
-          <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), _.zoomed?.class)} />
+          <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), _.zoomed?.class)} style={zoom().image} />
         </div>
-        {/* <Show when={rect()}>
-          {(currentRect) => (
-            <Image
-              {...({
-                ...inheritedZoomImageProps,
-                ...props.zoomImageProps,
-                class: cn(IMAGE_ZOOM.zoomImage, props.zoomImageProps?.class),
-                loading: props.zoomImageProps?.loading ?? "eager",
-              } as ImageProps)}
-              onTransitionEnd={() => phase() === "closing" && finishClose()}
-              style={getZoomFrameStyle(currentRect(), imageRatio(), isZoomed())}
-            />
-          )}
-        </Show> */}
       </DialogContent>
     </Dialog>
   );
