@@ -9,7 +9,7 @@ export const WORKS_GRID = {
   base: cva(`group/list grid w-full grid-cols-1 gap-8
     sm:grid-cols-2
     lg:grid-cols-3`),
-  img: cva("absolute size-full object-cover"),
+  img: cva("absolute size-full object-contain"),
   infos:
     cva(`absolute inset-0 flex flex-col justify-center items-center bg-black/50 text-white transition-opacity duration-300 opacity-0 pointer-events-none
     group-hover/item:opacity-100`),
@@ -37,6 +37,7 @@ export function WorksGrid(_: WorksGridProps) {
               sizes="(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw"
               src={work.image.src}
               width={work.image.width}
+              zoomImageProps={{ sizes: "100vw", class: "object-contain" }}
               // zoomImg={{
               //   alt: work.image.alt,
               //   background: work.image.background,

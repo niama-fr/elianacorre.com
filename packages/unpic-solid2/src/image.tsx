@@ -1,11 +1,9 @@
 import type { JSX } from "@solidjs/web";
 import { type CoreImageAttributes, transformProps, type UnpicImageProps } from "@unpic/core";
-import { createMemo, omit } from "solid-js";
+import { createMemo, omit, Show } from "solid-js";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export default function Image(props: ImageProps): JSX.Element {
-  if (!props.src) return null;
-
   const rest = omit(
     props,
     "alt",
@@ -26,34 +24,50 @@ export default function Image(props: ImageProps): JSX.Element {
     "role",
     "sizes",
     "src",
+    "style",
     "unstyled",
     "width"
   );
 
-  const transformed = createMemo(() => transformProps<SolidImageAttributes>(props));
+  const transformed = createMemo(() => (props.src ? transformProps<SolidImageAttributes>(props) : null));
   return (
-    <img
-      {...rest}
-      alt={stringAttr(transformed().alt) ?? ""}
-      decoding={transformed().decoding ?? undefined}
-      fetchpriority={transformed().fetchpriority ?? undefined}
-      height={transformed().height ?? undefined}
-      loading={transformed().loading ?? undefined}
-      role={(transformed().role ?? undefined) as JSX.ImgHTMLAttributes<HTMLImageElement>["role"]}
-      sizes={stringAttr(transformed().sizes)}
-      src={stringAttr(transformed().src)}
-      srcset={stringAttr(transformed().srcset)}
-      style={transformed().style}
-      width={transformed().width ?? undefined}
-    />
+    <Show when={transformed()}>
+      {(image) => (
+        <img
+          {...rest}
+          alt={stringAttr(image().alt) ?? ""}
+          decoding={image().decoding ?? undefined}
+          fetchpriority={image().fetchpriority ?? undefined}
+          height={image().height ?? undefined}
+          loading={image().loading ?? undefined}
+          role={(image().role ?? undefined) as JSX.ImgHTMLAttributes<HTMLImageElement>["role"]}
+          sizes={stringAttr(image().sizes)}
+          src={stringAttr(image().src)}
+          srcset={stringAttr(image().srcset)}
+          style={mergeStyle(image().style, props.style)}
+          width={image().width ?? undefined}
+        />
+      )}
+    </Show>
   );
 }
 
 // UTILS -----------------------------------------------------------------------------------------------------------------------------------
 const stringAttr = (value: unknown): string | undefined => (value == null ? undefined : String(value));
 
+const mergeStyle = (base: JSX.CSSProperties | string | undefined, override: JSX.CSSProperties | string | undefined) => {
+  if (override == null) return base;
+  if (base == null) return override;
+  if (typeof base === "string" || typeof override === "string") return override;
+
+  return {
+    ...base,
+    ...override,
+  };
+};
+
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type ImageProps = UnpicImageProps<SolidImageAttributes>;
+export type ImageProps = UnpicImageProps<SolidImageAttributes> & Pick<SolidImageAttributes, "style">;
 
 type SolidImageAttributes = Omit<JSX.ImgHTMLAttributes<HTMLImageElement>, keyof CoreImageAttributes> &
   CoreImageAttributes<JSX.CSSProperties | string>;
