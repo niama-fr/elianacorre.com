@@ -14,12 +14,15 @@ const IMAGE_ZOOM = {
   content:
     cva(`inset-0 top-0 left-0 z-50 z-dialog-content h-dvh w-screen max-w-none translate-x-0 translate-y-0 cursor-zoom-out overflow-hidden bg-transparent p-0 outline-none 
   data-closed:invisible data-closed:pointer-events-none`),
-  overlay: cva("bg-background/80 starting:opacity-0 backdrop-blur-md transition-opacity duration-300 ease-out", {
+  overlay: cva("bg-background/50 starting:opacity-0 backdrop-blur-md transition-opacity duration-300 ease-out", {
     variants: { closing: { true: "opacity-0", false: "opacity-100" } },
   }),
+  placeholder: cva(
+    "absolute top-0 left-0 origin-top-left bg-center bg-cover transition-[width,height,transform,opacity] duration-300 ease-out"
+  ),
   trigger: cva("size-full cursor-zoom-in object-cover"),
   wrapper: cva("fixed origin-top-left cursor-zoom-out overflow-hidden transition-transform duration-300 ease-out"),
-  zoomed: cva("origin-top-left object-cover transition-[width,height,transform] duration-300 ease-out"),
+  zoomed: cva("absolute top-0 left-0 origin-top-left object-cover transition-[width,height,transform] duration-300 ease-out"),
 } as const;
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
@@ -39,7 +42,6 @@ export function ImageZoom(_: ImageZoomProps) {
         ..._.zoomed,
         alt: _.alt,
         aspectRatio: _.aspectRatio,
-        background: _.background,
         height: _.height,
         src: _.src,
         width: _.width,
@@ -139,6 +141,14 @@ export function ImageZoom(_: ImageZoomProps) {
           onTransitionEnd={() => phase() === "closing" && finishClose()}
           style={zoom().wrapper}
         >
+          <div
+            aria-hidden="true"
+            class={IMAGE_ZOOM.placeholder()}
+            style={{
+              ...zoom().image,
+              "background-image": `url(${triggerRef.currentSrc || triggerRef.src})`,
+            }}
+          />
           <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), _.zoomed?.class)} style={zoom().image} />
         </div>
       </DialogContent>
@@ -148,5 +158,5 @@ export function ImageZoom(_: ImageZoomProps) {
 export type ImageZoomProps = ImageProps & { wrapperClass?: string; zoomed?: Partial<ImageProps> };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-type ZoomPhase = "idle" | "opening" | "open" | "closing";
+type ZoomPhase = "closing" | "idle" | "open" | "opening";
 type ZoomRect = { height: number; left: number; top: number; width: number };
