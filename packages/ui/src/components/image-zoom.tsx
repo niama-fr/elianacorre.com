@@ -1,92 +1,140 @@
 import { Image, type ImageProps } from "@ec/unpic-solid2";
-import type { JSX } from "@solidjs/web";
-import { createMemo, createSignal, omit, onSettled, Show } from "solid-js";
+import { cva } from "class-variance-authority";
+import { createEffect, createMemo, createSignal, omit, onSettled } from "solid-js";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/dialog";
 import { cn } from "@/lib/utils";
 
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
+const SCREEN_PADDING_PX = 20;
+const ZOOM_DURATION_MS = 300;
+const DEFAULT_RECT: ZoomRect = { height: 0, left: 0, top: 0, width: 0 };
+
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const IMAGE_ZOOM = {
-  backdrop: "absolute inset-0 bg-background/80 backdrop-blur-md transition-opacity duration-300 ease-out",
-  dialog:
-    "fixed inset-0 top-0 left-0 z-50 z-dialog-content h-dvh w-screen max-w-none translate-x-0 translate-y-0 cursor-zoom-out overflow-hidden bg-transparent p-0 outline-none data-[closed]:invisible data-[closed]:pointer-events-none",
-  triggerImage: "size-full cursor-zoom-in object-cover",
-  zoomImage: "fixed z-10 max-w-none cursor-zoom-out object-contain shadow-2xl transition-transform duration-300 ease-out",
+  content:
+    cva(`inset-0 top-0 left-0 z-50 z-dialog-content h-dvh w-screen max-w-none translate-x-0 translate-y-0 cursor-zoom-out overflow-hidden bg-transparent p-0 outline-none 
+  data-closed:invisible data-closed:pointer-events-none`),
+  overlay: cva("bg-background/80 starting:opacity-0 backdrop-blur-md transition-opacity duration-300 ease-out", {
+    variants: { closing: { true: "opacity-0", false: "opacity-100" } },
+  }),
+  trigger: cva("size-full cursor-zoom-in object-cover"),
+  wrapper: cva("fixed origin-top-left cursor-zoom-out overflow-hidden transition-transform duration-300 ease-out"),
+  // wrapper: cva("fixed origin-top-left cursor-zoom-out overflow-hidden transition-all duration-300 ease-out"),
+  zoomed: cva("size-full object-cover"),
 } as const;
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function ImageZoom(props: ImageZoomProps) {
-  const triggerImageProps = omit(props, "class", "ref", "zoomImageProps");
-  const inheritedZoomImageProps = omit(props, "class", "objectFit", "ref", "zoomImageProps");
-  const imageRatio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-
-  const [phase, setPhase] = createSignal<ZoomPhase>("idle");
-  const [rect, setRect] = createSignal<ZoomRect | null>(null);
+export function ImageZoom(_: ImageZoomProps) {
+  const triggerProps = omit(_, "class", "ref", "wrapperClass", "zoomed");
 
   let closeTimeout = Number.NaN;
   let openFrame = Number.NaN;
-  let imageRef!: HTMLImageElement;
 
-  const isDialogOpen = () => phase() !== "idle";
-  const isZoomed = () => phase() === "open";
-  const updateRect = () => setRect(getImageContentRect(imageRef, imageRatio()));
+  // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
+  const [phase, setPhase] = createSignal<ZoomPhase>("idle");
+  const [rect, setRect] = createSignal<ZoomRect>(DEFAULT_RECT);
 
-  const cancelOpenFrame = () => {
-    window.cancelAnimationFrame(openFrame);
-    openFrame = Number.NaN;
+  const zoomedProps = createMemo(
+    () =>
+      ({
+        ..._.zoomed,
+        alt: _.alt,
+        aspectRatio: _.aspectRatio,
+        background: _.background,
+        height: _.height,
+        src: _.src,
+        width: _.width,
+      }) as ImageProps
+  );
+
+  const ratio = createMemo(() => _.aspectRatio ?? (_.width ?? 0) / (_.height ?? 1));
+  const style = createMemo(() => {
+    const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
+    const height = width / ratio();
+    const translateX = window.innerWidth / 2 - (rect().left + width / 2);
+    const translateY = window.innerHeight / 2 - (rect().top + height / 2);
+    const scaleX = rect().width / width;
+    const scaleY = rect().height / height;
+    return {
+      height: `${height}px`,
+      // height: phase() === "open" ? `${height}px` : `${rect().height}px`,
+      left: `${rect().left}px`,
+      top: `${rect().top}px`,
+      transform:
+        phase() === "open" // ? `translate3d(${translateX}px, ${translateY}px, 0)` : "translate3d(0, 0, 0)",
+          ? `translate3d(${translateX}px, ${translateY}px, 0) scale(1)`
+          : `translate3d(0, 0, 0) scale(${scaleX}, ${scaleY})`,
+      width: `${width}px`,
+      // width: phase() === "open" ? `${width}px` : `${rect().width}px`,
+    };
+  });
+
+  // REFS ----------------------------------------------------------------------------------------------------------------------------------
+  let triggerRef!: HTMLImageElement;
+  const setTriggerRef = (el: HTMLImageElement) => {
+    triggerRef = el;
+    if (typeof _.ref === "function") _.ref(el);
   };
 
-  const openZoom = () => {
-    if (phase() !== "idle") return;
-
+  // METHODS -------------------------------------------------------------------------------------------------------------------------------
+  const closeZoom = () => {
+    if (phase() === "idle") return;
+    cancelAnimationFrame(openFrame);
+    setPhase("closing");
     window.clearTimeout(closeTimeout);
-    updateRect();
-
-    cancelOpenFrame();
-    setPhase("opening");
-    openFrame = window.requestAnimationFrame(() => {
-      openFrame = Number.NaN;
-      setPhase("open");
-    });
+    closeTimeout = setTimeout(() => setPhase("idle"), ZOOM_DURATION_MS);
   };
 
   const finishClose = () => {
     window.clearTimeout(closeTimeout);
     setPhase("idle");
-    setRect(null);
   };
 
-  const closeZoom = () => {
-    if (phase() === "idle") return;
-    cancelOpenFrame();
-    setPhase("closing");
-    window.clearTimeout(closeTimeout);
-    closeTimeout = window.setTimeout(finishClose, ZOOM_DURATION_MS);
+  const openZoom = () => {
+    if (phase() !== "idle") return;
+    updateRect();
+    setPhase("opening");
+    openFrame = requestAnimationFrame(() => setPhase("open"));
   };
 
-  onSettled(() => {
-    window.addEventListener("resize", updateRect);
-    return () => {
-      cancelOpenFrame();
-      window.clearTimeout(closeTimeout);
-      window.removeEventListener("resize", updateRect);
-    };
-  });
+  const updateRect = () => setRect(triggerRef.getBoundingClientRect());
+
+  // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
+  createEffect(
+    () => phase() === "idle",
+    (isIdle) => {
+      if (isIdle) return;
+      window.addEventListener("resize", updateRect);
+      return () => window.removeEventListener("resize", updateRect);
+    }
+  );
+
+  onSettled(() => () => cancelAnimationFrame(openFrame));
 
   return (
-    <Dialog onOpenChange={(open) => (open ? openZoom() : closeZoom())} open={isDialogOpen()}>
+    <Dialog onOpenChange={(open) => (open ? openZoom() : closeZoom())} open={phase() !== "idle"}>
       <DialogTrigger
-        {...triggerImageProps}
-        aria-label={props.alt ? `Zoomer ${props.alt}` : "Zoomer l'image"}
+        {...triggerProps}
+        aria-label={_.alt ? `Zoomer ${_.alt}` : "Zoomer l'image"}
         as={Image}
-        class={cn(IMAGE_ZOOM.triggerImage, isDialogOpen() && "opacity-0", props.class)}
-        ref={(element) => {
-          imageRef = element;
-          if (typeof props.ref === "function") props.ref(element);
-        }}
+        class={cn(IMAGE_ZOOM.trigger(), _.class)}
+        ref={setTriggerRef}
       />
-      <DialogContent class={IMAGE_ZOOM.dialog} onClick={closeZoom} showCloseButton={false}>
-        <div class={cn(IMAGE_ZOOM.backdrop, isZoomed() ? "opacity-100" : "opacity-0")} />
-        <Show when={rect()}>
+      <DialogContent
+        class={IMAGE_ZOOM.content()}
+        data-closing={phase() === "closing"}
+        onClick={closeZoom}
+        overlayClass={IMAGE_ZOOM.overlay({ closing: phase() === "closing" })}
+        showCloseButton={false}
+      >
+        <div
+          class={cn(IMAGE_ZOOM.wrapper(), _.wrapperClass)}
+          onTransitionEnd={() => phase() === "closing" && finishClose()}
+          style={style()}
+        >
+          <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), _.zoomed?.class)} />
+        </div>
+        {/* <Show when={rect()}>
           {(currentRect) => (
             <Image
               {...({
@@ -96,67 +144,15 @@ export function ImageZoom(props: ImageZoomProps) {
                 loading: props.zoomImageProps?.loading ?? "eager",
               } as ImageProps)}
               onTransitionEnd={() => phase() === "closing" && finishClose()}
-              style={getZoomFrameStyle(currentRect(), isZoomed())}
+              style={getZoomFrameStyle(currentRect(), imageRatio(), isZoomed())}
             />
           )}
-        </Show>
+        </Show> */}
       </DialogContent>
     </Dialog>
   );
 }
-export type ImageZoomProps = ImageProps & { zoomImageProps?: Partial<ImageProps> };
-
-// UTILS -----------------------------------------------------------------------------------------------------------------------------------
-const SCREEN_PADDING_PX = 20;
-const ZOOM_DURATION_MS = 300;
-
-const getImageContentRect = (image: HTMLImageElement, ratio: number): ZoomRect => {
-  const imageRect = image.getBoundingClientRect();
-
-  const style = window.getComputedStyle(image);
-  if (style.objectFit !== "cover" && style.objectFit !== "contain") return imageRect;
-
-  const boxRatio = imageRect.width / imageRect.height;
-  const shouldMatchHeight = style.objectFit === "cover" ? boxRatio < ratio : boxRatio > ratio;
-  const imageWidth = shouldMatchHeight ? imageRect.height * ratio : imageRect.width;
-  const imageHeight = imageWidth / ratio;
-  const [x = 0.5, y = 0.5] = style.objectPosition.split(" ").map(parsePositionValue);
-
-  return {
-    height: imageHeight,
-    left: imageRect.left + (imageRect.width - imageWidth) * x,
-    top: imageRect.top + (imageRect.height - imageHeight) * y,
-    width: imageWidth,
-  };
-};
-
-const getZoomFrameStyle = (rect: ZoomRect, zoomed: boolean): JSX.CSSProperties => {
-  const scale = Math.min(
-    (window.innerWidth - SCREEN_PADDING_PX * 2) / rect.width,
-    (window.innerHeight - SCREEN_PADDING_PX * 2) / rect.height
-  );
-  const width = rect.width * scale;
-  const height = rect.height * scale;
-  const translateX = window.innerWidth / 2 - (rect.left + width / 2);
-  const translateY = window.innerHeight / 2 - (rect.top + height / 2);
-
-  return {
-    height: `${height}px`,
-    left: `${rect.left}px`,
-    top: `${rect.top}px`,
-    transform: zoomed ? `translate3d(${translateX}px, ${translateY}px, 0) scale(1)` : `translate3d(0, 0, 0) scale(${1 / scale})`,
-    "transform-origin": "top left",
-    width: `${width}px`,
-  };
-};
-
-const parsePositionValue = (value: string): number => {
-  if (value === "left" || value === "top") return 0;
-  if (value === "right" || value === "bottom") return 1;
-  if (value === "center") return 0.5;
-  if (value.endsWith("%")) return Number.parseFloat(value) / 100;
-  return 0.5;
-};
+export type ImageZoomProps = ImageProps & { wrapperClass?: string; zoomed?: Partial<ImageProps> };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type ZoomPhase = "idle" | "opening" | "open" | "closing";

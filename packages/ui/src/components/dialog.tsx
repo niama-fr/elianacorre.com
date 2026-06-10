@@ -53,7 +53,7 @@ export const DialogContent = <T extends ValidComponent = "div">(props: DialogCon
   const rest = omit(_, "class", "children", "showCloseButton");
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay class={_.overlayClass} />
       <DialogContent_
         class={cn("fixed top-1/2 left-1/2 z-50 z-dialog-content w-full -translate-x-1/2 -translate-y-1/2 outline-none", _.class)}
         data-slot="dialog-content"
@@ -73,6 +73,7 @@ export const DialogContent = <T extends ValidComponent = "div">(props: DialogCon
 type DialogContentProps<T extends ValidComponent = "div"> = PolymorphicProps<T, DialogContentProps_<T>> &
   Pick<ComponentProps<T>, "class" | "children"> & {
     showCloseButton?: boolean;
+    overlayClass?: string;
   };
 
 // HEADER ----------------------------------------------------------------------------------------------------------------------------------
