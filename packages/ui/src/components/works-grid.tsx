@@ -25,7 +25,7 @@ export function WorksGrid(_: WorksGridProps) {
   return (
     <ul class={cn(WORKS_GRID.base(), C().base)}>
       <For each={_.works}>
-        {(work) => (
+        {(work, i) => (
           <li class={cn(WORKS_GRID.item(), C().item)}>
             <ImageZoom
               // class={{ trigger: "absolute inset-0", triggerImage: cn(WORKS_GRID.img(), C().img) }}
@@ -38,14 +38,6 @@ export function WorksGrid(_: WorksGridProps) {
               width={work.image.width}
               wrapperClass="rounded-3xl"
               zoomed={{ sizes: "100vw" }}
-              // zoomImg={{
-              //   alt: work.image.alt,
-              //   background: work.image.background,
-              //   height: work.image.height,
-              //   sizes: "100vw",
-              //   src: work.image.src,
-              //   width: work.image.width,
-              // }}
             />
             <div class={cn(WORKS_GRID.infos(), C().infos)}>
               <h3 class="text-center font-bold font-heading text-4xl">{work.title}</h3>
