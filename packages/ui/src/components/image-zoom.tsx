@@ -126,21 +126,21 @@ export function ImageZoom(props: ImageZoomProps) {
         tabindex={0}
       />
       <Show when={open()}>
-        <div class={IMAGE_ZOOM.root()}>
-          <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ expanded: expanded() })} onClick={closeZoom} type="button" />
-          <button
-            aria-label="Fermer l'image"
-            class={cn(IMAGE_ZOOM.frame({ animating: animating() }), props.wrapperClass)}
-            onClick={closeZoom}
-            onTransitionEnd={() => {
-              if (!expanded()) finishClose();
-            }}
-            style={frameStyle()}
-            type="button"
-          >
-            <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
-          </button>
-        </div>
+        <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ expanded: expanded() })} onClick={closeZoom} type="button" />
+        <button
+          aria-label="Fermer l'image"
+          class={cn(IMAGE_ZOOM.frame({ animating: animating() }), props.wrapperClass)}
+          onClick={closeZoom}
+          onTransitionEnd={(event) => {
+            if (event.currentTarget !== event.target) return;
+
+            if (!expanded()) finishClose();
+          }}
+          style={frameStyle()}
+          type="button"
+        >
+          <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
+        </button>
       </Show>
     </>
   );
@@ -156,10 +156,9 @@ const IMAGE_ZOOM = {
       },
     },
   }),
-  overlay: cva("absolute inset-0 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md transition-opacity duration-3000 ease-out", {
+  overlay: cva("fixed inset-0 z-50 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md transition-opacity duration-3000 ease-out", {
     variants: { expanded: { true: "opacity-100" } },
   }),
-  root: cva("fixed inset-0 z-80 cursor-zoom-out overflow-hidden"),
   trigger: cva("size-full cursor-zoom-in object-cover", {
     variants: {
       animating: {
