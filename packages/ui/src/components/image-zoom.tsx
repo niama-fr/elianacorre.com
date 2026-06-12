@@ -10,6 +10,7 @@ export function ImageZoom(props: ImageZoomProps) {
   const [geometry, setGeometry] = createSignal<ZoomGeometry>(DEFAULT_GEOMETRY);
 
   let triggerRef!: HTMLImageElement;
+  let frameRef!: HTMLButtonElement;
 
   const expanded = createMemo(() => phase() === "expanded");
   const mounted = createMemo(() => phase() !== "idle");
@@ -71,8 +72,20 @@ export function ImageZoom(props: ImageZoomProps) {
     (isMounted) => {
       if (!isMounted) return;
 
+      const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
       const scroll = lockScroll();
-      return () => unlockScroll(scroll);
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") closeZoom();
+      };
+
+      frameRef.focus({ preventScroll: true });
+      window.addEventListener("keydown", onKeyDown);
+
+      return () => {
+        window.removeEventListener("keydown", onKeyDown);
+        unlockScroll(scroll);
+        focused?.focus({ preventScroll: true });
+      };
     }
   );
 
@@ -97,16 +110,21 @@ export function ImageZoom(props: ImageZoomProps) {
         tabindex={0}
       />
       <Show when={mounted()}>
-        <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ visible: expanded() })} onClick={closeZoom} type="button" />
-        <button
-          aria-label="Fermer l'image"
-          class={cn(IMAGE_ZOOM.frame({ transitioning: transitioning() }), props.wrapperClass)}
-          onClick={closeZoom}
-          style={frameStyle()}
-          type="button"
-        >
-          <Image {...zoomedProps()} class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
-        </button>
+        <div aria-label={props.alt ? `Image agrandie: ${props.alt}` : "Image agrandie"} aria-modal="true" role="dialog">
+          <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ visible: expanded() })} onClick={closeZoom} type="button" />
+          <button
+            aria-label="Fermer l'image"
+            class={cn(IMAGE_ZOOM.frame({ transitioning: transitioning() }), props.wrapperClass)}
+            onClick={closeZoom}
+            ref={(element) => {
+              frameRef = element;
+            }}
+            style={frameStyle()}
+            type="button"
+          >
+            <Image {...zoomedProps()} aria-hidden="true" class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
+          </button>
+        </div>
       </Show>
     </>
   );
