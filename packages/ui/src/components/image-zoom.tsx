@@ -1,6 +1,6 @@
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
-import { createEffect, createMemo, createSignal, omit, onSettled, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, omit, Show } from "solid-js";
 import { cn } from "@/lib/utils";
 
 export function ImageZoom(props: ImageZoomProps) {
@@ -9,7 +9,6 @@ export function ImageZoom(props: ImageZoomProps) {
   const [phase, setPhase] = createSignal<ZoomPhase>("idle");
   const [geometry, setGeometry] = createSignal<ZoomGeometry>(DEFAULT_GEOMETRY);
 
-  let openFrame = 0;
   let triggerRef!: HTMLImageElement;
 
   const expanded = createMemo(() => phase() === "expanded");
@@ -34,7 +33,6 @@ export function ImageZoom(props: ImageZoomProps) {
     if (!mounted()) return;
 
     const currentPhase = phase();
-    window.cancelAnimationFrame(openFrame);
     if (currentPhase === "positioned") finishClose();
     else setPhase("collapsing");
   };
@@ -46,15 +44,8 @@ export function ImageZoom(props: ImageZoomProps) {
   const openZoom = () => {
     if (mounted()) return;
 
-    window.cancelAnimationFrame(openFrame);
     setGeometry(measureGeometry(triggerRef, ratio()));
     setPhase("positioned");
-
-    openFrame = window.requestAnimationFrame(() => {
-      openFrame = window.requestAnimationFrame(() => {
-        setPhase("expanded");
-      });
-    });
   };
 
   const setTriggerRef = (element: HTMLImageElement) => {
@@ -62,9 +53,18 @@ export function ImageZoom(props: ImageZoomProps) {
     if (typeof props.ref === "function") props.ref(element);
   };
 
-  onSettled(() => () => {
-    window.cancelAnimationFrame(openFrame);
-  });
+  createEffect(
+    () => phase() === "positioned",
+    (isPositioned) => {
+      if (!isPositioned) return;
+
+      let frame = window.requestAnimationFrame(() => {
+        frame = window.requestAnimationFrame(() => setPhase("expanded"));
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+  );
 
   createEffect(
     () => mounted(),
@@ -75,31 +75,6 @@ export function ImageZoom(props: ImageZoomProps) {
       return () => unlockScroll(scroll);
     }
   );
-
-  const lockScroll = (): ScrollSnapshot => {
-    const scroll = {
-      body: document.body.style.overflow,
-      bodyPaddingInlineEnd: document.body.style.paddingInlineEnd,
-      documentElement: document.documentElement.style.overflow,
-    };
-
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    if (scrollbarWidth > 0) {
-      const paddingInlineEnd = window.getComputedStyle(document.body).paddingInlineEnd;
-      document.body.style.paddingInlineEnd = `calc(${paddingInlineEnd} + ${scrollbarWidth}px)`;
-    }
-
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-
-    return scroll;
-  };
-
-  const unlockScroll = (scroll: ScrollSnapshot) => {
-    document.body.style.overflow = scroll.body;
-    document.body.style.paddingInlineEnd = scroll.bodyPaddingInlineEnd;
-    document.documentElement.style.overflow = scroll.documentElement;
-  };
 
   return (
     <>
@@ -195,6 +170,31 @@ const getTargetSize = (ratio: number): ZoomSize => {
     height: width / ratio,
     width,
   };
+};
+
+const lockScroll = (): ScrollSnapshot => {
+  const scroll = {
+    body: document.body.style.overflow,
+    bodyPaddingInlineEnd: document.body.style.paddingInlineEnd,
+    documentElement: document.documentElement.style.overflow,
+  };
+
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+  if (scrollbarWidth > 0) {
+    const paddingInlineEnd = window.getComputedStyle(document.body).paddingInlineEnd;
+    document.body.style.paddingInlineEnd = `calc(${paddingInlineEnd} + ${scrollbarWidth}px)`;
+  }
+
+  document.body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
+
+  return scroll;
+};
+
+const unlockScroll = (scroll: ScrollSnapshot) => {
+  document.body.style.overflow = scroll.body;
+  document.body.style.paddingInlineEnd = scroll.bodyPaddingInlineEnd;
+  document.documentElement.style.overflow = scroll.documentElement;
 };
 
 type ZoomGeometry = {
