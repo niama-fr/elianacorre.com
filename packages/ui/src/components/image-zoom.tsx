@@ -6,22 +6,22 @@ import { cn } from "@/lib/utils";
 export function ImageZoom(props: ImageZoomProps) {
   const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "wrapperClass", "zoomed");
 
-  const [animating, setAnimating] = createSignal(false);
-  const [expanded, setExpanded] = createSignal(false);
-  const [open, setOpen] = createSignal(false);
-  const [zoom, setZoom] = createSignal<ZoomGeometry>(DEFAULT_ZOOM);
+  const [phase, setPhase] = createSignal<ZoomPhase>("idle");
+  const [geometry, setGeometry] = createSignal<ZoomGeometry>(DEFAULT_GEOMETRY);
 
-  let closeTimeout = Number.NaN;
-  let overflow: ScrollOverflow | undefined;
-  let openFrame = Number.NaN;
+  let openFrame = 0;
+  let scroll: ScrollSnapshot | undefined;
   let triggerRef!: HTMLImageElement;
 
+  const expanded = createMemo(() => phase() === "expanded");
+  const mounted = createMemo(() => phase() !== "idle");
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
+  const transitioning = createMemo(() => phase() === "collapsing" || expanded());
   const zoomedProps = createMemo(() => ({ ...triggerProps, ...props.zoomed, background: undefined }) as ImageProps);
 
   const frameStyle = createMemo(() => {
-    const geometry = zoom();
-    const rect = expanded() ? geometry.target : geometry.from;
+    const zoom = geometry();
+    const rect = expanded() ? zoom.target : zoom.origin;
 
     return {
       height: `${rect.height}px`,
@@ -32,38 +32,30 @@ export function ImageZoom(props: ImageZoomProps) {
   });
 
   const closeZoom = () => {
-    if (!open()) return;
+    if (!mounted()) return;
 
+    const currentPhase = phase();
     window.cancelAnimationFrame(openFrame);
-    window.clearTimeout(closeTimeout);
-    setAnimating(true);
-    setExpanded(false);
-    closeTimeout = window.setTimeout(finishClose, ZOOM_DURATION_MS);
+    if (currentPhase === "positioned") finishClose();
+    else setPhase("collapsing");
   };
 
   const finishClose = () => {
-    window.clearTimeout(closeTimeout);
-    setAnimating(false);
-    setExpanded(false);
-    setOpen(false);
+    setPhase("idle");
     unlockScroll();
   };
 
   const openZoom = () => {
-    if (open()) return;
+    if (mounted()) return;
 
     window.cancelAnimationFrame(openFrame);
-    window.clearTimeout(closeTimeout);
-    setZoom(getZoomGeometry(triggerRef, ratio()));
-    setAnimating(false);
-    setExpanded(false);
+    setGeometry(measureGeometry(triggerRef, ratio()));
     lockScroll();
-    setOpen(true);
+    setPhase("positioned");
 
     openFrame = window.requestAnimationFrame(() => {
       openFrame = window.requestAnimationFrame(() => {
-        setAnimating(true);
-        setExpanded(true);
+        setPhase("expanded");
       });
     });
   };
@@ -75,12 +67,11 @@ export function ImageZoom(props: ImageZoomProps) {
 
   onSettled(() => () => {
     window.cancelAnimationFrame(openFrame);
-    window.clearTimeout(closeTimeout);
     unlockScroll();
   });
 
   const lockScroll = () => {
-    overflow ??= {
+    scroll ??= {
       body: document.body.style.overflow,
       bodyPaddingInlineEnd: document.body.style.paddingInlineEnd,
       documentElement: document.documentElement.style.overflow,
@@ -97,12 +88,12 @@ export function ImageZoom(props: ImageZoomProps) {
   };
 
   const unlockScroll = () => {
-    if (!overflow) return;
+    if (!scroll) return;
 
-    document.body.style.overflow = overflow.body;
-    document.body.style.paddingInlineEnd = overflow.bodyPaddingInlineEnd;
-    document.documentElement.style.overflow = overflow.documentElement;
-    overflow = undefined;
+    document.body.style.overflow = scroll.body;
+    document.body.style.paddingInlineEnd = scroll.bodyPaddingInlineEnd;
+    document.documentElement.style.overflow = scroll.documentElement;
+    scroll = undefined;
   };
 
   return (
@@ -110,32 +101,27 @@ export function ImageZoom(props: ImageZoomProps) {
       <Image
         {...triggerProps}
         aria-label={props.alt ? `Zoomer ${props.alt}` : "Zoomer l'image"}
-        class={cn(IMAGE_ZOOM.trigger({ animating: animating(), open: open() }), props.wrapperClass, props.class)}
-        onClick={() => (open() ? closeZoom() : openZoom())}
+        class={cn(IMAGE_ZOOM.trigger({ mounted: mounted(), transitioning: transitioning() }), props.wrapperClass, props.class)}
+        onClick={() => (mounted() ? closeZoom() : openZoom())}
         onKeyDown={(event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
-          if (open()) closeZoom();
+          if (mounted()) closeZoom();
           else openZoom();
         }}
         onTransitionEnd={() => {
-          if (open() && !expanded()) finishClose();
+          if (phase() === "collapsing") finishClose();
         }}
         ref={setTriggerRef}
-        style={open() ? frameStyle() : props.style}
+        style={mounted() ? frameStyle() : props.style}
         tabindex={0}
       />
-      <Show when={open()}>
-        <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ expanded: expanded() })} onClick={closeZoom} type="button" />
+      <Show when={mounted()}>
+        <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ visible: expanded() })} onClick={closeZoom} type="button" />
         <button
           aria-label="Fermer l'image"
-          class={cn(IMAGE_ZOOM.frame({ animating: animating() }), props.wrapperClass)}
+          class={cn(IMAGE_ZOOM.frame({ transitioning: transitioning() }), props.wrapperClass)}
           onClick={closeZoom}
-          onTransitionEnd={(event) => {
-            if (event.currentTarget !== event.target) return;
-
-            if (!expanded()) finishClose();
-          }}
           style={frameStyle()}
           type="button"
         >
@@ -151,20 +137,20 @@ export type ImageZoomProps = ImageProps & { wrapperClass?: string; zoomed?: Part
 const IMAGE_ZOOM = {
   frame: cva("fixed z-70 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0", {
     variants: {
-      animating: {
+      transitioning: {
         true: "transition-[top,left,width,height] duration-3000 ease-out will-change-[top,left,width,height]",
       },
     },
   }),
   overlay: cva("fixed inset-0 z-50 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md transition-opacity duration-3000 ease-out", {
-    variants: { expanded: { true: "opacity-100" } },
+    variants: { visible: { true: "opacity-100" } },
   }),
   trigger: cva("size-full cursor-zoom-in object-cover", {
     variants: {
-      animating: {
+      transitioning: {
         true: "transition-[top,left,width,height] duration-3000 ease-out will-change-[top,left,width,height]",
       },
-      open: {
+      mounted: {
         true: "fixed z-60 origin-top-left cursor-zoom-out",
       },
     },
@@ -172,23 +158,22 @@ const IMAGE_ZOOM = {
   zoomed: cva("block size-full object-cover"),
 } as const;
 
-const DEFAULT_ZOOM: ZoomGeometry = {
-  from: { height: 1, left: 0, top: 0, width: 1 },
+const DEFAULT_GEOMETRY: ZoomGeometry = {
+  origin: { height: 1, left: 0, top: 0, width: 1 },
   target: { height: 1, left: 0, top: 0, width: 1 },
 };
 const SCREEN_PADDING_PX = 20;
-const ZOOM_DURATION_MS = 3000;
 
-const getZoomGeometry = (image: HTMLImageElement, ratio: number): ZoomGeometry => {
-  const fromRect = image.getBoundingClientRect();
+const measureGeometry = (image: HTMLImageElement, ratio: number): ZoomGeometry => {
+  const origin = image.getBoundingClientRect();
   const target = getTargetSize(ratio);
 
   return {
-    from: {
-      height: fromRect.height,
-      left: fromRect.left,
-      top: fromRect.top,
-      width: fromRect.width,
+    origin: {
+      height: origin.height,
+      left: origin.left,
+      top: origin.top,
+      width: origin.width,
     },
     target: {
       ...target,
@@ -208,9 +193,10 @@ const getTargetSize = (ratio: number): ZoomSize => {
 };
 
 type ZoomGeometry = {
-  from: ZoomRect;
+  origin: ZoomRect;
   target: ZoomRect;
 };
+type ZoomPhase = "collapsing" | "expanded" | "idle" | "positioned";
 type ZoomRect = ZoomSize & { left: number; top: number };
 type ZoomSize = { height: number; width: number };
-type ScrollOverflow = { body: string; bodyPaddingInlineEnd: string; documentElement: string };
+type ScrollSnapshot = { body: string; bodyPaddingInlineEnd: string; documentElement: string };
