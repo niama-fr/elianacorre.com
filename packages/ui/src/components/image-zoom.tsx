@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
 import { createEffect, createMemo, createSignal, omit, Show } from "solid-js";
@@ -11,65 +12,46 @@ export function ImageZoom(props: ImageZoomProps) {
   let originRef!: HTMLSpanElement;
   let frameRef!: HTMLButtonElement;
 
-  const setTriggerRef = (element: HTMLImageElement) => {
-    if (typeof props.ref === "function") props.ref(element);
-  };
-
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
-  const [phase, setPhase] = createSignal<ZoomPhase>("idle");
-  const [geometry, setGeometry] = createSignal<ZoomGeometry>(DEFAULT_GEOMETRY);
+  const [phase, setPhase] = createSignal<ZoomPhase>("closed");
+  const [rects, setRects] = createSignal<ZoomRects>(DEFAULT_RECTS);
 
-  const expanded = createMemo(() => phase() === "expanded");
-  const mounted = createMemo(() => phase() !== "idle");
+  const isClosed = createMemo(() => phase() === "closed");
+  const isClosing = createMemo(() => phase() === "closing");
+  const isOpen = createMemo(() => phase() === "open");
+  const isOpening = createMemo(() => phase() === "opening");
+  const isTransitioning = createMemo(() => isOpen() || isClosing());
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-  const transitioning = createMemo(() => phase() === "collapsing" || expanded());
   const zoomedProps = createMemo(() => ({ ...triggerProps, ...props.zoomed, background: undefined }) as ImageProps);
-
-  const frameStyle = createMemo(() => {
-    const zoom = geometry();
-    const rect = expanded() ? zoom.target : zoom.origin;
-
-    return {
-      height: `${rect.height}px`,
-      left: `${rect.left}px`,
-      top: `${rect.top}px`,
-      width: `${rect.width}px`,
-    };
-  });
+  const rect = createMemo(() => rects()[isOpen() ? "target" : "origin"]);
+  const frameStyle = createMemo(() => `width:${rect().width}px;height:${rect().height}px;top:${rect().top}px;left:${rect().left}px`);
 
   // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
   createEffect(
-    () => phase() === "positioned",
-    (isPositioned) => {
-      if (!isPositioned) return;
-
-      let frame = window.requestAnimationFrame(() => {
-        frame = window.requestAnimationFrame(() => setPhase("expanded"));
-      });
-
-      return () => window.cancelAnimationFrame(frame);
+    () => isOpening(),
+    (isOpening) => {
+      if (!isOpening) return;
+      let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
+      return () => cancelAnimationFrame(frame);
     }
   );
 
   createEffect(
-    () => mounted(),
-    (isMounted) => {
-      if (!isMounted) return;
+    () => isClosed(),
+    (isClosed) => {
+      if (isClosed) return;
 
       const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
       const scroll = lockScroll();
-      const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape") closeZoom();
-      };
-      const onResize = () => setGeometry(measureGeometry(originRef, ratio()));
+      const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
 
       frameRef.focus({ preventScroll: true });
       window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("resize", onResize);
+      window.addEventListener("resize", updateRects);
 
       return () => {
         window.removeEventListener("keydown", onKeyDown);
-        window.removeEventListener("resize", onResize);
+        window.removeEventListener("resize", updateRects);
         unlockScroll(scroll);
         focused?.focus({ preventScroll: true });
       };
@@ -78,62 +60,60 @@ export function ImageZoom(props: ImageZoomProps) {
 
   // METHODS -------------------------------------------------------------------------------------------------------------------------------
   const closeZoom = () => {
-    if (!mounted()) return;
-
-    const currentPhase = phase();
-    if (currentPhase === "positioned") finishClose();
-    else setPhase("collapsing");
+    if (isClosed()) return;
+    if (isOpening()) finishClose();
+    else setPhase("closing");
   };
 
-  const finishClose = () => {
-    setPhase("idle");
-  };
+  const finishClose = () => setPhase("closed");
 
   const openZoom = () => {
-    if (mounted()) return;
+    if (!isClosed()) return;
+    updateRects();
+    setPhase("opening");
+  };
 
-    setGeometry(measureGeometry(originRef, ratio()));
-    setPhase("positioned");
+  const updateRects = () => {
+    const { height, left, top, width } = originRef.getBoundingClientRect();
+    const w = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
+    const h = w / ratio();
+    setRects({
+      origin: { height, left, top, width },
+      target: { height: h, left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2, width: w },
+    });
   };
 
   // TEMPLATE ------------------------------------------------------------------------------------------------------------------------------
   return (
     <>
-      <span
-        class={cn(IMAGE_ZOOM.origin(), props.wrapperClass)}
-        ref={(element) => {
-          originRef = element;
-        }}
-      >
+      <span class={cn(IMAGE_ZOOM.origin(), props.wrapperClass)} ref={originRef}>
         <Image
           {...triggerProps}
-          aria-label={props.alt ? `Zoomer ${props.alt}` : "Zoomer l'image"}
-          class={cn(IMAGE_ZOOM.trigger({ mounted: mounted(), transitioning: transitioning() }), props.wrapperClass, props.class)}
-          onClick={() => (mounted() ? closeZoom() : openZoom())}
+          aria-label="Zoomer"
+          class={cn(IMAGE_ZOOM.trigger(), props.wrapperClass, props.class)}
+          data-closed={isClosed()}
+          data-transitioning={isTransitioning()}
+          onClick={() => (isClosed() ? openZoom() : closeZoom())}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
             event.preventDefault();
-            if (mounted()) closeZoom();
-            else openZoom();
+            if (isClosed()) openZoom();
+            else closeZoom();
           }}
-          onTransitionEnd={() => {
-            if (phase() === "collapsing") finishClose();
-          }}
-          ref={setTriggerRef}
-          style={mounted() ? frameStyle() : props.style}
+          onTransitionEnd={() => isClosing() && finishClose()}
+          style={isClosed() ? props.style : frameStyle()}
           tabindex={0}
         />
       </span>
-      <Show when={mounted()}>
-        <div aria-label={props.alt ? `Image agrandie: ${props.alt}` : "Image agrandie"} aria-modal="true" role="dialog">
-          <button aria-label="Fermer l'image" class={IMAGE_ZOOM.overlay({ visible: expanded() })} onClick={closeZoom} type="button" />
+      <Show when={!isClosed()}>
+        <div aria-label="Image agrandie" aria-modal="true" role="dialog">
+          <button aria-label="Fermer" class={IMAGE_ZOOM.overlay()} data-open={isOpen()} onClick={closeZoom} type="button" />
           <button
-            aria-label="Fermer l'image"
-            class={cn(IMAGE_ZOOM.frame({ transitioning: transitioning() }), props.wrapperClass)}
+            aria-label="Fermer"
+            class={cn(IMAGE_ZOOM.frame(), props.wrapperClass)}
+            data-transitioning={isTransitioning()}
             onClick={closeZoom}
-            ref={(element) => {
-              frameRef = element;
-            }}
+            ref={frameRef}
             style={frameStyle()}
             type="button"
           >
@@ -147,69 +127,27 @@ export function ImageZoom(props: ImageZoomProps) {
 export type ImageZoomProps = ImageProps & { wrapperClass?: string; zoomed?: Partial<ImageProps> };
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-const DEFAULT_GEOMETRY: ZoomGeometry = {
+const DEFAULT_RECTS: ZoomRects = {
   origin: { height: 1, left: 0, top: 0, width: 1 },
   target: { height: 1, left: 0, top: 0, width: 1 },
 };
 const SCREEN_PADDING_PX = 20;
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-const GEOMETRY_TRANSITION =
-  "transition-[top,left,width,height] duration-3000 ease-out will-change-[top,left,width,height] motion-reduce:transition-none motion-reduce:will-change-auto";
-const OVERLAY_TRANSITION = "transition-opacity duration-3000 ease-out motion-reduce:transition-none";
+const TRANSITIONING = `data-transitioning:transition-[top,left,width,height] data-transitioning:duration-3000 data-transitioning:ease-out 
+data-transitioning:will-change-[top,left,width,height] data-transitioning:motion-reduce:transition-none data-transitioning:motion-reduce:will-change-auto`;
 
 const IMAGE_ZOOM = {
-  frame: cva("fixed z-70 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0", {
-    variants: {
-      transitioning: {
-        true: GEOMETRY_TRANSITION,
-      },
-    },
-  }),
-  overlay: cva(cn("fixed inset-0 z-50 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md", OVERLAY_TRANSITION), {
-    variants: { visible: { true: "opacity-100" } },
-  }),
+  frame: cva(`fixed z-70 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0 ${TRANSITIONING}`),
   origin: cva("block size-full"),
-  trigger: cva("size-full cursor-zoom-in object-cover", {
-    variants: {
-      transitioning: {
-        true: GEOMETRY_TRANSITION,
-      },
-      mounted: {
-        true: "fixed z-60 origin-top-left cursor-zoom-out",
-      },
-    },
-  }),
+  overlay: cva(`fixed inset-0 z-50 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md transition-opacity duration-3000 ease-out 
+    data-open:opacity-100 motion-reduce:transition-none`),
+  trigger: cva(`size-full cursor-zoom-in object-cover ${TRANSITIONING}
+    [&:not([data-closed])]:fixed [&:not([data-closed])]:z-60 [&:not([data-closed])]:origin-top-left [&:not([data-closed])]:cursor-zoom-out`),
   zoomed: cva("block size-full object-cover"),
 } as const;
 
 // HELPERS ---------------------------------------------------------------------------------------------------------------------------------
-const measureGeometry = (image: HTMLElement, ratio: number): ZoomGeometry => {
-  const origin = image.getBoundingClientRect();
-
-  return {
-    origin: {
-      height: origin.height,
-      left: origin.left,
-      top: origin.top,
-      width: origin.width,
-    },
-    target: getTargetRect(ratio),
-  };
-};
-
-const getTargetRect = (ratio: number): ZoomRect => {
-  const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio);
-  const height = width / ratio;
-
-  return {
-    height,
-    left: (window.innerWidth - width) / 2,
-    top: (window.innerHeight - height) / 2,
-    width,
-  };
-};
-
 const lockScroll = (): ScrollSnapshot => {
   const scroll = {
     body: document.body.style.overflow,
@@ -236,11 +174,7 @@ const unlockScroll = (scroll: ScrollSnapshot) => {
 };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-type ZoomGeometry = {
-  origin: ZoomRect;
-  target: ZoomRect;
-};
-type ZoomPhase = "collapsing" | "expanded" | "idle" | "positioned";
-type ZoomRect = ZoomSize & { left: number; top: number };
-type ZoomSize = { height: number; width: number };
 type ScrollSnapshot = { body: string; bodyPaddingInlineEnd: string; documentElement: string };
+type ZoomPhase = "closed" | "closing" | "open" | "opening";
+type ZoomRect = { height: number; left: number; top: number; width: number };
+type ZoomRects = { origin: ZoomRect; target: ZoomRect };
