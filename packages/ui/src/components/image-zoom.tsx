@@ -1,6 +1,6 @@
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
-import { createMemo, createSignal, omit, onSettled, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, omit, onSettled, Show } from "solid-js";
 import { cn } from "@/lib/utils";
 
 export function ImageZoom(props: ImageZoomProps) {
@@ -10,7 +10,6 @@ export function ImageZoom(props: ImageZoomProps) {
   const [geometry, setGeometry] = createSignal<ZoomGeometry>(DEFAULT_GEOMETRY);
 
   let openFrame = 0;
-  let scroll: ScrollSnapshot | undefined;
   let triggerRef!: HTMLImageElement;
 
   const expanded = createMemo(() => phase() === "expanded");
@@ -42,7 +41,6 @@ export function ImageZoom(props: ImageZoomProps) {
 
   const finishClose = () => {
     setPhase("idle");
-    unlockScroll();
   };
 
   const openZoom = () => {
@@ -50,7 +48,6 @@ export function ImageZoom(props: ImageZoomProps) {
 
     window.cancelAnimationFrame(openFrame);
     setGeometry(measureGeometry(triggerRef, ratio()));
-    lockScroll();
     setPhase("positioned");
 
     openFrame = window.requestAnimationFrame(() => {
@@ -67,11 +64,20 @@ export function ImageZoom(props: ImageZoomProps) {
 
   onSettled(() => () => {
     window.cancelAnimationFrame(openFrame);
-    unlockScroll();
   });
 
-  const lockScroll = () => {
-    scroll ??= {
+  createEffect(
+    () => mounted(),
+    (isMounted) => {
+      if (!isMounted) return;
+
+      const scroll = lockScroll();
+      return () => unlockScroll(scroll);
+    }
+  );
+
+  const lockScroll = (): ScrollSnapshot => {
+    const scroll = {
       body: document.body.style.overflow,
       bodyPaddingInlineEnd: document.body.style.paddingInlineEnd,
       documentElement: document.documentElement.style.overflow,
@@ -85,15 +91,14 @@ export function ImageZoom(props: ImageZoomProps) {
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
+
+    return scroll;
   };
 
-  const unlockScroll = () => {
-    if (!scroll) return;
-
+  const unlockScroll = (scroll: ScrollSnapshot) => {
     document.body.style.overflow = scroll.body;
     document.body.style.paddingInlineEnd = scroll.bodyPaddingInlineEnd;
     document.documentElement.style.overflow = scroll.documentElement;
-    scroll = undefined;
   };
 
   return (
