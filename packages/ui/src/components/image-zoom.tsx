@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function ImageZoom(props: ImageZoomProps) {
-  const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "wrapperClass", "zoomed");
+  const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "style", "wrapperClass", "zoomed");
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
   let originRef!: HTMLSpanElement;
@@ -22,7 +22,7 @@ export function ImageZoom(props: ImageZoomProps) {
   const isOpening = createMemo(() => phase() === "opening");
   const isTransitioning = createMemo(() => isOpen() || isClosing());
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-  const zoomedProps = createMemo(() => ({ ...triggerProps, ...props.zoomed, background: undefined }) as ImageProps);
+  const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
   const rect = createMemo(() => rects()[isOpen() ? "target" : "origin"]);
   const frameStyle = createMemo(() => `width:${rect().width}px;height:${rect().height}px;top:${rect().top}px;left:${rect().left}px`);
 
@@ -101,15 +101,20 @@ export function ImageZoom(props: ImageZoomProps) {
             else closeZoom();
           }}
           onTransitionEnd={() => isClosing() && finishClose()}
-          style={isClosed() ? props.style : frameStyle()}
+          style={isClosed() ? undefined : frameStyle()}
           tabindex={0}
         />
       </span>
       <Show when={!isClosed()}>
-        <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} data-open={isOpen()} onClick={closeZoom} ref={modalRef} type="button">
-          <span class={cn(IMAGE_ZOOM.frame(), props.wrapperClass)} data-transitioning={isTransitioning()} style={frameStyle()}>
-            <Image {...zoomedProps()} aria-hidden="true" class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
-          </span>
+        <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
+        <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
+          <Image
+            {...zoomedProps()}
+            aria-hidden="true"
+            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), props.wrapperClass, zoomedProps().class)}
+            data-transitioning={isTransitioning()}
+            style={frameStyle()}
+          />
         </button>
       </Show>
     </>
@@ -129,11 +134,11 @@ const TRANSITIONING = `data-transitioning:transition-[top,left,width,height] dat
 data-transitioning:will-change-[top,left,width,height] data-transitioning:motion-reduce:transition-none data-transitioning:motion-reduce:will-change-auto`;
 
 const IMAGE_ZOOM = {
-  frame: cva(`fixed z-70 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0 ${TRANSITIONING}`),
-  modal:
-    cva(`fixed inset-0 z-50 block cursor-zoom-out border-0 bg-transparent p-0 text-left backdrop-blur-0 transition-[background-color,backdrop-filter] duration-3000 ease-out
-    data-open:bg-background/50 data-open:backdrop-blur-md motion-reduce:transition-none`),
+  frame: cva(`fixed z-80 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0 ${TRANSITIONING}`),
+  modal: cva("fixed inset-0 z-70 block cursor-zoom-out border-0 bg-transparent p-0 text-left"),
   origin: cva("block size-full"),
+  overlay: cva(`fixed inset-0 z-50 bg-transparent backdrop-blur-0 transition-[background-color,backdrop-filter] duration-3000 ease-out
+    data-open:bg-background/50 data-open:backdrop-blur-md motion-reduce:transition-none`),
   trigger: cva(`size-full cursor-zoom-in object-cover ${TRANSITIONING}
     [&:not([data-closed])]:fixed [&:not([data-closed])]:z-60 [&:not([data-closed])]:origin-top-left [&:not([data-closed])]:cursor-zoom-out`),
   zoomed: cva("block size-full object-cover"),
