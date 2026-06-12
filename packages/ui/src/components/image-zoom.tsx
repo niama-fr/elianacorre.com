@@ -10,7 +10,7 @@ export function ImageZoom(props: ImageZoomProps) {
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
   let originRef!: HTMLSpanElement;
-  let frameRef!: HTMLButtonElement;
+  let modalRef!: HTMLButtonElement;
 
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
   const [phase, setPhase] = createSignal<ZoomPhase>("closed");
@@ -45,7 +45,7 @@ export function ImageZoom(props: ImageZoomProps) {
       const scroll = lockScroll();
       const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
 
-      frameRef.focus({ preventScroll: true });
+      modalRef.focus({ preventScroll: true });
       window.addEventListener("keydown", onKeyDown);
       window.addEventListener("resize", updateRects);
 
@@ -106,20 +106,12 @@ export function ImageZoom(props: ImageZoomProps) {
         />
       </span>
       <Show when={!isClosed()}>
-        <div aria-label="Image agrandie" aria-modal="true" role="dialog">
-          <button aria-label="Fermer" class={IMAGE_ZOOM.overlay()} data-open={isOpen()} onClick={closeZoom} type="button" />
-          <button
-            aria-label="Fermer"
-            class={cn(IMAGE_ZOOM.frame(), props.wrapperClass)}
-            data-transitioning={isTransitioning()}
-            onClick={closeZoom}
-            ref={frameRef}
-            style={frameStyle()}
-            type="button"
-          >
+        <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
+          <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
+          <span class={cn(IMAGE_ZOOM.frame(), props.wrapperClass)} data-transitioning={isTransitioning()} style={frameStyle()}>
             <Image {...zoomedProps()} aria-hidden="true" class={cn(IMAGE_ZOOM.zoomed(), zoomedProps().class)} />
-          </button>
-        </div>
+          </span>
+        </button>
       </Show>
     </>
   );
@@ -139,6 +131,7 @@ data-transitioning:will-change-[top,left,width,height] data-transitioning:motion
 
 const IMAGE_ZOOM = {
   frame: cva(`fixed z-70 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0 ${TRANSITIONING}`),
+  modal: cva("fixed inset-0 z-50 block cursor-zoom-out border-0 bg-transparent p-0 text-left"),
   origin: cva("block size-full"),
   overlay: cva(`fixed inset-0 z-50 border-0 bg-background/50 p-0 opacity-0 backdrop-blur-md transition-opacity duration-3000 ease-out 
     data-open:opacity-100 motion-reduce:transition-none`),
