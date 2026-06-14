@@ -1,4 +1,11 @@
-import { type Accessor, createContext, createSignal, type ParentProps, untrack, useContext } from "solid-js";
+import {
+  type Accessor,
+  createContext,
+  createSignal,
+  type ParentProps,
+  untrack,
+  useContext,
+} from "solid-js";
 
 export const ZAIDAN_COLOR_MODE_COOKIE_KEY = "zaidan-color-mode";
 
@@ -10,12 +17,12 @@ export type ColorModeContextValue = {
   setColorMode: (mode: ColorMode) => void;
 };
 
-export const ColorModeContext = createContext<ColorModeContextValue | null>(null);
+export const ColorModeContext = createContext<ColorModeContextValue>();
 
 export function ColorModeProvider(
   props: ParentProps<{
     initialColorMode: ColorMode;
-  }>
+  }>,
 ) {
   const [colorMode, setColorMode] = createSignal<ColorMode>(props.initialColorMode);
 
@@ -32,12 +39,16 @@ export function ColorModeProvider(
     document.cookie = `${ZAIDAN_COLOR_MODE_COOKIE_KEY}=${untrack(colorMode)}; path=/; max-age=31536000; SameSite=Lax`;
   };
 
-  return <ColorModeContext value={{ colorMode, toggleColorMode, setColorMode }}>{props.children}</ColorModeContext>;
+  return (
+    <ColorModeContext.Provider value={{ colorMode, toggleColorMode, setColorMode }}>
+      {props.children}
+    </ColorModeContext.Provider>
+  );
 }
 
 export function useColorMode(): ColorModeContextValue {
   const context = useContext(ColorModeContext);
-  if (context === null) {
+  if (context === undefined) {
     throw new Error("useColorMode must be used within a ColorModeProvider");
   }
   return context;
@@ -47,4 +58,5 @@ export const getClientColorMode = () =>
   document.cookie
     .split("; ")
     .find((cookie) => cookie.startsWith(`${ZAIDAN_COLOR_MODE_COOKIE_KEY}=`))
-    ?.split("=")[1] ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    ?.split("=")[1] ??
+  (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");

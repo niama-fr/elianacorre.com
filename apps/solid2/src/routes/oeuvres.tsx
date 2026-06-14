@@ -1,8 +1,8 @@
 import { readWorksLayout } from "@ec/domain/layouts";
 import type { Sets } from "@ec/domain/sets";
-import { BtnLink } from "@ec/ui/btn";
-import { Hero, HeroContent } from "@ec/ui/hero";
-import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/section";
+import { BtnLink } from "@ec/ui2/btn";
+import { Hero, HeroContent } from "@ec/ui2/hero";
+import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui2/section";
 import { Image } from "@ec/unpic-solid2";
 import { createFileRoute, Outlet, useParams } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";

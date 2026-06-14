@@ -1,7 +1,6 @@
-import type { ComponentProps, JSX } from "@solidjs/web";
 import { Link, type LinkProps } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
-import { createMemo, merge, omit } from "solid-js";
+import { type ComponentProps, createMemo, type JSX, mergeProps, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -75,8 +74,8 @@ export const BTN = {
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function Btn(_: BtnProps) {
-  const rest = omit(_, "children", "class", "icon", "intent", "reverse");
+export function Btn(props: BtnProps) {
+  const [_, rest] = splitProps(props, ["children", "class", "icon", "intent", "reverse"]);
   const C = createMemo(() => _.class ?? {});
 
   return (
@@ -90,8 +89,8 @@ export function Btn(_: BtnProps) {
 type BtnProps = Omit<ComponentProps<"button">, "class"> & BtnStyles & { icon?: string };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function BtnLink(_: BtnLinkProps) {
-  const rest = omit(_, "children", "class", "icon", "intent", "reverse");
+export function BtnLink(props: BtnLinkProps) {
+  const [_, rest] = splitProps(props, ["children", "class", "icon", "intent", "reverse"]);
   const C = createMemo(() => _.class ?? {});
 
   return (
@@ -106,7 +105,7 @@ type BtnLinkProps = LinkProps & BtnStyles & { children: JSX.Element; icon?: stri
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
 export function BtnContent(props: BtnContentProps) {
-  const _ = merge({ icon: "icon-[lucide--chevron-right]" }, props);
+  const _ = mergeProps({ icon: "icon-[lucide--chevron-right]" }, props);
   const C = createMemo(() => _.class ?? {});
 
   return (

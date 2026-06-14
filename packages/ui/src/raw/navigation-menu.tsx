@@ -8,8 +8,8 @@ import {
   Root,
   Trigger,
   Viewport,
-} from "@ec/kobalte2/navigation-menu";
-import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
+} from "@kobalte/core/navigation-menu";
+import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva } from "class-variance-authority";
 import { ChevronDown } from "lucide-solid";
 import type { ComponentProps, JSX, ValidComponent } from "solid-js";

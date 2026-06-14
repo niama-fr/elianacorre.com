@@ -1,0 +1,7 @@
+@import "@ec/ui2/styles/globals.css";
+
+@import "@fontsource-variable/dancing-script";
+@import "@fontsource-variable/lexend";
+
+@source "./**/*.{ts,tsx}";
+@source "../../../packages/ui2/src/components/**/*.{ts,tsx}";

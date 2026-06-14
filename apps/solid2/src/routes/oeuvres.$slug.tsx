@@ -1,7 +1,7 @@
 import { readWorksSetPage } from "@ec/domain/pages";
-import { GridBackground } from "@ec/ui/grid-background";
-import { Section, SectionMain } from "@ec/ui/section";
-import { WorksGrid } from "@ec/ui/works-grid";
+import { GridBackground } from "@ec/ui2/grid-background";
+import { Section, SectionMain } from "@ec/ui2/section";
+import { WorksGrid } from "@ec/ui2/works-grid";
 import { createFileRoute } from "@tanstack/solid-router";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------

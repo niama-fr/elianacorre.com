@@ -1,13 +1,13 @@
 import { readRootLayout } from "@ec/domain/layouts";
 import { GridBackground } from "@ec/ui/grid-background";
-import { NoHydration } from "@solidjs/web";
-import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
-import { createSignal, type Element, Loading, onSettled } from "solid-js";
-import styleCss from "@/styles.css?url";
+import { createRootRouteWithContext, HeadContent, Link, Outlet, Scripts } from "@tanstack/solid-router";
+import { createSignal, onCleanup, onMount, Suspense } from "solid-js";
+import { HydrationScript } from "solid-js/web";
+import styleCss from "../styles.css?url";
 import { Header } from "./-header";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -28,33 +28,34 @@ export const Route = createRootRoute({
     links: [{ rel: "stylesheet", href: styleCss }],
   }),
   loader: () => readRootLayout(),
-  shellComponent: RootDocument,
+  shellComponent: RootComponent,
 });
 
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
-function RootDocument(props: { children: Element }) {
+function RootComponent() {
   const data = Route.useLoaderData();
   const [isScrolled, setIsScrolled] = createSignal(false);
 
-  onSettled(() => {
+  onMount(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 1);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    onCleanup(() => window.removeEventListener("scroll", handleScroll));
   });
 
   return (
     <html lang="fr">
       <head>
-        <NoHydration>
-          <HeadContent />
-        </NoHydration>
+        <HydrationScript />
+        <HeadContent />
       </head>
       <body class="group/body" data-scrolled={isScrolled()}>
         <GridBackground />
         <Header data={data} />
         <main class="relative mt-20 flex-1 sm:mt-28 md:mt-40">
-          <Loading>{props.children}</Loading>
+          <Suspense>
+            <Outlet />
+          </Suspense>
         </main>
         <section class="relative flex justify-between bg-neutral-700 p-4 text-white">
           <span>© 2025 Eliana Corré</span>

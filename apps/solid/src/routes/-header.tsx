@@ -1,8 +1,8 @@
 import type { ReadRootLayoutProps } from "@ec/domain/layouts";
-import { Image } from "@ec/unpic-solid2";
 import { Link, useLocation } from "@tanstack/solid-router";
+import { Image } from "@unpic/solid";
 import { cva } from "class-variance-authority";
-import { type Accessor, createEffect, For, onSettled } from "solid-js";
+import { type Accessor, createEffect, For, on, onMount } from "solid-js";
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -43,10 +43,12 @@ export function Header(_: HeaderProps) {
   const stain = createStain();
 
   createEffect(
-    () => !_.data().navs.some(({ hash = "", to }) => hash === location().hash && to === location().pathname),
-    (noneActive) => {
-      if (noneActive) stain.setOrigin();
-    }
+    on(
+      () => !_.data().navs.some(({ hash = "", to }) => hash === location().hash && to === location().pathname),
+      (noneActive) => {
+        if (noneActive) stain.setOrigin();
+      }
+    )
   );
 
   return (
@@ -117,7 +119,7 @@ export function NavLinkContent(_: NavLinkContentProps) {
   // biome-ignore lint/suspicious/noUnassignedVariables: solid false positive
   let ref!: HTMLSpanElement;
 
-  onSettled(() => {
+  onMount(() => {
     if (_.isActive) _.setOrigin(ref.parentElement ?? undefined);
   });
 

@@ -1,6 +1,6 @@
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
-import { createStore } from "solid-js";
+import { createStore, produce } from "solid-js/store";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const STAIN = cva(`pointer-events-none absolute top-0 left-0 rounded-full bg-accent transition-none
@@ -22,17 +22,25 @@ export const createStain = () => {
   const setOrigin = (el?: HTMLElement) => {
     origin = el;
 
-    setStore((s) => {
-      s.className = cn(el?.dataset.stain, "opacity-0 transition-none");
-      s.style = styleFrom(el);
-    });
+    setStore(
+      produce((s) => {
+        s.className = cn(el?.dataset.stain, "opacity-0 transition-none");
+        s.style = styleFrom(el);
+      })
+    );
   };
 
   const update = (el?: HTMLElement) => {
-    setStore((s) => {
-      s.className = cn(el?.dataset.stain, el ? "opacity-100" : "opacity-0", "transition-[background-color,height,opacity,transform,width]");
-      s.style = styleFrom(el ?? origin);
-    });
+    setStore(
+      produce((s) => {
+        s.className = cn(
+          el?.dataset.stain,
+          el ? "opacity-100" : "opacity-0",
+          "transition-[background-color,height,opacity,transform,width]"
+        );
+        s.style = styleFrom(el ?? origin);
+      })
+    );
   };
 
   return { setOrigin, store, update };

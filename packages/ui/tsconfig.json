@@ -5,7 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
-    "jsxImportSource": "@solidjs/web",
+    "jsxImportSource": "solid-js",
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

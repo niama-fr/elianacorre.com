@@ -1,8 +1,7 @@
 import type { Images } from "@ec/domain/images";
-import { Image } from "@ec/unpic-solid2";
-import type { ComponentProps } from "@solidjs/web";
+import { Image } from "@unpic/solid";
 import { cva } from "class-variance-authority";
-import { createMemo, omit } from "solid-js";
+import { type ComponentProps, createMemo, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -24,8 +23,8 @@ export const HERO = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function Hero(_: HeroProps) {
-  const rest = omit(_, "children", "class", "image", "title");
+export function Hero(props: HeroProps) {
+  const [_, rest] = splitProps(props, ["children", "class", "image", "title"]);
   const C = createMemo(() => _.class ?? ({} as HeroClass));
 
   return (
@@ -60,8 +59,8 @@ export function Hero(_: HeroProps) {
 type HeroProps = Omit<ComponentProps<"section">, "class" | "title"> & HeroStyles & { image: Images["Entity"]; title: string[] };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
-export function HeroContent(_: HeroContentProps) {
-  const rest = omit(_, "children", "class");
+export function HeroContent(props: HeroContentProps) {
+  const [_, rest] = splitProps(props, ["children", "class"]);
 
   return (
     <div class={cn(HERO.content(), _.class)} {...rest}>

@@ -1,8 +1,7 @@
 import type { Images } from "@ec/domain/images";
-import { Image } from "@ec/unpic-solid2";
-import type { ComponentProps } from "@solidjs/web";
+import { Image } from "@unpic/solid";
 import { cva } from "class-variance-authority";
-import { createMemo, createSignal, merge, omit, onSettled } from "solid-js";
+import { type ComponentProps, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -54,8 +53,8 @@ export const SECTION = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Section(props: SectionProps) {
-  const _ = merge({ intent: "default" } as const, props);
-  const rest = omit(_, "children", "class", "intent", "reverse");
+  const merged = mergeProps({ intent: "default" } as const, props);
+  const [_, rest] = splitProps(merged, ["children", "class", "intent", "reverse"]);
   const C = createMemo(() => _.class ?? {});
 
   return (
@@ -67,8 +66,8 @@ export function Section(props: SectionProps) {
 type SectionProps = Omit<ComponentProps<"section">, "class"> & SectionVariants & { class?: Pick<SectionClass, "base" | "container"> };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
-export function SectionContent(_: SectionContentProps) {
-  const rest = omit(_, "children", "class");
+export function SectionContent(props: SectionContentProps) {
+  const [_, rest] = splitProps(props, ["children", "class"]);
 
   return (
     <div {...rest} class={cn(SECTION.content(), _.class)}>
@@ -80,8 +79,8 @@ type SectionContentProps = ComponentProps<"p">;
 
 // IMAGE -----------------------------------------------------------------------------------------------------------------------------------
 export function SectionImage(props: SectionImageProps) {
-  const _ = merge({ reverse: false }, props);
-  const rest = omit(_, "class", "image");
+  const merged = mergeProps({ reverse: false }, props);
+  const [_, rest] = splitProps(merged, ["class", "image"]);
   const C = createMemo(() => _.class ?? {});
 
   return (
@@ -105,8 +104,8 @@ type SectionImageProps = Omit<ComponentProps<"figure">, "class"> & {
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function SectionMain(_: SectionMainProps) {
-  const rest = omit(_, "children", "class");
+export function SectionMain(props: SectionMainProps) {
+  const [_, rest] = splitProps(props, ["children", "class"]);
   return (
     <main {...rest} class={cn(SECTION.main(), _.class)}>
       {_.children}
@@ -116,8 +115,8 @@ export function SectionMain(_: SectionMainProps) {
 type SectionMainProps = ComponentProps<"main">;
 
 // TITLE -----------------------------------------------------------------------------------------------------------------------------------
-export function SectionTitle(_: SectionTitleProps) {
-  const rest = omit(_, "class", "title");
+export function SectionTitle(props: SectionTitleProps) {
+  const [_, rest] = splitProps(props, ["class", "title"]);
   const C = createMemo(() => _.class ?? {});
 
   // biome-ignore lint/suspicious/noUnassignedVariables: false positive
@@ -125,7 +124,7 @@ export function SectionTitle(_: SectionTitleProps) {
 
   const [visible, setVisible] = createSignal(false);
 
-  onSettled(() => {
+  onMount(() => {
     const instance = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -135,7 +134,7 @@ export function SectionTitle(_: SectionTitleProps) {
       { threshold: 1 }
     );
     instance.observe(el);
-    return () => instance.disconnect();
+    onCleanup(() => instance.disconnect());
   });
 
   return (

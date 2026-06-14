@@ -1,5 +1,5 @@
 import { readAboutPage } from "@ec/domain/pages";
-import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from "@ec/ui/section";
+import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from "@ec/ui2/section";
 import { createFileRoute } from "@tanstack/solid-router";
 import { For } from "solid-js";
 

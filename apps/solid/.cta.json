@@ -1,5 +1,5 @@
 {
-  "projectName": "@ec/solid",
+  "projectName": "solid",
   "mode": "file-router",
   "typescript": true,
   "packageManager": "bun",
@@ -12,5 +12,7 @@
   "routerOnly": false,
   "version": 1,
   "framework": "solid",
-  "chosenAddOns": ["cloudflare"]
+  "chosenAddOns": [
+    "cloudflare"
+  ]
 }

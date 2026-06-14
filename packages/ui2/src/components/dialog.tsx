@@ -17,7 +17,7 @@ import {
   type DialogTriggerProps as DialogTriggerProps_,
 } from "@ec/kobalte2/dialog";
 import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
-import { Button } from "@ec/ui/button";
+import { Button } from "@ec/ui2/button";
 import type { ComponentProps, ValidComponent } from "@solidjs/web";
 import { type Component, merge, omit, Show } from "solid-js";
 import { cn } from "@/lib/utils";

@@ -1,20 +1,21 @@
 /** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
-import { Image, type ImageProps } from "@ec/unpic-solid2";
+import { Image, type ImageProps } from "@unpic/solid";
 import { cva } from "class-variance-authority";
-import { createEffect, createMemo, createSignal, omit, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, mergeProps, on, Show, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function ImageZoom(props: ImageZoomProps) {
-  const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "style", "wrapperClass", "zoomed");
+  const [_, triggerProps] = splitProps(props, ["onClick", "onKeyDown", "ref", "zoomed"]);
+  const zoomedProps = mergeProps(triggerProps, props.zoomed ?? {}, { background: undefined });
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
   let originRef!: HTMLSpanElement;
   let modalRef!: HTMLButtonElement;
 
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
-  const [phase, setPhase] = createSignal<ZoomPhase>("closed");
-  const [rects, setRects] = createSignal<ZoomRects>(DEFAULT_RECTS);
+  const [phase, setPhase] = createSignal<"closed" | "closing" | "open" | "opening">("closed");
+  const [styles, setStyles] = createSignal<{ from?: string; to?: string }>({ from: undefined, to: undefined });
 
   const isClosed = createMemo(() => phase() === "closed");
   const isClosing = createMemo(() => phase() === "closing");
@@ -22,40 +23,43 @@ export function ImageZoom(props: ImageZoomProps) {
   const isOpening = createMemo(() => phase() === "opening");
   const isTransitioning = createMemo(() => isOpen() || isClosing());
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-  const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
-  const rect = createMemo(() => rects()[isOpen() ? "target" : "origin"]);
-  const frameStyle = createMemo(() => `width:${rect().width}px;height:${rect().height}px;top:${rect().top}px;left:${rect().left}px`);
+  // const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
+  const style = createMemo(() => styles()[isOpen() ? "to" : "from"]);
 
   // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
   createEffect(
-    () => isOpening(),
-    (isOpening) => {
-      if (!isOpening) return;
-      let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
-      return () => cancelAnimationFrame(frame);
-    }
+    on(
+      () => isOpening(),
+      (isOpening) => {
+        if (!isOpening) return;
+        let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
+        return () => cancelAnimationFrame(frame);
+      }
+    )
   );
 
   createEffect(
-    () => isClosed(),
-    (isClosed) => {
-      if (isClosed) return;
+    on(
+      () => isClosed(),
+      (isClosed) => {
+        if (isClosed) return;
 
-      const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-      const scroll = lockScroll();
-      const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
+        const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+        const scroll = lockScroll();
+        const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
 
-      modalRef.focus({ preventScroll: true });
-      window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("resize", updateRects);
+        modalRef.focus({ preventScroll: true });
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("resize", updateStyles);
 
-      return () => {
-        window.removeEventListener("keydown", onKeyDown);
-        window.removeEventListener("resize", updateRects);
-        unlockScroll(scroll);
-        focused?.focus({ preventScroll: true });
-      };
-    }
+        return () => {
+          window.removeEventListener("keydown", onKeyDown);
+          window.removeEventListener("resize", updateStyles);
+          unlockScroll(scroll);
+          focused?.focus({ preventScroll: true });
+        };
+      }
+    )
   );
 
   // METHODS -------------------------------------------------------------------------------------------------------------------------------
@@ -69,28 +73,27 @@ export function ImageZoom(props: ImageZoomProps) {
 
   const openZoom = () => {
     if (!isClosed()) return;
-    updateRects();
+    updateStyles();
     setPhase("opening");
   };
 
-  const updateRects = () => {
-    const { height, left, top, width } = originRef.getBoundingClientRect();
-    const w = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
-    const h = w / ratio();
-    setRects({
-      origin: { height, left, top, width },
-      target: { height: h, left: (window.innerWidth - w) / 2, top: (window.innerHeight - h) / 2, width: w },
-    });
+  const styleFrom = ({ height, left, top, width }: ZoomRect) => `width:${width}px;height:${height}px;top:${top}px;left:${left}px`;
+
+  const updateStyles = () => {
+    const rect = originRef.getBoundingClientRect();
+    const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
+    const height = width / ratio();
+    setStyles({ from: styleFrom(rect), to: styleFrom({ height, left: (innerWidth - width) / 2, top: (innerHeight - height) / 2, width }) });
   };
 
   // TEMPLATE ------------------------------------------------------------------------------------------------------------------------------
   return (
     <>
-      <span class={cn(IMAGE_ZOOM.origin(), props.wrapperClass)} ref={originRef}>
+      <span class={IMAGE_ZOOM.origin()} ref={originRef}>
         <Image
           {...triggerProps}
           aria-label="Zoomer"
-          class={cn(IMAGE_ZOOM.trigger(), props.wrapperClass, props.class)}
+          class={cn(IMAGE_ZOOM.trigger(), props.class)}
           data-closed={isClosed()}
           data-transitioning={isTransitioning()}
           onClick={() => (isClosed() ? openZoom() : closeZoom())}
@@ -101,7 +104,7 @@ export function ImageZoom(props: ImageZoomProps) {
             else closeZoom();
           }}
           onTransitionEnd={() => isClosing() && finishClose()}
-          style={isClosed() ? undefined : frameStyle()}
+          style={isClosed() ? undefined : style()}
           tabindex={0}
         />
       </span>
@@ -109,35 +112,31 @@ export function ImageZoom(props: ImageZoomProps) {
         <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
         <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
           <Image
-            {...zoomedProps()}
+            {...zoomedProps}
             aria-hidden="true"
-            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), props.wrapperClass, zoomedProps().class)}
+            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), zoomedProps.class)}
             data-transitioning={isTransitioning()}
-            style={frameStyle()}
+            style={style()}
           />
         </button>
       </Show>
     </>
   );
 }
-export type ImageZoomProps = ImageProps & { wrapperClass?: string; zoomed?: Partial<ImageProps> };
+export type ImageZoomProps = ImageProps & { zoomed?: Partial<ImageProps> };
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-const DEFAULT_RECTS: ZoomRects = {
-  origin: { height: 1, left: 0, top: 0, width: 1 },
-  target: { height: 1, left: 0, top: 0, width: 1 },
-};
 const SCREEN_PADDING_PX = 20;
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-const TRANSITIONING = `data-transitioning:transition-[top,left,width,height] data-transitioning:duration-3000 data-transitioning:ease-out 
+const TRANSITIONING = `data-transitioning:transition-[top,left,width,height] data-transitioning:duration-500 data-transitioning:ease-out 
 data-transitioning:will-change-[top,left,width,height] data-transitioning:motion-reduce:transition-none data-transitioning:motion-reduce:will-change-auto`;
 
 const IMAGE_ZOOM = {
   frame: cva(`fixed z-80 cursor-zoom-out overflow-hidden border-0 bg-transparent p-0 ${TRANSITIONING}`),
   modal: cva("fixed inset-0 z-70 block cursor-zoom-out border-0 bg-transparent p-0 text-left"),
   origin: cva("block size-full"),
-  overlay: cva(`fixed inset-0 z-50 bg-transparent backdrop-blur-0 transition-[background-color,backdrop-filter] duration-3000 ease-out
+  overlay: cva(`fixed inset-0 z-50 bg-transparent backdrop-blur-0 transition-[background-color,backdrop-filter] duration-500 ease-out
     data-open:bg-background/50 data-open:backdrop-blur-md motion-reduce:transition-none`),
   trigger: cva(`size-full cursor-zoom-in object-cover ${TRANSITIONING}
     [&:not([data-closed])]:fixed [&:not([data-closed])]:z-60 [&:not([data-closed])]:origin-top-left [&:not([data-closed])]:cursor-zoom-out`),
@@ -172,6 +171,4 @@ const unlockScroll = (scroll: ScrollSnapshot) => {
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type ScrollSnapshot = { body: string; bodyPaddingInlineEnd: string; documentElement: string };
-type ZoomPhase = "closed" | "closing" | "open" | "opening";
 type ZoomRect = { height: number; left: number; top: number; width: number };
-type ZoomRects = { origin: ZoomRect; target: ZoomRect };

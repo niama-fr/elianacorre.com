@@ -1,4 +1,4 @@
-import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/section";
+import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui2/section";
 import { createFileRoute } from "@tanstack/solid-router";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "preserve",
-    "jsxImportSource": "@solidjs/web",
+    "jsxImportSource": "solid-js",
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
@@ -20,10 +20,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "noUncheckedSideEffectImports": true
   }
 }
