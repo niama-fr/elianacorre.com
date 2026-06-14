@@ -1,8 +1,9 @@
 /** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
-import { Image, type ImageProps } from "@unpic/solid";
+
 import { cva } from "class-variance-authority";
 import { createEffect, createMemo, createSignal, mergeProps, on, Show, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
+import { Image, type ImageProps } from "./image";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function ImageZoom(props: ImageZoomProps) {

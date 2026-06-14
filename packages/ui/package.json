@@ -7,6 +7,7 @@
     "@iconify/json": "^2.2.486",
     "@iconify/tailwind4": "^1.2.3",
     "@kobalte/core": "^0.13.11",
+    "@unpic/core": "^1.0.3",
     "@unpic/solid": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
