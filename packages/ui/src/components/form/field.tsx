@@ -35,11 +35,11 @@ export function Field({ children, label }: FieldProps) {
 export type FieldProps = { children: (isInvalid: boolean) => JSX.Element; label: string };
 
 // ERROR -----------------------------------------------------------------------------------------------------------------------------------
-export function FieldError({ errors, isInvalid }: FieldErrorProps) {
+export function FieldError(props: FieldErrorProps) {
   return (
-    <FieldErrorNative class={FIELD.error({ isInvalid })} errors={errors}>
+    <FieldErrorNative class={FIELD.error({ isInvalid: props.isInvalid })} errors={props.errors}>
       <span class={FIELD.errorIcon()} />
-      {errors[0]?.message}
+      {props.errors[0]?.message}
     </FieldErrorNative>
   );
 }
