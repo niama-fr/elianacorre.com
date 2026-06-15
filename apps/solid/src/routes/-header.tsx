@@ -1,6 +1,6 @@
 import type { ReadRootLayoutProps } from "@ec/domain/layouts";
-import { Link, useLocation } from "@tanstack/solid-router";
-import { Image } from "@unpic/solid";
+import { Image } from "@ec/ui/image";
+import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, For, on, onMount } from "solid-js";
 import { createStain, Stain } from "./-header.stain";
@@ -72,18 +72,22 @@ export function Header(_: HeaderProps) {
         <Stain stain={stain} />
         <div class={HEADER.navs()}>
           <For each={_.data().navs}>
-            {({ key, text, ...rest }) => (
-              <Link
-                {...rest}
-                activeProps={{ class: "bg-accent rounded-full" }}
-                class={HEADER.nav()}
-                onFocusIn={(e) => stain.update(e.currentTarget)}
-                onFocusOut={() => stain.update()}
-                onMouseEnter={(e) => stain.update(e.currentTarget)}
-              >
-                {({ isActive }) => <NavLinkContent isActive={isActive} setOrigin={stain.setOrigin} text={text} />}
-              </Link>
-            )}
+            {({ key, text, ...rest }) => {
+              const linkProps = rest as unknown as Pick<LinkProps, "activeOptions" | "hash" | "to">;
+
+              return (
+                <Link
+                  {...linkProps}
+                  activeProps={{ class: "bg-accent rounded-full" }}
+                  class={HEADER.nav()}
+                  onFocusIn={(e) => stain.update(e.currentTarget)}
+                  onFocusOut={() => stain.update()}
+                  onMouseEnter={(e) => stain.update(e.currentTarget)}
+                >
+                  {({ isActive }) => <NavLinkContent isActive={isActive} setOrigin={stain.setOrigin} text={text} />}
+                </Link>
+              );
+            }}
           </For>
         </div>
         <div class={HEADER.icons()}>

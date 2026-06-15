@@ -6,6 +6,8 @@ import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from
 import { WorksGrid } from "@ec/ui/works-grid";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
+import { Toaster } from "solid-sonner";
+import { IndexForm } from "./index/-form";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/")({
@@ -60,10 +62,10 @@ function IndexPage() {
         <SectionMain>
           <SectionTitle title={data().contact.title} />
           <SectionContent>{data().contact.content}</SectionContent>
-          {/* <IndexForm />  */}
+          <IndexForm />
         </SectionMain>
       </Section>
-      {/* <Toaster position="bottom-center" /> */}
+      <Toaster position="bottom-center" />
     </>
   );
 }

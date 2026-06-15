@@ -1,13 +1,22 @@
-import { linkOptions } from "@tanstack/solid-router";
 import { readImageBySlug } from "./images";
 import { readAllSets } from "./sets";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-const navs = linkOptions([
+type RootNav = {
+  activeOptions?: {
+    includeHash: boolean;
+  };
+  hash?: string;
+  key: "contact" | "oeuvres" | "qui-suis-je";
+  text: string;
+  to: "/" | "/oeuvres" | "/qui-suis-je";
+};
+
+const navs = [
   { key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je", hash: undefined },
   { key: "oeuvres", text: "Œuvres", to: "/oeuvres", hash: undefined },
   { key: "contact", text: "Contact", to: "/", hash: "contact", activeOptions: { includeHash: true } },
-]);
+] as const satisfies readonly RootNav[];
 
 export const readRootLayout = () => ({
   logoImg: readImageBySlug("logo"),

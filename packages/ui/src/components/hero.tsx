@@ -1,5 +1,5 @@
 import type { Images } from "@ec/domain/images";
-import { Image } from "@unpic/solid";
+import { Image } from "@ec/ui/image";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, createMemo, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";

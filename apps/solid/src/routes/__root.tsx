@@ -49,7 +49,7 @@ function RootComponent() {
         <HydrationScript />
         <HeadContent />
       </head>
-      <body class="group/body" data-scrolled={isScrolled()}>
+      <body class="group/body" data-scrolled={isScrolled() ? "" : undefined}>
         <GridBackground />
         <Header data={data} />
         <main class="relative mt-20 flex-1 sm:mt-28 md:mt-40">

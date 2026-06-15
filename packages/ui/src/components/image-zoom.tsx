@@ -1,14 +1,13 @@
 /** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
 
 import { cva } from "class-variance-authority";
-import { createEffect, createMemo, createSignal, mergeProps, on, Show, splitProps } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, Show, splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 import { Image, type ImageProps } from "./image";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function ImageZoom(props: ImageZoomProps) {
   const [_, triggerProps] = splitProps(props, ["onClick", "onKeyDown", "ref", "zoomed"]);
-  const zoomedProps = mergeProps(triggerProps, props.zoomed ?? {}, { background: undefined });
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
   let originRef!: HTMLSpanElement;
@@ -16,25 +15,24 @@ export function ImageZoom(props: ImageZoomProps) {
 
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
   const [phase, setPhase] = createSignal<"closed" | "closing" | "open" | "opening">("closed");
-  const [styles, setStyles] = createSignal<{ from?: string; to?: string }>({ from: undefined, to: undefined });
+  const [styles, setStyles] = createSignal<{ from: ZoomRect; to: ZoomRect }>({ from: DEFAULT_RECT, to: DEFAULT_RECT });
 
   const isClosed = createMemo(() => phase() === "closed");
   const isClosing = createMemo(() => phase() === "closing");
   const isOpen = createMemo(() => phase() === "open");
   const isOpening = createMemo(() => phase() === "opening");
   const isTransitioning = createMemo(() => isOpen() || isClosing());
+  const zoomedProps = createMemo(() => ({ ...triggerProps, ...(props.zoomed ?? {}), background: undefined }) as ImageProps);
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-  // const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
-  const style = createMemo(() => styles()[isOpen() ? "to" : "from"]);
+  const style = createMemo(() => styleFrom(styles()[isOpen() ? "to" : "from"]));
 
-  // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
   createEffect(
     on(
       () => isOpening(),
       (isOpening) => {
         if (!isOpening) return;
         let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
-        return () => cancelAnimationFrame(frame);
+        onCleanup(() => cancelAnimationFrame(frame));
       }
     )
   );
@@ -53,12 +51,12 @@ export function ImageZoom(props: ImageZoomProps) {
         window.addEventListener("keydown", onKeyDown);
         window.addEventListener("resize", updateStyles);
 
-        return () => {
+        onCleanup(() => {
           window.removeEventListener("keydown", onKeyDown);
           window.removeEventListener("resize", updateStyles);
           unlockScroll(scroll);
           focused?.focus({ preventScroll: true });
-        };
+        });
       }
     )
   );
@@ -78,13 +76,11 @@ export function ImageZoom(props: ImageZoomProps) {
     setPhase("opening");
   };
 
-  const styleFrom = ({ height, left, top, width }: ZoomRect) => `width:${width}px;height:${height}px;top:${top}px;left:${left}px`;
-
   const updateStyles = () => {
-    const rect = originRef.getBoundingClientRect();
+    const from = originRef.getBoundingClientRect();
     const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
     const height = width / ratio();
-    setStyles({ from: styleFrom(rect), to: styleFrom({ height, left: (innerWidth - width) / 2, top: (innerHeight - height) / 2, width }) });
+    setStyles({ from, to: { width, left: (innerWidth - width) / 2, top: (innerHeight - height) / 2, height } });
   };
 
   // TEMPLATE ------------------------------------------------------------------------------------------------------------------------------
@@ -95,8 +91,8 @@ export function ImageZoom(props: ImageZoomProps) {
           {...triggerProps}
           aria-label="Zoomer"
           class={cn(IMAGE_ZOOM.trigger(), props.class)}
-          data-closed={isClosed()}
-          data-transitioning={isTransitioning()}
+          data-closed={isClosed() ? "" : undefined}
+          data-transitioning={isTransitioning() ? "" : undefined}
           onClick={() => (isClosed() ? openZoom() : closeZoom())}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
@@ -110,13 +106,13 @@ export function ImageZoom(props: ImageZoomProps) {
         />
       </span>
       <Show when={!isClosed()}>
-        <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
+        <span class={IMAGE_ZOOM.overlay()} data-open={isOpen() ? "" : undefined} />
         <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
           <Image
-            {...zoomedProps}
+            {...zoomedProps()}
             aria-hidden="true"
-            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), zoomedProps.class)}
-            data-transitioning={isTransitioning()}
+            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), zoomedProps().class)}
+            data-transitioning={isTransitioning() ? "" : undefined}
             style={style()}
           />
         </button>
@@ -128,6 +124,7 @@ export type ImageZoomProps = ImageProps & { zoomed?: Partial<ImageProps> };
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const SCREEN_PADDING_PX = 20;
+const DEFAULT_RECT = { width: 0, height: 0, left: 0, top: 0 };
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const TRANSITIONING = `data-transitioning:transition-[top,left,width,height] data-transitioning:duration-500 data-transitioning:ease-out 
@@ -163,6 +160,8 @@ const lockScroll = (): ScrollSnapshot => {
 
   return scroll;
 };
+
+const styleFrom = (r: ZoomRect) => ({ width: `${r.width}px`, height: `${r.height}px`, top: `${r.top}px`, left: `${r.left}px` });
 
 const unlockScroll = (scroll: ScrollSnapshot) => {
   document.body.style.overflow = scroll.body;
