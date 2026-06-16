@@ -69,22 +69,15 @@ type FieldDescriptionProps = ComponentProps<"p"> & { class?: string | undefined 
 
 // ERROR -----------------------------------------------------------------------------------------------------------------------------------
 export const FieldError = (props: FieldErrorProps) => {
-  const [local, others] = splitProps(props, ["class", "children", "errors"]);
+  const [_, others] = splitProps(props, ["class", "children", "errors"]);
 
   const content = createMemo(() => {
-    if (local.children) {
-      return local.children;
-    }
+    if (_.children) return _.children;
+    if (!_.errors?.length) return null;
 
-    if (!local.errors?.length) {
-      return null;
-    }
+    const uniqueErrors = [...new Map(_.errors.map((error) => [error?.message, error])).values()];
 
-    const uniqueErrors = [...new Map(local.errors.map((error) => [error?.message, error])).values()];
-
-    if (uniqueErrors?.length === 1) {
-      return uniqueErrors[0]?.message;
-    }
+    if (uniqueErrors?.length === 1) return uniqueErrors[0]?.message;
 
     return (
       <ul class="ml-4 flex list-disc flex-col gap-1">
@@ -101,7 +94,7 @@ export const FieldError = (props: FieldErrorProps) => {
 
   return (
     <Show when={content()}>
-      <div class={cn("z-field-error font-normal", local.class)} data-slot="field-error" role="alert" {...others}>
+      <div class={cn("z-field-error font-normal", _.class)} data-slot="field-error" role="alert" {...others}>
         {content()}
       </div>
     </Show>

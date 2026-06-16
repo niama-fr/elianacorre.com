@@ -1,5 +1,7 @@
 import type { ReadRootLayoutProps } from "@ec/domain/layouts";
+import { Button } from "@ec/ui/button";
 import { Image } from "@ec/ui/image";
+import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, For, on, onMount } from "solid-js";
@@ -15,6 +17,14 @@ export const HEADER = {
     transition-[left,right,top] ${HEADER_TRANSITION}
     md:group-data-scrolled/body:inset-x-20`
   ),
+  burger: cva("group/burger relative cursor-pointer p-2 sm:hidden"),
+  burgerIcon: cva("pointer-events-none size-7 fill-none stroke-2 stroke-current"),
+  burgerIconBar1: cva(`origin-center translate-y-[-7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] 
+    group-aria-expanded/burger:translate-x-0 group-aria-expanded/burger:translate-y-0 group-aria-expanded/burger:rotate-315`),
+  burgerIconBar2: cva("origin-center transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.8)] group-aria-expanded/burger:rotate-45"),
+  burgerIconBar3: cva(`origin-center translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] 
+    group-aria-expanded/burger:translate-y-0 group-aria-expanded/burger:rotate-135`),
+  burgerNav: cva("flex flex-col gap-1"),
   content: cva(
     `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 bg-transparent
     group-data-scrolled/body:bg-white group-data-scrolled/body:shadow-header
@@ -110,7 +120,42 @@ export function Header(_: HeaderProps) {
               )}
             </For>
           </div>
-          {/* <Burger navs={navs} /> */}
+          <Popover>
+            <PopoverTrigger
+              class={HEADER.burger()}
+              onFocusIn={(e) => stain.update(e.currentTarget)}
+              onFocusOut={() => stain.update()}
+              onMouseEnter={(e) => stain.update(e.currentTarget)}
+            >
+              <span class={HEADER.stainContent()}>
+                <svg
+                  class={HEADER.burgerIcon()}
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <title>Menu</title>
+                  <path class={HEADER.burgerIconBar1()} d="M4 12L20 12" />
+                  <path class={HEADER.burgerIconBar2()} d="M4 12H20" />
+                  <path class={HEADER.burgerIconBar3()} d="M4 12H20" />
+                </svg>
+              </span>
+            </PopoverTrigger>
+            <PopoverContent>
+              <nav class={HEADER.burgerNav()}>
+                <For each={_.data().navs}>
+                  {(nav) => (
+                    <Button class="px-0" variant="ghost">
+                      <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
+                        {nav.text}
+                      </Link>
+                    </Button>
+                  )}
+                </For>
+              </nav>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>

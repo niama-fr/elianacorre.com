@@ -58,7 +58,7 @@ export function Section(props: SectionProps) {
   const C = createMemo(() => _.class ?? {});
 
   return (
-    <section {...rest} class={cn(SECTION.base(), C().base)} data-intent={_.intent} data-reverse={_.reverse}>
+    <section {...rest} class={cn(SECTION.base(), C().base)} data-intent={_.intent} data-reverse={_.reverse ? "" : undefined}>
       <div class={cn(SECTION.container(), C().container)}>{_.children}</div>
     </section>
   );

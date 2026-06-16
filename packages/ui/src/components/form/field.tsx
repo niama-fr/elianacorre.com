@@ -7,13 +7,13 @@ import { useFieldContext } from "@/hooks/form-context";
 const FIELD = {
   error: cva(
     `flex origin-top items-center gap-2 overflow-hidden rounded-md bg-destructive px-2 text-destructive-foreground 
-    transition-[max-height] duration-150 ease-in`,
+    transition-[max-height] duration-150 ease-in before:icon-[lucide--circle-alert] before:size-4 before:shrink-0 before:content-['']`,
     { variants: { isInvalid: { true: "max-h-10", false: "max-h-0" } } }
   ),
-  errorIcon: cva("icon-[lucide--circle-alert] size-4 py-8"),
   field: cva("gap-2"),
   label: cva("sr-only"),
 };
+const EMPTY_ERRORS: { message?: string }[] = [];
 
 // FIELD -----------------------------------------------------------------------------------------------------------------------------------
 export function Field({ children, label }: FieldProps) {
@@ -36,11 +36,8 @@ export type FieldProps = { children: (isInvalid: boolean) => JSX.Element; label:
 
 // ERROR -----------------------------------------------------------------------------------------------------------------------------------
 export function FieldError(props: FieldErrorProps) {
-  return (
-    <FieldErrorNative class={FIELD.error({ isInvalid: props.isInvalid })} errors={props.errors}>
-      <span class={FIELD.errorIcon()} />
-      {props.errors[0]?.message}
-    </FieldErrorNative>
-  );
+  const errors = createMemo(() => (props.isInvalid ? props.errors : EMPTY_ERRORS));
+
+  return <FieldErrorNative class={FIELD.error({ isInvalid: props.isInvalid })} errors={errors()} />;
 }
 export type FieldErrorProps = { errors: { message?: string }[]; isInvalid: boolean };

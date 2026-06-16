@@ -1,11 +1,8 @@
-import { useStore } from "@tanstack/react-store";
+import { Button } from "@ec/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
-import { motion } from "motion/react";
-import { useCallback, useState } from "react";
-import { Button } from "@/components/adapted/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { setHeaderHoveredId, store } from "@/lib/store";
+import { createSignal, For } from "solid-js";
 import { HEADER, type HeaderProps } from "./-header";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -15,47 +12,48 @@ export const BURGER = {
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function Burger({ navs }: BurgerProps) {
-  const [open, setOpen] = useState(false);
-  const handleOnMouseEnter = useCallback(() => setHeaderHoveredId("menu"), []);
+export function Burger(_: BurgerProps) {
+  const [open, setOpen] = createSignal(false);
+  // const handleOnMouseEnter = useCallback(() => setHeaderHoveredId("menu"), []);
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger
-        render={
-          <button class={BURGER.base()} onMouseEnter={handleOnMouseEnter} type="button">
-            <BurgerTrigger />
-          </button>
-        }
-      />
-      <PopoverContent align="start">
+    <Popover onOpenChange={setOpen} open={open()}>
+      <PopoverTrigger>
+        {/* <button class={BURGER.base()} onMouseEnter={handleOnMouseEnter} type="button"> */}
+        <BurgerTrigger />
+        {/* </button> */}
+      </PopoverTrigger>
+      {/* <PopoverContent align="start"> */}
+      <PopoverContent>
         <nav class={BURGER.nav()}>
-          {navs.map(({ key, ...nav }) => (
-            <Button class="px-0" key={key} onClick={() => setOpen(false)} variant="ghost">
-              <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
-                {nav.text}
-              </Link>
-            </Button>
-          ))}
+          <For each={_.data().navs}>
+            {(nav) => (
+              <Button class="px-0" onClick={() => setOpen(false)} variant="ghost">
+                <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
+                  {nav.text}
+                </Link>
+              </Button>
+            )}
+          </For>
         </nav>
       </PopoverContent>
     </Popover>
   );
 }
-type BurgerProps = Pick<HeaderProps, "navs">;
+type BurgerProps = Pick<HeaderProps, "data">;
 
 // TRIGGER ---------------------------------------------------------------------------------------------------------------------------------
 export function BurgerTrigger() {
-  const isHovered = useStore(store, ({ headerHoveredId }) => headerHoveredId === "menu");
+  // const isHovered = useStore(store, ({ headerHoveredId }) => headerHoveredId === "menu");
 
   return (
     <>
-      {isHovered ? <motion.div class={HEADER.stain()} layoutId="hovered" /> : null}
+      {/* {isHovered ? <motion.div class={HEADER.stain()} layoutId="hovered" /> : null} */}
       <span class={HEADER.stainContent()}>
         <svg
           class="pointer-events-none size-7 fill-none stroke-2 stroke-current"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          stroke-linecap="round"
+          stroke-linejoin="round"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
         >
