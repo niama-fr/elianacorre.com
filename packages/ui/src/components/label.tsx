@@ -1,21 +1,20 @@
+import { cva } from "class-variance-authority";
 import type { ComponentProps } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "@/lib/utils";
 
+// STYLES ----------------------------------------------------------------------------------------------------------------------------------
+const LABEL = cva(`flex select-none items-center gap-2 font-medium text-sm leading-none 
+  peer-disabled:cursor-not-allowed peer-disabled:opacity-50 
+  group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50`);
+
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const Label = (props: LabelProps) => {
-  const [local, others] = splitProps(props, ["class"]);
+  const [_, others] = splitProps(props, ["class"]);
 
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: false positive
-    <label
-      class={cn(
-        "z-label flex select-none items-center peer-disabled:cursor-not-allowed group-data-[disabled=true]:pointer-events-none",
-        local.class
-      )}
-      data-slot="label"
-      {...others}
-    />
+    <label class={cn(LABEL(), _.class)} data-slot="label" {...others} />
   );
 };
 type LabelProps = ComponentProps<"label">;
