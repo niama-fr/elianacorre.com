@@ -17,7 +17,11 @@ function RouteComponent() {
   return (
     <For each={data()}>
       {({ content, img, title }, i) => (
-        <Section class={{ container: i() % 2 === 0 ? "" : "lg:flex-row-reverse" }} intent={intents[i()]} reverse={i() % 2 !== 0}>
+        <Section
+          class={{ container: `lg:items-center ${i() % 2 === 0 ? "" : "lg:flex-row-reverse"}` }}
+          intent={intents[i()]}
+          reverse={i() % 2 !== 0}
+        >
           <SectionMain class="basis-1/2">
             <SectionTitle title={title} />
             <SectionContent>{content}</SectionContent>

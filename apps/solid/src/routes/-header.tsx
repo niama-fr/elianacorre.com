@@ -4,7 +4,7 @@ import { Image } from "@ec/ui/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
-import { type Accessor, createEffect, For, on, onMount } from "solid-js";
+import { type Accessor, createEffect, createSignal, For, on, onMount } from "solid-js";
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -15,9 +15,9 @@ export const HEADER = {
     `fixed inset-x-0 top-0 z-50
     group-data-scrolled/body:inset-x-4 group-data-scrolled/body:top-5
     transition-[left,right,top] ${HEADER_TRANSITION}
-    md:group-data-scrolled/body:inset-x-20`
+    lg:group-data-scrolled/body:inset-x-20`
   ),
-  burger: cva("group/burger relative cursor-pointer p-2 sm:hidden"),
+  burger: cva("group/burger relative cursor-pointer rounded-full p-2 data-expanded:bg-accent md:hidden"),
   burgerIcon: cva("pointer-events-none size-7 fill-none stroke-2 stroke-current"),
   burgerIconBar1: cva(`origin-center translate-y-[-7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] 
     group-aria-expanded/burger:translate-x-0 group-aria-expanded/burger:translate-y-0 group-aria-expanded/burger:rotate-315`),
@@ -38,10 +38,10 @@ export const HEADER = {
     group-data-scrolled/body:w-16
     transition-[width] ${HEADER_TRANSITION}
     sm:w-24 sm:group-data-scrolled/body:w-16 
-    md:w-40 md:group-data-scrolled/body:w-16`),
+    lg:w-40 md:group-data-scrolled/body:w-16`),
   nav: cva("relative cursor-pointer px-4 py-2"),
   navs: cva(`hidden items-center justify-center gap-2 font-bold text-black 
-    sm:flex`),
+    md:flex`),
   social: cva("relative p-2"),
   socials: cva("flex items-center"),
   stainContent: cva("relative z-10"),
@@ -51,6 +51,12 @@ export const HEADER = {
 export function Header(_: HeaderProps) {
   const location = useLocation({ select: ({ hash, pathname }) => ({ pathname, hash }) });
   const stain = createStain();
+  const [burgerOpen, setBurgerOpen] = createSignal(false);
+
+  let burgerRef!: HTMLButtonElement;
+
+  const hideStain = () => stain.update();
+  const showStain = (e: Event) => stain.update(e.currentTarget as HTMLElement);
 
   createEffect(
     on(
@@ -61,11 +67,21 @@ export function Header(_: HeaderProps) {
     )
   );
 
+  createEffect(
+    on(
+      () => burgerOpen(),
+      (burgerOpen) => {
+        stain.setOrigin(burgerOpen ? burgerRef : undefined);
+        // burgerRef.
+      }
+    )
+  );
+
   return (
     <header class={HEADER.base()}>
       {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: on purpose */}
       {/** biome-ignore lint/a11y/noStaticElementInteractions: on purpose */}
-      <div class={HEADER.content()} onMouseLeave={() => stain.update()}>
+      <div class={HEADER.content()} onMouseLeave={hideStain}>
         <Link aria-label="Accueil" class={HEADER.logo()} to="/">
           <div class={HEADER.logoContent()}>
             <Image
@@ -90,9 +106,9 @@ export function Header(_: HeaderProps) {
                   {...linkProps}
                   activeProps={{ class: "bg-accent rounded-full" }}
                   class={HEADER.nav()}
-                  onFocusIn={(e) => stain.update(e.currentTarget)}
-                  onFocusOut={() => stain.update()}
-                  onMouseEnter={(e) => stain.update(e.currentTarget)}
+                  onFocusIn={showStain}
+                  onFocusOut={hideStain}
+                  onMouseEnter={showStain}
                 >
                   {({ isActive }) => <NavLinkContent isActive={isActive} setOrigin={stain.setOrigin} text={text} />}
                 </Link>
@@ -109,9 +125,9 @@ export function Header(_: HeaderProps) {
                   class={HEADER.social()}
                   data-stain="bg-primary/40"
                   href={social.href}
-                  onFocusIn={(e) => stain.update(e.currentTarget)}
-                  onFocusOut={() => stain.update()}
-                  onMouseEnter={(e) => stain.update(e.currentTarget)}
+                  onFocusIn={showStain}
+                  onFocusOut={hideStain}
+                  onMouseEnter={showStain}
                 >
                   <span class={HEADER.stainContent()}>
                     <span class={HEADER.icon({ className: social.icon })} />
@@ -120,12 +136,13 @@ export function Header(_: HeaderProps) {
               )}
             </For>
           </div>
-          <Popover>
+          <Popover gutter={14} onOpenChange={setBurgerOpen} open={burgerOpen()} placement="bottom-end">
             <PopoverTrigger
               class={HEADER.burger()}
-              onFocusIn={(e) => stain.update(e.currentTarget)}
-              onFocusOut={() => stain.update()}
-              onMouseEnter={(e) => stain.update(e.currentTarget)}
+              onFocusIn={showStain}
+              onFocusOut={hideStain}
+              onMouseEnter={showStain}
+              ref={(r) => (burgerRef = r)}
             >
               <span class={HEADER.stainContent()}>
                 <svg
@@ -142,11 +159,11 @@ export function Header(_: HeaderProps) {
                 </svg>
               </span>
             </PopoverTrigger>
-            <PopoverContent>
+            <PopoverContent onCloseAutoFocus={(e) => e.preventDefault()}>
               <nav class={HEADER.burgerNav()}>
                 <For each={_.data().navs}>
                   {(nav) => (
-                    <Button class="px-0" variant="ghost">
+                    <Button class="px-0" onClick={() => setBurgerOpen(false)} variant="ghost">
                       <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
                         {nav.text}
                       </Link>

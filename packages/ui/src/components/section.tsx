@@ -13,9 +13,8 @@ export const SECTION = {
     lg:flex-row lg:items-start`
   ),
   content: cva(
-    `flex flex-col gap-8 text-balance text-center font-light 
+    `flex flex-col gap-8 font-light text-pretty text-justify
     sm:text-lg 
-    lg:text-start 
     2xl:text-xl`
   ),
   figure: cva(
@@ -32,7 +31,7 @@ export const SECTION = {
     lg:items-start`
   ),
   title: cva(
-    `group/title flex flex-col items-center font-extrabold text-4xl 
+    `group/title flex flex-col items-center font-extrabold text-4xl mb-4
     sm:text-6xl 
     lg:items-start 
     2xl:text-7xl`

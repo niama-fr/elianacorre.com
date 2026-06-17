@@ -13,6 +13,7 @@ type RootNav = {
 };
 
 const navs = [
+  { key: "carnets-de-voyage", text: "Carnets de voyage", to: "/carnets-de-voyage", hash: undefined },
   { key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je", hash: undefined },
   { key: "oeuvres", text: "Œuvres", to: "/oeuvres", hash: undefined },
   { key: "contact", text: "Contact", to: "/", hash: "contact", activeOptions: { includeHash: true } },

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as QuiSuisJeRouteImport } from './routes/qui-suis-je'
 import { Route as OeuvresRouteImport } from './routes/oeuvres'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as CarnetsDeVoyageRouteImport } from './routes/carnets-de-voyage'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OeuvresIndexRouteImport } from './routes/oeuvres.index'
 import { Route as OeuvresSlugRouteImport } from './routes/oeuvres.$slug'
@@ -29,6 +30,11 @@ const OeuvresRoute = OeuvresRouteImport.update({
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
   id: '/mentions-legales',
   path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CarnetsDeVoyageRoute = CarnetsDeVoyageRouteImport.update({
+  id: '/carnets-de-voyage',
+  path: '/carnets-de-voyage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,6 +55,7 @@ const OeuvresSlugRoute = OeuvresSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/carnets-de-voyage': typeof CarnetsDeVoyageRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/oeuvres': typeof OeuvresRouteWithChildren
   '/qui-suis-je': typeof QuiSuisJeRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/carnets-de-voyage': typeof CarnetsDeVoyageRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/qui-suis-je': typeof QuiSuisJeRoute
   '/oeuvres/$slug': typeof OeuvresSlugRoute
@@ -65,6 +73,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/carnets-de-voyage': typeof CarnetsDeVoyageRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/oeuvres': typeof OeuvresRouteWithChildren
   '/qui-suis-je': typeof QuiSuisJeRoute
@@ -75,16 +84,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/carnets-de-voyage'
     | '/mentions-legales'
     | '/oeuvres'
     | '/qui-suis-je'
     | '/oeuvres/$slug'
     | '/oeuvres/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/mentions-legales' | '/qui-suis-je' | '/oeuvres/$slug' | '/oeuvres'
+  to:
+    | '/'
+    | '/carnets-de-voyage'
+    | '/mentions-legales'
+    | '/qui-suis-je'
+    | '/oeuvres/$slug'
+    | '/oeuvres'
   id:
     | '__root__'
     | '/'
+    | '/carnets-de-voyage'
     | '/mentions-legales'
     | '/oeuvres'
     | '/qui-suis-je'
@@ -94,6 +111,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CarnetsDeVoyageRoute: typeof CarnetsDeVoyageRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   OeuvresRoute: typeof OeuvresRouteWithChildren
   QuiSuisJeRoute: typeof QuiSuisJeRoute
@@ -120,6 +138,13 @@ declare module '@tanstack/solid-router' {
       path: '/mentions-legales'
       fullPath: '/mentions-legales'
       preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/carnets-de-voyage': {
+      id: '/carnets-de-voyage'
+      path: '/carnets-de-voyage'
+      fullPath: '/carnets-de-voyage'
+      preLoaderRoute: typeof CarnetsDeVoyageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -161,6 +186,7 @@ const OeuvresRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CarnetsDeVoyageRoute: CarnetsDeVoyageRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   OeuvresRoute: OeuvresRouteWithChildren,
   QuiSuisJeRoute: QuiSuisJeRoute,
