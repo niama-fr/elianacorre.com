@@ -4,14 +4,14 @@
   "type": "module",
   "dependencies": {
     "@ec/domain": "workspace:*",
-    "@iconify/json": "^2.2.486",
+    "@iconify/json": "^2.2.487",
     "@iconify/tailwind4": "^1.2.3",
     "@kobalte/core": "^0.13.11",
     "@unpic/core": "^1.0.3",
     "@unpic/solid": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-solid": "^1.18.0",
+    "lucide-solid": "^1.20.0",
     "shadcn": "^4.11.0",
     "solid-js": "^1.9.13",
     "solid-sonner": "^0.3.1",
@@ -26,6 +26,6 @@
   },
   "peerDependencies": {
     "@tanstack/solid-form": "^1.33.0",
-    "@tanstack/solid-router": "^1.170.15"
+    "@tanstack/solid-router": "^1.170.16"
   }
 }
