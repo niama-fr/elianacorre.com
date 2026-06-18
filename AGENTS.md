@@ -123,3 +123,17 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 Most formatting and common issues are automatically fixed by Biome. Run `bunx ultracite fix` before committing to ensure compliance.
 
 @RTK.md
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the five canonical label names without overrides. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a multi-context repository. See `docs/agents/domain.md`.
