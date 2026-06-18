@@ -6,6 +6,7 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@unpic/placeholder": "^0.1.2"
+    "@unpic/placeholder": "^0.1.2",
+    "zod": "^4.4.3"
   }
 }

@@ -1,0 +1,20 @@
+{
+  "name": "@ec/backend",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "codegen": "convex codegen",
+    "deploy": "convex deploy",
+    "dev": "convex dev"
+  },
+  "dependencies": {
+    "@ec/domain": "workspace:*",
+    "convex": "^1.39.1",
+    "convex-helpers": "^0.1.118"
+  },
+  "exports": {
+    "./api": "./convex/_generated/api.js",
+    "./client": "./client.ts"
+  }
+}
