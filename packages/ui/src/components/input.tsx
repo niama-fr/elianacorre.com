@@ -1,0 +1,21 @@
+import { cva } from "class-variance-authority";
+import { type ComponentProps, splitProps } from "solid-js";
+import { cn } from "@/lib/utils";
+
+// STYLES ----------------------------------------------------------------------------------------------------------------------------------
+const INPUT = cva(
+  `h-9 w-full min-w-0 rounded-4xl border border-input bg-white px-3 py-1 text-base outline-none transition-colors 
+  file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm 
+  placeholder:text-muted-foreground 
+  focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 
+  disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
+  aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 
+  md:text-sm`
+);
+
+// ROOT ------------------------------------------------------------------------------------------------------------------------------------
+export const Input = (props: InputProps) => {
+  const [_, others] = splitProps(props, ["class"]);
+  return <input class={cn(INPUT(), _.class)} data-slot="input" {...others} />;
+};
+export type InputProps = ComponentProps<"input">;

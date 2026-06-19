@@ -1,0 +1,53 @@
+{
+  "name": "@ec/solid",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 3002",
+    "generate-routes": "tsr generate",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "deploy": "bun run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/vite-plugin": "^1.41.0",
+    "@ec/backend": "workspace:*",
+    "@ec/domain": "workspace:*",
+    "@ec/ui": "workspace:*",
+    "@fontsource-variable/dancing-script": "^5.2.8",
+    "@fontsource-variable/lexend": "^5.2.11",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/router-plugin": "^1.133.21",
+    "@tanstack/solid-router": "^1.170.16",
+    "@tanstack/solid-router-devtools": "^1.167.0",
+    "@tanstack/solid-router-ssr-query": "^1.167.1",
+    "@tanstack/solid-start": "^1.168.26",
+    "@types/canvas-confetti": "^1.9.0",
+    "@unpic/solid": "^1.0.0",
+    "canvas-confetti": "^1.9.4",
+    "class-variance-authority": "^0.7.1",
+    "solid-js": "^1.9.12",
+    "solid-sonner": "^0.3.1",
+    "tailwindcss": "^4.1.18",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@tanstack/devtools-vite": "^0.7.0",
+    "@tanstack/router-cli": "^1.133.21",
+    "jsdom": "^28.1.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^4.1.9",
+    "wrangler": "^4.101.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss"
+    ]
+  }
+}
