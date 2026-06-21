@@ -90,6 +90,9 @@
         "convex": "^1.39.1",
         "convex-helpers": "^0.1.118",
       },
+      "devDependencies": {
+        "vitest": "^4.1.9",
+      },
     },
     "packages/domain": {
       "name": "@ec/domain",

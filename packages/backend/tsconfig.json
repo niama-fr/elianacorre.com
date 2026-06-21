@@ -8,8 +8,7 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./*"],
-      "@niama/backend/*": ["./*"]
+      "@ec/backend/*": ["./*"]
     }
   },
   "include": ["."],

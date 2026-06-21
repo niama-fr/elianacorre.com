@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { submitContact } from "./contacts";
+import { describe, expect, it } from "vitest";
+import { zContactCreateValues } from "./contacts";
 
 const validContact = {
   email: "eliana@example.com",
@@ -8,20 +8,12 @@ const validContact = {
   surname: "Corré",
 };
 
-describe("contact submission", () => {
-  it("rejects invalid values before persistence", async () => {
-    const saveContact = vi.fn();
-
-    await expect(submitContact({ ...validContact, email: "invalid" }, saveContact)).rejects.toThrow();
-    expect(saveContact).not.toHaveBeenCalled();
+describe("contact validator", () => {
+  it("rejects invalid values", () => {
+    expect(zContactCreateValues.safeParse({ ...validContact, email: "invalid" }).success).toBe(false);
   });
 
-  it("persists validated contact values", async () => {
-    const saveContact = vi.fn(async () => undefined);
-
-    await submitContact(validContact, saveContact);
-
-    expect(saveContact).toHaveBeenCalledOnce();
-    expect(saveContact).toHaveBeenCalledWith(validContact);
+  it("returns valid contact values", () => {
+    expect(zContactCreateValues.parse(validContact)).toEqual(validContact);
   });
 });

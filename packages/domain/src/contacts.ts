@@ -19,14 +19,6 @@ export const zContactCreateValues = z.object({
 // CRUD ------------------------------------------------------------------------------------------------------------------------------------
 export const zContactCreate = zContactFields;
 
-// SUBMISSION ------------------------------------------------------------------------------------------------------------------------------
-export type SaveContact = (contact: Contacts["Create"]) => Promise<void>;
-
-export const submitContact = async (values: Contacts["CreateValues"], saveContact: SaveContact): Promise<void> => {
-  const contact = zContactCreateValues.parse(values);
-  await saveContact(contact);
-};
-
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Contacts = {
   Create: z.infer<typeof zContactCreate>;
