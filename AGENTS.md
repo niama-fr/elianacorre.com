@@ -128,11 +128,15 @@ Most formatting and common issues are automatically fixed by Biome. Run `bunx ul
 
 ### Issue tracker
 
-Issues and PRDs are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.
+Linear is the sole source of actionable work and PRDs. See `docs/agents/issue-tracker.md`.
 
-### Triage labels
+### Delivery workflow
 
-Triage uses the five canonical label names without overrides. See `docs/agents/triage-labels.md`.
+All changes follow the issue, branch, pull request, review, and approval contract in `docs/agents/delivery-workflow.md`.
+
+### Triage roles
+
+Triage maps the five canonical roles to Linear workflow states and issue context. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
