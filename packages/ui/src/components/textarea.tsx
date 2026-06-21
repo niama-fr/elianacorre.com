@@ -1,4 +1,4 @@
-import { cn } from "@ui/lib/utils";
+import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, splitProps } from "solid-js";
 

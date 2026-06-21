@@ -1,5 +1,5 @@
-import { FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ui/components/field";
-import { useFieldContext } from "@ui/hooks/form-context";
+import { FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ec/ui/field";
+import { useFieldContext } from "@ec/ui/hooks/form-context";
 import { cva } from "class-variance-authority";
 import { createMemo, type JSX } from "solid-js";
 

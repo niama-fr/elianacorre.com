@@ -1,5 +1,5 @@
 import type { Works } from "@ec/domain/works";
-import { cn } from "@ui/lib/utils";
+import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { createMemo, For } from "solid-js";
 import { ImageZoom } from "./image-zoom";

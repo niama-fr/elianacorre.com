@@ -1,6 +1,6 @@
+import { cn } from "@ec/ui/lib/utils";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { Separator as SeparatorPrimitive, type SeparatorRootProps } from "@kobalte/core/separator";
-import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, mergeProps, splitProps, type ValidComponent } from "solid-js";
 

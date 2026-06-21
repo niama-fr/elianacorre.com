@@ -1,7 +1,7 @@
 import { Button as Button_, type ButtonRootProps } from "@ec/kobalte2/button";
 import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
+import { cn } from "@ec/ui2/lib/utils";
 import type { ComponentProps, ValidComponent } from "@solidjs/web";
-import { cn } from "@ui2/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { omit } from "solid-js";
 

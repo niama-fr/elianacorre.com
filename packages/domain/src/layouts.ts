@@ -1,5 +1,5 @@
-import { readImageBySlug } from "@domain/images";
-import { readAllSets } from "@domain/sets";
+import { readImageBySlug } from "@ec/domain/images";
+import { readAllSets } from "@ec/domain/sets";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 type RootNav = {

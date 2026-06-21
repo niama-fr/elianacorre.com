@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
+
+import { cn } from "@ec/ui2/lib/utils";
 import { Image, type ImageProps } from "@ec/unpic-solid2";
-import { cn } from "@ui2/lib/utils";
 import { cva } from "class-variance-authority";
 import { createEffect, createMemo, createSignal, omit, Show } from "solid-js";
 

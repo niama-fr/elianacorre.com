@@ -1,5 +1,5 @@
-import { readImageBySlug } from "@domain/images";
-import { readSetBySlug } from "@domain/sets";
+import { readImageBySlug } from "@ec/domain/images";
+import { readSetBySlug } from "@ec/domain/sets";
 
 export const allWorks = [
   {

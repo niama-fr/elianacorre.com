@@ -1,4 +1,4 @@
-import { useColorMode } from "@ui/components/color-mode";
+import { useColorMode } from "@ec/ui/color-mode";
 import type { Component, ComponentProps, JSX } from "solid-js";
 import { Toaster as Sonner } from "solid-sonner";
 

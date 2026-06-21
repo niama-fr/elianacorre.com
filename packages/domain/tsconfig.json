@@ -10,8 +10,7 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@domain/*": ["./src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["."],

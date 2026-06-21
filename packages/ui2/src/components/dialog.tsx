@@ -18,8 +18,8 @@ import {
 } from "@ec/kobalte2/dialog";
 import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
 import { Button } from "@ec/ui2/button";
+import { cn } from "@ec/ui2/lib/utils";
 import type { ComponentProps, ValidComponent } from "@solidjs/web";
-import { cn } from "@ui2/lib/utils";
 import { type Component, merge, omit, Show } from "solid-js";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------

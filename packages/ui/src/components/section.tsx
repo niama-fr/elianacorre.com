@@ -1,6 +1,6 @@
 import type { Images } from "@ec/domain/images";
 import { Image } from "@ec/ui/image";
-import { cn } from "@ui/lib/utils";
+import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps } from "solid-js";
 

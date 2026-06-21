@@ -20,9 +20,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@backend/*": ["../*"],
-      "@domain/*": ["../../domain/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["./**/*"],

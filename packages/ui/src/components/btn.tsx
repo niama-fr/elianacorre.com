@@ -1,5 +1,5 @@
+import { cn } from "@ec/ui/lib/utils";
 import { Link, type LinkProps } from "@tanstack/solid-router";
-import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, createMemo, type JSX, mergeProps, splitProps } from "solid-js";
 

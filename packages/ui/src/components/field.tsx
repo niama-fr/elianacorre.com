@@ -1,6 +1,6 @@
-import { cn } from "@ui/lib/utils";
-import { Label } from "@ui/raw/label";
-import { Separator } from "@ui/raw/separator";
+import { Label } from "@ec/ui/label";
+import { cn } from "@ec/ui/lib/utils";
+import { Separator } from "@ec/ui/separator";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps, JSX } from "solid-js";
 import { createMemo, For, Show, splitProps } from "solid-js";

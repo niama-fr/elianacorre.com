@@ -1,5 +1,5 @@
-import { Textarea } from "@ui/components/textarea";
-import { useFieldContext } from "@ui/hooks/form-context";
+import { useFieldContext } from "@ec/ui/hooks/form-context";
+import { Textarea } from "@ec/ui/textarea";
 import { Field } from "./field";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

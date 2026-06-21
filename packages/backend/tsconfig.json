@@ -9,8 +9,6 @@
     "noEmit": true,
     "paths": {
       "@/*": ["./*"],
-      "@backend/*": ["./*"],
-      "@domain/*": ["../domain/src/*"],
       "@niama/backend/*": ["./*"]
     }
   },

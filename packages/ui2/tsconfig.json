@@ -10,12 +10,7 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@domain/*": ["../domain/src/*"],
-      "@kobalte2/*": ["../kobalte2/src/*"],
-      "@solid-primitives2/*": ["../solid-primitives2/src/*"],
-      "@ui2/*": ["./src/*"],
-      "@unpic-solid2/*": ["../unpic-solid2/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["."],

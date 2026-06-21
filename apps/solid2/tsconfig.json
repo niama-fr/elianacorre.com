@@ -24,10 +24,7 @@
 
     "paths": {
       "@/*": ["../../packages/ui2/src/*"],
-      "@backend/*": ["../../packages/backend/*"],
-      "@domain/*": ["../../packages/domain/src/*"],
-      "@solid2/*": ["./src/*"],
-      "@ui2/*": ["../../packages/ui2/src/*"]
+      "@solid2/*": ["./src/*"]
     }
   }
 }
