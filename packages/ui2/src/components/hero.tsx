@@ -1,9 +1,9 @@
 import type { Images } from "@ec/domain/images";
+import { cn } from "@ec/ui2/lib/utils";
 import { Image } from "@ec/unpic-solid2";
 import type { ComponentProps } from "@solidjs/web";
 import { cva } from "class-variance-authority";
 import { createMemo, omit } from "solid-js";
-import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const HERO = {

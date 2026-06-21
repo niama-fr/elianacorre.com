@@ -6,15 +6,21 @@
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
-    "dev": "convex dev"
+    "dev": "convex dev",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ec/domain": "workspace:*",
     "convex": "^1.39.1",
     "convex-helpers": "^0.1.118"
   },
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  },
   "exports": {
     "./api": "./convex/_generated/api.js",
-    "./client": "./client.ts"
+    "./client": "./client.ts",
+    "./contacts": "./contacts.ts"
   }
 }

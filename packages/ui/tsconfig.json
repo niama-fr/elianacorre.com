@@ -10,7 +10,8 @@
     "strict": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@ec/ui": ["./src/components"],
+      "@ec/ui/*": ["./src/*"]
     }
   },
   "include": ["."],

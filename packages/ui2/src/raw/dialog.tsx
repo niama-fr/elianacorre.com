@@ -1,11 +1,10 @@
+import { cn } from "@ec/ui2/lib/utils";
+import { Button } from "@ec/ui2/raw/button";
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { X } from "lucide-solid";
 import type { Component, ComponentProps, ValidComponent } from "solid-js";
 import { mergeProps, Show, splitProps } from "solid-js";
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/raw/button";
 
 const Dialog: Component<DialogPrimitive.DialogRootProps> = (props) => <DialogPrimitive.Root data-slot="dialog" {...props} />;
 

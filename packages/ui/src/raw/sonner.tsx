@@ -1,7 +1,7 @@
+import { useColorMode } from "@ec/ui/color-mode";
 import { CircleCheck, Info, LoaderCircle, OctagonX, TriangleAlert } from "lucide-solid";
 import type { Component, ComponentProps, JSX } from "solid-js";
 import { Toaster as Sonner } from "solid-sonner";
-import { useColorMode } from "@/components/color-mode";
 
 type ToasterProps = ComponentProps<typeof Sonner>;
 

@@ -1,8 +1,8 @@
+import { cn } from "@ec/ui2/lib/utils";
 import type { ComponentProps, JSX } from "@solidjs/web";
 import { Link, type LinkProps } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { createMemo, merge, omit } from "solid-js";
-import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const BTN = {

@@ -1,10 +1,9 @@
+import { cn } from "@ec/ui2/lib/utils";
+import { Label } from "@ec/ui2/raw/label";
+import { Separator } from "@ec/ui2/raw/separator";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps, JSX } from "solid-js";
 import { createMemo, For, Show, splitProps } from "solid-js";
-
-import { cn } from "@/lib/utils";
-import { Label } from "@/raw/label";
-import { Separator } from "@/raw/separator";
 
 type FieldSetProps = ComponentProps<"fieldset"> & {
   class?: string | undefined;

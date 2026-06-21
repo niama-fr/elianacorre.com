@@ -1,7 +1,7 @@
+import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentProps } from "solid-js";
 import { splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const LABEL = cva(`flex select-none items-center gap-2 font-medium text-sm leading-none 

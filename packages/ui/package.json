@@ -2,6 +2,9 @@
   "name": "@ec/ui",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
   "dependencies": {
     "@ec/domain": "workspace:*",
     "@iconify/json": "^2.2.487",
@@ -21,6 +24,7 @@
   "exports": {
     "./hooks/*": "./src/hooks/*.tsx",
     "./lib/*": "./src/lib/*.ts",
+    "./raw/*": "./src/raw/*.tsx",
     "./styles/*": "./src/styles/*",
     "./*": "./src/components/*.tsx"
   },

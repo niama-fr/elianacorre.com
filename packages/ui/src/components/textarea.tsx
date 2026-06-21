@@ -1,6 +1,6 @@
+import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const TEXTAREA = cva(

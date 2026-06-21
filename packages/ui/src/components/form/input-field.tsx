@@ -1,5 +1,5 @@
-import { Input } from "@/components/input";
-import { useFieldContext } from "@/hooks/form-context";
+import { useFieldContext } from "@ec/ui/hooks/form-context";
+import { Input } from "@ec/ui/input";
 import { Field } from "./field";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

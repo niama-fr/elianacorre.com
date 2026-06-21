@@ -1,17 +1,12 @@
-import { createServerFn } from "@tanstack/react-start";
-import { api } from "convex/_generated/api";
-import { ConvexHttpClient } from "convex/browser";
-import { zContactCreate } from "@/lib/domain";
+import { api } from "@ec/backend/api";
+import { createConvexHttpClient } from "@ec/backend/client";
+import { zContactCreateValues } from "@ec/domain/contacts";
+import { createServerFn } from "@tanstack/solid-start";
 
 // CONTACT ---------------------------------------------------------------------------------------------------------------------------------
 export const createContact = createServerFn({ method: "POST" })
-  .inputValidator(zContactCreate)
+  .inputValidator(zContactCreateValues)
   .handler(async ({ data }) => {
-    const convexUrl = process.env.VITE_CONVEX_URL;
-    if (!convexUrl) {
-      throw new Error("VITE_CONVEX_URL is required");
-    }
-
-    const convex = new ConvexHttpClient(convexUrl);
+    const convex = createConvexHttpClient(import.meta.env.VITE_CONVEX_URL);
     await convex.mutation(api.contacts.create, data);
   });

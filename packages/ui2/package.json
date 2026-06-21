@@ -26,6 +26,7 @@
     "./kobalte/utils": "./src/kobalte/utils/index.ts",
     "./primitives/*": "./src/primitives/*/index.ts",
     "./lib/*": "./src/lib/*.ts",
+    "./raw/*": "./src/raw/*.tsx",
     "./styles/*": "./src/styles/*",
     "./*": "./src/components/*.tsx"
   },
