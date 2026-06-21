@@ -134,6 +134,10 @@ Linear is the sole source of actionable work and PRDs. See `docs/agents/issue-tr
 
 All changes follow the issue, branch, pull request, review, and approval contract in `docs/agents/delivery-workflow.md`.
 
+### Project resources
+
+Canonical Linear, GitHub, Drive, Obsidian, and ADR locations are listed in `docs/agents/project-resources.md`.
+
 ### Triage roles
 
 Triage maps the five canonical roles to Linear workflow states and issue context. See `docs/agents/triage-labels.md`.
