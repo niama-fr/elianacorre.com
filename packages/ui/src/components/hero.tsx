@@ -1,8 +1,8 @@
 import type { Images } from "@ec/domain/images";
 import { Image } from "@ec/ui/image";
+import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, createMemo, splitProps } from "solid-js";
-import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const HERO = {

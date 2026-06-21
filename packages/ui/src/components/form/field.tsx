@@ -1,7 +1,7 @@
+import { FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ui/components/field";
+import { useFieldContext } from "@ui/hooks/form-context";
 import { cva } from "class-variance-authority";
 import { createMemo, type JSX } from "solid-js";
-import { useFieldContext } from "../../hooks/form-context";
-import { FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "../field";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {

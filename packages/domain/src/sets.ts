@@ -1,4 +1,4 @@
-import { readImageBySlug } from "./images";
+import { readImageBySlug } from "@domain/images";
 
 export const allSets = [
   {

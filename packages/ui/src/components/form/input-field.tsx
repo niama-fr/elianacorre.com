@@ -1,5 +1,5 @@
-import { useFieldContext } from "../../hooks/form-context";
-import { Input } from "../input";
+import { Input } from "@ui/components/input";
+import { useFieldContext } from "@ui/hooks/form-context";
 import { Field } from "./field";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

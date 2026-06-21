@@ -3,6 +3,20 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@backend/*": ["packages/backend/*"],
+      "@domain/*": ["packages/domain/src/*"],
+      "@kobalte2/*": ["packages/kobalte2/src/*"],
+      "@solid/*": ["apps/solid/src/*"],
+      "@solid2/*": ["apps/solid2/src/*"],
+      "@solid-presence2/*": ["packages/solid-presence2/src/*"],
+      "@solid-prevent-scroll2/*": ["packages/solid-prevent-scroll2/src/*"],
+      "@solid-primitives2/*": ["packages/solid-primitives2/src/*"],
+      "@ui/*": ["packages/ui/src/*"],
+      "@ui2/*": ["packages/ui2/src/*"],
+      "@unpic-solid2/*": ["packages/unpic-solid2/src/*"]
+    },
     "skipLibCheck": true,
     "strict": true
   }

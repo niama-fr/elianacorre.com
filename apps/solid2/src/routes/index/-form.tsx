@@ -1,9 +1,9 @@
+import { createContact } from "@solid2/functions/form";
+import { useAppForm } from "@solid2/hooks/form";
+import { zContactCreateValues } from "@solid2/lib/domain";
 import confetti from "canvas-confetti";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { createContact } from "@/functions/form";
-import { useAppForm } from "@/hooks/form";
-import { zContactCreateValues } from "@/lib/domain";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function IndexForm() {

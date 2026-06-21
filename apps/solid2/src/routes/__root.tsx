@@ -1,9 +1,9 @@
 import { readRootLayout } from "@ec/domain/layouts";
 import { GridBackground } from "@ec/ui2/grid-background";
+import styleCss from "@solid2/styles.css?url";
 import { NoHydration } from "@solidjs/web";
 import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
 import { createSignal, type Element, Loading, onSettled } from "solid-js";
-import styleCss from "@/styles.css?url";
 import { Header } from "./-header";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 // biome-ignore lint/performance/noNamespaceImport: false positive
 import * as PopoverPrimitive from "@kobalte/core/popover";
+import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
-import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const POPOVER = {

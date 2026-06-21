@@ -1,8 +1,8 @@
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { Separator as SeparatorPrimitive, type SeparatorRootProps } from "@kobalte/core/separator";
+import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, mergeProps, splitProps, type ValidComponent } from "solid-js";
-import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const SEPARATOR = cva(`shrink-0 bg-border 

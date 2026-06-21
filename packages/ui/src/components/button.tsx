@@ -1,8 +1,8 @@
 import { type ButtonRootProps, Root } from "@kobalte/core/button";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
+import { cn } from "@ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { type ComponentProps, splitProps, type ValidComponent } from "solid-js";
-import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const BUTTON = cva(

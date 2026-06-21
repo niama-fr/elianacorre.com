@@ -1,5 +1,5 @@
-import { readImageBySlug } from "./images";
-import { allWorks, readLastWorks, workFrom } from "./works";
+import { readImageBySlug } from "@domain/images";
+import { allWorks, readLastWorks, workFrom } from "@domain/works";
 
 // ABOUT -----------------------------------------------------------------------------------------------------------------------------------
 export const readAboutPage = () => [

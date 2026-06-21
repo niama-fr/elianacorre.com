@@ -1,8 +1,8 @@
 import type { Works } from "@ec/domain/works";
+import { ImageZoom } from "@ui2/components/image-zoom";
+import { cn } from "@ui2/lib/utils";
 import { cva } from "class-variance-authority";
 import { createMemo, For } from "solid-js";
-import { cn } from "../lib/utils";
-import { ImageZoom } from "./image-zoom";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const WORKS_GRID = {

@@ -1,7 +1,7 @@
 import type { Works } from "@ec/domain/works";
+import { cn } from "@ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { createMemo, For } from "solid-js";
-import { cn } from "../lib/utils";
 import { ImageZoom } from "./image-zoom";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

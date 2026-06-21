@@ -1,9 +1,9 @@
 import type { Images } from "@ec/domain/images";
 import { Image } from "@ec/unpic-solid2";
 import type { ComponentProps } from "@solidjs/web";
+import { cn } from "@ui2/lib/utils";
 import { cva } from "class-variance-authority";
 import { createMemo, createSignal, merge, omit, onSettled } from "solid-js";
-import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const SECTION = {
