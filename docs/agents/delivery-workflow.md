@@ -52,7 +52,23 @@ The project WIP limit is one `In Progress` issue. Urgent work must explicitly bl
 6. Pull requests are squash-merged. The squash commit title matches the pull request title.
 7. Direct commits and pushes to `main` are prohibited. NIA-5 was the one-time repository-bootstrap exception.
 8. Required checks and review must pass before merge. The branch must be current with `main`.
-9. Grégory approves and merges pull requests. Production deploys automatically from the approved merged commit.
+9. Codex performs a final two-axis review against repository standards and the Linear issue before approval.
+10. Grégory approves the protected `pull-request-approval` environment and merges the pull request. GitHub does not allow a pull-request author to approve their own review, so the environment approval is the enforceable human gate for this solo repository.
+11. Production deploys automatically from the approved merged commit.
+
+## GitHub enforcement
+
+Pull requests targeting `main` expose five stable required checks:
+
+- `Ultracite`
+- `Typecheck`
+- `Tests`
+- `Build`
+- `Approval`
+
+The first four checks run the commands in `docs/agents/verification.md`. `Approval` starts only after they pass and waits for Grégory to approve the protected `pull-request-approval` environment.
+
+The `main` ruleset requires pull requests, all five checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
 
 ## Codex authority
 
