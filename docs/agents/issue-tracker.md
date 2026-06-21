@@ -1,22 +1,29 @@
-# Issue tracker: GitHub
+# Issue tracker: Linear
 
-Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Issues, PRDs, priorities, ownership, dependencies, and work status for this repository live in the Niama Linear workspace:
+
+- Team: `Niama`
+- Project: [`elianacorre.com`](https://linear.app/niama/project/elianacorrecom-9ad653bd32f2)
+- Issue prefix: `NIA`
+
+Use the Linear integration available to the agent for issue and project operations. If the integration is unavailable, stop before changing code and restore access rather than creating a second task record elsewhere.
 
 ## Conventions
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply or remove labels**: `gh issue edit <number> --add-label "..."` or `gh issue edit <number> --remove-label "..."`
-- **Close an issue**: `gh issue close <number> --comment "..."`
-
-Infer the repository from `git remote -v`. The `gh` CLI does this automatically when run inside the clone.
+- Read the complete issue, comments, relations, and project context before implementation.
+- Create actionable work in the `elianacorre.com` Linear project unless the work belongs to another explicit Niama project.
+- Record acceptance criteria as checkboxes and list blocking issues explicitly.
+- Keep issue status current as work moves through the delivery workflow.
+- Add the pull request and material verification evidence to the issue.
+- Mark an issue `Done` only after its approved pull request is merged and required follow-up work is complete.
+- Do not create or use GitHub Issues for this repository. GitHub Issues are disabled intentionally.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a Linear issue in the appropriate project.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `gh issue view <number> --comments`.
+Fetch the Linear issue, including comments and relations.
+
+See `docs/agents/delivery-workflow.md` for readiness, WIP, branch, pull request, review, and merge rules.
