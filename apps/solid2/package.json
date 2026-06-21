@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.41.0",
+    "@ec/backend": "workspace:*",
     "@ec/domain": "workspace:*",
     "@ec/solid-primitives2": "workspace:*",
     "@ec/ui2": "workspace:*",
