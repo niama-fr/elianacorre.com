@@ -1,6 +1,6 @@
 import { cva } from "class-variance-authority";
 import { type ComponentProps, splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const INPUT = cva(

@@ -138,6 +138,10 @@ All changes follow the issue, branch, pull request, review, and approval contrac
 
 Canonical Linear, GitHub, Drive, Obsidian, and ADR locations are listed in `docs/agents/project-resources.md`.
 
+### Verification
+
+Required test, type-check, Ultracite, and production-build commands are documented in `docs/agents/verification.md`.
+
 ### Triage roles
 
 Triage maps the five canonical roles to Linear workflow states and issue context. See `docs/agents/triage-labels.md`.

@@ -1,6 +1,6 @@
 import type { Component, ComponentProps, JSX } from "solid-js";
 import { Toaster as Sonner } from "solid-sonner";
-import { useColorMode } from "@/components/color-mode";
+import { useColorMode } from "./color-mode";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const Toaster: Component<ToasterProps> = (props) => {

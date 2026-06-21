@@ -1,6 +1,6 @@
-import { Btn } from "@/components/btn";
-import { LoadingSwap } from "@/components/loading-swap";
-import { useFormContext } from "@/hooks/form-context";
+import { useFormContext } from "../../hooks/form-context";
+import { Btn } from "../btn";
+import { LoadingSwap } from "../loading-swap";
 
 export default function Submit({ ref }: { ref?: HTMLButtonElement }) {
   const form = useFormContext();

@@ -1,6 +1,6 @@
 import type { ComponentProps } from "solid-js";
 import { splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 type LabelProps = ComponentProps<"label">;
 

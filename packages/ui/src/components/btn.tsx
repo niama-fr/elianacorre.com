@@ -1,7 +1,7 @@
 import { Link, type LinkProps } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type ComponentProps, createMemo, type JSX, mergeProps, splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const BTN = {

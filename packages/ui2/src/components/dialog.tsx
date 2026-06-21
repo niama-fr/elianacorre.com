@@ -20,7 +20,7 @@ import type { PolymorphicProps } from "@ec/kobalte2/polymorphic";
 import { Button } from "@ec/ui2/button";
 import type { ComponentProps, ValidComponent } from "@solidjs/web";
 import { type Component, merge, omit, Show } from "solid-js";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const Dialog: Component<DialogRootProps_> = (props) => <DialogRoot_ data-slot="dialog" {...props} />;

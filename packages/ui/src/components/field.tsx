@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps, JSX } from "solid-js";
 import { createMemo, For, Show, splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
-import { Label } from "@/raw/label";
-import { Separator } from "@/raw/separator";
+import { cn } from "../lib/utils";
+import { Label } from "../raw/label";
+import { Separator } from "../raw/separator";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const FIELD = {

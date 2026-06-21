@@ -6,7 +6,8 @@
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
-    "dev": "convex dev"
+    "dev": "convex dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ec/domain": "workspace:*",

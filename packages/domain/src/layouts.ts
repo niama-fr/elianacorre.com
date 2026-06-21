@@ -7,9 +7,9 @@ type RootNav = {
     includeHash: boolean;
   };
   hash?: string;
-  key: "contact" | "oeuvres" | "qui-suis-je";
+  key: "carnets-de-voyage" | "contact" | "oeuvres" | "qui-suis-je";
   text: string;
-  to: "/" | "/oeuvres" | "/qui-suis-je";
+  to: "/" | "/carnets-de-voyage" | "/oeuvres" | "/qui-suis-je";
 };
 
 const navs = [
