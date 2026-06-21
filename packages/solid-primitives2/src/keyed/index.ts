@@ -1,16 +1,6 @@
-import {
-  type Accessor,
-  createMemo,
-  createRoot,
-  createSignal,
-  onCleanup,
-  type Setter,
-  untrack,
-  $TRACK,
-  mapArray,
-} from "solid-js";
 import type { JSX } from "@solidjs/web";
 import { isServer } from "@solidjs/web";
+import { $TRACK, type Accessor, createMemo, createRoot, createSignal, mapArray, onCleanup, type Setter, untrack } from "solid-js";
 
 const FALLBACK = Symbol("fallback");
 type AccessorArray<S> = { [K in keyof S]: Accessor<S[K]> };
@@ -32,7 +22,7 @@ export function keyArray<T, U, K>(
   items: Accessor<readonly T[] | undefined | null | false>,
   keyFn: (item: T, index: number) => K,
   mapFn: (v: Accessor<T>, i: Accessor<number>) => U,
-  options: { fallback?: Accessor<U> } = {},
+  options: { fallback?: Accessor<U> } = {}
 ): Accessor<U[]> {
   // SERVER NOOP
   if (isServer) {
@@ -43,8 +33,8 @@ export function keyArray<T, U, K>(
         s.push(
           mapFn(
             () => itemsRef[i]!,
-            () => i,
-          ),
+            () => i
+          )
         );
     } else if (options.fallback) s = [options.fallback()];
     return () => s;
@@ -65,7 +55,7 @@ export function keyArray<T, U, K>(
         dispose(prev.values());
         prev.clear();
         if (!options.fallback) return [];
-        const fb = createRoot(dispose => {
+        const fb = createRoot((dispose) => {
           prev.set(FALLBACK, { dispose } as Save);
           return options.fallback!();
         });
@@ -112,7 +102,7 @@ export function keyArray<T, U, K>(
   };
 
   function addNewItem(list: U[], item: T, i: number, key: K): void {
-    createRoot(dispose => {
+    createRoot((dispose) => {
       const [getItem, setItem] = createSignal(() => item);
       const save = { setItem, dispose } as Save;
       if (mapFn.length > 1) {
@@ -155,8 +145,8 @@ export function Key<T>(props: {
       () => props.each,
       typeof by === "function" ? by : (v: T) => v[by],
       props.children,
-      "fallback" in props ? { fallback: () => props.fallback } : undefined,
-    ),
+      "fallback" in props ? { fallback: () => props.fallback } : undefined
+    )
   ) as unknown as JSX.Element;
 }
 
@@ -178,11 +168,7 @@ export function Key<T>(props: {
 export function Entries<K extends string | number, V>(props: {
   of: Record<K, V> | ArrayLike<V> | undefined | null | false;
   fallback?: JSX.Element;
-  children: (
-    key: K extends number ? string : K,
-    v: Accessor<V>,
-    i: Accessor<number>,
-  ) => JSX.Element;
+  children: (key: K extends number ? string : K, v: Accessor<V>, i: Accessor<number>) => JSX.Element;
 }): JSX.Element {
   // changes to this function may be applicable to similar functions - grep 4A29BECD-767A-4CC0-AEBB-3543D7B444C6
   const mapFn = props.children;
@@ -190,14 +176,10 @@ export function Entries<K extends string | number, V>(props: {
     mapArray(
       () => props.of && Object.keys(props.of),
       mapFn.length < 3
-        ? key =>
-            (mapFn as (key: string, v: Accessor<V>) => JSX.Element)(
-              key,
-              () => props.of![key as never],
-            )
+        ? (key) => (mapFn as (key: string, v: Accessor<V>) => JSX.Element)(key, () => props.of![key as never])
         : (key, i) => mapFn(key as never, () => props.of![key as never], i),
-      "fallback" in props ? { fallback: () => props.fallback } : undefined,
-    ),
+      "fallback" in props ? { fallback: () => props.fallback } : undefined
+    )
   ) as unknown as JSX.Element;
 }
 
@@ -227,14 +209,10 @@ export function MapEntries<K, V>(props: {
     mapArray(
       () => props.of && Array.from(props.of.keys()),
       mapFn.length < 3
-        ? key =>
-            (mapFn as (key: K, v: Accessor<V>) => JSX.Element)(
-              key,
-              () => (props.of as Map<K, V>).get(key)!,
-            )
+        ? (key) => (mapFn as (key: K, v: Accessor<V>) => JSX.Element)(key, () => (props.of as Map<K, V>).get(key)!)
         : (key, i) => mapFn(key, () => (props.of as Map<K, V>).get(key)!, i),
-      "fallback" in props ? { fallback: () => props.fallback } : undefined,
-    ),
+      "fallback" in props ? { fallback: () => props.fallback } : undefined
+    )
   ) as unknown as JSX.Element;
 }
 
@@ -263,9 +241,9 @@ export function SetValues<T>(props: {
   return createMemo(
     mapArray(
       () => props.of && Array.from(props.of.values()),
-      mapFn.length < 2 ? value => (mapFn as (value: T) => JSX.Element)(value) : mapFn,
-      "fallback" in props ? { fallback: () => props.fallback } : undefined,
-    ),
+      mapFn.length < 2 ? (value) => (mapFn as (value: T) => JSX.Element)(value) : mapFn,
+      "fallback" in props ? { fallback: () => props.fallback } : undefined
+    )
   ) as unknown as JSX.Element;
 }
 
@@ -275,24 +253,19 @@ export type RerunChildren<T> = ((input: T, prevInput: T | undefined) => JSX.Elem
  * Causes the children to rerender when the `on` changes.
  * @see https://github.com/solidjs-community/solid-primitives/tree/main/packages/refs#Rerun
  */
-export function Rerun<S>(props: {
-  on: AccessorArray<S> | Accessor<S>;
+export function Rerun<S>(props: { on: AccessorArray<S> | Accessor<S>; children: RerunChildren<S> }): JSX.Element;
+export function Rerun<S extends (object | string | bigint | number | boolean) & { length?: never }>(props: {
+  on: S;
   children: RerunChildren<S>;
 }): JSX.Element;
-export function Rerun<
-  S extends (object | string | bigint | number | boolean) & { length?: never },
->(props: { on: S; children: RerunChildren<S> }): JSX.Element;
 export function Rerun(props: { on: any; children: RerunChildren<any> }): JSX.Element {
   const key = typeof props.on === "function" || Array.isArray(props.on) ? props.on : () => props.on;
   let prevInput: unknown;
-  return createMemo(
-    () => {
-      const input = Array.isArray(key) ? key.map(accessor => accessor()) : key();
-      const child = props.children;
-      const result =
-        typeof child === "function" && child.length > 0 ? (child as any)(input, prevInput) : child;
-      prevInput = input;
-      return result;
-    },
-  ) as unknown as JSX.Element;
+  return createMemo(() => {
+    const input = Array.isArray(key) ? key.map((accessor) => accessor()) : key();
+    const child = props.children;
+    const result = typeof child === "function" && child.length > 0 ? (child as any)(input, prevInput) : child;
+    prevInput = input;
+    return result;
+  }) as unknown as JSX.Element;
 }

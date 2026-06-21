@@ -10,59 +10,48 @@ import type { ValidComponent } from "@solidjs/web";
 import { createGenerateId, mergeDefaultProps } from "@ec/kobalte2/utils";
 import { createSignal, createUniqueId } from "solid-js";
 
-import {
-	type ElementOf,
-	Polymorphic,
-	type PolymorphicProps } from "../polymorphic";
+import { type ElementOf, Polymorphic, type PolymorphicProps } from "../polymorphic";
 import { createRegisterId } from "../primitives";
-import {
-	MenuGroupContext,
-	type MenuGroupContextValue } from "./menu-group-context";
+import { MenuGroupContext, type MenuGroupContextValue } from "./menu-group-context";
 import { useMenuRootContext } from "./menu-root-context";
 
 export interface MenuGroupOptions {}
 
 export interface MenuGroupCommonProps<T extends HTMLElement = HTMLElement> {
-	id: string;
+  id: string;
 }
 
 export interface MenuGroupRenderProps extends MenuGroupCommonProps {
-	role: "group";
-	"aria-labelledby": string | undefined;
+  "aria-labelledby": string | undefined;
+  role: "group";
 }
 
-export type MenuGroupProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = MenuGroupOptions & Partial<MenuGroupCommonProps<ElementOf<T>>>;
+export type MenuGroupProps<T extends ValidComponent | HTMLElement = HTMLElement> = MenuGroupOptions &
+  Partial<MenuGroupCommonProps<ElementOf<T>>>;
 
 /**
  * A container used to group multiple `Menu.Item`s.
  */
-export function MenuGroup<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, MenuGroupProps<T>>,
-) {
-	const rootContext = useMenuRootContext();
+export function MenuGroup<T extends ValidComponent = "div">(props: PolymorphicProps<T, MenuGroupProps<T>>) {
+  const rootContext = useMenuRootContext();
 
-	const mergedProps = mergeDefaultProps(
-		{
-			id: rootContext.generateId(`group-${createUniqueId()}`) },
-		props as MenuGroupProps,
-	);
+  const mergedProps = mergeDefaultProps(
+    {
+      id: rootContext.generateId(`group-${createUniqueId()}`),
+    },
+    props as MenuGroupProps
+  );
 
-	const [labelId, setLabelId] = createSignal<string>();
+  const [labelId, setLabelId] = createSignal<string>();
 
-	const context: MenuGroupContextValue = {
-		generateId: createGenerateId(() => mergedProps.id!),
-		registerLabelId: createRegisterId(setLabelId) };
+  const context: MenuGroupContextValue = {
+    generateId: createGenerateId(() => mergedProps.id!),
+    registerLabelId: createRegisterId(setLabelId),
+  };
 
-	return (
-		<MenuGroupContext value={context}>
-			<Polymorphic<MenuGroupRenderProps>
-				as="div"
-				role="group"
-				aria-labelledby={labelId()}
-				{...mergedProps}
-			/>
-		</MenuGroupContext>
-	);
+  return (
+    <MenuGroupContext value={context}>
+      <Polymorphic<MenuGroupRenderProps> aria-labelledby={labelId()} as="div" role="group" {...mergedProps} />
+    </MenuGroupContext>
+  );
 }

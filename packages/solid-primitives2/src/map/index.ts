@@ -1,5 +1,5 @@
-import { type Accessor } from "solid-js";
 import { TriggerCache } from "@ec/solid-primitives2/trigger";
+import { type Accessor } from "solid-js";
 
 const $OBJECT = Symbol("track-object");
 

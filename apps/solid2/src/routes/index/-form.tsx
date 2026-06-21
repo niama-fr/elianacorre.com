@@ -31,7 +31,7 @@ export function IndexForm() {
 
   return (
     <form
-      className="flex w-full flex-col items-end gap-4"
+      class="flex w-full flex-col items-end gap-4"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();

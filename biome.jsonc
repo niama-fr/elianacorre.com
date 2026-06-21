@@ -14,7 +14,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useBlockStatements": "off",
         "useConsistentTypeDefinitions": {
@@ -24,5 +24,37 @@
         "noMagicNumbers": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      // These raw wrappers intentionally mirror Kobalte's compound-component namespace API.
+      "includes": [
+        "packages/ui/src/raw/dialog.tsx",
+        "packages/ui/src/raw/popover.tsx",
+        "packages/ui/src/raw/sheet.tsx",
+        "packages/ui2/src/raw/dialog.tsx",
+        "packages/ui2/src/raw/popover.tsx",
+        "packages/ui2/src/raw/sheet.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noNamespaceImport": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/kobalte2/src/**",
+        "packages/solid-presence2/src/**",
+        "packages/solid-prevent-scroll2/src/**",
+        "packages/solid-primitives2/src/**",
+        "packages/unpic-solid2/src/**"
+      ],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ]
 }

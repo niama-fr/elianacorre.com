@@ -1,57 +1,38 @@
+import { mergeDefaultProps } from "@ec/kobalte2/utils";
+import { createEffect, splitProps } from "@ec/kobalte2/utils/solid-compat";
 import type { ValidComponent } from "@solidjs/web";
-import { splitProps, createEffect } from "@ec/kobalte2/utils/solid-compat";
-import {
-	mergeDefaultProps } from "@ec/kobalte2/utils";
-import {
-	onCleanup } from "solid-js";
+import { onCleanup } from "solid-js";
 
-import {
-	type ElementOf,
-	Polymorphic,
-	type PolymorphicProps } from "../polymorphic";
+import { type ElementOf, Polymorphic, type PolymorphicProps } from "../polymorphic";
 import { type PopoverDataSet, usePopoverContext } from "./popover-context";
 
 export interface PopoverDescriptionOptions {}
 
-export interface PopoverDescriptionCommonProps<
-	T extends HTMLElement = HTMLElement,
-> {
-	id: string;
+export interface PopoverDescriptionCommonProps<T extends HTMLElement = HTMLElement> {
+  id: string;
 }
 
-export interface PopoverDescriptionRenderProps
-	extends PopoverDescriptionCommonProps,
-		PopoverDataSet {}
+export interface PopoverDescriptionRenderProps extends PopoverDescriptionCommonProps, PopoverDataSet {}
 
-export type PopoverDescriptionProps<
-	T extends ValidComponent | HTMLElement = HTMLElement,
-> = PopoverDescriptionOptions &
-	Partial<PopoverDescriptionCommonProps<ElementOf<T>>>;
+export type PopoverDescriptionProps<T extends ValidComponent | HTMLElement = HTMLElement> = PopoverDescriptionOptions &
+  Partial<PopoverDescriptionCommonProps<ElementOf<T>>>;
 
 /**
  * An optional accessible description to be announced when the popover is open.
  */
-export function PopoverDescription<T extends ValidComponent = "p">(
-	props: PolymorphicProps<T, PopoverDescriptionProps<T>>,
-) {
-	const context = usePopoverContext();
+export function PopoverDescription<T extends ValidComponent = "p">(props: PolymorphicProps<T, PopoverDescriptionProps<T>>) {
+  const context = usePopoverContext();
 
-	const mergedProps = mergeDefaultProps(
-		{
-			id: context.generateId("description") },
-		props as PopoverDescriptionProps,
-	);
+  const mergedProps = mergeDefaultProps(
+    {
+      id: context.generateId("description"),
+    },
+    props as PopoverDescriptionProps
+  );
 
-	const [local, others] = splitProps(mergedProps, ["id"]);
+  const [local, others] = splitProps(mergedProps, ["id"]);
 
-	createEffect(() => onCleanup(context.registerDescriptionId(local.id)));
+  createEffect(() => onCleanup(context.registerDescriptionId(local.id)));
 
-	return (
-		<Polymorphic<PopoverDescriptionRenderProps>
-			as="p"
-			id={local.id}
-			{...context.dataset()}
-			{...others}
-		/>
-	);
+  return <Polymorphic<PopoverDescriptionRenderProps> as="p" id={local.id} {...context.dataset()} {...others} />;
 }

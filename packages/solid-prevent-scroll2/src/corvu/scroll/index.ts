@@ -1,3 +1,3 @@
-import { getScrollAtLocation } from './lib'
+import { getScrollAtLocation } from "./lib";
 
-export { getScrollAtLocation }
+export { getScrollAtLocation };

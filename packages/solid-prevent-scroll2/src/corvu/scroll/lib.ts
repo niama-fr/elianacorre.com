@@ -1,4 +1,4 @@
-import type { Axis } from '../types'
+import type { Axis } from "../types";
 
 /**
  * Returns the scroll dimensions of the given element on the given axis.
@@ -7,17 +7,14 @@ import type { Axis } from '../types'
  * @param axis - The axis to check for.
  * @returns The scroll dimensions of the element. `[clientSize, scrollOffset, scrollSize]`
  */
-const getScrollDimensions = (
-  element: HTMLElement,
-  axis: Axis,
-): [number, number, number] => {
+const getScrollDimensions = (element: HTMLElement, axis: Axis): [number, number, number] => {
   switch (axis) {
-    case 'x':
-      return [element.clientWidth, element.scrollLeft, element.scrollWidth]
-    case 'y':
-      return [element.clientHeight, element.scrollTop, element.scrollHeight]
+    case "x":
+      return [element.clientWidth, element.scrollLeft, element.scrollWidth];
+    case "y":
+      return [element.clientHeight, element.scrollTop, element.scrollHeight];
   }
-}
+};
 
 /**
  * Returns true if the given element is a scroll container on the given axis. Scroll containers are elements with `overflow` set to `auto` or `scroll`.
@@ -26,17 +23,17 @@ const getScrollDimensions = (
  * @param axis - The axis to check for.
  * @returns Whether the element is a scroll container.
  */
-const isScrollContainer = (element: HTMLElement, axis: Axis | 'both') => {
-  const styles = getComputedStyle(element)
-  const overflow = axis === 'x' ? styles.overflowX : styles.overflowY
+const isScrollContainer = (element: HTMLElement, axis: Axis | "both") => {
+  const styles = getComputedStyle(element);
+  const overflow = axis === "x" ? styles.overflowX : styles.overflowY;
 
   return (
-    overflow === 'auto' ||
-    overflow === 'scroll' ||
+    overflow === "auto" ||
+    overflow === "scroll" ||
     // The HTML element is a scroll container if it has overflow visible
-    (element.tagName === 'HTML' && overflow === 'visible')
-  )
-}
+    (element.tagName === "HTML" && overflow === "visible")
+  );
+};
 
 /**
  * Returns the total scroll available at the given location.
@@ -46,45 +43,32 @@ const isScrollContainer = (element: HTMLElement, axis: Axis | 'both') => {
  * @param stopAt - The HTMLElement to stop at when searching up the tree for scrollable elements. Defaults to the body element. Works with SolidJS portals by using their `_$host` property.
  * @returns The total scroll available at the given location. `[availableScroll, availableScrollTop]`
  */
-const getScrollAtLocation = (
-  location: HTMLElement,
-  axis: Axis,
-  stopAt?: HTMLElement,
-) => {
-  const directionFactor =
-    axis === 'x' && window.getComputedStyle(location).direction === 'rtl'
-      ? -1
-      : 1
+const getScrollAtLocation = (location: HTMLElement, axis: Axis, stopAt?: HTMLElement) => {
+  const directionFactor = axis === "x" && window.getComputedStyle(location).direction === "rtl" ? -1 : 1;
 
-  let currentElement: HTMLElement | null = location
-  let availableScroll = 0
-  let availableScrollTop = 0
-  let wrapperReached = false
+  let currentElement: HTMLElement | null = location;
+  let availableScroll = 0;
+  let availableScrollTop = 0;
+  let wrapperReached = false;
 
   do {
-    const [clientSize, scrollOffset, scrollSize] = getScrollDimensions(
-      currentElement,
-      axis,
-    )
+    const [clientSize, scrollOffset, scrollSize] = getScrollDimensions(currentElement, axis);
 
-    const scrolled = scrollSize - clientSize - directionFactor * scrollOffset
+    const scrolled = scrollSize - clientSize - directionFactor * scrollOffset;
 
-    if (
-      (scrollOffset !== 0 || scrolled !== 0) &&
-      isScrollContainer(currentElement, axis)
-    ) {
-      availableScroll += scrolled
-      availableScrollTop += scrollOffset
+    if ((scrollOffset !== 0 || scrolled !== 0) && isScrollContainer(currentElement, axis)) {
+      availableScroll += scrolled;
+      availableScrollTop += scrollOffset;
     }
     if (currentElement === (stopAt ?? document.documentElement)) {
-      wrapperReached = true
+      wrapperReached = true;
     } else {
       // @ts-expect-error: _$host is a custom SolidJS property
-      currentElement = currentElement._$host ?? currentElement.parentElement
+      currentElement = currentElement._$host ?? currentElement.parentElement;
     }
-  } while (currentElement && !wrapperReached)
+  } while (currentElement && !wrapperReached);
 
-  return [availableScroll, availableScrollTop] as [number, number]
-}
+  return [availableScroll, availableScrollTop] as [number, number];
+};
 
-export { getScrollAtLocation }
+export { getScrollAtLocation };

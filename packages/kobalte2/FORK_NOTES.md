@@ -18,3 +18,7 @@ Current state:
 - Source is vendored but not yet adapted for Solid 2 runtime semantics.
 - Imports of `@kobalte/utils` were rewritten to `@ec/kobalte2/utils`.
 - Solid Primitives, `solid-presence`, and `solid-prevent-scroll` imports now resolve to local workspace forks.
+
+## Local quality policy
+
+Ultracite formats this source, but Biome semantic lint rules are disabled for this vendored directory. The upstream public API and type shapes intentionally use patterns that conflict with this repository's first-party rules. Project-owned adapters and consumers remain fully linted.

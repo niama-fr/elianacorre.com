@@ -1,13 +1,11 @@
-import { createSignal, getObserver, onCleanup, type SignalOptions, DEV } from "solid-js";
-import { isServer } from "@solidjs/web";
 import { noop } from "@ec/solid-primitives2/utils";
+import { isServer } from "@solidjs/web";
+import { createSignal, DEV, getObserver, onCleanup, type SignalOptions } from "solid-js";
 
 export type Trigger = [track: VoidFunction, dirty: VoidFunction];
 
-const triggerOptions: SignalOptions<any> =
-  !isServer && DEV ? { equals: false, name: "trigger" } : { equals: false };
-const triggerCacheOptions: SignalOptions<any> =
-  !isServer && DEV ? { equals: false, name: "trigger-cache" } : triggerOptions;
+const triggerOptions: SignalOptions<any> = !isServer && DEV ? { equals: false, name: "trigger" } : { equals: false };
+const triggerCacheOptions: SignalOptions<any> = !isServer && DEV ? { equals: false, name: "trigger-cache" } : triggerOptions;
 
 /**
  * Set listeners in reactive computations and then trigger them when you want.
@@ -100,7 +98,7 @@ export class TriggerCache<T> {
  * dirtyAll()
  */
 export function createTriggerCache<T>(
-  mapConstructor: WeakMapConstructor | MapConstructor = Map,
+  mapConstructor: WeakMapConstructor | MapConstructor = Map
 ): [track: (key: T) => void, dirty: (key: T) => void, dirtyAll: () => void] {
   const map = new TriggerCache(mapConstructor);
   return [map.track.bind(map), map.dirty.bind(map), map.dirtyAll.bind(map)];

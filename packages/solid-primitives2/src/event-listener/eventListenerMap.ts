@@ -1,7 +1,7 @@
 import { type AnyFunction, entries, type Many, type MaybeAccessor } from "@ec/solid-primitives2/utils";
-import { createEventListener } from "./eventListener.js";
-import type { EventMapOf, TargetWithEventMap, EventListenerOptions } from "./types.js";
 import { isServer } from "@solidjs/web";
+import { createEventListener } from "./eventListener.js";
+import type { EventListenerOptions, EventMapOf, TargetWithEventMap } from "./types.js";
 
 export type EventHandlersMap<EventMap> = {
   [EventName in keyof EventMap]: (event: EventMap[EventName]) => void;
@@ -30,23 +30,19 @@ export function createEventListenerMap<
   Target extends TargetWithEventMap,
   EventMap extends EventMapOf<Target>,
   HandlersMap extends Partial<EventHandlersMap<EventMap>>,
->(
-  target: MaybeAccessor<Many<Target>>,
-  handlersMap: HandlersMap,
-  options?: EventListenerOptions,
-): void;
+>(target: MaybeAccessor<Many<Target>>, handlersMap: HandlersMap, options?: EventListenerOptions): void;
 
 // Custom Events
 export function createEventListenerMap<EventMap extends Record<string, Event>>(
   target: MaybeAccessor<Many<EventTarget>>,
   handlersMap: Partial<EventHandlersMap<EventMap>>,
-  options?: EventListenerOptions,
+  options?: EventListenerOptions
 ): void;
 
 export function createEventListenerMap(
   targets: MaybeAccessor<Many<EventTarget>>,
   handlersMap: Record<string, AnyFunction | undefined>,
-  options?: EventListenerOptions,
+  options?: EventListenerOptions
 ): void {
   if (isServer) {
     return;

@@ -15,7 +15,6 @@ export type { OverrideComponentProps, OverrideProps } from "@ec/kobalte2/utils";
 
 type EmptyProps = Record<never, never>;
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type ElementOf<T> = T extends HTMLElement ? T : T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : any;
 
 export type PolymorphicAttributes<T extends ValidComponent> = { as?: T | keyof JSX.HTMLElementTags };

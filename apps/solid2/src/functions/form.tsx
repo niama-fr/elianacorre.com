@@ -7,6 +7,11 @@ import { zContactCreate } from "@/lib/domain";
 export const createContact = createServerFn({ method: "POST" })
   .inputValidator(zContactCreate)
   .handler(async ({ data }) => {
-    const convex = new ConvexHttpClient(process.env.VITE_CONVEX_URL!);
+    const convexUrl = process.env.VITE_CONVEX_URL;
+    if (!convexUrl) {
+      throw new Error("VITE_CONVEX_URL is required");
+    }
+
+    const convex = new ConvexHttpClient(convexUrl);
     await convex.mutation(api.contacts.create, data);
   });

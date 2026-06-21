@@ -8,11 +8,11 @@ const Textarea = (props: TextareaProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
     <textarea
-      data-slot="textarea"
       class={cn(
         "field-sizing-content z-textarea flex min-h-16 w-full outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-        local.class,
+        local.class
       )}
+      data-slot="textarea"
       {...others}
     />
   );

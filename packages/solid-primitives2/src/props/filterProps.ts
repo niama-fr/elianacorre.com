@@ -20,9 +20,7 @@ export function filterProps<T extends object>(props: T, predicate: (key: keyof T
   return new Proxy(
     {
       get(property: string | number | symbol) {
-        return property in props && predicate(property as keyof T)
-          ? props[property as keyof T]
-          : undefined;
+        return property in props && predicate(property as keyof T) ? props[property as keyof T] : undefined;
       },
       has(property: string | number | symbol) {
         return property in props && predicate(property as keyof T);
@@ -31,7 +29,7 @@ export function filterProps<T extends object>(props: T, predicate: (key: keyof T
         return Object.keys(props).filter(predicate as (key: string) => boolean);
       },
     },
-    propTraps,
+    propTraps
   ) as unknown as T;
 }
 
@@ -53,19 +51,16 @@ export function filterProps<T extends object>(props: T, predicate: (key: keyof T
  * <div {...dataProps} />
  * ```
  */
-export function createPropsPredicate<T extends object>(
-  props: T,
-  predicate: (key: keyof T) => boolean,
-): (key: keyof T) => boolean {
+export function createPropsPredicate<T extends object>(props: T, predicate: (key: keyof T) => boolean): (key: keyof T) => boolean {
   const cache = createMemo(
     (): Partial<Record<keyof T, boolean>> => {
       // track prop names — adding/removing keys to dynamic props will trigger this
       Object.keys(props);
       return {};
     },
-    { equals: false },
+    { equals: false }
   );
-  return key => {
+  return (key) => {
     const cacheRef = cache();
     const cached = cacheRef[key];
     if (cached !== undefined) return cached;

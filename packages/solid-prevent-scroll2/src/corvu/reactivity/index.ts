@@ -1,6 +1,6 @@
-import { access, chain, mergeRefs, some } from './lib'
-import type { MaybeAccessor, MaybeAccessorValue } from './types'
+import { access, chain, mergeRefs, some } from "./lib";
+import type { MaybeAccessor, MaybeAccessorValue } from "./types";
 
-export type { MaybeAccessor, MaybeAccessorValue }
+export type { MaybeAccessor, MaybeAccessorValue };
 
-export { access, chain, mergeRefs, some }
+export { access, chain, mergeRefs, some };

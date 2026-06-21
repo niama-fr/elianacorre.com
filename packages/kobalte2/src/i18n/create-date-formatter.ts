@@ -6,14 +6,14 @@
  * https://github.com/adobe/react-spectrum/blob/15e101b74966bd5eb719c6529ce71ce57eaed430/packages/@react-aria/i18n/src/useDateFormatter.ts
  */
 
+import { access, type MaybeAccessor } from "@ec/kobalte2/utils";
 import { DateFormatter } from "@internationalized/date";
-import { type MaybeAccessor, access } from "@ec/kobalte2/utils";
 import { type Accessor, createMemo } from "solid-js";
 
 import { useLocale } from "./i18n-provider";
 
 export interface DateFormatterOptions extends Intl.DateTimeFormatOptions {
-	calendar?: string;
+  calendar?: string;
 }
 
 /**
@@ -21,10 +21,8 @@ export interface DateFormatterOptions extends Intl.DateTimeFormatOptions {
  * and handles caching of the date formatter for performance.
  * @param options - Formatting options.
  */
-export function createDateFormatter(
-	options: MaybeAccessor<DateFormatterOptions>,
-): Accessor<DateFormatter> {
-	const { locale } = useLocale();
+export function createDateFormatter(options: MaybeAccessor<DateFormatterOptions>): Accessor<DateFormatter> {
+  const { locale } = useLocale();
 
-	return createMemo(() => new DateFormatter(locale(), access(options)));
+  return createMemo(() => new DateFormatter(locale(), access(options)));
 }

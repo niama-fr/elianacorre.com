@@ -1,27 +1,20 @@
+import { isServer } from "@solidjs/web";
 import {
-  getOwner,
-  onCleanup,
-  createSignal,
   type Accessor,
-  untrack,
   type ComputeFunction,
+  createSignal,
+  DEV,
   type EffectFunction,
+  getOwner,
+  isEqual,
   type NoInfer,
+  onCleanup,
+  onSettled,
   type SignalOptions,
   sharedConfig,
-  onSettled,
-  DEV,
-  isEqual,
+  untrack,
 } from "solid-js";
-import { isServer } from "@solidjs/web";
-import type {
-  AnyClass,
-  MaybeAccessor,
-  MaybeAccessorValue,
-  Noop,
-  AnyObject,
-  AnyFunction,
-} from "./types.js";
+import type { AnyClass, AnyFunction, AnyObject, MaybeAccessor, MaybeAccessorValue, Noop } from "./types.js";
 
 export * from "./types.js";
 
@@ -50,8 +43,7 @@ const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }
 /**
  * Check if the value is an instance of ___
  */
-export const ofClass = (v: any, c: AnyClass): boolean =>
-  v instanceof c || (v && v.constructor === c);
+export const ofClass = (v: any, c: AnyClass): boolean => v instanceof c || (v && v.constructor === c);
 
 /** Check if value is typeof "object" or "function" */
 export function isObject(value: any): value is AnyObject {
@@ -59,8 +51,7 @@ export function isObject(value: any): value is AnyObject {
 }
 
 export const isNonNullable = <T>(i: T): i is NonNullable<T> => i != null;
-export const filterNonNullable = <T extends readonly unknown[]>(arr: T): NonNullable<T[number]>[] =>
-  arr.filter(isNonNullable);
+export const filterNonNullable = <T extends readonly unknown[]>(arr: T): NonNullable<T[number]>[] => arr.filter(isNonNullable);
 
 export const compare = (a: any, b: any): number => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -84,9 +75,7 @@ export function chain<Args extends [] | any[]>(callbacks: {
 /**
  * Returns a function that will call all functions in the reversed order with the same arguments.
  */
-export function reverseChain<Args extends [] | any[]>(
-  callbacks: (((...args: Args) => any) | undefined)[],
-): (...args: Args) => void {
+export function reverseChain<Args extends [] | any[]>(callbacks: (((...args: Args) => any) | undefined)[]): (...args: Args) => void {
   return (...args: Args) => {
     for (let i = callbacks.length - 1; i >= 0; i--) {
       const callback = callbacks[i];
@@ -117,27 +106,21 @@ export const asArray = <T>(value: T): (T extends any[] ? T[number] : NonNullable
  * const list = [1, 2, () => 3)] // T: MaybeAccessor<number>[]
  * const newList = accessArray(list) // T: number[]
  */
-export const accessArray = <A extends MaybeAccessor<any>>(
-  list: readonly A[],
-): MaybeAccessorValue<A>[] => list.map(v => access(v));
+export const accessArray = <A extends MaybeAccessor<any>>(list: readonly A[]): MaybeAccessorValue<A>[] => list.map((v) => access(v));
 
 /**
  * Run the function if the accessed value is not `undefined` nor `null`
  * @param value
  * @param fn
  */
-export const withAccess = <T, A extends MaybeAccessor<T>, V = MaybeAccessorValue<A>>(
-  value: A,
-  fn: (value: NonNullable<V>) => void,
-) => {
+export const withAccess = <T, A extends MaybeAccessor<T>, V = MaybeAccessorValue<A>>(value: A, fn: (value: NonNullable<V>) => void) => {
   const _value = access(value);
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   typeof _value != null && fn(_value as NonNullable<V>);
 };
 
-export const asAccessor = <A extends MaybeAccessor<unknown>>(
-  v: A,
-): Accessor<MaybeAccessorValue<A>> => (typeof v === "function" ? (v as any) : () => v as any);
+export const asAccessor = <A extends MaybeAccessor<unknown>>(v: A): Accessor<MaybeAccessorValue<A>> =>
+  typeof v === "function" ? (v as any) : () => v as any;
 
 /** If value is a function – call it with a given arguments – otherwise get the value as is */
 export function accessWith<T>(
@@ -157,22 +140,22 @@ export function accessWith<T>(
 export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
-  initialValue: Next,
+  initialValue: Next
 ): ComputeFunction<undefined | NoInfer<Next>, NoInfer<Next>>;
 export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
-  initialValue?: undefined,
+  initialValue?: undefined
 ): ComputeFunction<undefined | NoInfer<Next>>;
 export function defer<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
   fn: (input: S, prevInput: S, prev: undefined | NoInfer<Prev>) => Next,
-  initialValue?: Next,
+  initialValue?: Next
 ): ComputeFunction<undefined | NoInfer<Next>> {
   const isArray = Array.isArray(deps);
   let prevInput: S;
   let shouldDefer = true;
-  return prevValue => {
+  return (prevValue) => {
     let input: S;
     if (isArray) {
       input = Array(deps.length) as S;
@@ -202,9 +185,7 @@ export const keys = Object.keys as <T extends object>(object: T) => (keyof T)[];
 /**
  * Solid's `onCleanup` that doesn't warn in development if used outside of a component.
  */
-export const tryOnCleanup: typeof onCleanup = isDev
-  ? fn => (getOwner() ? onCleanup(fn) : fn)
-  : onCleanup;
+export const tryOnCleanup: typeof onCleanup = isDev ? (fn) => (getOwner() ? onCleanup(fn) : fn) : onCleanup;
 
 export const createCallbackStack = <A0 = void, A1 = void, A2 = void, A3 = void>(): {
   push: (...callbacks: ((arg0: A0, arg1: A1, arg2: A2, arg3: A3) => void)[]) => void;
@@ -216,7 +197,7 @@ export const createCallbackStack = <A0 = void, A1 = void, A2 = void, A3 = void>(
   return {
     push: (...callbacks) => stack.push(...callbacks),
     execute(arg0, arg1, arg2, arg3) {
-      stack.forEach(cb => cb(arg0, arg1, arg2, arg3));
+      stack.forEach((cb) => cb(arg0, arg1, arg2, arg3));
       clear();
     },
     clear,
@@ -250,11 +231,7 @@ export function createMicrotask<A extends any[] | []>(fn: (...a: A) => void): (.
  * ```
  * @see {@link createSignal}
  */
-export function createHydratableSignal<T>(
-  serverValue: T,
-  update: () => T,
-  options?: SignalOptions<T>,
-): ReturnType<typeof createSignal<T>> {
+export function createHydratableSignal<T>(serverValue: T, update: () => T, options?: SignalOptions<T>): ReturnType<typeof createSignal<T>> {
   if (isServer) {
     return createSignal(() => serverValue, options as never) as ReturnType<typeof createSignal<T>>;
   }
@@ -283,7 +260,7 @@ export function handleDiffArray<T>(
   current: readonly T[],
   prev: readonly T[],
   handleAdded: (item: T) => void,
-  handleRemoved: (item: T) => void,
+  handleRemoved: (item: T) => void
 ): void {
   const currLength = current.length;
   const prevLength = prev.length;
@@ -340,8 +317,8 @@ export const json = <T>(raw: string): T => JSON.parse(raw) as T;
 export const ndjson = <T>(raw: string): T[] =>
   raw
     .split("\n")
-    .filter(line => line !== "")
-    .map(line => JSON.parse(line) as T);
+    .filter((line) => line !== "")
+    .map((line) => JSON.parse(line) as T);
 
 /**
  * Split a string into individual lines, returning a `string[]`. Empty lines are filtered out.
@@ -351,7 +328,7 @@ export const ndjson = <T>(raw: string): T[] =>
  * // data() === ["line one", "line two"]
  * ```
  */
-export const lines = (raw: string): string[] => raw.split("\n").filter(line => line !== "");
+export const lines = (raw: string): string[] => raw.split("\n").filter((line) => line !== "");
 
 /**
  * Parse a string as a number using `Number()` semantics.
@@ -376,10 +353,7 @@ export const number = (raw: string): number => Number(raw);
  */
 export function safe<T>(transform: (raw: string) => T): (raw: string) => T | undefined;
 export function safe<T>(transform: (raw: string) => T, fallback: T): (raw: string) => T;
-export function safe<T>(
-  transform: (raw: string) => T,
-  fallback?: T,
-): (raw: string) => T | undefined {
+export function safe<T>(transform: (raw: string) => T, fallback?: T): (raw: string) => T | undefined {
   return (raw: string): T | undefined => {
     try {
       return transform(raw);

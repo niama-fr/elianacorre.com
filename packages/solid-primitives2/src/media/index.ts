@@ -1,9 +1,9 @@
-import { type Accessor } from "solid-js";
-import { isServer } from "@solidjs/web";
 import { makeEventListener } from "@ec/solid-primitives2/event-listener";
-import { entries, noop, createHydratableSignal } from "@ec/solid-primitives2/utils";
-import { createHydratableStaticStore } from "@ec/solid-primitives2/static-store";
 import { createHydratableSingletonRoot } from "@ec/solid-primitives2/rootless";
+import { createHydratableStaticStore } from "@ec/solid-primitives2/static-store";
+import { createHydratableSignal, entries, noop } from "@ec/solid-primitives2/utils";
+import { isServer } from "@solidjs/web";
+import { type Accessor } from "solid-js";
 
 /**
  * attaches a MediaQuery listener to window, listeneing to changes to provided query
@@ -17,10 +17,7 @@ import { createHydratableSingletonRoot } from "@ec/solid-primitives2/rootless";
  * // remove listeners (will happen also on cleanup)
  * clear()
  */
-export function makeMediaQueryListener(
-  query: string | MediaQueryList,
-  callback: (e: MediaQueryListEvent) => void,
-): VoidFunction {
+export function makeMediaQueryListener(query: string | MediaQueryList, callback: (e: MediaQueryListEvent) => void): VoidFunction {
   if (isServer) {
     return noop;
   }
@@ -80,9 +77,7 @@ export function createPrefersDark(serverFallback?: boolean) {
  *    prefersDark() // => boolean
  * });
  */
-export const usePrefersDark: () => Accessor<boolean> = /*#__PURE__*/ createHydratableSingletonRoot(
-  createPrefersDark.bind(void 0, false),
-);
+export const usePrefersDark: () => Accessor<boolean> = /*#__PURE__*/ createHydratableSingletonRoot(createPrefersDark.bind(void 0, false));
 
 export type Breakpoints = Record<string, string>;
 
@@ -91,12 +86,12 @@ export type Matches<T extends Breakpoints> = {
 } & { key: keyof T };
 
 export interface BreakpointOptions<T extends Breakpoints> {
-  /** If true watches changes and reports state reactively */
-  watchChange?: boolean;
   /** Default value of `match` when `window.matchMedia` is not available like during SSR & legacy browsers */
   fallbackState?: Matches<T>;
   /** Use `min-width` media query for mobile first or `max-width` for desktop first. Defaults to `min-width`  */
   mediaFeature?: string;
+  /** If true watches changes and reports state reactively */
+  watchChange?: boolean;
 }
 
 const getEmptyMatchesFromBreakpoints = <T extends Breakpoints>(breakpoints: T): Matches<T> =>
@@ -105,7 +100,7 @@ const getEmptyMatchesFromBreakpoints = <T extends Breakpoints>(breakpoints: T): 
       matches[key] = false;
       return matches;
     },
-    {} as Record<keyof T, boolean>,
+    {} as Record<keyof T, boolean>
   ) as Matches<T>;
 
 /**
@@ -126,15 +121,11 @@ const getEmptyMatchesFromBreakpoints = <T extends Breakpoints>(breakpoints: T): 
  * console.log(matches.lg);
  * ```
  */
-export function createBreakpoints<T extends Breakpoints>(
-  breakpoints: T,
-  options: BreakpointOptions<T> = {},
-): Matches<T> {
-  const fallback = Object.defineProperty(
-    options.fallbackState ?? getEmptyMatchesFromBreakpoints(breakpoints),
-    "key",
-    { enumerable: false, get: () => Object.keys(breakpoints).pop() },
-  );
+export function createBreakpoints<T extends Breakpoints>(breakpoints: T, options: BreakpointOptions<T> = {}): Matches<T> {
+  const fallback = Object.defineProperty(options.fallbackState ?? getEmptyMatchesFromBreakpoints(breakpoints), "key", {
+    enumerable: false,
+    get: () => Object.keys(breakpoints).pop(),
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (isServer || !window.matchMedia) return fallback;
@@ -147,10 +138,7 @@ export function createBreakpoints<T extends Breakpoints>(
     entries(breakpoints).forEach(([token, width]: [t: keyof T, w: string]) => {
       const mql = window.matchMedia(`(${mediaFeature}: ${width})`);
       matches[token] = mql.matches;
-      if (watchChange)
-        makeEventListener(mql, "change", (e: MediaQueryListEvent) =>
-          setMatches(token, e.matches as any),
-        );
+      if (watchChange) makeEventListener(mql, "change", (e: MediaQueryListEvent) => setMatches(token, e.matches as any));
     });
 
     return matches as Matches<T>;

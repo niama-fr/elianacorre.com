@@ -1,5 +1,5 @@
-import { withObjectCopy, shallowObjectCopy } from "./copy.js";
 import { type Modify } from "../index.js";
+import { shallowObjectCopy, withObjectCopy } from "./copy.js";
 
 /**
  * Create a new subset object without the provided keys
@@ -11,7 +11,7 @@ import { type Modify } from "../index.js";
  * ```
  */
 export const omit = <O extends object, K extends keyof O>(object: O, ...keys: K[]): Omit<O, K> =>
-  withObjectCopy(object, object => keys.forEach(key => delete object[key]));
+  withObjectCopy(object, (object) => keys.forEach((key) => delete object[key]));
 
 /**
  * Create a new subset object with only the provided keys
@@ -28,24 +28,20 @@ export const pick = <O extends object, K extends keyof O>(object: O, ...keys: K[
       if (k in object) n[k] = object[k];
       return n;
     },
-    {} as Pick<O, K>,
+    {} as Pick<O, K>
   );
 
 /**
  * Get a single property value of an object by specifying a path to it.
  */
 export function get<O extends object, K extends keyof O>(obj: O, key: K): O[K];
-export function get<O extends object, K1 extends keyof O, K2 extends keyof O[K1]>(
+export function get<O extends object, K1 extends keyof O, K2 extends keyof O[K1]>(obj: O, k1: K1, k2: K2): O[K1][K2];
+export function get<O extends object, K1 extends keyof O, K2 extends keyof O[K1], K3 extends keyof O[K1][K2]>(
   obj: O,
   k1: K1,
   k2: K2,
-): O[K1][K2];
-export function get<
-  O extends object,
-  K1 extends keyof O,
-  K2 extends keyof O[K1],
-  K3 extends keyof O[K1][K2],
->(obj: O, k1: K1, k2: K2, k3: K3): O[K1][K2][K3];
+  k3: K3
+): O[K1][K2][K3];
 export function get<
   O extends object,
   K1 extends keyof O,
@@ -89,10 +85,7 @@ export function get(obj: any, ...keys: (string | number | symbol)[]) {
  * @returns array of subset objects
  */
 
-export function split<T extends object, K extends keyof T>(
-  object: T,
-  ...keys: K[]
-): [Pick<T, K>, Omit<T, K>];
+export function split<T extends object, K extends keyof T>(object: T, ...keys: K[]): [Pick<T, K>, Omit<T, K>];
 export function split<T extends object, K1 extends keyof T, K2 extends keyof T>(
   object: T,
   ...keys: [K1[], K2[]]
@@ -101,34 +94,14 @@ export function split<T extends object, K1 extends keyof T, K2 extends keyof T, 
   object: T,
   ...keys: [K1[], K2[], K3[]]
 ): [Pick<T, K1>, Pick<T, K2>, Pick<T, K3>, Omit<T, K1 | K2 | K3>];
-export function split<
-  T extends object,
-  K1 extends keyof T,
-  K2 extends keyof T,
-  K3 extends keyof T,
-  K4 extends keyof T,
->(
+export function split<T extends object, K1 extends keyof T, K2 extends keyof T, K3 extends keyof T, K4 extends keyof T>(
   object: T,
   ...keys: [K1[], K2[], K3[], K4[]]
 ): [Pick<T, K1>, Pick<T, K2>, Pick<T, K3>, Pick<T, K4>, Omit<T, K1 | K2 | K3 | K4>];
-export function split<
-  T extends object,
-  K1 extends keyof T,
-  K2 extends keyof T,
-  K3 extends keyof T,
-  K4 extends keyof T,
-  K5 extends keyof T,
->(
+export function split<T extends object, K1 extends keyof T, K2 extends keyof T, K3 extends keyof T, K4 extends keyof T, K5 extends keyof T>(
   object: T,
   ...keys: [K1[], K2[], K3[], K4[], K5[]]
-): [
-  Pick<T, K1>,
-  Pick<T, K2>,
-  Pick<T, K3>,
-  Pick<T, K4>,
-  Pick<T, K5>,
-  Omit<T, K1 | K2 | K3 | K4 | K5>,
-];
+): [Pick<T, K1>, Pick<T, K2>, Pick<T, K3>, Pick<T, K4>, Pick<T, K5>, Omit<T, K1 | K2 | K3 | K4 | K5>];
 export function split<T extends object>(object: T, ...list: (keyof T)[][] | (keyof T)[]): any {
   const _list = (typeof list[0] === "string" ? [list] : list) as (keyof T)[][];
   const copy = shallowObjectCopy(object);
@@ -151,32 +124,28 @@ export function split<T extends object>(object: T, ...list: (keyof T)[][] | (key
  * const d = merge(a, b, c)
  */
 export function merge<A extends object, B extends object>(a: A, b: B): Modify<A, B>;
-export function merge<A extends object, B extends object, C extends object>(
-  a: A,
-  b: B,
-  c: C,
-): Modify<Modify<A, B>, C>;
+export function merge<A extends object, B extends object, C extends object>(a: A, b: B, c: C): Modify<Modify<A, B>, C>;
 export function merge<A extends object, B extends object, C extends object, D extends object>(
   a: A,
   b: B,
   c: C,
-  d: D,
+  d: D
 ): Modify<Modify<Modify<A, B>, C>, D>;
-export function merge<
-  A extends object,
-  B extends object,
-  C extends object,
-  D extends object,
-  E extends object,
->(a: A, b: B, c: C, d: D, e: E): Modify<Modify<Modify<Modify<A, B>, C>, D>, E>;
-export function merge<
-  A extends object,
-  B extends object,
-  C extends object,
-  D extends object,
-  E extends object,
-  F extends object,
->(a: A, b: B, c: C, d: D, e: E, f: F): Modify<Modify<Modify<Modify<Modify<A, B>, C>, D>, E>, F>;
+export function merge<A extends object, B extends object, C extends object, D extends object, E extends object>(
+  a: A,
+  b: B,
+  c: C,
+  d: D,
+  e: E
+): Modify<Modify<Modify<Modify<A, B>, C>, D>, E>;
+export function merge<A extends object, B extends object, C extends object, D extends object, E extends object, F extends object>(
+  a: A,
+  b: B,
+  c: C,
+  d: D,
+  e: E,
+  f: F
+): Modify<Modify<Modify<Modify<Modify<A, B>, C>, D>, E>, F>;
 export function merge(...objects: object[]) {
   const result = {};
   for (const obj of objects) {

@@ -1,5 +1,5 @@
-import createPreventScroll from './preventScroll'
+import createPreventScroll from "./preventScroll";
 
-export type { MaybeAccessor } from './corvu/reactivity'
+export type { MaybeAccessor } from "./corvu/reactivity";
 
-export default createPreventScroll
+export default createPreventScroll;

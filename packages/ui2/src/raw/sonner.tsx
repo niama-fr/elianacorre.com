@@ -9,9 +9,7 @@ const Toaster: Component<ToasterProps> = (props) => {
   const { colorMode } = useColorMode();
   return (
     <Sonner
-      theme={colorMode()}
       class="toaster group"
-      position="top-center"
       icons={{
         success: <CircleCheck class="size-4" />,
         info: <Info class="size-4" />,
@@ -19,6 +17,7 @@ const Toaster: Component<ToasterProps> = (props) => {
         error: <OctagonX class="size-4" />,
         loading: <LoaderCircle class="size-4 animate-spin" />,
       }}
+      position="top-center"
       style={
         {
           "--normal-bg": "var(--popover)",
@@ -27,6 +26,7 @@ const Toaster: Component<ToasterProps> = (props) => {
           "--border-radius": "var(--radius)",
         } as JSX.CSSProperties
       }
+      theme={colorMode()}
       {...props}
     />
   );

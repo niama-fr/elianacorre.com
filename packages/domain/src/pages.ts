@@ -52,7 +52,6 @@ export const readIndexPage = () => ({
     sentence: `" Don’t die with your song still inside you"`,
   },
   works: {
-    // biome-ignore lint/style/noMagicNumbers: off
     items: readLastWorks(3),
     title: ["Mes dernières ", "créations"],
   },
