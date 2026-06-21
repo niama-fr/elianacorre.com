@@ -1,10 +1,8 @@
-import type { Accessor, Setter } from "solid-js";
 import type { JSX } from "@solidjs/web";
-
-export type { EffectOptions } from "solid-js";
+import type { Accessor, Setter } from "solid-js";
 
 // TODO delete in next major version
-export type { ResolvedChildren } from "solid-js";
+export type { EffectOptions, ResolvedChildren } from "solid-js";
 export type ResolvedJSXElement = JSX.Element;
 
 /**
@@ -41,14 +39,12 @@ export type MaybeAccessor<T> = T | Accessor<T>;
  * // => string | void
  * ```
  */
-export type MaybeAccessorValue<T extends MaybeAccessor<any>> = T extends () => any
-  ? ReturnType<T>
-  : T;
+export type MaybeAccessorValue<T extends MaybeAccessor<any>> = T extends () => any ? ReturnType<T> : T;
 
 export type OnAccessEffectFunction<S, Prev, Next extends Prev = Prev> = (
   input: AccessReturnTypes<S>,
   prevInput: AccessReturnTypes<S>,
-  v: Prev,
+  v: Prev
 ) => Next;
 
 export type AccessReturnTypes<S> = S extends MaybeAccessor<any>[]
@@ -62,11 +58,7 @@ export type Modify<T, R> = Omit<T, keyof R> & R;
 
 /** Allows to make nested overwrites to an interface */
 export type ModifyDeep<A extends AnyObject, B extends DeepPartialAny<A>> = {
-  [K in keyof A]: B[K] extends never
-    ? A[K]
-    : B[K] extends AnyObject
-      ? ModifyDeep<A[K], B[K]>
-      : B[K];
+  [K in keyof A]: B[K] extends never ? A[K] : B[K] extends AnyObject ? ModifyDeep<A[K], B[K]> : B[K];
 } & (A extends AnyObject ? Omit<B, keyof A> : A);
 
 /** Makes each property optional and turns each leaf property into any, allowing for type overrides by narrowing any. */
@@ -85,16 +77,10 @@ export type RequiredKeys<T> = keyof {
 };
 
 /** Remove the first item of a tuple [1, 2, 3, 4] => [2, 3, 4] */
-export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: infer U) => void
-  ? U
-  : never;
+export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: infer U) => void ? U : never;
 
 /** `A | B => A & B` */
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
-  ? I
-  : never;
+export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 
 export type ExtractIfPossible<T, U> = Extract<T, U> extends never ? U : Extract<T, U>;
 

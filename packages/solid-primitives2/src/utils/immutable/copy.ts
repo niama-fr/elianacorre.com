@@ -37,6 +37,4 @@ export const withObjectCopy = <T extends object>(object: T, mutator: (copy: T) =
  * @returns changed object copy
  */
 export const withCopy = <T extends object>(source: T, mutator: (copy: T) => void): T =>
-  Array.isArray(source)
-    ? (withArrayCopy(source, mutator as any) as any)
-    : withObjectCopy(source, mutator);
+  Array.isArray(source) ? (withArrayCopy(source, mutator as any) as any) : withObjectCopy(source, mutator);

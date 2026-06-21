@@ -76,9 +76,7 @@ export function createScrollPosition(target?: Accessor<Element | Window | undefi
     getTargetPos = isFn
       ? () => getScrollPosition((target as Extract<typeof target, Function>)())
       : () => getScrollPosition(target as Element | Window),
-    [pos, setPos] = createStaticStore<Position>(
-      isHydrating ? { ...FALLBACK_SCROLL_POSITION } : getTargetPos(),
-    ),
+    [pos, setPos] = createStaticStore<Position>(isHydrating ? { ...FALLBACK_SCROLL_POSITION } : getTargetPos()),
     trigger = () => {
       setPos(getTargetPos());
     };

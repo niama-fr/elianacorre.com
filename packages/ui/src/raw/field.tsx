@@ -12,13 +12,7 @@ type FieldSetProps = ComponentProps<"fieldset"> & {
 
 const FieldSet = (props: FieldSetProps) => {
   const [local, others] = splitProps(props, ["class"]);
-  return (
-    <fieldset
-      data-slot="field-set"
-      class={cn("z-field-set flex flex-col", local.class)}
-      {...others}
-    />
-  );
+  return <fieldset class={cn("z-field-set flex flex-col", local.class)} data-slot="field-set" {...others} />;
 };
 
 type FieldLegendProps = ComponentProps<"legend"> & {
@@ -28,14 +22,7 @@ type FieldLegendProps = ComponentProps<"legend"> & {
 
 const FieldLegend = (props: FieldLegendProps) => {
   const [local, others] = splitProps(props, ["class", "variant"]);
-  return (
-    <legend
-      data-slot="field-legend"
-      data-variant={local.variant ?? "legend"}
-      class={cn("z-field-legend", local.class)}
-      {...others}
-    />
-  );
+  return <legend class={cn("z-field-legend", local.class)} data-slot="field-legend" data-variant={local.variant ?? "legend"} {...others} />;
 };
 
 type FieldGroupProps = ComponentProps<"div"> & {
@@ -46,11 +33,8 @@ const FieldGroup = (props: FieldGroupProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
     <div
+      class={cn("group/field-group @container/field-group z-field-group flex w-full flex-col", local.class)}
       data-slot="field-group"
-      class={cn(
-        "group/field-group @container/field-group z-field-group flex w-full flex-col",
-        local.class,
-      )}
       {...others}
     />
   );
@@ -81,10 +65,10 @@ const Field = (props: FieldProps) => {
   return (
     // biome-ignore lint/a11y/useSemanticElements: role="group" is intentional per shadcn design for accessibility
     <div
-      role="group"
-      data-slot="field"
-      data-orientation={local.orientation ?? "vertical"}
       class={cn(fieldVariants({ orientation: local.orientation }), local.class)}
+      data-orientation={local.orientation ?? "vertical"}
+      data-slot="field"
+      role="group"
       {...others}
     />
   );
@@ -98,11 +82,8 @@ const FieldContent = (props: FieldContentProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
     <div
+      class={cn("group/field-content z-field-content flex flex-1 flex-col leading-snug", local.class)}
       data-slot="field-content"
-      class={cn(
-        "group/field-content z-field-content flex flex-1 flex-col leading-snug",
-        local.class,
-      )}
       {...others}
     />
   );
@@ -116,12 +97,12 @@ const FieldLabel = (props: FieldLabelProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
     <Label
-      data-slot="field-label"
       class={cn(
         "group/field-label peer/field-label z-field-label flex w-fit leading-snug",
         "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
-        local.class,
+        local.class
       )}
+      data-slot="field-label"
       {...others}
     />
   );
@@ -134,11 +115,7 @@ type FieldTitleProps = ComponentProps<"div"> & {
 const FieldTitle = (props: FieldTitleProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
-    <div
-      data-slot="field-label"
-      class={cn("z-field-title z-font-heading flex w-fit items-center leading-snug", local.class)}
-      {...others}
-    />
+    <div class={cn("z-field-title z-font-heading flex w-fit items-center leading-snug", local.class)} data-slot="field-label" {...others} />
   );
 };
 
@@ -150,13 +127,13 @@ const FieldDescription = (props: FieldDescriptionProps) => {
   const [local, others] = splitProps(props, ["class"]);
   return (
     <p
-      data-slot="field-description"
       class={cn(
         "z-field-description font-normal leading-normal group-has-data-[orientation=horizontal]/field:text-balance",
         "nth-last-2:-mt-1 last:mt-0",
         "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
-        local.class,
+        local.class
       )}
+      data-slot="field-description"
       {...others}
     />
   );
@@ -170,18 +147,10 @@ type FieldSeparatorProps = ComponentProps<"div"> & {
 const FieldSeparator = (props: FieldSeparatorProps) => {
   const [local, others] = splitProps(props, ["class", "children"]);
   return (
-    <div
-      data-slot="field-separator"
-      data-content={!!local.children}
-      class={cn("relative z-field-separator", local.class)}
-      {...others}
-    >
+    <div class={cn("relative z-field-separator", local.class)} data-content={!!local.children} data-slot="field-separator" {...others}>
       <Separator class="absolute inset-0 top-1/2" />
       <Show when={local.children}>
-        <span
-          class="relative z-field-separator-content mx-auto block w-fit bg-background"
-          data-slot="field-separator-content"
-        >
+        <span class="relative z-field-separator-content mx-auto block w-fit bg-background" data-slot="field-separator-content">
           {local.children}
         </span>
       </Show>
@@ -207,9 +176,7 @@ const FieldError = (props: FieldErrorProps) => {
       return null;
     }
 
-    const uniqueErrors = [
-      ...new Map(local.errors.map((error) => [error?.message, error])).values(),
-    ];
+    const uniqueErrors = [...new Map(local.errors.map((error) => [error?.message, error])).values()];
 
     if (uniqueErrors?.length === 1) {
       return uniqueErrors[0]?.message;
@@ -230,12 +197,7 @@ const FieldError = (props: FieldErrorProps) => {
 
   return (
     <Show when={content()}>
-      <div
-        role="alert"
-        data-slot="field-error"
-        class={cn("z-field-error font-normal", local.class)}
-        {...others}
-      >
+      <div class={cn("z-field-error font-normal", local.class)} data-slot="field-error" role="alert" {...others}>
         {content()}
       </div>
     </Show>

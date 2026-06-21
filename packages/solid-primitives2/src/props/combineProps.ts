@@ -1,6 +1,6 @@
+import { access, chain, type MaybeAccessor, reverseChain } from "@ec/solid-primitives2/utils";
 import type { JSX } from "@solidjs/web";
-import { merge, type Merge } from "solid-js";
-import { access, chain, reverseChain, type MaybeAccessor } from "@ec/solid-primitives2/utils";
+import { type Merge, merge } from "solid-js";
 import { propTraps } from "./propTraps.js";
 
 const extractCSSregex = /((?:--)?(?:\w+-?)+)\s*:\s*([^;]*)/g;
@@ -30,17 +30,11 @@ export function stringStyleToObject(style: string): JSX.CSSProperties {
  * styles; // { margin: "2rem", border: "1px solid #121212", padding: "16px" }
  */
 export function combineStyle(a: string, b: string): string;
-export function combineStyle(
-  a: JSX.CSSProperties | undefined,
-  b: JSX.CSSProperties | undefined,
-): JSX.CSSProperties;
+export function combineStyle(a: JSX.CSSProperties | undefined, b: JSX.CSSProperties | undefined): JSX.CSSProperties;
+export function combineStyle(a: JSX.CSSProperties | string | undefined, b: JSX.CSSProperties | string | undefined): JSX.CSSProperties;
 export function combineStyle(
   a: JSX.CSSProperties | string | undefined,
-  b: JSX.CSSProperties | string | undefined,
-): JSX.CSSProperties;
-export function combineStyle(
-  a: JSX.CSSProperties | string | undefined,
-  b: JSX.CSSProperties | string | undefined,
+  b: JSX.CSSProperties | string | undefined
 ): JSX.CSSProperties | string {
   if (typeof a === "string") {
     if (typeof b === "string") return `${a};${b}`;
@@ -64,7 +58,7 @@ type PropsInput = {
 const reduce = <K extends keyof PropsInput>(
   sources: MaybeAccessor<PropsInput>[],
   key: K,
-  calc: (a: NonNullable<PropsInput[K]>, b: NonNullable<PropsInput[K]>) => PropsInput[K],
+  calc: (a: NonNullable<PropsInput[K]>, b: NonNullable<PropsInput[K]>) => PropsInput[K]
 ) => {
   let v: PropsInput[K] = undefined;
   for (const props of sources) {
@@ -102,25 +96,15 @@ export type CombinePropsOptions = {
  * <MyButton style={{ margin: "24px" }} />
  * ```
  */
-export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(
-  sources: T,
-  options?: CombinePropsOptions,
-): Merge<T>;
-export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(
-  ...sources: T
-): Merge<T>;
-export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
-  ...args: T | [sources: T, options?: CombinePropsOptions]
-): Merge<T> {
+export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(sources: T, options?: CombinePropsOptions): Merge<T>;
+export function combineProps<T extends [] | MaybeAccessor<PropsInput>[]>(...sources: T): Merge<T>;
+export function combineProps<T extends MaybeAccessor<PropsInput>[]>(...args: T | [sources: T, options?: CombinePropsOptions]): Merge<T> {
   const restArgs = Array.isArray(args[0]);
   const sources = (restArgs ? args[0] : args) as T;
 
   if (sources.length === 1) return sources[0] as Merge<T>;
 
-  const chainFn =
-    restArgs && (args[1] as CombinePropsOptions | undefined)?.reverseEventHandlers
-      ? reverseChain
-      : chain;
+  const chainFn = restArgs && (args[1] as CombinePropsOptions | undefined)?.reverseEventHandlers ? reverseChain : chain;
 
   // create a map of event listeners to be chained
   const listeners: Record<string, ((...args: any[]) => void)[]> = {};
@@ -143,8 +127,7 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
                 : v[0].bind(void 0, v[1])
               : void 0;
 
-        if (callback)
-          listeners[name] ? listeners[name].push(callback) : (listeners[name] = [callback]);
+        if (callback) listeners[name] ? listeners[name].push(callback) : (listeners[name] = [callback]);
         else delete listeners[name];
       }
     }
@@ -177,8 +160,7 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
         }
 
         // Merge classes or classNames
-        if (key === "class" || key === "className")
-          return reduce(sources, key, (a, b) => `${a} ${b}`);
+        if (key === "class" || key === "className") return reduce(sources, key, (a, b) => `${a} ${b}`);
 
         // Merge classList objects, keys in the last object overrides all previous ones.
         if (key === "classList") return reduce(sources, key, (a, b) => ({ ...a, ...b }));
@@ -192,7 +174,7 @@ export function combineProps<T extends MaybeAccessor<PropsInput>[]>(
         return Object.keys(merged);
       },
     },
-    propTraps,
+    propTraps
   ) as any;
 }
 

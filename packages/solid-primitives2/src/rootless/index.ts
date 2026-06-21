@@ -1,24 +1,17 @@
-import {
-  createRoot,
-  getOwner,
-  onCleanup,
-  runWithOwner,
-  type Owner,
-  sharedConfig,
-  type Accessor,
-  createSignal,
-  type Signal,
-  type Setter,
-} from "solid-js";
+import { type AnyFunction, access, asArray, createMicrotask, noop, trueFn } from "@ec/solid-primitives2/utils";
 import { isServer } from "@solidjs/web";
 import {
-  type AnyFunction,
-  asArray,
-  access,
-  noop,
-  createMicrotask,
-  trueFn,
-} from "@ec/solid-primitives2/utils";
+  type Accessor,
+  createRoot,
+  createSignal,
+  getOwner,
+  type Owner,
+  onCleanup,
+  runWithOwner,
+  type Setter,
+  type Signal,
+  sharedConfig,
+} from "solid-js";
 
 const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }).context);
 
@@ -39,10 +32,8 @@ const hasHydrationContext = () => Boolean((sharedConfig as { context?: unknown }
  */
 export function createSubRoot<T>(fn: (dispose: VoidFunction) => T, ...owners: (Owner | null)[]): T {
   if (owners.length === 0) owners = [getOwner()];
-  return createRoot(dispose => {
-    asArray(access(owners)).forEach(
-      owner => owner && runWithOwner(owner, onCleanup.bind(void 0, dispose)),
-    );
+  return createRoot((dispose) => {
+    asArray(access(owners)).forEach((owner) => owner && runWithOwner(owner, onCleanup.bind(void 0, dispose)));
     return fn(dispose);
   });
 }
@@ -63,10 +54,8 @@ export const createBranch = createSubRoot;
  *    createEffect(() => {})
  * })
  */
-export const createCallback = <T extends AnyFunction>(
-  callback: T,
-  owner: Owner | null = getOwner(),
-): T => (owner ? (((...args) => runWithOwner(owner, () => callback(...args))) as T) : callback);
+export const createCallback = <T extends AnyFunction>(callback: T, owner: Owner | null = getOwner()): T =>
+  owner ? (((...args) => runWithOwner(owner, () => callback(...args))) as T) : callback;
 
 /**
  * Executes {@link fn} in a {@link createSubRoot} *(auto-disposing root)*, and returns a dispose function, to dispose computations used inside before automatic cleanup.
@@ -83,16 +72,13 @@ export const createCallback = <T extends AnyFunction>(
  * dispose()
  * ```
  */
-export function createDisposable(
-  fn: (dispose: VoidFunction) => void,
-  ...owners: (Owner | null)[]
-): VoidFunction {
+export function createDisposable(fn: (dispose: VoidFunction) => void, ...owners: (Owner | null)[]): VoidFunction {
   return createSubRoot(
-    dispose => {
+    (dispose) => {
       fn(dispose);
       return dispose;
     },
-    ...owners,
+    ...owners
   );
 }
 
@@ -115,10 +101,7 @@ export function createDisposable(
  * const state = useState();
  * ...
  */
-export function createSingletonRoot<T>(
-  factory: (dispose: VoidFunction) => T,
-  detachedOwner: Owner | null = getOwner(),
-): () => T {
+export function createSingletonRoot<T>(factory: (dispose: VoidFunction) => T, detachedOwner: Owner | null = getOwner()): () => T {
   let listeners = 0,
     value: T | undefined,
     disposeRoot: VoidFunction | undefined;
@@ -137,7 +120,7 @@ export function createSingletonRoot<T>(
 
     if (!disposeRoot) {
       runWithOwner(detachedOwner, () => {
-        createRoot(dispose => (value = factory((disposeRoot = dispose))));
+        createRoot((dispose) => (value = factory((disposeRoot = dispose))));
       });
     }
 
@@ -164,10 +147,7 @@ export const createSharedRoot = createSingletonRoot;
 export function createHydratableSingletonRoot<T>(factory: (dispose: VoidFunction) => T): () => T {
   const owner = getOwner();
   const singleton = createSingletonRoot(factory, owner);
-  return () =>
-    isServer || hasHydrationContext()
-      ? runWithOwner(owner, () => createRoot(factory))
-      : singleton();
+  return () => (isServer || hasHydrationContext() ? runWithOwner(owner, () => createRoot(factory)) : singleton());
 }
 
 /**
@@ -188,19 +168,13 @@ export type RootPoolOptions = {
  * @param dispose A function that disposes the root and prevents it from being reused.
  * @returns The result of {@link RootPoolFunction}.
  */
-export type RootPoolFactory<TArg, TResult> = (
-  arg: Accessor<TArg>,
-  active: Accessor<boolean>,
-  dispose: VoidFunction,
-) => TResult;
+export type RootPoolFactory<TArg, TResult> = (arg: Accessor<TArg>, active: Accessor<boolean>, dispose: VoidFunction) => TResult;
 
 /**
  * A function returned by {@link createRootPool}.
  * @param arg The argument passed to {@link RootPoolFactory}.
  */
-export type RootPoolFunction<TArg, TResult> = (
-  ..._: void extends TArg ? [arg?: TArg] : [arg: TArg]
-) => TResult;
+export type RootPoolFunction<TArg, TResult> = (..._: void extends TArg ? [arg?: TArg] : [arg: TArg]) => TResult;
 
 /**
  * Creates a pool of roots, that can be reused. Useful for creating components that are mounted and unmounted frequently.
@@ -235,16 +209,16 @@ export type RootPoolFunction<TArg, TResult> = (
  */
 export function createRootPool<TArg, TResult>(
   factory: RootPoolFactory<TArg, TResult>,
-  options?: RootPoolOptions,
+  options?: RootPoolOptions
 ): RootPoolFunction<TArg, TResult>;
 export function createRootPool<TArg, TResult>(
   factory: RootPoolFactory<TArg, TResult>,
-  options: RootPoolOptions = {},
+  options: RootPoolOptions = {}
 ): (arg: TArg) => TResult {
   // don't cache roots on the server
   if (isServer) {
     const owner = getOwner();
-    return args => runWithOwner(owner, () => createRoot(dispose => factory(() => args, trueFn, dispose)));
+    return (args) => runWithOwner(owner, () => createRoot((dispose) => factory(() => args, trueFn, dispose)));
   }
 
   type Root = {
@@ -310,7 +284,7 @@ export function createRootPool<TArg, TResult>(
     length = 0;
   });
 
-  return arg => {
+  return (arg) => {
     let root!: Root;
 
     if (length) {
@@ -318,7 +292,15 @@ export function createRootPool<TArg, TResult>(
       pool[length] = undefined!;
       root.set(() => arg);
       root.setA(true);
-    } else root = runWithOwner(owner, () => createRoot(dispose => mapRoot(dispose, createSignal(() => arg))));
+    } else
+      root = runWithOwner(owner, () =>
+        createRoot((dispose) =>
+          mapRoot(
+            dispose,
+            createSignal(() => arg)
+          )
+        )
+      );
 
     onCleanup(() => cleanupRoot(root));
 

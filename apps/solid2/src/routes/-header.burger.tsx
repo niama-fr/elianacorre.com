@@ -3,6 +3,7 @@ import { Link } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { motion } from "motion/react";
 import { useCallback, useState } from "react";
+import { For } from "solid-js";
 import { Button } from "@/components/adapted/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { setHeaderHoveredId, store } from "@/lib/store";
@@ -30,13 +31,15 @@ export function Burger({ navs }: BurgerProps) {
       />
       <PopoverContent align="start">
         <nav class={BURGER.nav()}>
-          {navs.map(({ key, ...nav }) => (
-            <Button class="px-0" key={key} onClick={() => setOpen(false)} variant="ghost">
-              <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
-                {nav.text}
-              </Link>
-            </Button>
-          ))}
+          <For each={navs}>
+            {({ key: _key, ...nav }) => (
+              <Button class="px-0" onClick={() => setOpen(false)} variant="ghost">
+                <Link {...nav} class="flex h-full w-full items-center justify-center font-bold">
+                  {nav.text}
+                </Link>
+              </Button>
+            )}
+          </For>
         </nav>
       </PopoverContent>
     </Popover>

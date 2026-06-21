@@ -1,14 +1,7 @@
-import { chain, arrayEquals } from "@ec/solid-primitives2/utils";
-import {
-  type Accessor,
-  children,
-  createEffect,
-  createMemo,
-  onCleanup,
-  untrack,
-} from "solid-js";
+import { arrayEquals, chain } from "@ec/solid-primitives2/utils";
 import type { JSX } from "@solidjs/web";
 import { isServer } from "@solidjs/web";
+import { type Accessor, children, createEffect, createMemo, onCleanup, untrack } from "solid-js";
 
 // TODO delete in next major version
 export type { ResolvedChildren } from "solid-js";
@@ -74,10 +67,7 @@ export const defaultElementPredicate: (item: JSX.Element | Element) => item is E
  * @param predicate predicate to filter elements
  * @returns single element or an array of elements or `null` if no elements were found
  */
-export function getResolvedElements<T extends object>(
-  value: JSX.Element,
-  predicate: (item: JSX.Element | T) => item is T,
-): T | T[] | null {
+export function getResolvedElements<T extends object>(value: JSX.Element, predicate: (item: JSX.Element | T) => item is T): T | T[] | null {
   if (predicate(value)) return value;
   if (typeof value === "function" && !(value as () => JSX.Element).length)
     return getResolvedElements((value as () => JSX.Element)(), predicate);
@@ -85,8 +75,7 @@ export function getResolvedElements<T extends object>(
     const results: T[] = [];
     for (const item of value) {
       const result = getResolvedElements(item, predicate);
-      if (result)
-        Array.isArray(result) ? results.push.apply(results, result) : results.push(result);
+      if (result) Array.isArray(result) ? results.push.apply(results, result) : results.push(result);
     }
     return results.length ? results : null;
   }
@@ -125,21 +114,21 @@ export function resolveElements(fn: Accessor<JSX.Element>): ResolveChildrenRetur
 export function resolveElements<T extends object & JSX.Element>(
   fn: Accessor<JSX.Element>,
   predicate: (item: JSX.Element) => item is T,
-  serverPredicate?: (item: JSX.Element) => item is T,
+  serverPredicate?: (item: JSX.Element) => item is T
 ): ResolveChildrenReturn<T>;
 export function resolveElements<T extends object>(
   fn: Accessor<JSX.Element>,
   predicate: (item: JSX.Element | T) => item is T,
-  serverPredicate?: (item: JSX.Element | T) => item is T,
+  serverPredicate?: (item: JSX.Element | T) => item is T
 ): ResolveChildrenReturn<T>;
 export function resolveElements(
   fn: Accessor<JSX.Element>,
   predicate = defaultElementPredicate,
-  serverPredicate = defaultElementPredicate,
+  serverPredicate = defaultElementPredicate
 ): ResolveChildrenReturn<Element> {
   const children = createMemo(fn);
   const memo = createMemo(() =>
-    getResolvedElements(children(), isServer ? serverPredicate : predicate),
+    getResolvedElements(children(), isServer ? serverPredicate : predicate)
   ) as unknown as ResolveChildrenReturn<Element>;
   memo.toArray = () => {
     const value = memo();
@@ -157,13 +146,9 @@ export function resolveElements(
  * @param predicate predicate to filter elements
  * @returns single found element or `null` if no elements were found
  */
-export function getFirstChild<T extends object>(
-  value: JSX.Element,
-  predicate: (item: JSX.Element | T) => item is T,
-): T | null {
+export function getFirstChild<T extends object>(value: JSX.Element, predicate: (item: JSX.Element | T) => item is T): T | null {
   if (predicate(value)) return value;
-  if (typeof value === "function" && !(value as () => JSX.Element).length)
-    return getFirstChild((value as () => JSX.Element)(), predicate);
+  if (typeof value === "function" && !(value as () => JSX.Element).length) return getFirstChild((value as () => JSX.Element)(), predicate);
   if (Array.isArray(value)) {
     for (const item of value) {
       const result = getFirstChild(item, predicate);
@@ -198,17 +183,17 @@ export function resolveFirst(fn: Accessor<JSX.Element>): Accessor<Element | null
 export function resolveFirst<T extends object & JSX.Element>(
   fn: Accessor<JSX.Element>,
   predicate: (item: JSX.Element) => item is T,
-  serverPredicate?: (item: JSX.Element) => item is T,
+  serverPredicate?: (item: JSX.Element) => item is T
 ): Accessor<T | null>;
 export function resolveFirst<T extends object>(
   fn: Accessor<JSX.Element>,
   predicate: (item: JSX.Element | T) => item is T,
-  serverPredicate?: (item: JSX.Element | T) => item is T,
+  serverPredicate?: (item: JSX.Element | T) => item is T
 ): Accessor<T | null>;
 export function resolveFirst(
   fn: Accessor<JSX.Element>,
   predicate = defaultElementPredicate,
-  serverPredicate = defaultElementPredicate,
+  serverPredicate = defaultElementPredicate
 ): Accessor<any | null> {
   const children = createMemo(fn);
   return createMemo(() => getFirstChild(children(), isServer ? serverPredicate : predicate));
@@ -239,9 +224,9 @@ export function Refs(props: { ref: Ref<Element[]>; children: JSX.Element }): JSX
   createEffect(
     () => resolved.toArray().filter(defaultElementPredicate),
     (els) => {
-    if (!arrayEquals(prev, els)) untrack(() => cb(els));
-    prev = els;
-    },
+      if (!arrayEquals(prev, els)) untrack(() => cb(els));
+      prev = els;
+    }
   );
   onCleanup(() => prev.length && cb([]));
 
@@ -273,9 +258,9 @@ export function Ref(props: { ref: Ref<Element | undefined>; children: JSX.Elemen
   createEffect(
     () => resolved.toArray().find(defaultElementPredicate),
     (el) => {
-    if (el !== prev) untrack(() => cb(el));
-    prev = el;
-    },
+      if (el !== prev) untrack(() => cb(el));
+      prev = el;
+    }
   );
 
   onCleanup(() => prev && cb(undefined));

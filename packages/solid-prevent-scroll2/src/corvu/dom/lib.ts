@@ -4,47 +4,41 @@
  *
  * https://github.com/solidjs-community/solid-primitives
  */
-import type { EventHandlerEvent } from './types'
-import type { JSX } from '@solidjs/web'
 
-const extractCSSregex = /((?:--)?(?:\w+-?)+)\s*:\s*([^;]*)/g
+import type { JSX } from "@solidjs/web";
+import type { EventHandlerEvent } from "./types";
+
+const extractCSSregex = /((?:--)?(?:\w+-?)+)\s*:\s*([^;]*)/g;
 
 function stringStyleToObject(style: string): JSX.CSSProperties {
-  const object: Record<string, string> = {}
-  let match: RegExpExecArray | null
+  const object: Record<string, string> = {};
+  let match: RegExpExecArray | null;
   while ((match = extractCSSregex.exec(style))) {
-    object[match[1]!] = match[2]!
+    object[match[1]!] = match[2]!;
   }
-  return object
+  return object;
 }
 
-function combineStyle(
-  a: JSX.CSSProperties,
-  b: JSX.CSSProperties | string | undefined,
-): JSX.CSSProperties | string {
-  if (typeof b === 'string') {
-    b = stringStyleToObject(b)
+function combineStyle(a: JSX.CSSProperties, b: JSX.CSSProperties | string | undefined): JSX.CSSProperties | string {
+  if (typeof b === "string") {
+    b = stringStyleToObject(b);
   }
-  return { ...a, ...b }
+  return { ...a, ...b };
 }
 
-const afterPaint = (fn: () => void) =>
-  requestAnimationFrame(() => requestAnimationFrame(fn))
+const afterPaint = (fn: () => void) => requestAnimationFrame(() => requestAnimationFrame(fn));
 
-const callEventHandler = <T, E extends Event>(
-  eventHandler: JSX.EventHandlerUnion<T, E> | undefined,
-  event: EventHandlerEvent<T, E>,
-) => {
+const callEventHandler = <T, E extends Event>(eventHandler: JSX.EventHandlerUnion<T, E> | undefined, event: EventHandlerEvent<T, E>) => {
   if (eventHandler) {
-    if (typeof eventHandler === 'function') {
-      eventHandler(event)
+    if (typeof eventHandler === "function") {
+      eventHandler(event);
     } else {
-      eventHandler[0](eventHandler[1], event)
+      eventHandler[0](eventHandler[1], event);
     }
   }
 
-  return event.defaultPrevented
-}
+  return event.defaultPrevented;
+};
 
 /**
  * Checks whether an element contains another element.
@@ -55,39 +49,27 @@ const callEventHandler = <T, E extends Event>(
  * @returns Whether the wrapper contains the target element.
  */
 const contains = (wrapper: HTMLElement, target: unknown) => {
-  if (!(target instanceof HTMLElement)) return false
+  if (!(target instanceof HTMLElement)) return false;
 
-  if (wrapper.contains(target)) return true
-  let currentElement: HTMLElement | null = target
+  if (wrapper.contains(target)) return true;
+  let currentElement: HTMLElement | null = target;
   while (currentElement) {
-    if (currentElement === wrapper) return true
+    if (currentElement === wrapper) return true;
     // @ts-expect-error: _$host is a custom SolidJS property
-    currentElement = currentElement._$host ?? currentElement.parentElement
+    currentElement = currentElement._$host ?? currentElement.parentElement;
   }
-  return false
-}
+  return false;
+};
 
 const sortByDocumentPosition = (a: HTMLElement, b: HTMLElement) => {
-  const relativePosition = a.compareDocumentPosition(b)
-  if (
-    relativePosition & Node.DOCUMENT_POSITION_PRECEDING ||
-    relativePosition & Node.DOCUMENT_POSITION_CONTAINS
-  ) {
-    return 1
+  const relativePosition = a.compareDocumentPosition(b);
+  if (relativePosition & Node.DOCUMENT_POSITION_PRECEDING || relativePosition & Node.DOCUMENT_POSITION_CONTAINS) {
+    return 1;
   }
-  if (
-    relativePosition & Node.DOCUMENT_POSITION_FOLLOWING ||
-    relativePosition & Node.DOCUMENT_POSITION_CONTAINED_BY
-  ) {
-    return -1
+  if (relativePosition & Node.DOCUMENT_POSITION_FOLLOWING || relativePosition & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+    return -1;
   }
-  return 0
-}
+  return 0;
+};
 
-export {
-  afterPaint,
-  callEventHandler,
-  combineStyle,
-  contains,
-  sortByDocumentPosition,
-}
+export { afterPaint, callEventHandler, combineStyle, contains, sortByDocumentPosition };

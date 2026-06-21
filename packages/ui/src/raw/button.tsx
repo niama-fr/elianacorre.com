@@ -31,7 +31,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 type ButtonProps<T extends ValidComponent = "button"> = PolymorphicProps<T, ButtonRootProps<T>> &
@@ -40,13 +40,7 @@ type ButtonProps<T extends ValidComponent = "button"> = PolymorphicProps<T, Butt
 
 const Button = <T extends ValidComponent = "button">(props: ButtonProps<T>) => {
   const [local, others] = splitProps(props as ButtonProps, ["variant", "size", "class"]);
-  return (
-    <Root
-      class={cn(buttonVariants({ variant: local.variant, size: local.size }), local.class)}
-      data-slot="button"
-      {...others}
-    />
-  );
+  return <Root class={cn(buttonVariants({ variant: local.variant, size: local.size }), local.class)} data-slot="button" {...others} />;
 };
 
 export { Button, type ButtonProps, buttonVariants };

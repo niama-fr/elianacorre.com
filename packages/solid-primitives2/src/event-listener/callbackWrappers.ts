@@ -15,7 +15,7 @@
  */
 export const preventDefault =
   <E extends Event>(callback: (event: E) => void): ((event: E) => void) =>
-  e => {
+  (e) => {
     e.preventDefault();
     callback(e);
   };
@@ -37,7 +37,7 @@ export const preventDefault =
  */
 export const stopPropagation =
   <E extends Event>(callback: (event: E) => void): ((event: E) => void) =>
-  e => {
+  (e) => {
     e.stopPropagation();
     callback(e);
   };
@@ -59,7 +59,7 @@ export const stopPropagation =
  */
 export const stopImmediatePropagation =
   <E extends Event>(callback: (event: E) => void): ((event: E) => void) =>
-  e => {
+  (e) => {
     e.stopImmediatePropagation();
     callback(e);
   };

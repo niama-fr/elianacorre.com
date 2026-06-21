@@ -12,7 +12,5 @@
   "routerOnly": false,
   "version": 1,
   "framework": "solid",
-  "chosenAddOns": [
-    "cloudflare"
-  ]
+  "chosenAddOns": ["cloudflare"]
 }

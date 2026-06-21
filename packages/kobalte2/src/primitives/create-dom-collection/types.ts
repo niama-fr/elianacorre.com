@@ -1,5 +1,5 @@
 import type { Accessor } from "solid-js";
 
 export interface DomCollectionItem {
-	ref: Accessor<Element | undefined>;
+  ref: Accessor<Element | undefined>;
 }
