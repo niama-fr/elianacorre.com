@@ -24,6 +24,7 @@
   "exports": {
     "./hooks/*": "./src/hooks/*.tsx",
     "./lib/*": "./src/lib/*.ts",
+    "./raw/*": "./src/raw/*.tsx",
     "./styles/*": "./src/styles/*",
     "./*": "./src/components/*.tsx"
   },

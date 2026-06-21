@@ -23,8 +23,7 @@
     "noUncheckedSideEffectImports": true,
 
     "paths": {
-      "@/*": ["../../packages/ui/src/*"],
-      "@solid/*": ["./src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

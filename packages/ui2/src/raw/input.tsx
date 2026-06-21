@@ -1,6 +1,5 @@
+import { cn } from "@ec/ui2/lib/utils";
 import { type ComponentProps, splitProps } from "solid-js";
-
-import { cn } from "@/lib/utils";
 
 type InputProps = ComponentProps<"input">;
 

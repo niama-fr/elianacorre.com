@@ -1,3 +1,4 @@
+import { cn } from "@ec/ui/lib/utils";
 import {
   Content,
   Menu,
@@ -14,7 +15,6 @@ import { cva } from "class-variance-authority";
 import { ChevronDown } from "lucide-solid";
 import type { ComponentProps, JSX, ValidComponent } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
-import { cn } from "@/lib/utils";
 
 type NavigationMenuProps<T extends ValidComponent = "ul"> = PolymorphicProps<T, NavigationMenuRootProps<T>> &
   Pick<ComponentProps<T>, "class" | "children">;
