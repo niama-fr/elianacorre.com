@@ -124,6 +124,10 @@ Most formatting and common issues are automatically fixed by Biome. Run `bunx ul
 
 @RTK.md
 
+## Shell execution
+
+The RTK contract above is mandatory for every shell command. Use `rtk proxy` or `rtk run` when no specialized RTK subcommand fits; never bypass RTK with a raw shell invocation.
+
 ## Agent skills
 
 ### Issue tracker
