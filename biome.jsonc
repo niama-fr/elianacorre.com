@@ -27,21 +27,10 @@
   },
   "overrides": [
     {
-      // These raw wrappers intentionally mirror Kobalte's compound-component namespace API.
-      "includes": [
-        "packages/ui/src/raw/dialog.tsx",
-        "packages/ui/src/raw/popover.tsx",
-        "packages/ui/src/raw/sheet.tsx",
-        "packages/ui2/src/raw/dialog.tsx",
-        "packages/ui2/src/raw/popover.tsx",
-        "packages/ui2/src/raw/sheet.tsx"
-      ],
+      // Generated UI wrappers are replaced by their generator and are not maintained by hand.
+      "includes": ["packages/ui/src/raw/**", "packages/ui2/src/raw/**"],
       "linter": {
-        "rules": {
-          "performance": {
-            "noNamespaceImport": "off"
-          }
-        }
+        "enabled": false
       }
     },
     {

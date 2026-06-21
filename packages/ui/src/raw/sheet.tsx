@@ -3,7 +3,7 @@ import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { X } from "lucide-solid";
 import type { Component, ComponentProps, ValidComponent } from "solid-js";
 import { mergeProps, Show, splitProps } from "solid-js";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
 const Sheet: Component<SheetPrimitive.DialogRootProps> = (props) => <SheetPrimitive.Root data-slot="sheet" {...props} />;
