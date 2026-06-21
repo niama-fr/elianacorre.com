@@ -1,0 +1,133 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "issueId",
+      "type": "promptString",
+      "description": "Linear issue identifier",
+      "default": "NIA-"
+    },
+    {
+      "id": "branchDescription",
+      "type": "promptString",
+      "description": "Short kebab-case branch description"
+    },
+    {
+      "id": "prNumber",
+      "type": "promptString",
+      "description": "Pull request number"
+    },
+    {
+      "id": "mergeConfirmation",
+      "type": "promptString",
+      "description": "Type MERGE to authorize the squash merge"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Workflow: Start issue branch",
+      "type": "process",
+      "command": "rtk",
+      "args": [
+        "run",
+        "git switch main && git pull --ff-only && git switch -c '${input:issueId}/${input:branchDescription}'"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Open current Linear issue",
+      "type": "process",
+      "command": "rtk",
+      "args": [
+        "run",
+        "issue=$(git branch --show-current | sed -E 's#^([^/]+).*#\\1#'); test -n \"$issue\" && open \"https://linear.app/niama/issue/$issue\""
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Test",
+      "type": "process",
+      "command": "rtk",
+      "args": ["test", "bun", "run", "test"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Typecheck",
+      "type": "process",
+      "command": "rtk",
+      "args": ["proxy", "bun", "run", "typecheck"],
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Workflow: Ultracite",
+      "type": "process",
+      "command": "rtk",
+      "args": ["proxy", "bun", "run", "check"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Build",
+      "type": "process",
+      "command": "rtk",
+      "args": ["proxy", "bun", "run", "build"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Verify all",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Workflow: Test",
+        "Workflow: Typecheck",
+        "Workflow: Ultracite",
+        "Workflow: Build"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Workflow: Open current PR",
+      "type": "process",
+      "command": "rtk",
+      "args": ["gh", "pr", "view", "--web"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Watch current PR checks",
+      "type": "process",
+      "command": "rtk",
+      "args": ["gh", "pr", "checks", "--watch", "--interval", "10"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Workflow: Approve current PR deployment",
+      "type": "process",
+      "command": "rtk",
+      "args": [
+        "run",
+        "branch=$(git branch --show-current); run_id=$(gh run list --workflow 'Pull request' --branch \"$branch\" --event pull_request --limit 1 --json databaseId --jq '.[0].databaseId'); test -n \"$run_id\" && gh api --method POST \"repos/niama-fr/elianacorre.com/actions/runs/$run_id/pending_deployments\" -F 'environment_ids[]=17012820517' -f state=approved -f comment='Approved from VS Code after final review'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true
+      }
+    },
+    {
+      "label": "Workflow: Merge PR",
+      "type": "process",
+      "command": "rtk",
+      "args": [
+        "run",
+        "test '${input:mergeConfirmation}' = MERGE && title=$(gh pr view '${input:prNumber}' --json title --jq .title) && gh pr merge '${input:prNumber}' --squash --delete-branch --subject \"$title\" --body ''"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true
+      }
+    }
+  ]
+}
