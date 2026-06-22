@@ -1,50 +1,37 @@
-name: Deploy production
+name: Deploy staging
 
 on:
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: Commit SHA or tag to deploy as a known-good rollback
-        required: true
-        type: string
-      reason:
-        description: Reason for the manual deployment
-        required: true
-        type: string
+  push:
+    branches: [main]
 
 concurrency:
-  group: production
-  cancel-in-progress: false
+  group: staging
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Production
+    name: Staging
     runs-on: ubuntu-latest
     environment:
-      name: production
-      url: ${{ vars.PRODUCTION_URL }}
+      name: staging
+      url: ${{ vars.STAGING_URL }}
     steps:
-      - name: Check out deployment commit
+      - name: Check out merged commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 0
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.sha }}
       - name: Record deployment commit
         run: echo "DEPLOY_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-      - name: Require a commit from main
-        run: |
-          git fetch origin main:refs/remotes/origin/main
-          git merge-base --is-ancestor "$DEPLOY_SHA" origin/main
       - name: Set up Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.10
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Deploy Convex backend and build application
+      - name: Deploy Convex staging and build application
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
@@ -52,24 +39,24 @@ jobs:
           bunx convex deploy
           --cmd "cd ../../apps/solid && bun run build"
           --cmd-url-env-var-name VITE_CONVEX_URL
-          --message "GitHub deployment ${DEPLOY_SHA}"
-      - name: Deploy Cloudflare Worker
+          --message "GitHub staging deployment ${DEPLOY_SHA}"
+      - name: Deploy Cloudflare staging Worker
         working-directory: apps/solid
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
           bunx wrangler deploy
-          --name elianacorre-com
+          --name elianacorre-com-staging
           --tag "$DEPLOY_SHA"
-          --message "GitHub deployment ${DEPLOY_SHA}"
+          --message "GitHub staging deployment ${DEPLOY_SHA}"
           --keep-vars
       - name: Record deployment summary
         run: |
           {
-            echo "## Production deployment"
+            echo "## Staging deployment"
             echo
             echo "- Commit: \`${DEPLOY_SHA}\`"
-            echo "- Reason: ${{ inputs.reason }}"
-            echo "- URL: ${{ vars.PRODUCTION_URL }}"
+            echo "- URL: ${{ vars.STAGING_URL }}"
+            echo "- Convex: isolated staging project"
           } >> "$GITHUB_STEP_SUMMARY"
