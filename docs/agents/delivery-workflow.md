@@ -54,7 +54,8 @@ The project WIP limit is one `In Progress` issue. Urgent work must explicitly bl
 8. Required checks and review must pass before merge. The branch must be current with `main`.
 9. Codex performs a final two-axis review against repository standards and the Linear issue before approval.
 10. Grégory approves the protected `pull-request-approval` environment and merges the pull request. GitHub does not allow a pull-request author to approve their own review, so the environment approval is the enforceable human gate for this solo repository.
-11. Production deploys automatically from the approved merged commit.
+11. Approved merges deploy automatically to persistent staging.
+12. Production releases require a separate manual workflow dispatch and protected environment approval.
 
 ## GitHub enforcement
 
@@ -71,7 +72,7 @@ The first four checks run the commands in `docs/agents/verification.md`. `Previe
 
 The `main` ruleset requires pull requests, all six checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
 
-Deployment setup, verification, and rollback are documented in `docs/agents/deployment.md`.
+Deployment setup, staging verification, production release, launch boundaries, and rollback are documented in `docs/agents/deployment.md`.
 
 ## Codex authority
 

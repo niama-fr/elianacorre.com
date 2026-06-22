@@ -21,6 +21,21 @@
       "id": "mergeConfirmation",
       "type": "promptString",
       "description": "Type MERGE to authorize the squash merge"
+    },
+    {
+      "id": "releaseSha",
+      "type": "promptString",
+      "description": "Full main commit SHA to release"
+    },
+    {
+      "id": "releaseReason",
+      "type": "promptString",
+      "description": "Production release reason"
+    },
+    {
+      "id": "releaseConfirmation",
+      "type": "promptString",
+      "description": "Type RELEASE to dispatch production"
     }
   ],
   "tasks": [
@@ -122,6 +137,20 @@
       "args": [
         "run",
         "test '${input:mergeConfirmation}' = MERGE && title=$(gh pr view '${input:prNumber}' --json title --jq .title) && gh pr merge '${input:prNumber}' --squash --delete-branch --subject \"$title\" --body ''"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true
+      }
+    },
+    {
+      "label": "Workflow: Release production",
+      "type": "process",
+      "command": "rtk",
+      "args": [
+        "run",
+        "test '${input:releaseConfirmation}' = RELEASE && gh workflow run deploy-production.yml --ref main --field ref='${input:releaseSha}' --field reason='${input:releaseReason}'"
       ],
       "problemMatcher": [],
       "presentation": {
