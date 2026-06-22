@@ -75,6 +75,103 @@ rtk gh variable set PRODUCTION_URL --env production --body "https://elianacorre.
 
 Find the Cloudflare account ID and Workers subdomain in the Cloudflare dashboard under **Workers & Pages**. Create the preview and production Convex deploy keys in the Convex project under **Settings → Deploy Keys**.
 
+## Credential setup walkthrough
+
+Set up preview first and verify it before creating production credentials. Preview and production use the same GitHub names but different environment-scoped values.
+
+### Convex preview
+
+1. Open the `elianacorre.com` project in the Convex dashboard.
+2. Open **Settings → Deploy Keys**.
+3. Create a **Preview Deploy Key** with a name such as `GitHub preview`.
+4. Copy the key when Convex displays it.
+5. In another terminal, run:
+
+   ```bash
+   rtk gh secret set CONVEX_DEPLOY_KEY --env preview
+   ```
+
+6. Paste the key at the secure prompt and submit it.
+7. Verify only the secret's existence and update time:
+
+   ```bash
+   rtk gh secret list --env preview
+   ```
+
+GitHub never returns the stored secret value.
+
+### Cloudflare preview
+
+#### 1. Find the account ID and Workers subdomain
+
+1. Open the Cloudflare dashboard.
+2. Select the account that owns `elianacorre.com`.
+3. Open **Workers & Pages**.
+4. In **Account details**, copy the **Account ID**.
+5. On the same overview, find **Your subdomain**. Copy only the part before `.workers.dev`.
+6. Store both non-secret values in GitHub:
+
+   ```bash
+   rtk gh variable set CLOUDFLARE_ACCOUNT_ID --env preview --body "ACCOUNT_ID"
+   rtk gh variable set CLOUDFLARE_WORKERS_SUBDOMAIN --env preview --body "SUBDOMAIN"
+   ```
+
+Do not include `.workers.dev` in `CLOUDFLARE_WORKERS_SUBDOMAIN`.
+
+#### 2. Create the API token
+
+Prefer an Account API token because CI credentials should not depend on a personal user remaining in the account:
+
+1. Open **Manage Account → API Tokens**.
+2. Select **Create Token**.
+3. Select **Create Custom Token**.
+4. Name it `elianacorre.com GitHub preview`.
+5. Add permission **Account → Workers Scripts → Edit**.
+6. Under account resources, include only the account that owns `elianacorre.com`.
+7. Do not add zone permissions; this workflow does not edit DNS.
+8. Leave IP filtering empty because GitHub-hosted runner IPs are not stable.
+9. Optionally set an expiry date only if token rotation is scheduled before it.
+10. Continue to the summary, verify the scope, and create the token.
+11. Copy the token immediately; Cloudflare displays it only once.
+
+If Account API tokens are unavailable for the account, use **My Profile → API Tokens** and create the same custom user token and scope.
+
+#### 3. Store and verify the token
+
+Run:
+
+```bash
+rtk gh secret set CLOUDFLARE_API_TOKEN --env preview
+rtk gh secret list --env preview
+rtk gh variable list --env preview
+```
+
+Paste the token only into the secure `gh secret set` prompt. The final two commands should show these names without revealing secret values:
+
+- Secret `CONVEX_DEPLOY_KEY`
+- Secret `CLOUDFLARE_API_TOKEN`
+- Variable `CLOUDFLARE_ACCOUNT_ID`
+- Variable `CLOUDFLARE_WORKERS_SUBDOMAIN`
+
+After all four values exist, rerun the failed pull-request workflow. The first successful run creates the `elianacorre-com-preview` Worker, deploys isolated Convex functions, and attaches the preview URL to the pull request.
+
+### Production credentials
+
+Create production credentials only after preview works end to end:
+
+1. In Convex, create a **Production Deploy Key** named `GitHub production`.
+2. Store it with `rtk gh secret set CONVEX_DEPLOY_KEY --env production`.
+3. In Cloudflare, create a second token named `elianacorre.com GitHub production` with the same minimal account permission.
+4. Store it with `rtk gh secret set CLOUDFLARE_API_TOKEN --env production`.
+5. Set the non-secret variables:
+
+   ```bash
+   rtk gh variable set CLOUDFLARE_ACCOUNT_ID --env production --body "ACCOUNT_ID"
+   rtk gh variable set PRODUCTION_URL --env production --body "https://elianacorre.com"
+   ```
+
+Never reuse the Convex preview key as the production key. Keep separate Cloudflare tokens so either automation path can be revoked and rotated independently.
+
 ## Pull-request preview
 
 `.github/workflows/pull-request.yml` performs this sequence:
