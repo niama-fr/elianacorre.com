@@ -58,17 +58,20 @@ The project WIP limit is one `In Progress` issue. Urgent work must explicitly bl
 
 ## GitHub enforcement
 
-Pull requests targeting `main` expose five stable required checks:
+Pull requests targeting `main` expose six stable required checks:
 
 - `Ultracite`
 - `Typecheck`
 - `Tests`
 - `Build`
+- `Preview`
 - `Approval`
 
-The first four checks run the commands in `docs/agents/verification.md`. `Approval` starts only after they pass and waits for Grégory to approve the protected `pull-request-approval` environment.
+The first four checks run the commands in `docs/agents/verification.md`. `Preview` starts only after they pass and deploys isolated Convex data and a Cloudflare preview. `Approval` starts only after the preview succeeds and waits for Grégory to approve the protected `pull-request-approval` environment.
 
-The `main` ruleset requires pull requests, all five checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
+The `main` ruleset requires pull requests, all six checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
+
+Deployment setup, verification, and rollback are documented in `docs/agents/deployment.md`.
 
 ## Codex authority
 

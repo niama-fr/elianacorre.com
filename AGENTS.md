@@ -146,6 +146,10 @@ Canonical Linear, GitHub, Drive, Obsidian, and ADR locations are listed in `docs
 
 Required test, type-check, Ultracite, and production-build commands are documented in `docs/agents/verification.md`.
 
+### Deployment
+
+Preview and production deployment setup, verification, secrets, and rollback are documented in `docs/agents/deployment.md`.
+
 ### Triage roles
 
 Triage maps the five canonical roles to Linear workflow states and issue context. See `docs/agents/triage-labels.md`.
