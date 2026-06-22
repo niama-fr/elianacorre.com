@@ -294,6 +294,7 @@ export const imageFrom = ({ alt, blurhash, height, src, width }: Images["Entry"]
 export const readImageBySlug = (slug: Images["Entry"]["slug"]) => {
   const entry = allImages.find((image) => image.slug === slug);
   if (!entry) throw new Error(`Image not found: ${slug}`);
+
   return imageFrom(entry);
 };
 

@@ -8,19 +8,19 @@ import { createMemo, For, Show, splitProps } from "solid-js";
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const FIELD = {
   base: cva("group/field flex w-full gap-3 data-[invalid=true]:text-destructive", {
+    defaultVariants: {
+      orientation: "vertical",
+    },
     variants: {
       orientation: {
-        vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
         horizontal: `flex-row items-center 
           has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px
           *:data-[slot=field-label]:flex-auto `,
         responsive: `flex-col *:w-full
         @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto @md/field-group:has-[>[data-slot=field-content]]:items-start 
         @md/field-group:*:data-[slot=field-label]:flex-auto [&>.sr-only]:w-auto @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px`,
+        vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
       },
-    },
-    defaultVariants: {
-      orientation: "vertical",
     },
   }),
   content: cva("group/field-content flex flex-1 flex-col gap-1 leading-snug"),
@@ -48,13 +48,13 @@ export const FIELD = {
 
 export const Field = (props: FieldProps) => {
   const [_, others] = splitProps(props, ["class", "orientation"]);
+  // The shadcn field primitive intentionally uses a generic group container.
   return (
-    // biome-ignore lint/a11y/useSemanticElements: role="group" is intentional per shadcn design for accessibility
     <div
       class={cn(FIELD.base({ orientation: _.orientation }), _.class)}
       data-orientation={_.orientation ?? "vertical"}
       data-slot="field"
-      role="group"
+      role="group" // oxlint-disable-line jsx-a11y/prefer-tag-over-role
       {...others}
     />
   );
@@ -81,6 +81,7 @@ export const FieldError = (props: FieldErrorProps) => {
 
   const content = createMemo(() => {
     if (_.children) return _.children;
+
     if (!_.errors?.length) return null;
 
     const uniqueErrors = [...new Map(_.errors.map((error) => [error?.message, error])).values()];
@@ -111,7 +112,7 @@ export const FieldError = (props: FieldErrorProps) => {
 type FieldErrorProps = ComponentProps<"div"> & {
   class?: string | undefined;
   children?: JSX.Element;
-  errors?: Array<{ message?: string } | undefined>;
+  errors?: ({ message?: string } | undefined)[];
 };
 
 // GROUP -----------------------------------------------------------------------------------------------------------------------------------

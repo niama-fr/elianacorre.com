@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/performance/noBarrelFile: false positive */
 export {
   DialogCloseButton,
   type DialogCloseButtonCommonProps,

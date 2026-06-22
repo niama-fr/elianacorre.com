@@ -6,14 +6,14 @@ This contract applies to human contributors and coding agents working on `eliana
 
 Each artifact has one canonical home:
 
-| System | Owns |
-| --- | --- |
-| Linear | Actionable work, PRDs, priority, ownership, dependencies, acceptance criteria, and status |
-| GitHub | Git repositories, branches, commits, pull requests, code review, CI results, releases, and deployment provenance |
-| Obsidian | Evolving research, exploration, meeting notes, and personal or team knowledge |
-| Google Drive | Original artwork, photography, contracts, and collaborative business-document drafts |
-| Repository ADRs | Finalized technical and architectural decisions |
-| Git | Final published website copy and code-ready assets |
+| System          | Owns                                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Linear          | Actionable work, PRDs, priority, ownership, dependencies, acceptance criteria, and status                        |
+| GitHub          | Git repositories, branches, commits, pull requests, code review, CI results, releases, and deployment provenance |
+| Obsidian        | Evolving research, exploration, meeting notes, and personal or team knowledge                                    |
+| Google Drive    | Original artwork, photography, contracts, and collaborative business-document drafts                             |
+| Repository ADRs | Finalized technical and architectural decisions                                                                  |
+| Git             | Final published website copy and code-ready assets                                                               |
 
 Link canonical artifacts across systems instead of copying their contents. Task status exists only in Linear. Final ADR text and published copy exist only in Git.
 
@@ -61,14 +61,14 @@ The project WIP limit is one `In Progress` issue. Urgent work must explicitly bl
 
 Pull requests targeting `main` expose six stable required checks:
 
-- `Ultracite`
+- `Quality`
 - `Typecheck`
 - `Tests`
 - `Build`
 - `Preview`
 - `Approval`
 
-The first four checks run the commands in `docs/agents/verification.md`. `Preview` starts only after they pass and deploys isolated Convex data and a Cloudflare preview. `Approval` starts only after the preview succeeds and waits for Grégory to approve the protected `pull-request-approval` environment.
+The first four checks run the commands in `docs/agents/verification.md`. `Quality` runs Oxfmt and Oxlint. `Preview` starts only after they pass and deploys isolated Convex data and a Cloudflare preview. `Approval` starts only after the preview succeeds and waits for Grégory to approve the protected `pull-request-approval` environment.
 
 The `main` ruleset requires pull requests, all six checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
 
@@ -104,7 +104,7 @@ Solid 2 may replace Solid 1 only when:
 
 - It has feature parity with the production application.
 - Critical user flows have automated tests.
-- Ultracite reports zero errors.
+- Oxfmt and Oxlint report zero errors.
 - Type checking and production builds pass.
 - An isolated staging deployment has been reviewed and approved by Grégory.
 

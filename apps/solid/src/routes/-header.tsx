@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, createSignal, For, on, onMount } from "solid-js";
+
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +50,7 @@ export const HEADER = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
-  const location = useLocation({ select: ({ hash, pathname }) => ({ pathname, hash }) });
+  const location = useLocation({ select: ({ hash, pathname }) => ({ hash, pathname }) });
   const stain = createStain();
   const [burgerOpen, setBurgerOpen] = createSignal(false);
 
@@ -70,8 +71,8 @@ export function Header(_: HeaderProps) {
   createEffect(
     on(
       () => burgerOpen(),
-      (burgerOpen) => {
-        stain.setOrigin(burgerOpen ? burgerRef : undefined);
+      (isBurgerOpen) => {
+        stain.setOrigin(isBurgerOpen ? burgerRef : undefined);
         // burgerRef.
       }
     )
@@ -79,8 +80,6 @@ export function Header(_: HeaderProps) {
 
   return (
     <header class={HEADER.base()}>
-      {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: on purpose */}
-      {/** biome-ignore lint/a11y/noStaticElementInteractions: on purpose */}
       <div class={HEADER.content()} onMouseLeave={hideStain}>
         <Link aria-label="Accueil" class={HEADER.logo()} to="/">
           <div class={HEADER.logoContent()}>
@@ -98,7 +97,7 @@ export function Header(_: HeaderProps) {
         <Stain stain={stain} />
         <div class={HEADER.navs()}>
           <For each={_.data().navs}>
-            {({ key, text, ...rest }) => {
+            {({ key: _key, text, ...rest }) => {
               const linkProps = rest as unknown as Pick<LinkProps, "activeOptions" | "hash" | "to">;
 
               return (
@@ -182,7 +181,8 @@ export type HeaderProps = { data: Accessor<ReadRootLayoutProps> };
 
 // LINK CONTENT ----------------------------------------------------------------------------------------------------------------------------
 export function NavLinkContent(_: NavLinkContentProps) {
-  // biome-ignore lint/suspicious/noUnassignedVariables: solid false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let ref!: HTMLSpanElement;
 
   onMount(() => {

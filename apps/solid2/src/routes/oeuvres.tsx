@@ -31,16 +31,16 @@ function WorksLayout() {
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const WORKS = {
-  base: cva(
-    `min-h-[470px]
-    lg:min-h-[500px] lg:items-stretch lg:gap-20
-    xl:min-h-auto`
-  ),
   aside: cva(
     `relative hidden flex-none aspect-square self-center
     lg:flex lg:w-xs
     xl:w-sm 
     2xl:w-md`
+  ),
+  base: cva(
+    `min-h-[470px]
+    lg:min-h-[500px] lg:items-stretch lg:gap-20
+    xl:min-h-auto`
   ),
   description: cva(
     `flex flex-1 flex-col justify-center gap-8 transition
@@ -74,17 +74,17 @@ export function WorksLayoutSets(_: WorksLayoutSetsProps) {
   const nextLink = createMemo(
     () =>
       ({
-        to: "/oeuvres/$slug",
         params: { slug: _.sets[(activeIndex() + 1) % count()]?.slug },
         resetScroll: false,
+        to: "/oeuvres/$slug",
       }) as const
   );
   const previousLink = createMemo(
     () =>
       ({
-        to: "/oeuvres/$slug",
         params: { slug: _.sets[(activeIndex() + count() - 1) % count()]?.slug },
         resetScroll: false,
+        to: "/oeuvres/$slug",
       }) as const
   );
 
@@ -93,7 +93,7 @@ export function WorksLayoutSets(_: WorksLayoutSetsProps) {
       <aside class={WORKS.aside()}>
         <For each={_.sets}>
           {(set, i) => {
-            const { height: _, ...r } = set.image;
+            const { height: _h, ...r } = set.image;
             return (
               <figure
                 class={WORKS.figure({ active: i() === activeIndex() })}

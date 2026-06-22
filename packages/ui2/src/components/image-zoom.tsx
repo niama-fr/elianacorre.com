@@ -1,125 +1,7 @@
-/** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
-
 import { cn } from "@ec/ui2/lib/utils";
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
 import { createEffect, createMemo, createSignal, omit, Show } from "solid-js";
-
-// ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function ImageZoom(props: ImageZoomProps) {
-  const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "style", "zoomed");
-
-  // REFS ----------------------------------------------------------------------------------------------------------------------------------
-  let originRef!: HTMLSpanElement;
-  let modalRef!: HTMLButtonElement;
-
-  // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
-  const [phase, setPhase] = createSignal<"closed" | "closing" | "open" | "opening">("closed");
-  const [styles, setStyles] = createSignal<{ from?: string; to?: string }>({ from: undefined, to: undefined });
-
-  const isClosed = createMemo(() => phase() === "closed");
-  const isClosing = createMemo(() => phase() === "closing");
-  const isOpen = createMemo(() => phase() === "open");
-  const isOpening = createMemo(() => phase() === "opening");
-  const isTransitioning = createMemo(() => isOpen() || isClosing());
-  const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
-  const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
-  const style = createMemo(() => styles()[isOpen() ? "to" : "from"]);
-
-  // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
-  createEffect(
-    () => isOpening(),
-    (isOpening) => {
-      if (!isOpening) return;
-      let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
-      return () => cancelAnimationFrame(frame);
-    }
-  );
-
-  createEffect(
-    () => isClosed(),
-    (isClosed) => {
-      if (isClosed) return;
-
-      const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-      const scroll = lockScroll();
-      const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
-
-      modalRef.focus({ preventScroll: true });
-      window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("resize", updateStyles);
-
-      return () => {
-        window.removeEventListener("keydown", onKeyDown);
-        window.removeEventListener("resize", updateStyles);
-        unlockScroll(scroll);
-        focused?.focus({ preventScroll: true });
-      };
-    }
-  );
-
-  // METHODS -------------------------------------------------------------------------------------------------------------------------------
-  const closeZoom = () => {
-    if (isClosed()) return;
-    if (isOpening()) finishClose();
-    else setPhase("closing");
-  };
-
-  const finishClose = () => setPhase("closed");
-
-  const openZoom = () => {
-    if (!isClosed()) return;
-    updateStyles();
-    setPhase("opening");
-  };
-
-  const styleFrom = ({ height, left, top, width }: ZoomRect) => `width:${width}px;height:${height}px;top:${top}px;left:${left}px`;
-
-  const updateStyles = () => {
-    const rect = originRef.getBoundingClientRect();
-    const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
-    const height = width / ratio();
-    setStyles({ from: styleFrom(rect), to: styleFrom({ height, left: (innerWidth - width) / 2, top: (innerHeight - height) / 2, width }) });
-  };
-
-  // TEMPLATE ------------------------------------------------------------------------------------------------------------------------------
-  return (
-    <>
-      <span class={IMAGE_ZOOM.origin()} ref={originRef}>
-        <Image
-          {...triggerProps}
-          aria-label="Zoomer"
-          class={cn(IMAGE_ZOOM.trigger(), props.class)}
-          data-closed={isClosed()}
-          data-transitioning={isTransitioning()}
-          onClick={() => (isClosed() ? openZoom() : closeZoom())}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            if (isClosed()) openZoom();
-            else closeZoom();
-          }}
-          onTransitionEnd={() => isClosing() && finishClose()}
-          style={isClosed() ? undefined : style()}
-          tabindex={0}
-        />
-      </span>
-      <Show when={!isClosed()}>
-        <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
-        <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
-          <Image
-            {...zoomedProps()}
-            aria-hidden="true"
-            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), zoomedProps().class)}
-            data-transitioning={isTransitioning()}
-            style={style()}
-          />
-        </button>
-      </Show>
-    </>
-  );
-}
-export type ImageZoomProps = ImageProps & { zoomed?: Partial<ImageProps> };
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const SCREEN_PADDING_PX = 20;
@@ -149,7 +31,7 @@ const lockScroll = (): ScrollSnapshot => {
 
   const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
   if (scrollbarWidth > 0) {
-    const paddingInlineEnd = window.getComputedStyle(document.body).paddingInlineEnd;
+    const { paddingInlineEnd } = window.getComputedStyle(document.body);
     document.body.style.paddingInlineEnd = `calc(${paddingInlineEnd} + ${scrollbarWidth}px)`;
   }
 
@@ -159,11 +41,133 @@ const lockScroll = (): ScrollSnapshot => {
   return scroll;
 };
 
+const styleFrom = ({ height, left, top, width }: ZoomRect) => `width:${width}px;height:${height}px;top:${top}px;left:${left}px`;
+
 const unlockScroll = (scroll: ScrollSnapshot) => {
   document.body.style.overflow = scroll.body;
   document.body.style.paddingInlineEnd = scroll.bodyPaddingInlineEnd;
   document.documentElement.style.overflow = scroll.documentElement;
 };
+
+// ROOT ------------------------------------------------------------------------------------------------------------------------------------
+export function ImageZoom(props: ImageZoomProps) {
+  const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "style", "zoomed");
+
+  // REFS ----------------------------------------------------------------------------------------------------------------------------------
+  // Solid assigns these refs through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
+  let originRef!: HTMLSpanElement;
+  // oxlint-disable-next-line no-unassigned-vars
+  let modalRef!: HTMLButtonElement;
+
+  // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
+  const [phase, setPhase] = createSignal<"closed" | "closing" | "open" | "opening">("closed");
+  const [styles, setStyles] = createSignal<{ from?: string; to?: string }>({ from: undefined, to: undefined });
+
+  const isClosed = createMemo(() => phase() === "closed");
+  const isClosing = createMemo(() => phase() === "closing");
+  const isOpen = createMemo(() => phase() === "open");
+  const isOpening = createMemo(() => phase() === "opening");
+  const isTransitioning = createMemo(() => isOpen() || isClosing());
+  const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
+  const zoomedProps = createMemo(() => ({ ...triggerProps, ...omit(props.zoomed ?? {}, "style"), background: undefined }) as ImageProps);
+  const style = createMemo(() => styles()[isOpen() ? "to" : "from"]);
+
+  // METHODS -------------------------------------------------------------------------------------------------------------------------------
+  const finishClose = () => setPhase("closed");
+  const closeZoom = () => {
+    if (isClosed()) return;
+
+    if (isOpening()) finishClose();
+    else setPhase("closing");
+  };
+
+  const updateStyles = () => {
+    const rect = originRef.getBoundingClientRect();
+    const width = Math.min(window.innerWidth - SCREEN_PADDING_PX * 2, (window.innerHeight - SCREEN_PADDING_PX * 2) * ratio());
+    const height = width / ratio();
+    setStyles({ from: styleFrom(rect), to: styleFrom({ height, left: (innerWidth - width) / 2, top: (innerHeight - height) / 2, width }) });
+  };
+
+  const openZoom = () => {
+    if (!isClosed()) return;
+
+    updateStyles();
+    setPhase("opening");
+  };
+
+  // LIFECYCLE -----------------------------------------------------------------------------------------------------------------------------
+  createEffect(
+    () => isOpening(),
+    (isCurrentlyOpening) => {
+      if (!isCurrentlyOpening) return;
+
+      let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
+      return () => cancelAnimationFrame(frame);
+    }
+  );
+
+  createEffect(
+    () => isClosed(),
+    (isCurrentlyClosed) => {
+      if (isCurrentlyClosed) return;
+
+      const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
+      const scroll = lockScroll();
+      const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
+
+      modalRef.focus({ preventScroll: true });
+      window.addEventListener("keydown", onKeyDown);
+      window.addEventListener("resize", updateStyles);
+
+      return () => {
+        window.removeEventListener("keydown", onKeyDown);
+        window.removeEventListener("resize", updateStyles);
+        unlockScroll(scroll);
+        focused?.focus({ preventScroll: true });
+      };
+    }
+  );
+
+  // TEMPLATE ------------------------------------------------------------------------------------------------------------------------------
+  return (
+    <>
+      <span class={IMAGE_ZOOM.origin()} ref={originRef}>
+        <Image
+          {...triggerProps}
+          aria-label="Zoomer"
+          class={cn(IMAGE_ZOOM.trigger(), props.class)}
+          data-closed={isClosed()}
+          data-transitioning={isTransitioning()}
+          onClick={() => (isClosed() ? openZoom() : closeZoom())}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            if (isClosed()) openZoom();
+            else closeZoom();
+          }}
+          onTransitionEnd={() => isClosing() && finishClose()}
+          style={isClosed() ? undefined : style()}
+          tabindex={0}
+        />
+      </span>
+      <Show when={!isClosed()}>
+        <span class={IMAGE_ZOOM.overlay()} data-open={isOpen()} />
+        <button aria-label="Fermer" class={IMAGE_ZOOM.modal()} onClick={closeZoom} ref={modalRef} type="button">
+          <Image
+            {...zoomedProps()}
+            aria-hidden="true"
+            class={cn(IMAGE_ZOOM.frame(), IMAGE_ZOOM.zoomed(), zoomedProps().class)}
+            data-transitioning={isTransitioning()}
+            style={style()}
+          />
+        </button>
+      </Show>
+    </>
+  );
+}
+export type ImageZoomProps = ImageProps & { zoomed?: Partial<ImageProps> };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type ScrollSnapshot = { body: string; bodyPaddingInlineEnd: string; documentElement: string };

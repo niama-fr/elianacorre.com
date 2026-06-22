@@ -43,6 +43,7 @@ export const readAllSets = () => allSets.map(setFrom);
 export const readSetBySlug = (slug: Sets["Entry"]["slug"]) => {
   const entity = allSets.find((entry) => entry.slug === slug);
   if (!entity) throw new Error(`Set not found: ${slug}`);
+
   return setFrom(entity);
 };
 

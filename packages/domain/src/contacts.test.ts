@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { zContactCreateValues } from "./contacts";
 
 const validContact = {
@@ -10,10 +11,10 @@ const validContact = {
 
 describe("contact validator", () => {
   it("rejects invalid values", () => {
-    expect(zContactCreateValues.safeParse({ ...validContact, email: "invalid" }).success).toBe(false);
+    expect(zContactCreateValues.safeParse({ ...validContact, email: "invalid" }).success).toBeFalsy();
   });
 
   it("returns valid contact values", () => {
-    expect(zContactCreateValues.parse(validContact)).toEqual(validContact);
+    expect(zContactCreateValues.parse(validContact)).toStrictEqual(validContact);
   });
 });

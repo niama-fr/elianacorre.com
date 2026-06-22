@@ -19,10 +19,10 @@
     "@ec/solid-presence2": "workspace:*",
     "@ec/solid-prevent-scroll2": "workspace:*",
     "@ec/solid-primitives2": "workspace:*",
-    "@solidjs/web": "2.0.0-beta.14",
     "@floating-ui/dom": "^1.7.6",
     "@internationalized/date": "^3.12.2",
-    "@internationalized/number": "^3.6.7"
+    "@internationalized/number": "^3.6.7",
+    "@solidjs/web": "2.0.0-beta.14"
   },
   "peerDependencies": {
     "solid-js": "2.0.0-beta.14"

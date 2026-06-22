@@ -4,9 +4,11 @@ import { cva } from "class-variance-authority";
 import { motion } from "motion/react";
 import { useCallback, useState } from "react";
 import { For } from "solid-js";
+
 import { Button } from "@/components/adapted/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { setHeaderHoveredId, store } from "@/lib/store";
+
 import { HEADER, type HeaderProps } from "./-header";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

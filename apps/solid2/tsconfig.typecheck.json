@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/router.tsx", "src/routes.smoke.test.ts"]
+  "include": ["src/router.tsx", "src/routes.smoke.test.ts"],
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
 }

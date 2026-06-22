@@ -37,12 +37,12 @@ export function onMount(fn: () => undefined | VoidFunction): void {
   });
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: This mirrors Solid 1's loose `on` array dependency typing for Kobalte compatibility.
+// This mirrors Solid 1's loose `on` array dependency typing for Kobalte compatibility.
 export type AccessorArray<_S> = readonly Accessor<any>[];
 
 export function on<S, Next extends Prev, Prev = Next>(
   deps: AccessorArray<S> | Accessor<S>,
-  // biome-ignore lint/suspicious/noExplicitAny: Kobalte call sites rely on Solid 1's permissive callback inference here.
+  // Kobalte call sites rely on Solid 1's permissive callback inference here.
   fn: (input: any, prevInput: any, prev: any) => Next,
   options: { defer?: boolean } = {}
 ): ComputeFunction<undefined | NoInfer<Next>, NoInfer<Next> | undefined> {

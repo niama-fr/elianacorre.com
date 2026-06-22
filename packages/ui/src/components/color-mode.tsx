@@ -27,19 +27,18 @@ export function ColorModeProvider(
     html.classList.remove("light", "dark");
     html.classList.add(untrack(colorMode));
 
-    // Set the cookie
-    // biome-ignore lint/suspicious/noDocumentCookie: <will find a better way to do this>
+    // This theme cookie is intentionally readable by the server-rendered application.
+    // oxlint-disable-next-line unicorn/no-document-cookie
     document.cookie = `${ZAIDAN_COLOR_MODE_COOKIE_KEY}=${untrack(colorMode)}; path=/; max-age=31536000; SameSite=Lax`;
   };
 
-  return <ColorModeContext.Provider value={{ colorMode, toggleColorMode, setColorMode }}>{props.children}</ColorModeContext.Provider>;
+  return <ColorModeContext.Provider value={{ colorMode, setColorMode, toggleColorMode }}>{props.children}</ColorModeContext.Provider>;
 }
 
 export function useColorMode(): ColorModeContextValue {
   const context = useContext(ColorModeContext);
-  if (context === undefined) {
-    throw new Error("useColorMode must be used within a ColorModeProvider");
-  }
+  if (context === undefined) throw new Error("useColorMode must be used within a ColorModeProvider");
+
   return context;
 }
 

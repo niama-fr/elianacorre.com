@@ -2,25 +2,28 @@ import { zContactCreateValues } from "@ec/domain/contacts";
 import { useAppForm } from "@ec/ui/hooks/form";
 import confetti from "canvas-confetti";
 import { toast } from "solid-sonner";
+
 import { createContact } from "@/functions/form";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function IndexForm() {
-  // biome-ignore lint/suspicious/noUnassignedVariables: false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let submitRef!: HTMLButtonElement;
 
   const form = useAppForm(() => ({
     defaultValues: { email: "", forename: "", message: "", surname: "" },
     onSubmit: async ({ value }) => {
       if (!submitRef) return;
+
       const rect = submitRef.getBoundingClientRect();
 
       await createContact({ data: value });
 
       confetti({
+        origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
         particleCount: 100,
         spread: 70,
-        origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
       });
 
       form.reset();

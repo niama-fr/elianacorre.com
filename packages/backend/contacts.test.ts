@@ -10,11 +10,12 @@ const validContact = {
 
 describe("contact persistence", () => {
   it("inserts validated contact values", async () => {
-    const insert = vi.fn(async () => "contact-id");
+    const insert = vi.fn<(table: "contacts", contact: typeof validContact) => Promise<string>>(
+      async () => await Promise.resolve("contact-id")
+    );
 
     await insertContact({ insert }, validContact);
 
-    expect(insert).toHaveBeenCalledOnce();
-    expect(insert).toHaveBeenCalledWith("contacts", validContact);
+    expect(insert).toHaveBeenCalledExactlyOnceWith("contacts", validContact);
   });
 });

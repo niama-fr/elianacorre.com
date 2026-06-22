@@ -6,25 +6,25 @@ import { type ComponentProps, splitProps } from "solid-js";
 export const LOADING_SWAP = {
   base: cva("grid grid-cols-1 items-center justify-items-center"),
   children: cva("col-start-1 col-end-2 row-start-1 row-end-2 w-full", {
+    defaultVariants: {
+      isLoading: false,
+    },
     variants: {
       isLoading: {
         false: "visible",
         true: "invisible",
       },
     },
+  }),
+  loader: cva("col-start-1 col-end-2 row-start-1 row-end-2", {
     defaultVariants: {
       isLoading: false,
     },
-  }),
-  loader: cva("col-start-1 col-end-2 row-start-1 row-end-2", {
     variants: {
       isLoading: {
         false: "invisible",
         true: "visible",
       },
-    },
-    defaultVariants: {
-      isLoading: false,
     },
   }),
   spinner: cva("icon-[lucide--loader-circle] animate-spin"),

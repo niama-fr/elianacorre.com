@@ -95,7 +95,7 @@ export function PopperArrow<T extends ValidComponent = "div">(props: Polymorphic
       )}
       {...others}
     >
-      {/* biome-ignore lint/a11y/noSvgWithoutTitle: aria hidden */}
+      {/* The SVG is decorative and hidden from assistive technology. */}
       <svg display="block" style="transform:scale(1.02)" viewBox={`0 0 ${DEFAULT_SIZE} ${DEFAULT_SIZE}`}>
         <g transform={rotate()}>
           <path d={ARROW_PATH} fill="none" />

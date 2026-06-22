@@ -8,14 +8,14 @@ export const BTN = {
   base: cva(
     "group/button relative w-auto cursor-pointer overflow-hidden rounded-full border bg-background px-6 py-2 text-center font-semibold",
     {
+      defaultVariants: {
+        intent: "primary",
+      },
       variants: {
         intent: {
           primary: "hover:border-primary",
           secondary: "hover:border-secondary",
         },
-      },
-      defaultVariants: {
-        intent: "primary",
       },
     }
   ),
@@ -23,14 +23,14 @@ export const BTN = {
     `size-2 rounded-full transition-all duration-300 
     group-hover/button:scale-[100.8]`,
     {
+      defaultVariants: {
+        intent: "primary",
+      },
       variants: {
         intent: {
           primary: "bg-primary",
           secondary: "bg-secondary",
         },
-      },
-      defaultVariants: {
-        intent: "primary",
       },
     }
   ),
@@ -38,14 +38,14 @@ export const BTN = {
     `inline-block transition-all duration-300 
     group-hover/button:opacity-0`,
     {
-      variants: {
-        reverse: {
-          true: "group-hover/button:-translate-x-12",
-          false: "group-hover/button:translate-x-12",
-        },
-      },
       defaultVariants: {
         reverse: false,
+      },
+      variants: {
+        reverse: {
+          false: "group-hover/button:translate-x-12",
+          true: "group-hover/button:-translate-x-12",
+        },
       },
     }
   ),
@@ -53,19 +53,19 @@ export const BTN = {
     `absolute top-0 z-10 flex size-full items-center justify-center gap-2 opacity-0 transition-all duration-300
     group-hover/button:opacity-100`,
     {
+      defaultVariants: {
+        intent: "primary",
+        reverse: false,
+      },
       variants: {
         intent: {
           primary: "text-primary-foreground",
           secondary: "text-secondary-foreground",
         },
         reverse: {
-          true: "translate-x-5 flex-row-reverse group-hover/button:-translate-x-8",
           false: "translate-x-12 flex-row group-hover/button:-translate-x-5",
+          true: "translate-x-5 flex-row-reverse group-hover/button:-translate-x-8",
         },
-      },
-      defaultVariants: {
-        intent: "primary",
-        reverse: false,
       },
     }
   ),

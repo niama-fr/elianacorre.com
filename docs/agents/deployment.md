@@ -6,11 +6,11 @@ The stable application (`apps/solid`) uses Convex for data and Cloudflare Worker
 
 ## Deployment topology
 
-| Target | Convex | Cloudflare Worker | Trigger |
-| --- | --- | --- | --- |
-| Pull-request preview | Temporary preview deployment `pr-<number>` | `elianacorre-com-preview`, alias `pr-<number>` | Quality checks pass |
-| Persistent staging | Separate Convex staging project | `elianacorre-com-staging` | Approved pull request merges to `main` |
-| Production release | Production deployment | `elianacorre-com` | Manual workflow dispatch and protected environment approval |
+| Target               | Convex                                     | Cloudflare Worker                              | Trigger                                                     |
+| -------------------- | ------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------- |
+| Pull-request preview | Temporary preview deployment `pr-<number>` | `elianacorre-com-preview`, alias `pr-<number>` | Quality checks pass                                         |
+| Persistent staging   | Separate Convex staging project            | `elianacorre-com-staging`                      | Approved pull request merges to `main`                      |
+| Production release   | Production deployment                      | `elianacorre-com`                              | Manual workflow dispatch and protected environment approval |
 
 `elianacorre.com` remains on the existing public site until a dedicated client-approved launch issue attaches it to `elianacorre-com`. A successful staging deployment is not a production release.
 
@@ -140,7 +140,7 @@ rtk gh variable list --env production
 
 `.github/workflows/pull-request.yml`:
 
-1. Runs Ultracite, type checking, tests, and builds.
+1. Runs Oxfmt, Oxlint, type checking, tests, and builds.
 2. Creates or reuses Convex preview `pr-<number>`.
 3. Builds `apps/solid` with the preview Convex URL.
 4. Uploads an aliased Cloudflare preview version.
@@ -253,12 +253,12 @@ Production releases and rollbacks require Grégory's explicit authorization.
 
 ## AI-to-human mapping
 
-| AI-assisted action | Human equivalent |
-| --- | --- |
-| Configure environments | Use GitHub Settings or the documented `rtk gh` commands |
-| Store credentials | Run `rtk gh secret set` and paste at the secure prompt |
-| Inspect preview or staging | Open the Actions run and workers.dev URL |
-| Release production | Dispatch the workflow, then approve the protected environment |
-| Roll back | Dispatch a known-good SHA or use the documented Wrangler rollback |
+| AI-assisted action         | Human equivalent                                                  |
+| -------------------------- | ----------------------------------------------------------------- |
+| Configure environments     | Use GitHub Settings or the documented `rtk gh` commands           |
+| Store credentials          | Run `rtk gh secret set` and paste at the secure prompt            |
+| Inspect preview or staging | Open the Actions run and workers.dev URL                          |
+| Release production         | Dispatch the workflow, then approve the protected environment     |
+| Roll back                  | Dispatch a known-good SHA or use the documented Wrangler rollback |
 
 Update this runbook whenever provider names, secret names, deployment triggers, environment protections, URLs, or rollback behavior change.

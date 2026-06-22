@@ -3,6 +3,7 @@ import { Image } from "@ec/unpic-solid2";
 import { Link, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, For, onSettled } from "solid-js";
+
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ export const HEADER = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
-  const location = useLocation({ select: ({ hash, pathname }) => ({ pathname, hash }) });
+  const location = useLocation({ select: ({ hash, pathname }) => ({ hash, pathname }) });
   const stain = createStain();
 
   createEffect(
@@ -51,8 +52,6 @@ export function Header(_: HeaderProps) {
 
   return (
     <header class={HEADER.base()}>
-      {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: on purpose */}
-      {/** biome-ignore lint/a11y/noStaticElementInteractions: on purpose */}
       <div class={HEADER.content()} onMouseLeave={() => stain.update()}>
         <Link aria-label="Accueil" class={HEADER.logo()} to="/">
           <div class={HEADER.logoContent()}>
@@ -70,7 +69,7 @@ export function Header(_: HeaderProps) {
         <Stain stain={stain} />
         <div class={HEADER.navs()}>
           <For each={_.data().navs}>
-            {({ key, text, ...rest }) => (
+            {({ key: _key, text, ...rest }) => (
               <Link
                 {...rest}
                 activeProps={{ class: "bg-accent rounded-full" }}
@@ -114,7 +113,8 @@ export type HeaderProps = { data: Accessor<ReadRootLayoutProps> };
 
 // LINK CONTENT ----------------------------------------------------------------------------------------------------------------------------
 export function NavLinkContent(_: NavLinkContentProps) {
-  // biome-ignore lint/suspicious/noUnassignedVariables: solid false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let ref!: HTMLSpanElement;
 
   onSettled(() => {

@@ -118,7 +118,8 @@ export function SectionTitle(props: SectionTitleProps) {
   const [_, rest] = splitProps(props, ["class", "title"]);
   const C = createMemo(() => _.class ?? {});
 
-  // biome-ignore lint/suspicious/noUnassignedVariables: false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let el!: HTMLHeadingElement;
 
   const [visible, setVisible] = createSignal(false);
@@ -127,6 +128,7 @@ export function SectionTitle(props: SectionTitleProps) {
     const instance = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
+
         setVisible(true);
         instance.disconnect();
       },
