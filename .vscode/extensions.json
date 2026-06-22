@@ -1,7 +1,3 @@
 {
-  "recommendations": [
-    "github.vscode-github-actions",
-    "github.vscode-pull-request-github",
-    "linear.linear-open-issue"
-  ]
+  "recommendations": ["github.vscode-github-actions", "github.vscode-pull-request-github", "linear.linear-open-issue", "oxc.oxc-vscode"]
 }

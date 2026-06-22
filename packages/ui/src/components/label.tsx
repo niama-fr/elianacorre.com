@@ -13,7 +13,8 @@ export const Label = (props: LabelProps) => {
   const [_, others] = splitProps(props, ["class"]);
 
   return (
-    // biome-ignore lint/a11y/noLabelWithoutControl: false positive
+    // Consumers associate this primitive with a control through props or children.
+    // oxlint-disable-next-line jsx-a11y/label-has-associated-control
     <label class={cn(LABEL(), _.class)} data-slot="label" {...others} />
   );
 };

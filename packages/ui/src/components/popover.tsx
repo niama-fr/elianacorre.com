@@ -1,6 +1,7 @@
 import { cn } from "@ec/ui/lib/utils";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-// biome-ignore lint/performance/noNamespaceImport: false positive
+// Kobalte exposes its compound component API as a namespace.
+// oxlint-disable-next-line import/no-namespace
 import * as PopoverPrimitive from "@kobalte/core/popover";
 import { cva } from "class-variance-authority";
 import type { ComponentProps, ValidComponent } from "solid-js";

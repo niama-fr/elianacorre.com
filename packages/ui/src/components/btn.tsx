@@ -17,7 +17,7 @@ export const BTN = {
       defaultVariants: {
         intent: "primary",
       },
-    }
+    },
   ),
   circle: cva(
     `size-2 rounded-full transition-all duration-300 
@@ -32,7 +32,7 @@ export const BTN = {
       defaultVariants: {
         intent: "primary",
       },
-    }
+    },
   ),
   container: cva(
     `inline-block transition-all duration-300 
@@ -47,7 +47,7 @@ export const BTN = {
       defaultVariants: {
         reverse: false,
       },
-    }
+    },
   ),
   hovered: cva(
     `absolute top-0 z-10 flex size-full items-center justify-center gap-2 opacity-0 transition-all duration-300
@@ -67,7 +67,7 @@ export const BTN = {
         intent: "primary",
         reverse: false,
       },
-    }
+    },
   ),
   icon: cva("size-5"),
   unhovered: cva("flex items-center gap-2"),

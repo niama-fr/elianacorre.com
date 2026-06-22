@@ -6,7 +6,8 @@ import { createContact } from "@/functions/form";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function IndexForm() {
-  // biome-ignore lint/suspicious/noUnassignedVariables: false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let submitRef!: HTMLButtonElement;
 
   const form = useAppForm(() => ({

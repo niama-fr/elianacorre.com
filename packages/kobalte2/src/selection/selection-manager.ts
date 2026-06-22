@@ -400,7 +400,7 @@ export class SelectionManager implements MultipleSelectionManager {
           }
         }
 
-        // biome-ignore lint/style/noParameterAssign: used in loop
+        // The loop advances the working key.
         key = this.collection().getKeyAfter(key);
       }
     };

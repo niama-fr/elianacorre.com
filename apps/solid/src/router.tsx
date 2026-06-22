@@ -14,7 +14,8 @@ export function getRouter() {
 }
 
 declare module "@tanstack/solid-router" {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: TanStack Router requires interface-based module augmentation.
+  // TanStack Router requires interface-based declaration merging.
+  // oxlint-disable-next-line typescript/consistent-type-definitions
   interface Register {
     router: ReturnType<typeof getRouter>;
   }

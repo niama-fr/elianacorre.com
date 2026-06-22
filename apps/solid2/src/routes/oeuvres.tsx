@@ -34,17 +34,17 @@ export const WORKS = {
   base: cva(
     `min-h-[470px]
     lg:min-h-[500px] lg:items-stretch lg:gap-20
-    xl:min-h-auto`
+    xl:min-h-auto`,
   ),
   aside: cva(
     `relative hidden flex-none aspect-square self-center
     lg:flex lg:w-xs
     xl:w-sm 
-    2xl:w-md`
+    2xl:w-md`,
   ),
   description: cva(
     `flex flex-1 flex-col justify-center gap-8 transition
-    starting:translate-x-10 starting:opacity-0`
+    starting:translate-x-10 starting:opacity-0`,
   ),
   figure: cva("absolute size-full overflow-hidden rounded-3xl bg-neutral-200 shadow-2xl transition", {
     variants: {
@@ -60,7 +60,7 @@ export const WORKS = {
   title: cva(
     `text-2xl 
     sm:text-4xl 
-    2xl:text-5xl`
+    2xl:text-5xl`,
   ),
 };
 
@@ -77,7 +77,7 @@ export function WorksLayoutSets(_: WorksLayoutSetsProps) {
         to: "/oeuvres/$slug",
         params: { slug: _.sets[(activeIndex() + 1) % count()]?.slug },
         resetScroll: false,
-      }) as const
+      }) as const,
   );
   const previousLink = createMemo(
     () =>
@@ -85,7 +85,7 @@ export function WorksLayoutSets(_: WorksLayoutSetsProps) {
         to: "/oeuvres/$slug",
         params: { slug: _.sets[(activeIndex() + count() - 1) % count()]?.slug },
         resetScroll: false,
-      }) as const
+      }) as const,
   );
 
   return (

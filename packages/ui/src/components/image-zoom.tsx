@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
-
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { createEffect, createMemo, createSignal, on, onCleanup, Show, splitProps } from "solid-js";
@@ -10,7 +8,10 @@ export function ImageZoom(props: ImageZoomProps) {
   const [_, triggerProps] = splitProps(props, ["onClick", "onKeyDown", "ref", "zoomed"]);
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
+  // Solid assigns these refs through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let originRef!: HTMLSpanElement;
+  // oxlint-disable-next-line no-unassigned-vars
   let modalRef!: HTMLButtonElement;
 
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ export function ImageZoom(props: ImageZoomProps) {
   const isOpen = createMemo(() => phase() === "open");
   const isOpening = createMemo(() => phase() === "opening");
   const isTransitioning = createMemo(() => isOpen() || isClosing());
-  const zoomedProps = createMemo(() => ({ ...triggerProps, ...(props.zoomed ?? {}), background: undefined }) as ImageProps);
+  const zoomedProps = createMemo(() => ({ ...triggerProps, ...props.zoomed, background: undefined }) as ImageProps);
   const ratio = createMemo(() => props.aspectRatio ?? (props.width ?? 0) / (props.height ?? 1));
   const style = createMemo(() => styleFrom(styles()[isOpen() ? "to" : "from"]));
 
@@ -33,8 +34,8 @@ export function ImageZoom(props: ImageZoomProps) {
         if (!isOpening) return;
         let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
         onCleanup(() => cancelAnimationFrame(frame));
-      }
-    )
+      },
+    ),
   );
 
   createEffect(
@@ -57,8 +58,8 @@ export function ImageZoom(props: ImageZoomProps) {
           unlockScroll(scroll);
           focused?.focus({ preventScroll: true });
         });
-      }
-    )
+      },
+    ),
   );
 
   // METHODS -------------------------------------------------------------------------------------------------------------------------------

@@ -63,7 +63,7 @@ function relativeOffset(ancestor: HTMLElement, child: HTMLElement, axis: "left" 
       sum -= ancestor[prop];
       break;
     }
-    // biome-ignore lint/style/noParameterAssign: used in loop
+    // The loop advances the working child.
     child = child.offsetParent as HTMLElement;
   }
   return sum;
@@ -99,7 +99,7 @@ export function scrollIntoViewport(targetElement: Element, opts?: ScrollIntoView
       // If scrolling is prevented, we don't want to scroll the body since it might move the overlay partially offscreen and the user can't scroll it back into view.
       while (targetElement && scrollParent && targetElement !== root && scrollParent !== root) {
         scrollIntoView(scrollParent as HTMLElement, targetElement as HTMLElement);
-        // biome-ignore lint/style/noParameterAssign: used in loop
+        // The loop advances the working target.
         targetElement = scrollParent;
         scrollParent = getScrollParent(targetElement);
       }

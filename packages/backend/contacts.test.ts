@@ -10,7 +10,7 @@ const validContact = {
 
 describe("contact persistence", () => {
   it("inserts validated contact values", async () => {
-    const insert = vi.fn(async () => "contact-id");
+    const insert = vi.fn<(table: "contacts", contact: typeof validContact) => Promise<string>>(async () => "contact-id");
 
     await insertContact({ insert }, validContact);
 

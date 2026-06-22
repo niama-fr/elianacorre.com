@@ -43,10 +43,7 @@
       "label": "Workflow: Start issue branch",
       "type": "process",
       "command": "rtk",
-      "args": [
-        "run",
-        "git switch main && git pull --ff-only && git switch -c '${input:issueId}/${input:branchDescription}'"
-      ],
+      "args": ["run", "git switch main && git pull --ff-only && git switch -c '${input:issueId}/${input:branchDescription}'"],
       "problemMatcher": []
     },
     {
@@ -74,7 +71,7 @@
       "problemMatcher": ["$tsc"]
     },
     {
-      "label": "Workflow: Ultracite",
+      "label": "Workflow: Quality",
       "type": "process",
       "command": "rtk",
       "args": ["proxy", "bun", "run", "check"],
@@ -90,12 +87,7 @@
     {
       "label": "Workflow: Verify all",
       "dependsOrder": "sequence",
-      "dependsOn": [
-        "Workflow: Test",
-        "Workflow: Typecheck",
-        "Workflow: Ultracite",
-        "Workflow: Build"
-      ],
+      "dependsOn": ["Workflow: Test", "Workflow: Typecheck", "Workflow: Quality", "Workflow: Build"],
       "problemMatcher": [],
       "group": {
         "kind": "test",

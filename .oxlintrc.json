@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "vitest": true
+  },
+  "ignorePatterns": [
+    ".agents/**",
+    "apps/solid/src/routeTree.gen.ts",
+    "apps/solid2/src/routeTree.gen.ts",
+    "packages/backend/convex/_generated/**",
+    "packages/kobalte2/src/**",
+    "packages/solid-presence2/src/**",
+    "packages/solid-prevent-scroll2/src/**",
+    "packages/solid-primitives2/src/**",
+    "packages/ui/src/raw/**",
+    "packages/ui2/src/raw/**",
+    "packages/unpic-solid2/src/**"
+  ],
+  "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+  "plugins": ["eslint", "import", "jsx-a11y", "oxc", "promise", "typescript", "unicorn", "vitest"],
+  "rules": {
+    "curly": "off",
+    "import/no-namespace": "error",
+    "no-alert": "error",
+    "no-console": "error",
+    "no-debugger": "error",
+    "no-eval": "error",
+    "no-magic-numbers": "off",
+    "no-var": "error",
+    "prefer-const": "error",
+    "typescript/consistent-type-definitions": ["error", "type"],
+    "unicorn/no-document-cookie": "error"
+  },
+  "overrides": [
+    {
+      "files": ["apps/solid/src/routes.smoke.test.ts", "apps/solid2/src/routes.smoke.test.ts"],
+      "rules": {
+        "import/default": "off"
+      }
+    }
+  ]
+}

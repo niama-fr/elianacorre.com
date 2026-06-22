@@ -27,17 +27,17 @@ export const FIELD = {
   description: cva(
     `nth-last-2:-mt-1 text-left font-normal text-muted-foreground text-sm leading-normal last:mt-0 
     group-has-data-[orientation=horizontal]/field:text-balance 
-    [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 [[data-variant=legend]+&]:-mt-1.5`
+    [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 [[data-variant=legend]+&]:-mt-1.5`,
   ),
   error: cva("font-normal text-destructive text-sm"),
   group: cva(
-    "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4"
+    "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
   ),
   label: cva(
     `group/field-label peer/field-label flex w-fit gap-2 leading-snug 
     has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-xl 
     has-[>[data-slot=field]]:border has-data-checked:border-primary/50 has-data-checked:bg-primary/5 
-    *:data-[slot=field]:p-4 group-data-[disabled=true]/field:opacity-50 peer-data-disabled:opacity-50`
+    *:data-[slot=field]:p-4 group-data-[disabled=true]/field:opacity-50 peer-data-disabled:opacity-50`,
   ),
   legend: cva("mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base"),
   separator: cva("relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2"),
@@ -48,13 +48,13 @@ export const FIELD = {
 
 export const Field = (props: FieldProps) => {
   const [_, others] = splitProps(props, ["class", "orientation"]);
+  // The shadcn field primitive intentionally uses a generic group container.
   return (
-    // biome-ignore lint/a11y/useSemanticElements: role="group" is intentional per shadcn design for accessibility
     <div
       class={cn(FIELD.base({ orientation: _.orientation }), _.class)}
       data-orientation={_.orientation ?? "vertical"}
       data-slot="field"
-      role="group"
+      role="group" // oxlint-disable-line jsx-a11y/prefer-tag-over-role
       {...others}
     />
   );

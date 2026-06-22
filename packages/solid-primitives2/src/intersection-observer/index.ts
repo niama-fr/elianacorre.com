@@ -21,9 +21,9 @@ export type CreateViewportObserverReturnValue = [
 ];
 
 declare module "solid-js" {
-  // biome-ignore lint/style/noNamespace: Solid directives are augmented through the JSX namespace.
+  // Solid directives are augmented through the JSX namespace.
   namespace JSX {
-    // biome-ignore lint/style/useConsistentTypeDefinitions: Declaration merging requires an interface.
+    // Declaration merging requires an interface.
     interface Directives {
       intersectionObserver: true | EntryCallback;
     }

@@ -1,8 +1,13 @@
 {
   "name": "@ec/backend",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "exports": {
+    "./api": "./convex/_generated/api.js",
+    "./client": "./client.ts",
+    "./contacts": "./contacts.ts"
+  },
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
@@ -17,10 +22,5 @@
   },
   "devDependencies": {
     "vitest": "^4.1.9"
-  },
-  "exports": {
-    "./api": "./convex/_generated/api.js",
-    "./client": "./client.ts",
-    "./contacts": "./contacts.ts"
   }
 }

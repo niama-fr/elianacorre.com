@@ -13,13 +13,13 @@ export const HEADER = {
     `fixed inset-x-0 top-0 z-50
     group-data-scrolled/body:inset-x-4 group-data-scrolled/body:top-5
     transition-[left,right,top] ${HEADER_TRANSITION}
-    md:group-data-scrolled/body:inset-x-20`
+    md:group-data-scrolled/body:inset-x-20`,
   ),
   content: cva(
     `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 bg-transparent
     group-data-scrolled/body:bg-white group-data-scrolled/body:shadow-header
     transition-[background-color,box-shadow] ${HEADER_TRANSITION}
-    xl:container`
+    xl:container`,
   ),
   icon: cva("flex size-7"),
   icons: cva("flex"),
@@ -46,13 +46,11 @@ export function Header(_: HeaderProps) {
     () => !_.data().navs.some(({ hash = "", to }) => hash === location().hash && to === location().pathname),
     (noneActive) => {
       if (noneActive) stain.setOrigin();
-    }
+    },
   );
 
   return (
     <header class={HEADER.base()}>
-      {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: on purpose */}
-      {/** biome-ignore lint/a11y/noStaticElementInteractions: on purpose */}
       <div class={HEADER.content()} onMouseLeave={() => stain.update()}>
         <Link aria-label="Accueil" class={HEADER.logo()} to="/">
           <div class={HEADER.logoContent()}>
@@ -70,7 +68,7 @@ export function Header(_: HeaderProps) {
         <Stain stain={stain} />
         <div class={HEADER.navs()}>
           <For each={_.data().navs}>
-            {({ key, text, ...rest }) => (
+            {({ key: _key, text, ...rest }) => (
               <Link
                 {...rest}
                 activeProps={{ class: "bg-accent rounded-full" }}
@@ -114,7 +112,8 @@ export type HeaderProps = { data: Accessor<ReadRootLayoutProps> };
 
 // LINK CONTENT ----------------------------------------------------------------------------------------------------------------------------
 export function NavLinkContent(_: NavLinkContentProps) {
-  // biome-ignore lint/suspicious/noUnassignedVariables: solid false positive
+  // Solid assigns this ref through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let ref!: HTMLSpanElement;
 
   onSettled(() => {

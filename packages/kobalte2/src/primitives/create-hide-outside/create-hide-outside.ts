@@ -133,7 +133,7 @@ export function ariaHideOutside(targets: Element[], root = document.body) {
 
   walk(root);
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Preserved upstream aria-hide behavior; this patch only adapts Solid 2 effect semantics.
+  // Preserve upstream aria-hide behavior; this patch only adapts Solid 2 effect semantics.
   const observer = new MutationObserver((changes) => {
     for (const change of changes) {
       if (change.type !== "childList" || change.addedNodes.length === 0) {

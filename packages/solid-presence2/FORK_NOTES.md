@@ -9,4 +9,4 @@ Current state:
 
 ## Local quality policy
 
-Ultracite formats this source, but Biome semantic lint rules are disabled for this vendored directory. The upstream public API and type shapes intentionally use patterns that conflict with this repository's first-party rules. Project-owned adapters and consumers remain fully linted.
+Oxfmt and Oxlint exclude this vendored source. The upstream public API and type shapes intentionally use patterns that conflict with this repository's first-party rules. Project-owned adapters and consumers remain fully formatted and linted.

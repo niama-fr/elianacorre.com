@@ -62,7 +62,7 @@ type FieldProps = ComponentProps<"div"> &
 const Field = (props: FieldProps) => {
   const [local, others] = splitProps(props, ["class", "orientation"]);
   return (
-    // biome-ignore lint/a11y/useSemanticElements: role="group" is intentional per shadcn design for accessibility
+    // role="group" is intentional per the shadcn accessibility design.
     <div
       class={cn(fieldVariants({ orientation: local.orientation }), local.class)}
       data-orientation={local.orientation ?? "vertical"}

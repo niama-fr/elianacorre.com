@@ -11,7 +11,7 @@ responsive `<img>` tag that follows best practices, with the correct srcset,
 sizes and styles. Detects image URLs from most image CDNs and CMSs and can
 resize images with no build step.
 
-> This package vendors upstream source for the Solid 2 migration. Ultracite formats the source, but Biome semantic lint rules are disabled for the vendored directory to preserve upstream API and type shapes. Project-owned adapters and consumers remain fully linted.
+> This package vendors upstream source for the Solid 2 migration. Oxfmt and Oxlint exclude the vendored source to preserve upstream API and type shapes. Project-owned adapters and consumers remain fully formatted and linted.
 
 ## Features
 

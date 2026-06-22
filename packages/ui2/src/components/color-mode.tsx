@@ -15,7 +15,7 @@ export const ColorModeContext = createContext<ColorModeContextValue | null>(null
 export function ColorModeProvider(
   props: ParentProps<{
     initialColorMode: ColorMode;
-  }>
+  }>,
 ) {
   const [colorMode, setColorMode] = createSignal<ColorMode>(props.initialColorMode);
 
@@ -27,8 +27,8 @@ export function ColorModeProvider(
     html.classList.remove("light", "dark");
     html.classList.add(untrack(colorMode));
 
-    // Set the cookie
-    // biome-ignore lint/suspicious/noDocumentCookie: <will find a better way to do this>
+    // This theme cookie is intentionally readable by the server-rendered application.
+    // oxlint-disable-next-line unicorn/no-document-cookie
     document.cookie = `${ZAIDAN_COLOR_MODE_COOKIE_KEY}=${untrack(colorMode)}; path=/; max-age=31536000; SameSite=Lax`;
   };
 

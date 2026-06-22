@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "useTabs": false,
+  "tabWidth": 2,
+  "printWidth": 140,
+  "singleQuote": false,
+  "jsxSingleQuote": false,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "semi": true,
+  "arrowParens": "always",
+  "bracketSameLine": false,
+  "bracketSpacing": true,
+  "ignorePatterns": [
+    ".agents/**",
+    "apps/solid/src/routeTree.gen.ts",
+    "apps/solid2/src/routeTree.gen.ts",
+    "packages/backend/convex/_generated/**",
+    "packages/kobalte2/src/**",
+    "packages/solid-presence2/src/**",
+    "packages/solid-prevent-scroll2/src/**",
+    "packages/solid-primitives2/src/**",
+    "packages/ui/src/raw/**",
+    "packages/ui2/src/raw/**",
+    "packages/unpic-solid2/src/**",
+    "skills-lock.json"
+  ]
+}

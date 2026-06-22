@@ -26,7 +26,7 @@ export const createStain = () => {
       produce((s) => {
         s.className = cn(el?.dataset.stain, "opacity-0 transition-none");
         s.style = styleFrom(el);
-      })
+      }),
     );
   };
 
@@ -36,10 +36,10 @@ export const createStain = () => {
         s.className = cn(
           el?.dataset.stain,
           el ? "opacity-100" : "opacity-0",
-          "transition-[background-color,height,opacity,transform,width]"
+          "transition-[background-color,height,opacity,transform,width]",
         );
         s.style = styleFrom(el ?? origin);
-      })
+      }),
     );
   };
 

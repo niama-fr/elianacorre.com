@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noUnassignedVariables: false positive solid */
-
 import { cn } from "@ec/ui2/lib/utils";
 import { Image, type ImageProps } from "@ec/unpic-solid2";
 import { cva } from "class-variance-authority";
@@ -10,7 +8,10 @@ export function ImageZoom(props: ImageZoomProps) {
   const triggerProps = omit(props, "onClick", "onKeyDown", "ref", "style", "zoomed");
 
   // REFS ----------------------------------------------------------------------------------------------------------------------------------
+  // Solid assigns these refs through JSX at runtime.
+  // oxlint-disable-next-line no-unassigned-vars
   let originRef!: HTMLSpanElement;
+  // oxlint-disable-next-line no-unassigned-vars
   let modalRef!: HTMLButtonElement;
 
   // SIGNALS -------------------------------------------------------------------------------------------------------------------------------
@@ -33,7 +34,7 @@ export function ImageZoom(props: ImageZoomProps) {
       if (!isOpening) return;
       let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
       return () => cancelAnimationFrame(frame);
-    }
+    },
   );
 
   createEffect(
@@ -55,7 +56,7 @@ export function ImageZoom(props: ImageZoomProps) {
         unlockScroll(scroll);
         focused?.focus({ preventScroll: true });
       };
-    }
+    },
   );
 
   // METHODS -------------------------------------------------------------------------------------------------------------------------------

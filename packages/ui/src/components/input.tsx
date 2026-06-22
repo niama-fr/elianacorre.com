@@ -10,7 +10,7 @@ const INPUT = cva(
   focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 
   disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
   aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 
-  md:text-sm`
+  md:text-sm`,
 );
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
