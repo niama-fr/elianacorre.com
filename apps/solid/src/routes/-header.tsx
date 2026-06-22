@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, createSignal, For, on, onMount } from "solid-js";
+
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -15,7 +16,7 @@ export const HEADER = {
     `fixed inset-x-0 top-0 z-50
     group-data-scrolled/body:inset-x-4 group-data-scrolled/body:top-5
     transition-[left,right,top] ${HEADER_TRANSITION}
-    lg:group-data-scrolled/body:inset-x-20`,
+    lg:group-data-scrolled/body:inset-x-20`
   ),
   burger: cva("group/burger relative cursor-pointer rounded-full p-2 data-expanded:bg-accent md:hidden"),
   burgerIcon: cva("pointer-events-none size-7 fill-none stroke-2 stroke-current"),
@@ -29,7 +30,7 @@ export const HEADER = {
     `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 bg-transparent
     group-data-scrolled/body:bg-white group-data-scrolled/body:shadow-header
     transition-[background-color,box-shadow] ${HEADER_TRANSITION}
-    xl:container`,
+    xl:container`
   ),
   icon: cva("flex size-7"),
   icons: cva("flex"),
@@ -49,7 +50,7 @@ export const HEADER = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
-  const location = useLocation({ select: ({ hash, pathname }) => ({ pathname, hash }) });
+  const location = useLocation({ select: ({ hash, pathname }) => ({ hash, pathname }) });
   const stain = createStain();
   const [burgerOpen, setBurgerOpen] = createSignal(false);
 
@@ -63,18 +64,18 @@ export function Header(_: HeaderProps) {
       () => !_.data().navs.some(({ hash = "", to }) => hash === location().hash && to === location().pathname),
       (noneActive) => {
         if (noneActive) stain.setOrigin();
-      },
-    ),
+      }
+    )
   );
 
   createEffect(
     on(
       () => burgerOpen(),
-      (burgerOpen) => {
-        stain.setOrigin(burgerOpen ? burgerRef : undefined);
+      (isBurgerOpen) => {
+        stain.setOrigin(isBurgerOpen ? burgerRef : undefined);
         // burgerRef.
-      },
-    ),
+      }
+    )
   );
 
   return (

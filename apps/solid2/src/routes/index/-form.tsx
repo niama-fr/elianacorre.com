@@ -1,6 +1,7 @@
 import confetti from "canvas-confetti";
 import { useRef } from "react";
 import { toast } from "sonner";
+
 import { createContact } from "@/functions/form";
 import { useAppForm } from "@/hooks/form";
 import { zContactCreateValues } from "@/lib/domain";
@@ -12,17 +13,18 @@ export function IndexForm() {
     defaultValues: { email: "", forename: "", message: "", surname: "" },
     onSubmit: async ({ value }) => {
       if (!submitRef.current) return;
+
       const rect = submitRef.current.getBoundingClientRect();
 
       await createContact({ data: value });
 
       confetti({
-        particleCount: 100,
-        spread: 70,
         origin: {
           x: (rect.left + rect.width / 2) / window.innerWidth,
           y: (rect.top + rect.height / 2) / window.innerHeight,
         },
+        particleCount: 100,
+        spread: 70,
       });
       form.reset();
       toast.success("Merci de votre intérêt ! Je vous recontacte très bientôt.");

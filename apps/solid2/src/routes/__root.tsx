@@ -3,29 +3,31 @@ import { GridBackground } from "@ec/ui2/grid-background";
 import { NoHydration } from "@solidjs/web";
 import { createRootRoute, HeadContent, Link, Scripts } from "@tanstack/solid-router";
 import { createSignal, type Element, Loading, onSettled } from "solid-js";
-import styleCss from "@/styles.css?url";
+
 import { Header } from "./-header";
+
+import styleCss from "@/styles.css?url";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createRootRoute({
   head: () => ({
+    links: [{ href: styleCss, rel: "stylesheet" }],
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { content: "width=device-width, initial-scale=1", name: "viewport" },
       { title: "Eliana Corré" },
       {
-        name: "description",
         content: "Artiste peintre à l'île de la Réunion vous présente l'ensemble de ses collections.",
+        name: "description",
       },
       {
-        name: "keywords",
         content:
           "artiste peintre, Eliana Corré, tableaux personnalisés, animaux totems, art contemporain, peinture nature, œuvres sur mesure, art réconfortant, peinture animale, portfolio artiste",
+        name: "keywords",
       },
-      { name: "author", content: "Eliana Corré" },
-      { name: "robots", content: "index, follow" },
+      { content: "Eliana Corré", name: "author" },
+      { content: "index, follow", name: "robots" },
     ],
-    links: [{ rel: "stylesheet", href: styleCss }],
   }),
   loader: () => readRootLayout(),
   shellComponent: RootDocument,

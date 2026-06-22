@@ -8,10 +8,10 @@ import { createMemo, omit } from "solid-js";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const HERO = {
   aside: cva(
-    "relative hidden aspect-square w-full flex-none rounded-2xl border-12 border-white bg-neutral-200 shadow-2xl outline-1 outline-neutral-200 md:border-16 lg:-mr-20 lg:flex lg:w-md lg:rotate-6 lg:transition-transform lg:hover:rotate-8 xl:mr-0 xl:w-xl 2xl:w-2xl",
+    "relative hidden aspect-square w-full flex-none rounded-2xl border-12 border-white bg-neutral-200 shadow-2xl outline-1 outline-neutral-200 md:border-16 lg:-mr-20 lg:flex lg:w-md lg:rotate-6 lg:transition-transform lg:hover:rotate-8 xl:mr-0 xl:w-xl 2xl:w-2xl"
   ),
   base: cva(
-    "container relative z-10 mx-auto flex flex-col items-center gap-8 px-4 py-8 sm:px-8 lg:flex-row lg:items-start xl:items-center",
+    "container relative z-10 mx-auto flex flex-col items-center gap-8 px-4 py-8 sm:px-8 lg:flex-row lg:items-start xl:items-center"
   ),
   content: cva("text-balance text-center font-light text-lg sm:text-xl lg:text-start 2xl:text-2xl"),
   img: cva("size-full object-cover"),

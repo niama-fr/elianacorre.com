@@ -9,7 +9,7 @@ const TEXTAREA = cva(
   aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive aria-invalid:ring-[3px] 
   md:text-sm 
   placeholder:text-muted-foreground 
-  disabled:cursor-not-allowed disabled:opacity-50`,
+  disabled:cursor-not-allowed disabled:opacity-50`
 );
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------

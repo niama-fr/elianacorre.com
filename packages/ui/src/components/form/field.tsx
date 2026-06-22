@@ -8,7 +8,7 @@ const FIELD = {
   error: cva(
     `flex origin-top items-center gap-2 overflow-hidden rounded-md bg-destructive px-2 text-destructive-foreground 
     transition-[max-height] duration-150 ease-in before:icon-[lucide--circle-alert] before:size-4 before:shrink-0 before:content-['']`,
-    { variants: { isInvalid: { true: "max-h-10", false: "max-h-0" } } },
+    { variants: { isInvalid: { false: "max-h-0", true: "max-h-10" } } }
   ),
   field: cva("gap-2"),
   label: cva("sr-only"),
@@ -19,7 +19,7 @@ const EMPTY_ERRORS: { message?: string }[] = [];
 export function Field({ children, label }: FieldProps) {
   const field = useFieldContext<string>();
   const isInvalid = createMemo(
-    () => (field().form.state.submissionAttempts > 0 || field().state.meta.isBlurred) && !field().state.meta.isValid,
+    () => (field().form.state.submissionAttempts > 0 || field().state.meta.isBlurred) && !field().state.meta.isValid
   );
 
   return (

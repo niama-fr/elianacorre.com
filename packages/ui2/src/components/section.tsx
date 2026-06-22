@@ -11,13 +11,13 @@ export const SECTION = {
   container: cva(
     `container mx-auto flex flex-col items-center gap-8 px-4 py-8 
     sm:px-8 
-    lg:flex-row lg:items-start`,
+    lg:flex-row lg:items-start`
   ),
   content: cva(
     `flex flex-col gap-8 text-balance text-center font-light 
     sm:text-lg 
     lg:text-start 
-    2xl:text-xl`,
+    2xl:text-xl`
   ),
   figure: cva(
     `relative hidden aspect-square w-full flex-none rounded-2xl border-12 border-white bg-neutral-200 shadow-2xl outline-1 outline-neutral-200
@@ -25,18 +25,18 @@ export const SECTION = {
     md:border-[16px] 
     lg:flex lg:w-md lg:translate-x-8 lg:-translate-y-8 lg:rotate-6 lg:hover:rotate-8 lg:transition-transform 
     xl:w-xl 
-    2xl:w-2xl`,
+    2xl:w-2xl`
   ),
   image: cva("size-full object-cover"),
   main: cva(
     `flex flex-col items-center gap-8 w-full
-    lg:items-start`,
+    lg:items-start`
   ),
   title: cva(
     `group/title flex flex-col items-center font-extrabold text-4xl 
     sm:text-6xl 
     lg:items-start 
-    2xl:text-7xl`,
+    2xl:text-7xl`
   ),
   titleRow: cva("relative -mr-5 w-fit pr-5"),
   titleRowEffect: cva(`pointer-events-none absolute inset-0 z-0 flex items-start opacity-0 scale-95 
@@ -47,7 +47,7 @@ export const SECTION = {
   titleRowRectangle: cva(
     `size-0 translate-y-1 -rotate-2 rounded-2xl bg-primary group-data-[intent=secondary]/section:bg-secondary
     group-data-visible/title:size-full
-    transition-all duration-2000 ease-in-out`,
+    transition-all duration-2000 ease-in-out`
   ),
   titleRowText: cva("relative z-10 text-white"),
 };
@@ -130,10 +130,11 @@ export function SectionTitle(_: SectionTitleProps) {
     const instance = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
+
         setVisible(true);
         instance.disconnect();
       },
-      { threshold: 1 },
+      { threshold: 1 }
     );
     instance.observe(el);
     return () => instance.disconnect();

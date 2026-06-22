@@ -9,19 +9,19 @@ export const Toaster: Component<ToasterProps> = (props) => {
     <Sonner
       class="toaster group"
       icons={{
-        success: <span class="icon-[lucide--circle-check] size-4" />,
-        info: <span class="icon-[lucide--info] size-4" />,
-        warning: <span class="icon-[lucide--triangle-alert] size-4" />,
         error: <span class="icon-[lucide--octagon-x] size-4" />,
+        info: <span class="icon-[lucide--info] size-4" />,
         loading: <span class="icon-[lucide--loader-circle] size-4 animate-spin" />,
+        success: <span class="icon-[lucide--circle-check] size-4" />,
+        warning: <span class="icon-[lucide--triangle-alert] size-4" />,
       }}
       position="top-center"
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--popover)",
+          "--normal-border": "var(--border)",
+          "--normal-text": "var(--popover-foreground)",
         } as JSX.CSSProperties
       }
       theme={colorMode()}

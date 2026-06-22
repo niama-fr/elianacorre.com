@@ -1,17 +1,9 @@
-{
-  "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "useTabs": false,
-  "tabWidth": 2,
-  "printWidth": 140,
-  "singleQuote": false,
-  "jsxSingleQuote": false,
-  "quoteProps": "as-needed",
-  "trailingComma": "all",
-  "semi": true,
-  "arrowParens": "always",
-  "bracketSameLine": false,
-  "bracketSpacing": true,
-  "ignorePatterns": [
+import { defineConfig } from "oxfmt";
+import ultracite from "ultracite/oxfmt";
+
+export default defineConfig({
+  ...ultracite,
+  ignorePatterns: [
     ".agents/**",
     "apps/solid/src/routeTree.gen.ts",
     "apps/solid2/src/routeTree.gen.ts",
@@ -23,6 +15,7 @@
     "packages/ui/src/raw/**",
     "packages/ui2/src/raw/**",
     "packages/unpic-solid2/src/**",
-    "skills-lock.json"
-  ]
-}
+    "skills-lock.json",
+  ],
+  printWidth: 140,
+});

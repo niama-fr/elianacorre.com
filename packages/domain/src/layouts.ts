@@ -13,17 +13,17 @@ type RootNav = {
 };
 
 const navs = [
-  { key: "carnets-de-voyage", text: "Carnets de voyage", to: "/carnets-de-voyage", hash: undefined },
-  { key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je", hash: undefined },
-  { key: "oeuvres", text: "Œuvres", to: "/oeuvres", hash: undefined },
-  { key: "contact", text: "Contact", to: "/", hash: "contact", activeOptions: { includeHash: true } },
+  { hash: undefined, key: "carnets-de-voyage", text: "Carnets de voyage", to: "/carnets-de-voyage" },
+  { hash: undefined, key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je" },
+  { hash: undefined, key: "oeuvres", text: "Œuvres", to: "/oeuvres" },
+  { activeOptions: { includeHash: true }, hash: "contact", key: "contact", text: "Contact", to: "/" },
 ] as const satisfies readonly RootNav[];
 
 export const readRootLayout = () => ({
   logoImg: readImageBySlug("logo"),
   navs,
   socials: [
-    { key: "instagram", icon: "icon-[line-md--instagram]", text: "Instagram", href: "https://instagram.com/elianacorre" },
+    { href: "https://instagram.com/elianacorre", icon: "icon-[line-md--instagram]", key: "instagram", text: "Instagram" },
     // { key: "youtube", icon: "icon-[line-md--youtube-filled]", text: "Youtube", href: "https://youtube.com/@elianacorre" },
   ],
 });

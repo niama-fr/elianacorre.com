@@ -3,6 +3,7 @@ import { Image } from "@ec/unpic-solid2";
 import { Link, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
 import { type Accessor, createEffect, For, onSettled } from "solid-js";
+
 import { createStain, Stain } from "./-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -13,13 +14,13 @@ export const HEADER = {
     `fixed inset-x-0 top-0 z-50
     group-data-scrolled/body:inset-x-4 group-data-scrolled/body:top-5
     transition-[left,right,top] ${HEADER_TRANSITION}
-    md:group-data-scrolled/body:inset-x-20`,
+    md:group-data-scrolled/body:inset-x-20`
   ),
   content: cva(
     `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 bg-transparent
     group-data-scrolled/body:bg-white group-data-scrolled/body:shadow-header
     transition-[background-color,box-shadow] ${HEADER_TRANSITION}
-    xl:container`,
+    xl:container`
   ),
   icon: cva("flex size-7"),
   icons: cva("flex"),
@@ -39,14 +40,14 @@ export const HEADER = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Header(_: HeaderProps) {
-  const location = useLocation({ select: ({ hash, pathname }) => ({ pathname, hash }) });
+  const location = useLocation({ select: ({ hash, pathname }) => ({ hash, pathname }) });
   const stain = createStain();
 
   createEffect(
     () => !_.data().navs.some(({ hash = "", to }) => hash === location().hash && to === location().pathname),
     (noneActive) => {
       if (noneActive) stain.setOrigin();
-    },
+    }
   );
 
   return (

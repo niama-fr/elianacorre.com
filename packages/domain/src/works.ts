@@ -326,7 +326,7 @@ export const workFrom = ({ date, height, imageSlug, material, media, setSlug, sl
 
 export const readLastWorks = (count: number) =>
   [...allWorks]
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .toSorted((a, b) => b.date.localeCompare(a.date))
     .slice(0, count)
     .map(workFrom);
 

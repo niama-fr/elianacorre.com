@@ -15,7 +15,7 @@ export const ColorModeContext = createContext<ColorModeContextValue | null>(null
 export function ColorModeProvider(
   props: ParentProps<{
     initialColorMode: ColorMode;
-  }>,
+  }>
 ) {
   const [colorMode, setColorMode] = createSignal<ColorMode>(props.initialColorMode);
 
@@ -32,14 +32,13 @@ export function ColorModeProvider(
     document.cookie = `${ZAIDAN_COLOR_MODE_COOKIE_KEY}=${untrack(colorMode)}; path=/; max-age=31536000; SameSite=Lax`;
   };
 
-  return <ColorModeContext value={{ colorMode, toggleColorMode, setColorMode }}>{props.children}</ColorModeContext>;
+  return <ColorModeContext value={{ colorMode, setColorMode, toggleColorMode }}>{props.children}</ColorModeContext>;
 }
 
 export function useColorMode(): ColorModeContextValue {
   const context = useContext(ColorModeContext);
-  if (context === null) {
-    throw new Error("useColorMode must be used within a ColorModeProvider");
-  }
+  if (context === null) throw new Error("useColorMode must be used within a ColorModeProvider");
+
   return context;
 }
 
