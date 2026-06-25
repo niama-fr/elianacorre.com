@@ -6,7 +6,7 @@ Run these commands from the repository root before opening or approving a pull r
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `bun run test`      | Critical public routes and loader content in both applications, plus the contact validator and isolated persistence boundary |
 | `bun run typecheck` | The stable application, the active Solid 2 route graph, and first-party domain, backend, and stable UI packages              |
-| `bun run check`     | Oxfmt formatting and Oxlint static-analysis rules                                                                            |
+| `bun run check`     | Ultracite policy through Oxfmt formatting and Oxlint static-analysis rules                                                   |
 | `bun run build`     | Production client and server builds for both applications                                                                    |
 
 ## Test scope
@@ -23,18 +23,21 @@ Vendored Solid 2 migration packages retain their documented upstream compatibili
 
 ## Static-quality scope
 
-Oxfmt formats first-party project code and documentation with a 140-character print width. Agent skill sources, generated route and Convex files, generated UI wrappers, vendored Solid 2 compatibility sources, and `skills-lock.json` remain outside the project formatting boundary.
+Ultracite provides the shared formatter and linter presets. The repository scripts invoke the pinned engines directly: Oxfmt formats
+first-party project code and documentation with a 140-character print width, then Oxlint performs static analysis. Agent skill sources,
+generated route and Convex files, generated UI wrappers, vendored Solid 2 compatibility sources, and `skills-lock.json` remain outside
+the project formatting boundary.
 
-Oxlint checks first-party JavaScript and TypeScript with its correctness rules plus the built-in TypeScript, import, JSX accessibility, Oxc, Promise, Unicorn, and Vitest plugins. Generated route manifests, generated Convex bindings, generated UI wrappers, and vendored Solid 2 compatibility sources remain outside linting because they are replaced or maintained upstream.
+Oxlint and oxlint-tsgolint check first-party JavaScript and TypeScript with correctness rules plus type-aware TypeScript, import, JSX accessibility, Oxc, Promise, Unicorn, TanStack, and Vitest rules. Generated route manifests, generated Convex bindings, generated UI wrappers, and vendored Solid 2 compatibility sources remain outside linting because they are replaced or maintained upstream.
 
-Oxlint does not currently provide native Solid, TanStack Router, or CSS lint presets equivalent to the former Ultracite/Biome presets. Type checking and route smoke tests cover the active Solid and TanStack graphs; Oxfmt parses and formats CSS, but CSS-specific semantic linting is not currently available in the Oxc toolchain.
+Ultracite's Solid preset does not currently add framework-specific Oxlint rules, so type checking and route smoke tests cover the active Solid graph. Oxfmt parses and formats CSS, but CSS-specific semantic linting is not currently available in this toolchain.
 
 ## Maintaining the Oxc baseline
 
 Prerequisites are Bun 1.3.10, a clean issue branch, and permission to edit the repository ruleset when a required CI check name changes.
 
-1. Pin Oxfmt and Oxlint in the root `devDependencies`.
-2. Keep formatter ownership in `.oxfmtrc.json` and linter ownership in `.oxlintrc.json`.
+1. Pin Ultracite, Oxfmt, Oxlint, and oxlint-tsgolint exactly in the root `devDependencies`.
+2. Keep formatter ownership in `oxfmt.config.ts` and linter ownership in `oxlint.config.ts`.
 3. Run `bun install`, `bun run fix`, and the complete verification table above.
 4. If the GitHub job name changes, open **Settings → Rules → Rulesets → Protect main** and replace only the matching required status-check context. Verify that `Quality`, `Typecheck`, `Tests`, `Build`, `Preview`, and `Approval` remain required.
 5. Confirm a clean installation with `bun install --frozen-lockfile`.
