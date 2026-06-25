@@ -99,6 +99,9 @@ The `main` ruleset requires pull requests, all six checks, and a branch current 
 
 Deployment setup, staging verification, production release, launch boundaries, and rollback are documented in `docs/agents/deployment.md`.
 
+The complete human-operated procedure, including recommended interfaces, terminal fallbacks, evidence requirements, and copyable comment
+templates, is documented in [`docs/agents/manual-delivery.md`](manual-delivery.md).
+
 ## Codex authority
 
 Codex may:
