@@ -144,6 +144,11 @@ Linear is the sole source of actionable work and PRDs. See `docs/agents/issue-tr
 
 All changes follow the issue, branch, pull request, review, and approval contract in `docs/agents/delivery-workflow.md`.
 
+### Agent efficiency
+
+Default to the low-consumption collaboration contract in `docs/agents/agent-efficiency.md`. Load documentation progressively, keep successful
+command output concise, and hand routine verification and delivery operations to Grégory unless he explicitly requests autonomous completion.
+
 ### Project resources
 
 Canonical Linear, GitHub, Drive, Obsidian, and ADR locations are listed in `docs/agents/project-resources.md`.
