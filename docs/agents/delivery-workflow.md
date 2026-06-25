@@ -42,6 +42,30 @@ Codex may refine incomplete `Backlog` issues but must not implement them until t
 
 The project WIP limit is one `In Progress` issue. Urgent work must explicitly block or move the current issue before another issue starts.
 
+### Acceptance-criteria ownership and transitions
+
+Acceptance criteria are live delivery controls, not a closing checklist completed after the work is merged.
+
+Before moving an issue from `In Progress` to `In Review`:
+
+1. Review every acceptance criterion against the final implementation and verification evidence.
+2. Check each objective criterion whose result is proven by code inspection, tests, static checks, builds, or documented configuration.
+3. Leave criteria requiring visual, editorial, business, client, or other human judgment unchecked.
+4. Name the human owner and the required validation for every unchecked criterion in an issue comment.
+5. Do not move the issue to `In Review` if any unchecked criterion represents missing implementation rather than pending human validation.
+
+Codex owns checking objective technical criteria it has verified. Grégory owns criteria requiring human judgment and may also independently
+recheck technical criteria. A checked criterion must have evidence in the pull request, issue comments, test results, or linked artifact.
+
+Before moving an issue to `Done`:
+
+- Every acceptance criterion must be checked, or the issue description must be explicitly revised to remove or replace a criterion before
+  completion.
+- The approved pull request must be merged and required follow-up work must be complete.
+- The issue must contain the pull request and merge evidence.
+
+If a commit changes after criteria were reviewed, re-evaluate affected criteria before approval.
+
 ## Delivery rules
 
 1. Every durable code or repository change starts from a `Ready` Linear issue. If a request has no issue, Codex creates and scopes one before editing.
@@ -52,7 +76,8 @@ The project WIP limit is one `In Progress` issue. Urgent work must explicitly bl
 6. Pull requests are squash-merged. The squash commit title matches the pull request title.
 7. Direct commits and pushes to `main` are prohibited. NIA-5 was the one-time repository-bootstrap exception.
 8. Required checks and review must pass before merge. The branch must be current with `main`.
-9. Codex performs a final two-axis review against repository standards and the Linear issue before approval.
+9. Codex reconciles and checks objective Linear acceptance criteria before moving the issue to `In Review`, then performs a final two-axis
+   review against repository standards and the issue before approval.
 10. Grégory approves the protected `pull-request-approval` environment and merges the pull request. GitHub does not allow a pull-request author to approve their own review, so the environment approval is the enforceable human gate for this solo repository.
 11. Approved merges deploy automatically to persistent staging.
 12. Production releases require a separate manual workflow dispatch and protected environment approval.
@@ -73,6 +98,9 @@ The first four checks run the commands in `docs/agents/verification.md`. `Qualit
 The `main` ruleset requires pull requests, all six checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
 
 Deployment setup, staging verification, production release, launch boundaries, and rollback are documented in `docs/agents/deployment.md`.
+
+The complete human-operated procedure, including recommended interfaces, terminal fallbacks, evidence requirements, and copyable comment
+templates, is documented in [`docs/agents/manual-delivery.md`](manual-delivery.md).
 
 ## Codex authority
 

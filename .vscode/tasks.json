@@ -102,6 +102,17 @@
       "problemMatcher": []
     },
     {
+      "label": "Workflow: Mark current PR ready",
+      "type": "process",
+      "command": "rtk",
+      "args": ["gh", "pr", "ready"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true
+      }
+    },
+    {
       "label": "Workflow: Watch current PR checks",
       "type": "process",
       "command": "rtk",
