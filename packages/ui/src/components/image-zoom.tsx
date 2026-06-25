@@ -115,7 +115,7 @@ export function ImageZoom(props: ImageZoomProps) {
     on(
       () => isClosed(),
       (isCurrentlyClosed) => {
-        if (!isCurrentlyClosed) return;
+        if (isCurrentlyClosed) return;
 
         const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
         const scroll = lockScroll();
