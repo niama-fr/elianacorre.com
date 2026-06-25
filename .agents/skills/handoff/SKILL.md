@@ -13,4 +13,14 @@ Do not duplicate content already captured in other artifacts (PRDs, plans, ADRs,
 
 Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
 
+Include a "consumption and manual handoff" section with:
+
+- a qualitative low/medium/high consumption estimate for each major phase;
+- the material cost drivers;
+- work the user should perform manually next;
+- work where agent judgment remains valuable;
+- exact commands or UI steps for the manual work.
+
+Do not claim exact token counts unless an authoritative usage tool reported them.
+
 If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
