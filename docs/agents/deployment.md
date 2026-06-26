@@ -182,7 +182,9 @@ Before release:
 1. Confirm the selected commit passed pull-request checks and staging review.
 2. Confirm the client approved the release contents.
 3. Confirm no incompatible Convex schema rollback is involved.
-4. Dispatch the workflow:
+4. Dispatch the workflow from GitHub Web: **Actions → Deploy production → Run workflow**. Enter the full `main` commit SHA and release reason.
+
+   Terminal fallback:
 
    ```bash
    rtk gh workflow run deploy-production.yml \
@@ -190,8 +192,6 @@ Before release:
      --field ref=RELEASE_SHA \
      --field reason="Release NIA-123"
    ```
-
-   VS Code equivalent: run `Workflow: Release production`, enter the full SHA and reason, then type `RELEASE`.
 
 5. Open the pending deployment and approve the protected `production` environment.
 6. Monitor:

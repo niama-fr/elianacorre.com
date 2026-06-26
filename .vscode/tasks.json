@@ -11,31 +11,6 @@
       "id": "branchDescription",
       "type": "promptString",
       "description": "Short kebab-case branch description"
-    },
-    {
-      "id": "prNumber",
-      "type": "promptString",
-      "description": "Pull request number"
-    },
-    {
-      "id": "mergeConfirmation",
-      "type": "promptString",
-      "description": "Type MERGE to authorize the squash merge"
-    },
-    {
-      "id": "releaseSha",
-      "type": "promptString",
-      "description": "Full main commit SHA to release"
-    },
-    {
-      "id": "releaseReason",
-      "type": "promptString",
-      "description": "Production release reason"
-    },
-    {
-      "id": "releaseConfirmation",
-      "type": "promptString",
-      "description": "Type RELEASE to dispatch production"
     }
   ],
   "tasks": [
@@ -43,7 +18,7 @@
       "label": "Workflow: Start issue branch",
       "type": "process",
       "command": "rtk",
-      "args": ["run", "git switch main && git pull --ff-only && git switch -c '${input:issueId}/${input:branchDescription}'"],
+      "args": ["run", "git fetch origin main && git switch --no-track -c '${input:issueId}/${input:branchDescription}' origin/main"],
       "problemMatcher": []
     },
     {
@@ -85,9 +60,16 @@
       "problemMatcher": []
     },
     {
+      "label": "Workflow: Diff check",
+      "type": "process",
+      "command": "rtk",
+      "args": ["git", "diff", "--check"],
+      "problemMatcher": []
+    },
+    {
       "label": "Workflow: Verify all",
       "dependsOrder": "sequence",
-      "dependsOn": ["Workflow: Test", "Workflow: Typecheck", "Workflow: Quality", "Workflow: Build"],
+      "dependsOn": ["Workflow: Test", "Workflow: Typecheck", "Workflow: Quality", "Workflow: Build", "Workflow: Diff check"],
       "problemMatcher": [],
       "group": {
         "kind": "test",
@@ -102,64 +84,11 @@
       "problemMatcher": []
     },
     {
-      "label": "Workflow: Mark current PR ready",
-      "type": "process",
-      "command": "rtk",
-      "args": ["gh", "pr", "ready"],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "focus": true
-      }
-    },
-    {
       "label": "Workflow: Watch current PR checks",
       "type": "process",
       "command": "rtk",
       "args": ["gh", "pr", "checks", "--watch", "--interval", "10"],
       "problemMatcher": []
-    },
-    {
-      "label": "Workflow: Approve current PR deployment",
-      "type": "process",
-      "command": "rtk",
-      "args": [
-        "run",
-        "branch=$(git branch --show-current); run_id=$(gh run list --workflow 'Pull request' --branch \"$branch\" --event pull_request --limit 1 --json databaseId --jq '.[0].databaseId'); test -n \"$run_id\" && gh api --method POST \"repos/niama-fr/elianacorre.com/actions/runs/$run_id/pending_deployments\" -F 'environment_ids[]=17012820517' -f state=approved -f comment='Approved from VS Code after final review'"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "focus": true
-      }
-    },
-    {
-      "label": "Workflow: Merge PR",
-      "type": "process",
-      "command": "rtk",
-      "args": [
-        "run",
-        "test '${input:mergeConfirmation}' = MERGE && title=$(gh pr view '${input:prNumber}' --json title --jq .title) && gh pr merge '${input:prNumber}' --squash --delete-branch --subject \"$title\" --body ''"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "focus": true
-      }
-    },
-    {
-      "label": "Workflow: Release production",
-      "type": "process",
-      "command": "rtk",
-      "args": [
-        "run",
-        "test '${input:releaseConfirmation}' = RELEASE && gh workflow run deploy-production.yml --ref main --field ref='${input:releaseSha}' --field reason='${input:releaseReason}'"
-      ],
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "focus": true
-      }
     }
   ]
 }

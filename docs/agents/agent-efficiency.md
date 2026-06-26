@@ -24,6 +24,10 @@ Grégory handles routine, observable operations by default:
 
 An explicit request such as “finish delivery autonomously” authorizes Codex to perform those routine operations for that issue.
 
+For routine delivery, Codex should use the simplified manual loop in `docs/agents/manual-delivery.md`: Linear App for issue state, GitHub Desktop
+for branch/commit/push/PR creation, Codex for implementation help and review, and GitHub Web for protected approval and merge. Do not prefer VS Code
+or terminal tasks for approval, merge, or production release unless Grégory explicitly asks for a fallback.
+
 ## Progressive documentation loading
 
 Start with the Linear issue and `AGENTS.md`. Do not preload every linked runbook.
@@ -32,7 +36,7 @@ Open only the document needed for the active phase:
 
 - implementation ambiguity: the relevant domain documentation;
 - verification command uncertainty: `docs/agents/verification.md`;
-- PR, review, or merge operation: the relevant section of `docs/agents/delivery-workflow.md` or `docs/agents/manual-delivery.md`;
+- PR, review, or merge operation: the relevant section of `docs/agents/manual-delivery.md`;
 - deployment or rollback: the relevant section of `docs/agents/deployment.md`.
 
 Reuse instructions already read in the current session. Search for a heading or command before opening an entire large document.

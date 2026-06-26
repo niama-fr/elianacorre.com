@@ -82,6 +82,29 @@ If a commit changes after criteria were reviewed, re-evaluate affected criteria 
 11. Approved merges deploy automatically to persistent staging.
 12. Production releases require a separate manual workflow dispatch and protected environment approval.
 
+## Preferred human loop
+
+The day-to-day manual workflow is:
+
+1. Linear App: create or refine the issue until it is `Ready`.
+2. Linear App: assign Grégory and move the issue to `In Progress`.
+3. GitHub Desktop: create the issue branch from `origin/main`.
+4. VS Code and Codex: implement within scope.
+5. VS Code task or terminal: verify locally.
+6. GitHub Desktop: commit, publish, and push.
+7. GitHub Desktop: open the pull request.
+8. Codex: fill or review the PR template, link evidence, and reconcile objective acceptance criteria.
+9. Linear App: move the issue to `In Review` only after implementation is complete.
+10. GitHub Web: review checks and preview, approve the protected environment, then squash and merge.
+11. Linear App: add the delivery-complete comment and move the issue to `Done`.
+
+GitHub Desktop opens a normal pull request rather than a draft. That is acceptable once the branch has been intentionally committed and pushed.
+An open pull request is not merge-ready until acceptance criteria are reconciled, required checks pass, preview is reviewed when relevant, and the
+final standards/spec review is recorded.
+
+The concise step-by-step procedure, including preferred surfaces, Codex prompts, VS Code tasks, and terminal fallbacks, is
+[`docs/agents/manual-delivery.md`](manual-delivery.md).
+
 ## GitHub enforcement
 
 Pull requests targeting `main` expose six stable required checks:
