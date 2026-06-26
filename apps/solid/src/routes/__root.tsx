@@ -42,7 +42,9 @@ function RootComponent() {
     const handleScroll = () => setIsScrolled(window.scrollY > 1);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    onCleanup(() => window.removeEventListener("scroll", handleScroll));
+    onCleanup(() => {
+      window.removeEventListener("scroll", handleScroll);
+    });
   });
 
   return (

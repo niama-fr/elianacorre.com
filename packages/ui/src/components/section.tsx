@@ -52,7 +52,7 @@ export const SECTION = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Section(props: SectionProps) {
-  const merged = mergeProps({ intent: "default" } as const, props);
+  const merged = mergeProps({ intent: "default", reverse: false } as const, props);
   const [_, rest] = splitProps(merged, ["children", "class", "intent", "reverse"]);
   const C = createMemo(() => _.class ?? {});
 
@@ -135,7 +135,9 @@ export function SectionTitle(props: SectionTitleProps) {
       { threshold: 1 }
     );
     instance.observe(el);
-    onCleanup(() => instance.disconnect());
+    onCleanup(() => {
+      instance.disconnect();
+    });
   });
 
   return (
@@ -180,6 +182,6 @@ export type SectionTitleProps = Omit<ComponentProps<"h2">, "class" | "title"> & 
 export type SectionClass = Partial<Record<keyof typeof SECTION, string>>;
 
 export type SectionVariants = {
-  intent?: "default" | "primary" | "secondary" | null;
-  reverse?: boolean | null;
+  intent?: "default" | "primary" | "secondary";
+  reverse?: boolean;
 };

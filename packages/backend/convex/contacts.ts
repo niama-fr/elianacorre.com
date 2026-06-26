@@ -9,5 +9,5 @@ const zMutation = zCustomMutation(mutation, NoOp);
 
 export const create = zMutation({
   args: zContactCreate,
-  handler: ({ db }, args) => insertContact(db, args),
+  handler: async ({ db }, args) => await insertContact(db, args),
 });
