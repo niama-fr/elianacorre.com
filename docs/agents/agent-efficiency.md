@@ -78,7 +78,34 @@ When implementation and review are complete, Codex supplies:
 Evidence supplied by Grégory is accepted when it names the exact commit and command or workflow result. A new commit invalidates earlier final
 verification and review evidence.
 
-## Closing usage report
+## Thread Closeout
+
+Closeout has two different artifacts:
+
+- A temporary handoff is an agent-to-agent bridge saved outside the workspace, usually in `/tmp`.
+- The canonical session synthesis is the Obsidian record in the Niama vault's `Elianacorre.com` project area.
+
+When Grégory asks to close a thread or session, Codex updates or creates the Obsidian session synthesis before reporting closure if the conversation
+produced durable project state. Durable project state includes issue delivery, workflow or runbook changes, technical decisions, implementation work,
+verification evidence, plans that future work depends on, and open loops.
+
+The session synthesis records:
+
+- current state;
+- open loops, blockers, and owners;
+- canonical links to Linear issues, pull requests, repository docs, ADRs, Drive files, and temporary handoffs as applicable;
+- the consumption and manual-responsibility report.
+
+Lightweight conversations that produced no durable project state may close without a new or updated Obsidian session note. Codex states that decision
+explicitly in the closeout response.
+
+Before reporting a substantial thread closed, Codex verifies and reports:
+
+- the temporary handoff path, if one was created;
+- the Obsidian session note path;
+- when the vault is Git-backed, the commit SHA containing the session synthesis update.
+
+## Closing Usage Report
 
 Every closing handoff includes:
 

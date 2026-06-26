@@ -5,7 +5,26 @@ argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
+Write a temporary handoff document summarising the current conversation so a fresh agent can continue the work. Save it to the temporary directory
+of the user's OS - not the current workspace. This temporary handoff is a bridge for the next agent; it is not the canonical session synthesis.
+
+For an Elianacorre.com thread closeout, also update or create the canonical Obsidian session synthesis before reporting that the thread is closed
+when the conversation produced durable project state, such as issue delivery, workflow changes, decisions, plans, implementation work, verification
+evidence, or open loops. Use the Niama Obsidian vault's `Elianacorre.com` project area. Lightweight conversations that produced no durable project
+state may close without a new or updated session note, but state that decision explicitly.
+
+The Obsidian session synthesis must include:
+
+- current state;
+- open loops and owners;
+- canonical links to Linear issues, pull requests, repository docs, ADRs, Drive files, and temporary handoffs as applicable;
+- the consumption and manual-responsibility report.
+
+Before final closeout, verify and report:
+
+- the temporary handoff path, if one was created;
+- the Obsidian session note path, or the explicit lightweight-session reason no note was needed;
+- when the vault is Git-backed, the commit SHA containing the session synthesis update.
 
 Include a "suggested skills" section in the document, which suggests skills that the agent should invoke.
 

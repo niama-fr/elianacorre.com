@@ -11,3 +11,7 @@ Use these locations to navigate the `elianacorre.com` project. Link to canonical
 | Repository ADRs | [`docs/adr/`](../adr/) and context-specific `docs/adr/` directories                                                     | Finalized technical and architectural decisions                                       |
 
 The Drive and Obsidian locations are described by account, vault, and artifact name so this repository does not depend on a contributor's local filesystem path.
+
+Canonical session syntheses live in the Niama Obsidian vault's `Elianacorre.com` project area. They should summarize current state, open loops,
+canonical links, and the consumption/manual-responsibility report instead of duplicating full Linear issues, pull request descriptions, or repository
+diffs.
