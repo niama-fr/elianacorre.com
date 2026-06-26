@@ -3,7 +3,7 @@ import { cn } from "@ec/ui/lib/utils";
 import { Separator } from "@ec/ui/separator";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps, JSX } from "solid-js";
-import { createMemo, For, Show, splitProps } from "solid-js";
+import { createMemo, For, mergeProps, Show, splitProps } from "solid-js";
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export const FIELD = {
@@ -77,12 +77,13 @@ type FieldDescriptionProps = ComponentProps<"p"> & { class?: string | undefined 
 
 // ERROR -----------------------------------------------------------------------------------------------------------------------------------
 export const FieldError = (props: FieldErrorProps) => {
-  const [_, others] = splitProps(props, ["class", "children", "errors"]);
+  const merged = mergeProps({ errors: [] as NonNullable<FieldErrorProps["errors"]> }, props);
+  const [_, others] = splitProps(merged, ["class", "children", "errors"]);
 
   const content = createMemo(() => {
-    if (_.children) return _.children;
+    if (_.children !== undefined) return _.children;
 
-    if (!_.errors?.length) return null;
+    if (_.errors.length === 0) return null;
 
     const uniqueErrors = [...new Map(_.errors.map((error) => [error?.message, error])).values()];
 
@@ -143,7 +144,7 @@ type FieldLegendProps = ComponentProps<"legend"> & {
 export const FieldSeparator = (props: FieldSeparatorProps) => {
   const [_, others] = splitProps(props, ["class", "children"]);
   return (
-    <div class={cn(FIELD.separator(), _.class)} data-content={!!_.children} data-slot="field-separator" {...others}>
+    <div class={cn(FIELD.separator(), _.class)} data-content={_.children !== undefined} data-slot="field-separator" {...others}>
       <Separator class="absolute inset-0 top-1/2" />
       <Show when={_.children}>
         <span class={FIELD.separatorContent()} data-slot="field-separator-content">

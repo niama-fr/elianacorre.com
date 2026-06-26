@@ -19,6 +19,7 @@
     "@ec/ui": "workspace:*",
     "@fontsource-variable/dancing-script": "^5.2.8",
     "@fontsource-variable/lexend": "^5.2.11",
+    "@t3-oss/env-core": "^0.13.11",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/router-plugin": "^1.133.21",
     "@tanstack/solid-router": "^1.170.16",

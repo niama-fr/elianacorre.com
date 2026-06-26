@@ -14,13 +14,11 @@ export function IndexForm() {
   const form = useAppForm(() => ({
     defaultValues: { email: "", forename: "", message: "", surname: "" },
     onSubmit: async ({ value }) => {
-      if (!submitRef) return;
-
       const rect = submitRef.getBoundingClientRect();
 
       await createContact({ data: value });
 
-      confetti({
+      await confetti({
         origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
         particleCount: 100,
         spread: 70,
@@ -37,7 +35,7 @@ export function IndexForm() {
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
     >
       <form.AppForm>

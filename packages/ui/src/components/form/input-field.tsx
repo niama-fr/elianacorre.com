@@ -14,7 +14,9 @@ export default function InputField({ label, type }: InputFieldProps) {
           aria-invalid={isInvalid}
           id={field().name}
           onBlur={field().handleBlur}
-          onChange={(e) => field().handleChange(e.target.value)}
+          onChange={(e) => {
+            field().handleChange(e.target.value);
+          }}
           placeholder={label}
           type={type}
           value={field().state.value}

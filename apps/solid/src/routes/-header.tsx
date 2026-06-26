@@ -4,7 +4,7 @@ import { Image } from "@ec/ui/image";
 import { Popover, PopoverContent, PopoverTrigger } from "@ec/ui/popover";
 import { Link, type LinkProps, useLocation } from "@tanstack/solid-router";
 import { cva } from "class-variance-authority";
-import { type Accessor, createEffect, createSignal, For, on, onMount } from "solid-js";
+import { type Accessor, createEffect, createSignal, For, mergeProps, on, onMount } from "solid-js";
 
 import { createStain, Stain } from "./-header.stain";
 
@@ -56,8 +56,12 @@ export function Header(_: HeaderProps) {
 
   let burgerRef!: HTMLButtonElement;
 
-  const hideStain = () => stain.update();
-  const showStain = (e: Event) => stain.update(e.currentTarget as HTMLElement);
+  const hideStain = () => {
+    stain.update();
+  };
+  const showStain = (e: Event) => {
+    stain.update(e.currentTarget as HTMLElement);
+  };
 
   createEffect(
     on(
@@ -158,7 +162,11 @@ export function Header(_: HeaderProps) {
                 </svg>
               </span>
             </PopoverTrigger>
-            <PopoverContent onCloseAutoFocus={(e) => e.preventDefault()}>
+            <PopoverContent
+              onCloseAutoFocus={(e) => {
+                e.preventDefault();
+              }}
+            >
               <nav class={HEADER.burgerNav()}>
                 <For each={_.data().navs}>
                   {(nav) => (
@@ -180,7 +188,8 @@ export function Header(_: HeaderProps) {
 export type HeaderProps = { data: Accessor<ReadRootLayoutProps> };
 
 // LINK CONTENT ----------------------------------------------------------------------------------------------------------------------------
-export function NavLinkContent(_: NavLinkContentProps) {
+export function NavLinkContent(props: NavLinkContentProps) {
+  const _ = mergeProps({ isActive: false }, props);
   // Solid assigns this ref through JSX at runtime.
   // oxlint-disable-next-line no-unassigned-vars
   let ref!: HTMLSpanElement;

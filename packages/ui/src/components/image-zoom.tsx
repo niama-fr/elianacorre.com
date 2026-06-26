@@ -106,7 +106,9 @@ export function ImageZoom(props: ImageZoomProps) {
         if (!isCurrentlyOpening) return;
 
         let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setPhase("open"))));
-        onCleanup(() => cancelAnimationFrame(frame));
+        onCleanup(() => {
+          cancelAnimationFrame(frame);
+        });
       }
     )
   );
@@ -119,7 +121,9 @@ export function ImageZoom(props: ImageZoomProps) {
 
         const focused = document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
         const scroll = lockScroll();
-        const onKeyDown = (event: KeyboardEvent) => event.key === "Escape" && closeZoom();
+        const onKeyDown = (event: KeyboardEvent) => {
+          if (event.key === "Escape") closeZoom();
+        };
 
         modalRef.focus({ preventScroll: true });
         window.addEventListener("keydown", onKeyDown);
@@ -145,7 +149,10 @@ export function ImageZoom(props: ImageZoomProps) {
           class={cn(IMAGE_ZOOM.trigger(), props.class)}
           data-closed={isClosed() ? "" : undefined}
           data-transitioning={isTransitioning() ? "" : undefined}
-          onClick={() => (isClosed() ? openZoom() : closeZoom())}
+          onClick={() => {
+            if (isClosed()) openZoom();
+            else closeZoom();
+          }}
           onKeyDown={(event) => {
             if (event.key !== "Enter" && event.key !== " ") return;
 
