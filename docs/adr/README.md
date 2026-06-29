@@ -15,3 +15,4 @@ Exploration and evolving notes remain in the Niama Obsidian vault. Link the rele
 - [0005: Use Better Auth for platform identities](0005-use-better-auth-for-platform-identities.md)
 - [0006: Isolate non-production email](0006-isolate-non-production-email.md)
 - [0007: Decouple email delivery from domain state](0007-decouple-email-delivery-from-domain-state.md)
+- [0008: Replace Solid with React](0008-replace-solid-with-react.md)

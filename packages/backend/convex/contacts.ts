@@ -1,13 +1,9 @@
-import { insertContact } from "@ec/backend/contacts";
-import { zContactCreate } from "@ec/domain/contacts";
-import { NoOp } from "convex-helpers/server/customFunctions";
-import { zCustomMutation } from "convex-helpers/server/zod4";
+import { zContactCreate } from "@ec/domain/schemas/contacts";
 
-import { mutation } from "./_generated/server";
+import { zMutation } from "./zod";
 
-const zMutation = zCustomMutation(mutation, NoOp);
-
+// MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
 export const create = zMutation({
   args: zContactCreate,
-  handler: async ({ db }, args) => await insertContact(db, args),
+  handler: async (ctx, args) => await ctx.db.insert("contacts", args),
 });

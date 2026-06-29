@@ -15,8 +15,8 @@ const GRID_BACKGROUND = {
 export function GridBackground() {
   return (
     <>
-      <div class={GRID_BACKGROUND.base()} />
-      <div class={GRID_BACKGROUND.radial()} />
+      <div className={GRID_BACKGROUND.base()} />
+      <div className={GRID_BACKGROUND.radial()} />
     </>
   );
 }

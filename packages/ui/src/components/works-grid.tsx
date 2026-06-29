@@ -1,15 +1,15 @@
-import type { Works } from "@ec/domain/works";
+import type { Works } from "@ec/domain/helpers/works";
+import { Image } from "@ec/ui/components/image";
+import { ImageZoom } from "@ec/ui/components/image-zoom";
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
-import { createMemo, For } from "solid-js";
-
-import { ImageZoom } from "./image-zoom";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const WORKS_GRID = {
   base: cva(`group/list grid w-full grid-cols-1 gap-8
     sm:grid-cols-2
     lg:grid-cols-3`),
+  img: cva("absolute size-full object-cover"),
   infos:
     cva(`absolute inset-0 flex flex-col justify-center items-center bg-black/50 text-white transition-opacity duration-300 opacity-0 pointer-events-none
     group-hover/item:opacity-100`),
@@ -19,31 +19,26 @@ export const WORKS_GRID = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function WorksGrid(_: WorksGridProps) {
-  const C = createMemo(() => _.class ?? {});
+export function WorksGrid(props: WorksGridProps) {
+  const { className: C = {}, works } = props;
 
   return (
-    <ul class={cn(WORKS_GRID.base(), C().base)}>
-      <For each={_.works}>
-        {(work) => (
-          <li class={cn(WORKS_GRID.item(), C().item)}>
-            <ImageZoom
-              alt={work.image.alt}
-              background={work.image.background}
+    <ul className={cn(WORKS_GRID.base(), C.base)}>
+      {works.map((work) => (
+        <li className={cn(WORKS_GRID.item(), C.item)} key={work.slug}>
+          <ImageZoom zoomImg={{ ...work.image, sizes: "100vw" }}>
+            <Image
+              {...work.image}
               breakpoints={[300, 384, 470, 600, 768, 940]}
-              class="rounded-3xl"
-              height={work.image.height}
+              className={cn(WORKS_GRID.img(), C.img)}
               sizes="(min-width: 1536px) 470px, (min-width: 1280px) 384px, (min-width: 1024px) 300px, (min-width: 768px) 336px, (min-width: 640px) 272px, 100vw"
-              src={work.image.src}
-              width={work.image.width}
-              zoomed={{ sizes: "100vw" }}
             />
-            <div class={cn(WORKS_GRID.infos(), C().infos)}>
-              <h3 class="text-center font-bold font-heading text-4xl">{work.title}</h3>
-            </div>
-          </li>
-        )}
-      </For>
+          </ImageZoom>
+          <div className={cn(WORKS_GRID.infos(), C.infos)}>
+            <h3 className="text-center font-bold font-heading text-4xl">{work.title}</h3>
+          </div>
+        </li>
+      ))}
     </ul>
   );
 }
@@ -51,4 +46,4 @@ export type WorksGridProps = WorksGridStyles & { works: Works["Entity"][] };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type WorksGridClass = Partial<Record<keyof typeof WORKS_GRID, string>>;
-export type WorksGridStyles = { class?: WorksGridClass };
+export type WorksGridStyles = { className?: WorksGridClass };

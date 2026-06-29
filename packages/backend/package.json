@@ -1,26 +1,36 @@
 {
   "name": "@ec/backend",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "exports": {
     "./api": "./convex/_generated/api.js",
-    "./client": "./client.ts",
-    "./contacts": "./contacts.ts"
+    "./types": "./convex/_generated/dataModel.d.ts",
+    "./*": "./*.ts"
   },
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
     "dev": "convex dev",
-    "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@convex-dev/better-auth": "^0.12.5",
     "@ec/domain": "workspace:*",
-    "convex": "^1.39.1",
-    "convex-helpers": "^0.1.118"
+    "better-auth": "~1.6.15",
+    "convex": "^1.42.0",
+    "convex-helpers": "^0.1.120",
+    "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "vitest": "^4.1.9"
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/bun": "latest",
+    "@types/node": "^26.0.1",
+    "convex-test": "^0.0.54",
+    "eslint": "^10.6.0",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.9",
+    "zod": "^4.4.3"
   }
 }

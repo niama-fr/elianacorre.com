@@ -1,0 +1,8 @@
+@import "@ec/ui/styles/public.css";
+
+@import "@fontsource-variable/dancing-script";
+@import "@fontsource-variable/lexend";
+
+@source "../**/*.{ts,tsx}";
+@source "../../../../packages/domain/src/**/*.ts";
+@source "../../../../packages/ui/src/components/**/*.{ts,tsx}";

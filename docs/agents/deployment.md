@@ -1,8 +1,6 @@
 # Deployment
 
-The stable application (`apps/solid`) uses Convex for data and Cloudflare Workers for hosting. Delivery has three deliberately separate targets.
-
-`apps/solid2` remains a migration application and is not deployed by these workflows.
+The stable application (`apps/web`) uses Convex for data and Cloudflare Workers for hosting. Delivery has three deliberately separate targets.
 
 ## Deployment topology
 
@@ -77,6 +75,21 @@ The environment is restricted to protected branches and requires Grégory's appr
 
 Run commands from the repository root. `gh secret set` prompts securely for values.
 
+Each Convex deployment requires these declared environment variables:
+
+- `BETTER_AUTH_SECRET`: a deployment secret generated with at least 32 random bytes.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: credentials for the environment's Google OAuth client.
+- `SITE_URL`: the public application origin, without a trailing path.
+- `WHITELIST_SEED`: a JSON array of explicitly authorized administrator email addresses.
+
+Set these through the Convex dashboard under **Deployment Settings → Environment Variables**. For preview deployments, configure project-level
+preview defaults under **Project Settings → Environment Variables** so a new preview can deploy successfully. The pull-request workflow replaces
+the preview default `SITE_URL` with that PR's exact Worker alias immediately after deployment.
+
+Google OAuth must list `${SITE_URL}/api/auth/callback/google` as an authorized redirect URI. Google does not support wildcard redirect URIs, so add
+the exact active pull-request callback before testing Google sign-in and remove it after the preview is no longer needed. Staging and production
+use their fixed Worker origins.
+
 ### Preview
 
 The existing preview setup uses:
@@ -142,10 +155,12 @@ rtk gh variable list --env production
 
 1. Runs Oxfmt, Oxlint, type checking, tests, and builds.
 2. Creates or reuses Convex preview `pr-<number>`.
-3. Builds `apps/solid` with the preview Convex URL.
-4. Uploads an aliased Cloudflare preview version.
-5. Attaches the URL, exact head SHA, and workflow run to the pull request.
-6. Waits for protected pull-request approval.
+3. Builds `apps/web` with the preview Convex URL.
+4. Seeds missing administrator profiles from `WHITELIST_SEED` when the preview is first created.
+5. Sets the preview deployment's Better Auth `SITE_URL` to the exact Cloudflare preview alias.
+6. Uploads an aliased Cloudflare preview version.
+7. Attaches the URL, exact head SHA, and workflow run to the pull request.
+8. Waits for protected pull-request approval.
 
 Expected URL:
 
@@ -159,7 +174,8 @@ Verify that the URL returns HTTP 200, the comment SHA equals the PR head, and te
 
 `.github/workflows/deploy-staging.yml` runs after each push to protected `main`.
 
-It checks out the exact merge SHA, deploys to the separate Convex staging project, builds with that staging URL, and deploys `elianacorre-com-staging`.
+It checks out the exact merge SHA, deploys to the separate Convex staging project, seeds missing administrator profiles, builds with that staging URL,
+and deploys `elianacorre-com-staging`.
 
 Verify after every merge:
 
@@ -241,7 +257,7 @@ Treat Convex schema rollback carefully: old functions must remain compatible wit
 Use only when production Convex is compatible and the fault is limited to the Worker:
 
 ```bash
-cd apps/solid
+cd apps/web
 rtk proxy bunx wrangler deployments list --name elianacorre-com
 rtk proxy bunx wrangler rollback VERSION_ID \
   --name elianacorre-com \
