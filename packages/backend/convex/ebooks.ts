@@ -1,4 +1,5 @@
 import { zEbookCreate } from "@ec/domain/schemas/ebooks";
+import { zStoragePdfDoc } from "@ec/domain/schemas/storage";
 import { zDocRef } from "@ec/domain/schemas/utils";
 
 import { zAdminMutation, zAdminQuery } from "./zod";
@@ -21,9 +22,17 @@ export const readAll = zAdminQuery({
 export const create = zAdminMutation({
   args: zEbookCreate,
   handler: async (ctx, args) => {
+    const storageDoc = await ctx.db.system.get("_storage", args.storageId);
+    const parsed = zStoragePdfDoc.safeParse(storageDoc);
+
+    if (!parsed.success) {
+      await ctx.storage.delete(args.storageId);
+      return { error: "INVALID_STORAGE_DOC" };
+    }
+
     const latest = await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
     const now = Date.now();
-    return await ctx.db.insert("ebooks", {
+    const _id = await ctx.db.insert("ebooks", {
       ...args,
       publishedAt: null,
       publishedBy: null,
@@ -32,6 +41,7 @@ export const create = zAdminMutation({
       uploadedBy: ctx.profile._id,
       version: (latest?.version ?? 0) + 1,
     });
+    return { data: _id };
   },
 });
 

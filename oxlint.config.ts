@@ -14,6 +14,16 @@ export default defineConfig({
   rules: {
     "consistent-return": "off",
     curly: ["error", "multi"],
+    "eslint/no-unused-vars": [
+      "error",
+      {
+        argsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+        fix: { imports: "safe-fix", variables: "off" },
+        varsIgnorePattern: "^_",
+      },
+    ],
     "func-style": "off",
     "import/consistent-type-specifier-style": "off",
     "jsx-a11y/control-has-associated-label": "error",
@@ -24,9 +34,11 @@ export default defineConfig({
     "jsx-a11y/no-noninteractive-element-to-interactive-role": "error",
     "jsx-a11y/prefer-tag-over-role": "error",
     "no-console": "error",
+    "no-empty-function": ["error", { allow: ["arrowFunctions"] }],
     "no-use-before-define": ["error", { functions: false, typedefs: false }],
     "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/no-unsafe-type-assertion": "off",
+    "typescript/strict-boolean-expressions": "off",
     "typescript/strict-void-return": "off",
   },
 });

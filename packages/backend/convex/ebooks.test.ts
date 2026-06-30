@@ -1,4 +1,5 @@
 import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
+import { MAX_SIZE } from "@ec/domain/helpers/storage";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -15,6 +16,14 @@ const createBackend = () => {
 
 const zAuthUser = z.object({ _id: z.string(), email: z.email() });
 const zAuthSession = z.object({ _id: z.string() });
+
+const storeFile = async (convex: TestConvex<typeof schema>, contents: string | ArrayBuffer, contentType = "application/pdf") =>
+  await convex.run(async (ctx) => {
+    const storageId = await Promise.resolve(ctx.storage.store(new Blob([contents], { type: contentType })));
+    // @ts-expect-error -- convex-test omits Blob MIME metadata from its _storage fixture.
+    await ctx.db.patch(storageId, { contentType });
+    return storageId;
+  });
 
 const createIdentity = async (convex: TestConvex<typeof schema>, role: "admin" | "member", emailVerified = true) => {
   const now = Date.now();
@@ -61,9 +70,7 @@ describe("e-book administration", () => {
 
   it("allows an authenticated administrator to create a draft", async () => {
     const convex = createBackend();
-    const storageId = await convex.run(
-      async (ctx) => await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" })))
-    );
+    const storageId = await storeFile(convex, "%PDF-1.7");
     const asAdmin = await createIdentity(convex, "admin");
 
     await asAdmin.mutation(api.ebooks.create, {
@@ -84,25 +91,54 @@ describe("e-book administration", () => {
     ]);
   });
 
+  it("rejects a stored file that is not a PDF", async () => {
+    const convex = createBackend();
+    const storageId = await storeFile(convex, "not a PDF", "text/plain");
+    const asAdmin = await createIdentity(convex, "admin");
+
+    await expect(
+      asAdmin.mutation(api.ebooks.create, {
+        fileName: "ebook.txt",
+        storageId,
+        title: "Invalid e-book",
+      })
+    ).resolves.toStrictEqual({ error: "INVALID_STORAGE_DOC" });
+    await expect(convex.run(async (ctx) => await ctx.db.system.get("_storage", storageId))).resolves.toBeNull();
+  });
+
+  it("rejects a PDF larger than 20 MB", async () => {
+    const convex = createBackend();
+    const storageId = await storeFile(convex, new ArrayBuffer(MAX_SIZE + 1));
+    const asAdmin = await createIdentity(convex, "admin");
+
+    await expect(
+      asAdmin.mutation(api.ebooks.create, {
+        fileName: "ebook.pdf",
+        storageId,
+        title: "Oversized e-book",
+      })
+    ).resolves.toStrictEqual({ error: "INVALID_STORAGE_DOC" });
+    await expect(convex.run(async (ctx) => await ctx.db.system.get("_storage", storageId))).resolves.toBeNull();
+  });
+
   it("keeps exactly one published e-book through publication and rollback", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
-    const firstStorageId = await convex.run(
-      async (ctx) => await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7 first"], { type: "application/pdf" })))
-    );
-    const secondStorageId = await convex.run(
-      async (ctx) => await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7 second"], { type: "application/pdf" })))
-    );
-    const firstId = await asAdmin.mutation(api.ebooks.create, {
+    const firstStorageId = await storeFile(convex, "%PDF-1.7 first");
+    const secondStorageId = await storeFile(convex, "%PDF-1.7 second");
+    const firstResult = await asAdmin.mutation(api.ebooks.create, {
       fileName: "first.pdf",
       storageId: firstStorageId,
       title: "First version",
     });
-    const secondId = await asAdmin.mutation(api.ebooks.create, {
+    const secondResult = await asAdmin.mutation(api.ebooks.create, {
       fileName: "second.pdf",
       storageId: secondStorageId,
       title: "Second version",
     });
+    if (firstResult.data === undefined || secondResult.data === undefined) throw new Error("Draft creation failed");
+    const firstId = firstResult.data;
+    const secondId = secondResult.data;
 
     await asAdmin.mutation(api.ebooks.publish, { _id: firstId });
     await asAdmin.mutation(api.ebooks.publish, { _id: secondId });

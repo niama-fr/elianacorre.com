@@ -1,11 +1,8 @@
-import { ACCEPTED_TYPES, MAX_SIZE } from "@ec/domain/helpers/ebooks";
+import { PDF_ACCEPTED_TYPES, MAX_SIZE } from "@ec/domain/helpers/storage";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 
 import { zDocCommon, zStorageRef } from "./utils";
-
-// FILE STATUS -----------------------------------------------------------------------------------------------------------------------------
-export const zEbookFileStatus = z.literal(["invalid", "valid"]);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zEbookStatus = z.literal(["archived", "draft", "published"]);
@@ -38,9 +35,7 @@ export const zEbookCreateValues = z.object({
   file: z
     .file({ error: "L'ebook est requis" })
     .max(MAX_SIZE, { error: "Le fichier PDF doit avoir une taille maximale de 20 Mo" })
-    .mime(ACCEPTED_TYPES, {
-      error: "Veuillez sélectionner un fichier PDF",
-    })
+    .mime([...PDF_ACCEPTED_TYPES], { error: "Veuillez sélectionner un fichier PDF" })
     .nullable()
     .refine((file) => file !== null, { error: "L'ebook est requis" }),
   title: z.string().trim().min(1, { error: "Le titre est requis" }),
