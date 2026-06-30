@@ -111,7 +111,8 @@ function EbookForm() {
         const uploadResponse = await fetch(uploadUrl, { body: file, headers: { "Content-Type": file.type }, method: "POST" });
         if (!uploadResponse.ok) throw new Error("Le téléversement du fichier a echoué.");
         const { storageId } = (await uploadResponse.json()) as { storageId: Id<"_storage"> };
-        await create.mutateAsync({ fileName: file.name, storageId, title });
+        const { error } = await create.mutateAsync({ fileName: file.name, storageId, title });
+        if (error !== undefined) throw new Error(error);
         form.reset();
       } catch {
         toast.error("L'enregistrement de la nouvelle version a echoué.");
