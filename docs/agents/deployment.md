@@ -184,15 +184,6 @@ Moving `elianacorre.com` from the existing project is a separate manual launch o
 
 Do not move the public domain as part of an ordinary staging or production workflow change.
 
-## Retire preview infrastructure
-
-After this workflow change is merged and its four PR checks are proven:
-
-1. Delete expired Convex preview deployments from both projects.
-2. Delete the unused Cloudflare Worker `elianacorre-com-preview`.
-3. Delete the unused GitHub environments `preview` and `pull-request-approval` after confirming no workflow references them.
-4. Revoke the Convex Preview Deploy Key and dedicated preview Cloudflare token.
-
 ## Human verification
 
 After every merge, verify the staging Actions run and `https://staging.elianacorre.com`. Before production, confirm the exact staging commit was
