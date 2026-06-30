@@ -147,11 +147,12 @@ Exploration begins in Obsidian when useful. Once a technical decision is final, 
 
 Google Drive holds source assets and collaborative drafts. Optimize and copy production assets into Git or the production asset store. Never make the website depend on personal Drive links. Final published website copy lives in Git.
 
-## Solid 2 migration
+## Production application replacement
 
-`apps/solid` is the production application. `apps/solid2` is the migration application.
+`apps/web` is the production application. Framework experiments and replacement applications do not remain as parallel workspaces after a
+migration is accepted.
 
-Solid 2 may replace Solid 1 only when:
+A replacement may become the production application only when:
 
 - It has feature parity with the production application.
 - Critical user flows have automated tests.
@@ -159,4 +160,5 @@ Solid 2 may replace Solid 1 only when:
 - Type checking and production builds pass.
 - An isolated staging deployment has been reviewed and approved by Grégory.
 
-The replacement happens in a dedicated issue and pull request that renames the migration application to `solid` and removes the previous implementation.
+The replacement happens in a dedicated issue and pull request that removes the previous implementation and updates delivery and deployment
+documentation.

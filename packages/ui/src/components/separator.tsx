@@ -1,18 +1,18 @@
+import { Separator as SeparatorPrimitive } from "@base-ui/react/separator";
 import { cn } from "@ec/ui/lib/utils";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { Separator as SeparatorPrimitive, type SeparatorRootProps } from "@kobalte/core/separator";
-import { cva } from "class-variance-authority";
-import { type ComponentProps, mergeProps, splitProps, type ValidComponent } from "solid-js";
 
-// STYLES ----------------------------------------------------------------------------------------------------------------------------------
-const SEPARATOR = cva(`shrink-0 bg-border 
-  data-[orientation=horizontal]:h-px data-[orientation=vertical]:h-full data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-px`);
+function Separator({ className, orientation = "horizontal", ...props }: SeparatorPrimitive.Props) {
+  return (
+    <SeparatorPrimitive
+      data-slot="separator"
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch",
+        className
+      )}
+      {...props}
+    />
+  );
+}
 
-// ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export const Separator = <T extends ValidComponent = "hr">(props: SeparatorProps<T>) => {
-  const mergedProps = mergeProps({ orientation: "horizontal" } as const, props);
-  const [_, others] = splitProps(mergedProps as SeparatorProps, ["class"]);
-  return <SeparatorPrimitive class={cn(SEPARATOR(), _.class)} data-slot="separator" {...others} />;
-};
-
-export type SeparatorProps<T extends ValidComponent = "hr"> = PolymorphicProps<T, SeparatorRootProps<T>> & Pick<ComponentProps<T>, "class">;
+export { Separator };

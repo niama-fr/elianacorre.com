@@ -37,11 +37,16 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: >-
           bunx convex deploy
-          --cmd "cd ../../apps/solid && bun run build"
+          --cmd "cd ../../apps/web && bun run build"
           --cmd-url-env-var-name VITE_CONVEX_URL
           --message "GitHub staging deployment ${DEPLOY_SHA}"
+      - name: Seed administrator profiles
+        working-directory: packages/backend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: bunx convex run profiles:seed
       - name: Deploy Cloudflare staging Worker
-        working-directory: apps/solid
+        working-directory: apps/web
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -1,18 +1,9 @@
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@ec/ui/lib/utils";
-import { type ButtonRootProps, Root } from "@kobalte/core/button";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva, type VariantProps } from "class-variance-authority";
-import { type ComponentProps, splitProps, type ValidComponent } from "solid-js";
 
-// STYLES ----------------------------------------------------------------------------------------------------------------------------------
-export const BUTTON = cva(
-  `group/button inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-4xl border 
-  border-transparent bg-clip-padding font-medium text-sm outline-none transition-all 
-  focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 
-  active:not-aria-[haspopup]:translate-y-px 
-  disabled:pointer-events-none disabled:opacity-50 
-  aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 
-  [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0`,
+export const buttonVariants = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-4xl border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     defaultVariants: {
       size: "default",
@@ -32,22 +23,20 @@ export const BUTTON = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
-        ghost: "hover:bg-accent hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        ghost: "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
         outline: "border-border bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+        success: "bg-success text-success-foreground hover:bg-success/80",
+        warn: "bg-warn text-warn-foreground hover:bg-warn/80",
       },
     },
   }
 );
 
-// ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export const Button = <T extends ValidComponent = "button">(props: ButtonProps<T>) => {
-  const [_, others] = splitProps(props as ButtonProps, ["variant", "size", "class"]);
-  return <Root class={cn(BUTTON({ size: _.size, variant: _.variant }), _.class)} data-slot="button" {...others} />;
-};
-export type ButtonProps<T extends ValidComponent = "button"> = PolymorphicProps<T, ButtonRootProps<T>> &
-  VariantProps<typeof BUTTON> &
-  Pick<ComponentProps<T>, "class">;
+export function Button({ className, variant = "default", size = "default", ...props }: ButtonProps) {
+  return <ButtonPrimitive data-slot="button" className={cn(buttonVariants({ className, size, variant }))} {...props} />;
+}
+export type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants>;

@@ -1,6 +1,5 @@
 import { cn } from "@ec/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import { type ComponentProps, splitProps } from "solid-js";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const LOADING_SWAP = {
@@ -32,17 +31,17 @@ export const LOADING_SWAP = {
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function LoadingSwap(props: LoadingSwapProps) {
-  const [_, rest] = splitProps(props, ["children", "class", "isLoading"]);
+  const { children, className, isLoading, ...rest } = props;
   return (
-    <div class={LOADING_SWAP.base()} {...rest}>
-      <div class={cn(LOADING_SWAP.children({ isLoading: _.isLoading }), _.class)}>{_.children}</div>
-      <div class={cn(LOADING_SWAP.loader({ isLoading: _.isLoading }), _.class)}>
-        <span class={LOADING_SWAP.spinner()} />
+    <div className={LOADING_SWAP.base()} {...rest}>
+      <div className={cn(LOADING_SWAP.children({ isLoading }), className)}>{children}</div>
+      <div className={cn(LOADING_SWAP.loader({ isLoading }), className)}>
+        <span className={LOADING_SWAP.spinner()} />
       </div>
     </div>
   );
 }
-export type LoadingSwapProps = ComponentProps<"div"> & LoadingSwapStyles;
+export type LoadingSwapProps = React.ComponentProps<"div"> & LoadingSwapStyles;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type LoadingSwapStyles = VariantProps<typeof LOADING_SWAP.children>;

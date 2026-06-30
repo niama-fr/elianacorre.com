@@ -13,6 +13,7 @@ permissions:
   contents: read
 
 env:
+  CONVEX_PROJECT: eliana-corre:elianacorre-com-b1869
   PREVIEW_WORKER_NAME: elianacorre-com-preview
 
 jobs:
@@ -74,6 +75,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Build production applications
+        env:
+          VITE_CONVEX_URL: https://build-only.convex.cloud
         run: bun run build
 
   preview:
@@ -104,11 +107,18 @@ jobs:
         run: >-
           bunx convex deploy
           --preview-name "pr-${{ github.event.pull_request.number }}"
-          --cmd "cd ../../apps/solid && bun run build"
+          --preview-run "profiles:seed"
+          --cmd "cd ../../apps/web && bun run build"
           --cmd-url-env-var-name VITE_CONVEX_URL
           --message "PR #${{ github.event.pull_request.number }} at ${{ github.event.pull_request.head.sha }}"
+      - name: Configure preview authentication origin
+        working-directory: packages/backend
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          SITE_URL: https://pr-${{ github.event.pull_request.number }}-${{ env.PREVIEW_WORKER_NAME }}.${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}.workers.dev
+        run: bunx convex env set --deployment "${CONVEX_PROJECT}:preview/pr-${{ github.event.pull_request.number }}" SITE_URL "$SITE_URL"
       - name: Bootstrap Cloudflare preview Worker
-        working-directory: apps/solid
+        working-directory: apps/web
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -121,7 +131,7 @@ jobs:
               --keep-vars
           fi
       - name: Upload Cloudflare preview version
-        working-directory: apps/solid
+        working-directory: apps/web
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

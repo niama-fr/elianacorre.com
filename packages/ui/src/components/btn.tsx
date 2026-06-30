@@ -1,7 +1,6 @@
 import { cn } from "@ec/ui/lib/utils";
-import { Link, type LinkProps } from "@tanstack/solid-router";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
-import { type ComponentProps, createMemo, type JSX, mergeProps, splitProps } from "solid-js";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const BTN = {
@@ -75,60 +74,54 @@ export const BTN = {
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function Btn(props: BtnProps) {
-  const [_, rest] = splitProps(props, ["children", "class", "icon", "intent", "reverse"]);
-  const C = createMemo(() => _.class ?? {});
-
+  const { children, className: C = {}, icon, intent, reverse, ...rest } = props;
   return (
-    <button class={cn(BTN.base({ intent: _.intent }), C().base)} {...rest}>
-      <BtnContent class={C()} icon={_.icon} intent={_.intent} reverse={_.reverse}>
-        {_.children}
+    <button className={cn(BTN.base({ intent }), C.base)} {...rest}>
+      <BtnContent className={C} icon={icon} intent={intent} reverse={reverse}>
+        {children}
       </BtnContent>
     </button>
   );
 }
-type BtnProps = Omit<ComponentProps<"button">, "class"> & BtnStyles & { icon?: string };
+type BtnProps = Omit<React.ComponentProps<"button">, "className"> & BtnStyles & { icon?: string };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function BtnLink(props: BtnLinkProps) {
-  const [_, rest] = splitProps(props, ["children", "class", "icon", "intent", "reverse"]);
-  const C = createMemo(() => _.class ?? {});
+  const { className: C = {}, children, icon, intent, reverse, ...rest } = props;
 
   return (
-    <Link class={cn(BTN.base({ intent: _.intent }), C().base)} {...rest}>
-      <BtnContent class={C()} icon={_.icon} intent={_.intent} reverse={_.reverse}>
-        {_.children}
+    <Link className={cn(BTN.base({ intent }), C.base)} {...rest}>
+      <BtnContent className={C} icon={icon} intent={intent} reverse={reverse}>
+        {children}
       </BtnContent>
     </Link>
   );
 }
-type BtnLinkProps = LinkProps & BtnStyles & { children: JSX.Element; icon?: string };
+type BtnLinkProps = React.PropsWithChildren<LinkProps & BtnStyles & { icon?: string }>;
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
 export function BtnContent(props: BtnContentProps) {
-  const _ = mergeProps({ icon: "icon-[lucide--chevron-right]" }, props);
-  const C = createMemo(() => _.class ?? {});
-
+  const { className: C = {}, children, intent = "primary", reverse = false, icon = "icon-[lucide--chevron-right]" } = props;
   return (
     <>
-      <div class={cn(BTN.unhovered(), C().unhovered)}>
-        <div class={cn(BTN.circle({ intent: _.intent }), C().circle)} />
-        <span class={cn(BTN.container({ reverse: _.reverse }), C().container)}>{_.children}</span>
+      <div className={cn(BTN.unhovered(), C.unhovered)}>
+        <div className={cn(BTN.circle({ intent }), C.circle)} />
+        <span className={cn(BTN.container({ reverse }), C.container)}>{children}</span>
       </div>
-      <div class={cn(BTN.hovered({ intent: _.intent, reverse: _.reverse }), C().hovered)}>
-        <span>{_.children}</span>
-        <span class={cn(BTN.icon(), C().icon, _.icon)} />
+      <div className={cn(BTN.hovered({ intent, reverse }), C.hovered)}>
+        <span>{children}</span>
+        <span className={cn(BTN.icon(), C.icon, icon)} />
       </div>
     </>
   );
 }
-type BtnContentProps = BtnStyles & { children: JSX.Element; icon?: string };
+type BtnContentProps = React.PropsWithChildren<BtnStyles & { icon?: string }>;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-type BtnClass = Partial<Record<keyof typeof BTN, string>>;
 
 type BtnVariants = {
   intent?: "primary" | "secondary";
   reverse?: boolean;
 };
 
-type BtnStyles = BtnVariants & { class?: BtnClass };
+type BtnStyles = BtnVariants & { className?: Partial<Record<keyof typeof BTN, string>> };

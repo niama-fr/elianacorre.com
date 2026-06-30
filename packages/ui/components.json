@@ -1,26 +1,23 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "kobalte",
+  "style": "base-maia",
   "rsc": false,
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "../ui/src/styles/globals.css",
-    "baseColor": "zinc",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
     "cssVariables": true
   },
-  "iconLibrary": "tabler",
+  "iconLibrary": "lucide",
   "aliases": {
-    "components": "@ec/ui",
+    "components": "@ec/ui/components",
     "utils": "@ec/ui/lib/utils",
     "hooks": "@ec/ui/hooks",
     "lib": "@ec/ui/lib",
-    "ui": "@ec/ui/raw"
+    "ui": "@ec/ui/components"
   },
   "rtl": false,
   "menuColor": "default",
-  "menuAccent": "subtle",
-  "registries": {
-    "@zaidan": "https://zaidan.carere.dev/r/{style}/{name}.json"
-  }
+  "menuAccent": "subtle"
 }

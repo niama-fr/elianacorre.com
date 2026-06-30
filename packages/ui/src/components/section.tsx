@@ -1,8 +1,8 @@
-import type { Images } from "@ec/domain/images";
-import { Image } from "@ec/ui/image";
+import type { Images } from "@ec/domain/helpers/images";
+import { Image } from "@ec/ui/components/image";
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
-import { type ComponentProps, createMemo, createSignal, mergeProps, onCleanup, onMount, splitProps } from "solid-js";
+import { useEffect, useRef, useState } from "react";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const SECTION = {
@@ -14,15 +14,15 @@ export const SECTION = {
   ),
   content: cva(
     `flex flex-col gap-8 font-light text-pretty text-justify
-    sm:text-lg 
+    sm:text-lg
     2xl:text-xl`
   ),
   figure: cva(
     `relative hidden aspect-square w-full flex-none rounded-2xl border-12 border-white bg-neutral-200 shadow-2xl outline-1 outline-neutral-200
     group-data-reverse/section:lg:-translate-8 group-data-reverse/section:lg:-rotate-6 group-data-reverse/section:lg:hover:-rotate-8
-    md:border-[16px] 
-    lg:flex lg:w-md lg:translate-x-8 lg:-translate-y-8 lg:rotate-6 lg:hover:rotate-8 lg:transition-transform 
-    xl:w-xl 
+    md:border-16
+    lg:flex lg:w-md lg:translate-x-8 lg:-translate-y-8 lg:rotate-6 lg:hover:rotate-8 lg:transition-transform
+    xl:w-xl
     2xl:w-2xl`
   ),
   image: cva("size-full object-cover"),
@@ -52,79 +52,69 @@ export const SECTION = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Section(props: SectionProps) {
-  const merged = mergeProps({ intent: "default", reverse: false } as const, props);
-  const [_, rest] = splitProps(merged, ["children", "class", "intent", "reverse"]);
-  const C = createMemo(() => _.class ?? {});
-
+  const { children, className: C = {}, intent = "default", reverse = false, ...rest } = props;
   return (
-    <section {...rest} class={cn(SECTION.base(), C().base)} data-intent={_.intent} data-reverse={_.reverse ? "" : undefined}>
-      <div class={cn(SECTION.container(), C().container)}>{_.children}</div>
+    <section {...rest} className={cn(SECTION.base(), C.base)} data-intent={intent} data-reverse={reverse ? "" : undefined}>
+      <div className={cn(SECTION.container(), C.container)}>{children}</div>
     </section>
   );
 }
-type SectionProps = Omit<ComponentProps<"section">, "class"> & SectionVariants & { class?: Pick<SectionClass, "base" | "container"> };
+type SectionProps = Omit<React.ComponentProps<"section">, "className"> &
+  SectionVariants & { className?: Pick<SectionClass, "base" | "container"> };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
 export function SectionContent(props: SectionContentProps) {
-  const [_, rest] = splitProps(props, ["children", "class"]);
-
+  const { children, className, ...rest } = props;
   return (
-    <div {...rest} class={cn(SECTION.content(), _.class)}>
-      {_.children}
+    <div {...rest} className={cn(SECTION.content(), className)}>
+      {children}
     </div>
   );
 }
-type SectionContentProps = ComponentProps<"p">;
+type SectionContentProps = React.ComponentProps<"p">;
 
 // IMAGE -----------------------------------------------------------------------------------------------------------------------------------
 export function SectionImage(props: SectionImageProps) {
-  const merged = mergeProps({ reverse: false }, props);
-  const [_, rest] = splitProps(merged, ["class", "image"]);
-  const C = createMemo(() => _.class ?? {});
-
+  const { className: C = {}, image, ...rest } = props;
   return (
-    <figure {...rest} class={cn(SECTION.figure(), C().figure)}>
+    <figure {...rest} className={cn(SECTION.figure(), C.figure)}>
       <Image
-        alt={_.image.alt}
+        alt={image.alt}
         aspectRatio={1}
-        background={_.image.background}
-        class={cn(SECTION.image(), C().image)}
+        background={image.background}
+        className={cn(SECTION.image(), C.image)}
         operations={{ imagekit: { f: "avif" } }}
         sizes="(min-width: 1536px) 724px, (min-width: 1280px) 612px, (min-width: 1024px) 406px, (min-width: 768px) 670px, (min-width: 640px) 576px, 100vw"
-        src={_.image.src}
-        width={_.image.width}
+        src={image.src}
+        width={image.width}
       />
     </figure>
   );
 }
-type SectionImageProps = Omit<ComponentProps<"figure">, "class"> & {
-  class?: Pick<SectionClass, "figure" | "image">;
+type SectionImageProps = Omit<React.ComponentProps<"figure">, "className"> & {
+  className?: Pick<SectionClass, "figure" | "image">;
   image: Images["Entity"];
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function SectionMain(props: SectionMainProps) {
-  const [_, rest] = splitProps(props, ["children", "class"]);
+  const { children, className, ...rest } = props;
   return (
-    <main {...rest} class={cn(SECTION.main(), _.class)}>
-      {_.children}
+    <main {...rest} className={cn(SECTION.main(), className)}>
+      {children}
     </main>
   );
 }
-type SectionMainProps = ComponentProps<"main">;
+type SectionMainProps = React.ComponentProps<"main">;
 
 // TITLE -----------------------------------------------------------------------------------------------------------------------------------
 export function SectionTitle(props: SectionTitleProps) {
-  const [_, rest] = splitProps(props, ["class", "title"]);
-  const C = createMemo(() => _.class ?? {});
+  const { className: C = {}, title, ...rest } = props;
+  const el = useRef<HTMLHeadingElement>(null);
 
-  // Solid assigns this ref through JSX at runtime.
-  // oxlint-disable-next-line no-unassigned-vars
-  let el!: HTMLHeadingElement;
+  const [visible, setVisible] = useState(false);
 
-  const [visible, setVisible] = createSignal(false);
-
-  onMount(() => {
+  useEffect(() => {
     const instance = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -134,29 +124,29 @@ export function SectionTitle(props: SectionTitleProps) {
       },
       { threshold: 1 }
     );
-    instance.observe(el);
-    onCleanup(() => {
+    if (el.current) instance.observe(el.current);
+    return () => {
       instance.disconnect();
-    });
-  });
+    };
+  }, []);
 
   return (
-    <h2 ref={el} {...rest} class={cn(SECTION.title(), C().title)} data-visible={visible()}>
-      <span>{_.title[0]}</span>
-      <div class={cn(SECTION.titleRow(), C().titleRow)}>
-        <span class={cn(SECTION.titleRowText(), C().titleRowText)}>{_.title[1]}</span>
-        <div class={cn(SECTION.titleRowEffect(), C().titleRowEffect)}>
-          <div class={cn(SECTION.titleRowRectangle(), C().titleRowRectangle)} />
-          <div class={cn(SECTION.titleRowPointerWrapper(), C().titleRowPointerWrapper)}>
+    <h2 ref={el} {...rest} className={cn(SECTION.title(), C.title)} data-visible={visible}>
+      <span>{title[0]}</span>
+      <div className={cn(SECTION.titleRow(), C.titleRow)}>
+        <span className={cn(SECTION.titleRowText(), C.titleRowText)}>{title[1]}</span>
+        <div className={cn(SECTION.titleRowEffect(), C.titleRowEffect)}>
+          <div className={cn(SECTION.titleRowRectangle(), C.titleRowRectangle)} />
+          <div className={cn(SECTION.titleRowPointerWrapper(), C.titleRowPointerWrapper)}>
             <svg
               aria-hidden="true"
-              class={cn(SECTION.titleRowPointer(), C().titleRowPointer)}
+              className={cn(SECTION.titleRowPointer(), C.titleRowPointer)}
               fill="currentColor"
               height="1em"
               stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1"
               viewBox="0 0 16 16"
               width="1em"
               xmlns="http://www.w3.org/2000/svg"
@@ -170,8 +160,8 @@ export function SectionTitle(props: SectionTitleProps) {
   );
 }
 
-export type SectionTitleProps = Omit<ComponentProps<"h2">, "class" | "title"> & {
-  class?: Pick<
+export type SectionTitleProps = Omit<React.ComponentProps<"h2">, "className" | "title"> & {
+  className?: Pick<
     SectionClass,
     "title" | "titleRow" | "titleRowEffect" | "titleRowPointer" | "titleRowPointerWrapper" | "titleRowRectangle" | "titleRowText"
   >;

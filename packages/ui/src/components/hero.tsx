@@ -1,8 +1,7 @@
-import type { Images } from "@ec/domain/images";
-import { Image } from "@ec/ui/image";
+import type { Images } from "@ec/domain/helpers/images";
+import { Image } from "@ec/ui/components/image";
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
-import { type ComponentProps, createMemo, splitProps } from "solid-js";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const HERO = {
@@ -24,52 +23,51 @@ export const HERO = {
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Hero(props: HeroProps) {
-  const [_, rest] = splitProps(props, ["children", "class", "image", "title"]);
-  const C = createMemo(() => _.class ?? ({} as HeroClass));
+  const { children, className: C = {}, image, title, ...rest } = props;
 
   return (
-    <section class={cn(HERO.base(), C().base)} {...rest}>
-      <main class={cn(HERO.main(), C().main)}>
-        <h1 class={cn(HERO.title(), C().title)}>
-          <span>{_.title[0]}</span>
-          <div class={cn(HERO.titleRow(), C().titleRow)}>
-            <div class={cn(HERO.titleRowContent(), C().titleRowContent)}>{_.title[1]}</div>
-            <div class={cn(HERO.titleRowCursor(), C().titleRowCursor)} />
+    <section className={cn(HERO.base(), C.base)} {...rest}>
+      <main className={cn(HERO.main(), C.main)}>
+        <h1 className={cn(HERO.title(), C.title)}>
+          <span>{title[0]}</span>
+          <div className={cn(HERO.titleRow(), C.titleRow)}>
+            <div className={cn(HERO.titleRowContent(), C.titleRowContent)}>{title[1]}</div>
+            <div className={cn(HERO.titleRowCursor(), C.titleRowCursor)} />
           </div>
         </h1>
-        {_.children}
+        {children}
       </main>
-      <aside class={cn(HERO.aside(), C().aside)}>
+      <aside className={cn(HERO.aside(), C.aside)}>
         <Image
-          alt={_.image.alt}
+          alt={image.alt}
           aspectRatio={1}
-          background={_.image.background}
+          background={image.background}
           breakpoints={[406, 576, 724, 812, 1152, 1340, 1448, 1624]}
-          class={cn(HERO.img())}
+          className={cn(HERO.img())}
           operations={{ imagekit: { f: "avif" } }}
           priority={true}
           sizes="(min-width: 1536px) 724px, (min-width: 1280px) 612px, (min-width: 1024px) 406px, (min-width: 768px) 670px, (min-width: 640px) 576px, 100vw"
-          src={_.image.src}
-          width={_.image.width}
+          src={image.src}
+          width={image.width}
         />
       </aside>
     </section>
   );
 }
-type HeroProps = Omit<ComponentProps<"section">, "class" | "title"> & HeroStyles & { image: Images["Entity"]; title: string[] };
+type HeroProps = Omit<React.ComponentProps<"section">, "className" | "title"> & HeroStyles & { image: Images["Entity"]; title: string[] };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
 export function HeroContent(props: HeroContentProps) {
-  const [_, rest] = splitProps(props, ["children", "class"]);
+  const { children, className, ...rest } = props;
 
   return (
-    <div class={cn(HERO.content(), _.class)} {...rest}>
-      {_.children}
+    <div className={cn(HERO.content(), className)} {...rest}>
+      {children}
     </div>
   );
 }
-type HeroContentProps = ComponentProps<"div">;
+type HeroContentProps = React.ComponentProps<"div">;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type HeroClass = Partial<Record<keyof typeof HERO, string>>;
-type HeroStyles = { class?: HeroClass };
+type HeroStyles = { className?: HeroClass };

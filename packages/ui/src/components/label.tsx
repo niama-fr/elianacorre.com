@@ -1,21 +1,18 @@
 import { cn } from "@ec/ui/lib/utils";
-import { cva } from "class-variance-authority";
-import type { ComponentProps } from "solid-js";
-import { splitProps } from "solid-js";
+import * as React from "react";
 
-// STYLES ----------------------------------------------------------------------------------------------------------------------------------
-const LABEL = cva(`flex select-none items-center gap-2 font-medium text-sm leading-none 
-  peer-disabled:cursor-not-allowed peer-disabled:opacity-50 
-  group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50`);
-
-// ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export const Label = (props: LabelProps) => {
-  const [_, others] = splitProps(props, ["class"]);
-
+function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
-    // Consumers associate this primitive with a control through props or children.
     // oxlint-disable-next-line jsx-a11y/label-has-associated-control
-    <label class={cn(LABEL(), _.class)} data-slot="label" {...others} />
+    <label
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
   );
-};
-type LabelProps = ComponentProps<"label">;
+}
+
+export { Label };
