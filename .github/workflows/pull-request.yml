@@ -13,6 +13,7 @@ permissions:
   contents: read
 
 env:
+  CONVEX_PROJECT: eliana-corre:elianacorre-com-b1869
   PREVIEW_WORKER_NAME: elianacorre-com-preview
 
 jobs:
@@ -115,7 +116,7 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           SITE_URL: https://pr-${{ github.event.pull_request.number }}-${{ env.PREVIEW_WORKER_NAME }}.${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}.workers.dev
-        run: bunx convex env set --deployment "pr-${{ github.event.pull_request.number }}" SITE_URL "$SITE_URL"
+        run: bunx convex env set --deployment "${CONVEX_PROJECT}:preview/pr-${{ github.event.pull_request.number }}" SITE_URL "$SITE_URL"
       - name: Bootstrap Cloudflare preview Worker
         working-directory: apps/web
         env:

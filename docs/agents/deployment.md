@@ -154,7 +154,7 @@ rtk gh variable list --env production
 `.github/workflows/pull-request.yml`:
 
 1. Runs Oxfmt, Oxlint, type checking, tests, and builds.
-2. Creates or reuses Convex preview `pr-<number>`.
+2. Creates or reuses Convex preview `pr-<number>` under project `eliana-corre:elianacorre-com-b1869`.
 3. Builds `apps/web` with the preview Convex URL.
 4. Seeds missing administrator profiles from `WHITELIST_SEED` when the preview is first created.
 5. Sets the preview deployment's Better Auth `SITE_URL` to the exact Cloudflare preview alias.
@@ -167,6 +167,9 @@ Expected URL:
 ```text
 https://pr-<number>-elianacorre-com-preview.<subdomain>.workers.dev
 ```
+
+Convex CLI commands that target a preview use the fully qualified deployment reference
+`eliana-corre:elianacorre-com-b1869:preview/pr-<number>`.
 
 Verify that the URL returns HTTP 200, the comment SHA equals the PR head, and test submissions do not appear in production.
 
