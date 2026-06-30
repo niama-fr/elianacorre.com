@@ -1,31 +1,64 @@
 # Deployment
 
-The stable application (`apps/web`) uses Convex for data and Cloudflare Workers for hosting. Delivery has three deliberately separate targets.
+The React application in `apps/web` uses Convex for backend state and Cloudflare Workers for hosting. GitHub Actions coordinates both systems so a
+Worker is never intentionally deployed against an unrelated Convex code version.
 
 ## Deployment topology
 
-| Target               | Convex                                     | Cloudflare Worker                              | Trigger                                                     |
-| -------------------- | ------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------- |
-| Pull-request preview | Temporary preview deployment `pr-<number>` | `elianacorre-com-preview`, alias `pr-<number>` | Quality checks pass                                         |
-| Persistent staging   | Separate Convex staging project            | `elianacorre-com-staging`                      | Approved pull request merges to `main`                      |
-| Production release   | Production deployment                      | `elianacorre-com`                              | Manual workflow dispatch and protected environment approval |
+| Application environment | Convex target                                                     | Cloudflare target         | Trigger                  |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------- | ------------------------ |
+| Local dev               | Personal dev deployment in `eliana-corre:elianacorre-com-staging` | Local Vite server         | `bun run dev`            |
+| Staging                 | Production deployment in `eliana-corre:elianacorre-com-staging`   | `elianacorre-com-staging` | Every merge to `main`    |
+| Production              | Production deployment in `eliana-corre:elianacorre-com-b1869`     | `elianacorre-com`         | Protected manual release |
 
-`elianacorre.com` remains on the existing public site until a dedicated client-approved launch issue attaches it to `elianacorre-com`. A successful staging deployment is not a production release.
+The personal dev deployment in the production Convex project is unused. Pull requests do not create Convex deployments or Cloudflare versions.
 
-## Security boundaries
+`main` is the integration branch. A successful merge deploys to staging, where manual browser validation occurs. Production remains unchanged until
+the latest successful staging commit is deliberately promoted.
 
-- Preview, staging, and production use separate GitHub environments.
-- Preview uses a Convex Preview Deploy Key.
-- Staging uses a production deploy key from a separate Convex staging project.
-- Production uses the production deploy key from the real production project.
-- Each environment has its own Cloudflare API token.
-- Secret values never belong in Git, Linear, Obsidian, comments, terminal arguments, or prompts.
+## Environment isolation
 
-Cloudflare Workers Scripts permission is account-wide. Separate tokens isolate rotation and revocation but not Worker-level access. Strict Cloudflare-side isolation requires separate accounts.
+Every Convex deployment owns separate data, files, functions, environment variables, Better Auth sessions, and scheduled jobs. Staging data is
+disposable and must never be copied to production. Real identities, content, contacts, and future consent records remain authoritative only in the
+production deployment.
+
+Each deployment declares:
+
+- `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
+- `SITE_URL`: exact application origin with no trailing path.
+- `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
+
+The Google OAuth clients authorize these callbacks:
+
+```text
+http://localhost:3002/api/auth/callback/google
+https://staging.elianacorre.com/api/auth/callback/google
+https://elianacorre.com/api/auth/callback/google
+```
+
+Dev and staging use the first two callbacks on one non-production client. Production uses only the final callback on its production client.
+
+## Local development
+
+Local development uses the personal cloud dev deployment in the staging Convex project. Select it from `packages/backend`:
+
+```bash
+rtk proxy bunx convex deployment select eliana-corre:elianacorre-com-staging:dev
+```
+
+Configure that deployment's environment variables in Convex, set the generated `VITE_CONVEX_URL` for `apps/web`, then run:
+
+```bash
+rtk proxy bun run dev
+```
+
+The backend workspace runs `convex dev --run profiles:seed`. The idempotent internal mutation inserts missing administrators once when the dev
+process starts and does not remove existing profiles.
 
 ## GitHub environments
 
-### `preview`
+### `staging`
 
 Secrets:
 
@@ -35,249 +68,128 @@ Secrets:
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_WORKERS_SUBDOMAIN`
+- `STAGING_URL`: `https://staging.elianacorre.com`
 
-No required reviewer. Pull-request code reaches this environment only after all quality checks pass.
+The Convex key targets the production deployment of `elianacorre-com-staging` and grants only:
 
-### `staging`
-
-Secrets:
-
-- `CONVEX_DEPLOY_KEY`: production deploy key for the separate Convex staging project.
-- `CLOUDFLARE_API_TOKEN`: dedicated staging Cloudflare token.
-
-Variables:
-
-- `CLOUDFLARE_ACCOUNT_ID`
-- `STAGING_URL`: `https://elianacorre-com-staging.<subdomain>.workers.dev`
-
-No required reviewer. Only pushes to protected `main` trigger staging.
+```text
+deployment:deploy
+deployment:functions:runInternalMutations
+```
 
 ### `production`
 
 Secrets:
 
-- `CONVEX_DEPLOY_KEY`: production deploy key for the real production project.
-- `CLOUDFLARE_API_TOKEN`: dedicated production Cloudflare token.
+- `CONVEX_DEPLOY_KEY`
+- `CLOUDFLARE_API_TOKEN`
 
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
-- `PRODUCTION_URL`: use the production workers.dev URL before launch; change it to `https://elianacorre.com` only in the launch issue.
+- `CONVEX_URL`: production `.convex.cloud` URL used to build Worker-only rollbacks.
+- `PRODUCTION_URL`: use the production `workers.dev` URL before launch, then `https://elianacorre.com`.
 
-The environment is restricted to protected branches and requires Grégory's approval. Production deployment therefore requires:
+The production environment is restricted to protected branches and requires Grégory's approval. Its Convex key has the same two minimal permissions
+as staging.
 
-1. A manual `Deploy production` workflow dispatch.
-2. A selected SHA that is an ancestor of `main`.
-3. Protected environment approval.
+Secrets never belong in Git, Linear, Obsidian, comments, command arguments, or prompts. Store them through GitHub or the Convex dashboard.
 
-## Credential setup
+## Pull-request verification
 
-Run commands from the repository root. `gh secret set` prompts securely for values.
+`.github/workflows/pull-request.yml` runs four independent jobs:
 
-Each Convex deployment requires these declared environment variables:
+- `Quality`
+- `Typecheck`
+- `Tests`
+- `Build`
 
-- `BETTER_AUTH_SECRET`: a deployment secret generated with at least 32 random bytes.
-- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: credentials for the environment's Google OAuth client.
-- `SITE_URL`: the public application origin, without a trailing path.
-- `WHITELIST_SEED`: a JSON array of explicitly authorized administrator email addresses.
-
-Set these through the Convex dashboard under **Deployment Settings → Environment Variables**. For preview deployments, configure project-level
-preview defaults under **Project Settings → Environment Variables** so a new preview can deploy successfully. The pull-request workflow replaces
-the preview default `SITE_URL` with that PR's exact Worker alias immediately after deployment.
-
-Google OAuth must list `${SITE_URL}/api/auth/callback/google` as an authorized redirect URI. Google does not support wildcard redirect URIs, so add
-the exact active pull-request callback before testing Google sign-in and remove it after the preview is no longer needed. Staging and production
-use their fixed Worker origins.
-
-### Preview
-
-The existing preview setup uses:
-
-```bash
-rtk gh secret set CONVEX_DEPLOY_KEY --env preview
-rtk gh secret set CLOUDFLARE_API_TOKEN --env preview
-rtk gh variable set CLOUDFLARE_ACCOUNT_ID --env preview --body "ACCOUNT_ID"
-rtk gh variable set CLOUDFLARE_WORKERS_SUBDOMAIN --env preview --body "SUBDOMAIN"
-```
-
-The Convex key is created under the production project's **Settings → Deploy Keys** as a Preview Deploy Key.
-
-### Persistent staging
-
-Convex recommends a separate project for permanent staging.
-
-1. In the Convex dashboard, create a project named `elianacorre.com staging` in the same team.
-2. Open its production deployment **Settings → Deploy Keys**.
-3. Create `GitHub staging` with only `deployment:deploy`.
-4. In Cloudflare **Manage Account → API Tokens**, create `elianacorre.com GitHub staging`.
-5. Grant only **Account → Workers Scripts → Edit** for the relevant account.
-6. Store the values:
-
-   ```bash
-   rtk gh secret set CONVEX_DEPLOY_KEY --env staging
-   rtk gh secret set CLOUDFLARE_API_TOKEN --env staging
-   rtk gh variable set CLOUDFLARE_ACCOUNT_ID --env staging --body "ACCOUNT_ID"
-   rtk gh variable set STAGING_URL --env staging \
-     --body "https://elianacorre-com-staging.SUBDOMAIN.workers.dev"
-   ```
-
-Replace `SUBDOMAIN` with the prefix before `.workers.dev`.
-
-### Production
-
-Production uses the existing production project and Worker:
-
-```bash
-rtk gh secret set CONVEX_DEPLOY_KEY --env production
-rtk gh secret set CLOUDFLARE_API_TOKEN --env production
-rtk gh variable set CLOUDFLARE_ACCOUNT_ID --env production --body "ACCOUNT_ID"
-rtk gh variable set PRODUCTION_URL --env production \
-  --body "https://elianacorre-com.SUBDOMAIN.workers.dev"
-```
-
-Do not attach `elianacorre.com` or set it as `PRODUCTION_URL` before the launch issue.
-
-Verify names without exposing values:
-
-```bash
-rtk gh secret list --env preview
-rtk gh variable list --env preview
-rtk gh secret list --env staging
-rtk gh variable list --env staging
-rtk gh secret list --env production
-rtk gh variable list --env production
-```
-
-## Pull-request preview
-
-`.github/workflows/pull-request.yml`:
-
-1. Runs Oxfmt, Oxlint, type checking, tests, and builds.
-2. Creates or reuses Convex preview `pr-<number>` under project `eliana-corre:elianacorre-com-b1869`.
-3. Builds `apps/web` with the preview Convex URL.
-4. Seeds missing administrator profiles from `WHITELIST_SEED` when the preview is first created.
-5. Sets the preview deployment's Better Auth `SITE_URL` to the exact Cloudflare preview alias.
-6. Uploads an aliased Cloudflare preview version.
-7. Attaches the URL, exact head SHA, and workflow run to the pull request.
-8. Waits for protected pull-request approval.
-
-Expected URL:
-
-```text
-https://pr-<number>-elianacorre-com-preview.<subdomain>.workers.dev
-```
-
-Convex CLI commands that target a preview use the fully qualified deployment reference
-`eliana-corre:elianacorre-com-b1869:preview/pr-<number>`.
-
-Verify that the URL returns HTTP 200, the comment SHA equals the PR head, and test submissions do not appear in production.
+The `Protect main` ruleset requires those jobs and an up-to-date pull request. Grégory's manual merge is the human decision; no protected PR
+environment approval or hosted preview is involved.
 
 ## Persistent staging
 
-`.github/workflows/deploy-staging.yml` runs after each push to protected `main`.
+`.github/workflows/deploy-staging.yml` runs on every push to `main`:
 
-It checks out the exact merge SHA, deploys to the separate Convex staging project, seeds missing administrator profiles, builds with that staging URL,
-and deploys `elianacorre-com-staging`.
+1. Check out the exact merge commit.
+2. Deploy functions and schema to the staging Convex project.
+3. Build `apps/web` against the staging Convex URL.
+4. Run the idempotent internal `profiles:seed` mutation.
+5. Deploy `elianacorre-com-staging` with the merge SHA in Cloudflare metadata.
 
-Verify after every merge:
+Attach `staging.elianacorre.com` to the staging Worker under **Workers & Pages → Settings → Domains & Routes**. Protect the hostname with Cloudflare
+Access and allow only Grégory's email. Then set the fixed origins:
 
 ```bash
-rtk gh run list --workflow "Deploy staging" --limit 5
-rtk gh run view RUN_ID
-rtk proxy curl --fail --location --output /dev/null \
-  --write-out "%{http_code} %{url_effective}\n" \
-  "https://elianacorre-com-staging.SUBDOMAIN.workers.dev"
+rtk gh variable set STAGING_URL --env staging --body "https://staging.elianacorre.com"
 ```
 
-Client review and unfinished feature testing happen on staging, not production.
+Set the staging Convex `SITE_URL` to the same origin and add its exact Google callback before verifying authentication.
 
 ## Production release
 
-Production does not run on a push to `main`.
+`.github/workflows/deploy-production.yml` accepts a stable SemVer without the `v` prefix and a release reason. It does not accept an arbitrary SHA.
 
-Before release:
+1. Resolve the latest GitHub deployment of the `staging` environment that reached a successful status.
+2. Require `1.0.0` for the first release and a stable version greater than every existing release thereafter.
+3. Reject malformed versions and an existing `v<version>` tag before requesting protected approval.
+4. After approval, check out the resolved staging SHA.
+5. Deploy production Convex functions and schema, build the application against that deployment, and seed missing administrators.
+6. Deploy the production Worker.
+7. Create `v<version>` and a GitHub Release only after both deployments succeed.
 
-1. Confirm the selected commit passed pull-request checks and staging review.
-2. Confirm the client approved the release contents.
-3. Confirm no incompatible Convex schema rollback is involved.
-4. Dispatch the workflow from GitHub Web: **Actions → Deploy production → Run workflow**. Enter the full `main` commit SHA and release reason.
+Release notes include the reason, exact SHA, workflow link, and GitHub's generated list of merged pull requests. The first launch release is `v1.0.0`.
 
-   Terminal fallback:
+From GitHub Web, open **Actions → Deploy production → Run workflow**, enter a version such as `1.0.0` and the release reason, then approve the
+protected `production` environment.
 
-   ```bash
-   rtk gh workflow run deploy-production.yml \
-     --ref main \
-     --field ref=RELEASE_SHA \
-     --field reason="Release NIA-123"
-   ```
+## Rollback
 
-5. Open the pending deployment and approve the protected `production` environment.
-6. Monitor:
+`.github/workflows/rollback-production.yml` is a separate protected manual workflow. It accepts an existing `v<version>` GitHub Release, scope, and
+incident reason.
 
-   ```bash
-   rtk gh run list --workflow "Deploy production" --limit 5
-   rtk gh run view RUN_ID
-   ```
+- `worker` is the default. It rebuilds the tagged application against `CONVEX_URL` and deploys only the production Worker.
+- `worker-and-convex` also deploys the tagged Convex functions and schema. Use it only after explicitly verifying compatibility with current
+  production data.
 
-The workflow rejects a SHA that is not reachable from `main`.
+After stabilization, deliver the permanent correction through `main`, staging validation, and a new patch release. Never move or recreate a
+published production tag.
 
-Before custom-domain launch, verify the production workers.dev URL. After the dedicated launch issue attaches `elianacorre.com`, verify both the custom domain and Worker version provenance.
+## Convex migration rule
 
-## Custom-domain launch boundary
+Convex schema and data changes use expand-and-contract releases:
 
-Attaching `elianacorre.com` is a separate release decision, not normal deployment setup.
+1. Add backward-compatible fields, indexes, and functions.
+2. Deploy and backfill data.
+3. Move application reads and writes to the new shape.
+4. Remove obsolete behavior only in a later production release.
 
-The launch issue must:
+This keeps the current and previous Worker compatible during deployment and makes Worker-only rollback viable. A production release must not combine
+the first use of a replacement shape with removal of the old shape.
 
-1. Confirm all client-approved features are present on staging.
-2. Record the release SHA.
-3. Release that SHA to production and verify the production workers.dev URL.
-4. Add `elianacorre.com` as a Cloudflare Custom Domain for `elianacorre-com`.
-5. Update `PRODUCTION_URL` to `https://elianacorre.com`.
-6. Verify DNS, TLS, routes, contact submission, and rollback.
+## Custom-domain launch
 
-Do not alter the existing custom-domain binding outside that issue.
+Moving `elianacorre.com` from the existing project is a separate manual launch operation:
 
-## Failure and rollback
+1. Release and verify `v1.0.0` through the production `workers.dev` URL.
+2. Configure production Convex `SITE_URL`, Google OAuth, and `PRODUCTION_URL` for the apex domain.
+3. Detach the apex domain from the old Worker and attach it to `elianacorre-com`.
+4. Configure a permanent `www.elianacorre.com` redirect to `https://elianacorre.com`.
+5. Verify TLS, authentication, contact submission, canonical redirects, and rollback readiness.
+6. Keep the old Worker available temporarily for emergency recovery.
 
-### Staging failure
+Do not move the public domain as part of an ordinary staging or production workflow change.
 
-A staging failure does not affect the public site or production data. Fix it through a Linear issue and pull request. Rerunning is appropriate only when the failure was external and the commit has not changed.
+## Retire preview infrastructure
 
-### Production failure
+After this workflow change is merged and its four PR checks are proven:
 
-If production fails before the Worker deploy, the previous Worker version remains active. Inspect whether Convex, the application build, or Cloudflare failed before retrying.
+1. Delete expired Convex preview deployments from both projects.
+2. Delete the unused Cloudflare Worker `elianacorre-com-preview`.
+3. Delete the unused GitHub environments `preview` and `pull-request-approval` after confirming no workflow references them.
+4. Revoke the Convex Preview Deploy Key and dedicated preview Cloudflare token.
 
-### Redeploy a known-good production commit
+## Human verification
 
-Dispatch `Deploy production` with a known-good SHA from `main` and an incident reason. Protected approval is required again.
-
-Treat Convex schema rollback carefully: old functions must remain compatible with current production data.
-
-### Cloudflare-only rollback
-
-Use only when production Convex is compatible and the fault is limited to the Worker:
-
-```bash
-cd apps/web
-rtk proxy bunx wrangler deployments list --name elianacorre-com
-rtk proxy bunx wrangler rollback VERSION_ID \
-  --name elianacorre-com \
-  --message "Rollback INCIDENT_REFERENCE" \
-  --yes
-```
-
-Production releases and rollbacks require Grégory's explicit authorization.
-
-## AI-to-human mapping
-
-| AI-assisted action         | Human equivalent                                                  |
-| -------------------------- | ----------------------------------------------------------------- |
-| Configure environments     | Use GitHub Settings or the documented `rtk gh` commands           |
-| Store credentials          | Run `rtk gh secret set` and paste at the secure prompt            |
-| Inspect preview or staging | Open the Actions run and workers.dev URL                          |
-| Release production         | Dispatch the workflow, then approve the protected environment     |
-| Roll back                  | Dispatch a known-good SHA or use the documented Wrangler rollback |
-
-Update this runbook whenever provider names, secret names, deployment triggers, environment protections, URLs, or rollback behavior change.
+After every merge, verify the staging Actions run and `https://staging.elianacorre.com`. Before production, confirm the exact staging commit was
+reviewed. After release or rollback, verify the workflow summary, GitHub Release or rollback tag, Worker URL, authentication, and critical forms.

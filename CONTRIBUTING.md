@@ -9,7 +9,6 @@ Every durable change follows the repository's [delivery workflow](docs/agents/de
 3. Open a pull request titled `NIA-123: Meaningful outcome`.
 4. Obtain a final Codex review against the issue and repository standards.
 5. Wait for the required `Quality`, `Typecheck`, `Tests`, and `Build` checks.
-6. Grégory approves the protected `pull-request-approval` environment.
-7. Squash-merge the current branch into `main`.
+6. Grégory squash-merges the current branch into `main`.
 
-Run the documented [verification commands](docs/agents/verification.md) locally before requesting approval.
+Run the documented [verification commands](docs/agents/verification.md) locally before requesting merge.

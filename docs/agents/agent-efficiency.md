@@ -15,8 +15,7 @@ Codex focuses on work where repository context and technical judgment add materi
 Grégory handles routine, observable operations by default:
 
 - the final complete verification suite;
-- waiting for GitHub checks and preview deployment;
-- preview inspection when no technical diagnosis is required;
+- waiting for GitHub checks;
 - protected-environment approval;
 - squash merge;
 - staging workflow and HTTP verification;
@@ -25,7 +24,7 @@ Grégory handles routine, observable operations by default:
 An explicit request such as “finish delivery autonomously” authorizes Codex to perform those routine operations for that issue.
 
 For routine delivery, Codex should use the simplified manual loop in `docs/agents/manual-delivery.md`: Linear App for issue state, GitHub Desktop
-for branch/commit/push/PR creation, Codex for implementation help and review, and GitHub Web for protected approval and merge. Do not prefer VS Code
+for branch/commit/push/PR creation, Codex for implementation help and review, and GitHub Web for checks and merge. Do not prefer VS Code
 or terminal tasks for approval, merge, or production release unless Grégory explicitly asks for a fallback.
 
 ## Progressive documentation loading
@@ -75,9 +74,9 @@ When implementation and review are complete, Codex supplies:
 - the exact branch and commit SHA;
 - commands still required;
 - the PR URL and expected checks;
-- preview scenarios, if any;
+- staging scenarios, if any;
 - exact approval, merge, staging, and Linear closure steps;
-- conditions that require returning to Codex, such as a failed check, changed commit, merge conflict, or unexpected preview behavior.
+- conditions that require returning to Codex, such as a failed check, changed commit, merge conflict, or unexpected staging behavior.
 
 Evidence supplied by Grégory is accepted when it names the exact commit and command or workflow result. A new commit invalidates earlier final
 verification and review evidence.

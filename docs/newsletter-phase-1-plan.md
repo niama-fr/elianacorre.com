@@ -39,7 +39,7 @@ Phase 1 excludes:
 - subscriber accounts;
 - paid subscriptions, payments, or access-controlled videos;
 - lifetime training purchases;
-- implementation in the experimental `apps/solid2` application;
+- parallel framework applications or migration prototypes;
 - a newsletter editor in the website;
 - contact-list import;
 - multiple newsletter addresses per person;
@@ -50,7 +50,7 @@ Phase 1 excludes:
 
 ### Application
 
-The feature is delivered in the stable `apps/solid` TanStack Start application. The experimental Solid 2 application remains outside this phase.
+The feature is delivered in the React TanStack Start application at `apps/web`.
 
 ### Convex
 
@@ -193,7 +193,7 @@ International transfers are not prohibited, but Convex, Loops, Cloudflare, Bette
 
 ## Environment isolation
 
-Development, preview, and staging:
+Development and staging:
 
 - never receive production subscriber data;
 - never use production Loops credentials or contact identifiers;
