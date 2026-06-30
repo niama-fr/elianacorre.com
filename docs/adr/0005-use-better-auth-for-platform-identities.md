@@ -6,9 +6,8 @@ Accepted for newsletter phase 1. The Solid-specific framework decision is supers
 
 ## Context
 
-Phase 1 needs authenticated content administrators, and later paid subscriptions and training purchases need customer identities. The stable
-application is `apps/solid`, so the identity provider must fit TanStack Start, Solid, and Convex without making newsletter subscription an
-account concept.
+Phase 1 needs authenticated content administrators, and later paid subscriptions and training purchases need customer identities. The application
+uses the supported React TanStack Start and Convex integration without making newsletter subscription an account concept.
 
 ## Decision
 

@@ -77,10 +77,10 @@ If a commit changes after criteria were reviewed, re-evaluate affected criteria 
 7. Direct commits and pushes to `main` are prohibited. NIA-5 was the one-time repository-bootstrap exception.
 8. Required checks and review must pass before merge. The branch must be current with `main`.
 9. Codex reconciles and checks objective Linear acceptance criteria before moving the issue to `In Review`, then performs a final two-axis
-   review against repository standards and the issue before approval.
-10. Grégory approves the protected `pull-request-approval` environment and merges the pull request. GitHub does not allow a pull-request author to approve their own review, so the environment approval is the enforceable human gate for this solo repository.
+   review against repository standards and the issue before merge.
+10. Grégory reviews the required checks and manually merges the pull request. The merge action is the human gate for this solo repository.
 11. Approved merges deploy automatically to persistent staging.
-12. Production releases require a separate manual workflow dispatch and protected environment approval.
+12. Production releases promote the latest successful staging commit through a separate SemVer workflow dispatch and protected environment approval.
 
 ## Preferred human loop
 
@@ -95,30 +95,30 @@ The day-to-day manual workflow is:
 7. GitHub Desktop: open the pull request.
 8. Codex: fill or review the PR template, link evidence, and reconcile objective acceptance criteria.
 9. Linear App: move the issue to `In Review` only after implementation is complete.
-10. GitHub Web: review checks and preview, approve the protected environment, then squash and merge.
+10. GitHub Web: review the required checks, then squash and merge.
 11. Linear App: add the delivery-complete comment and move the issue to `Done`.
 
 GitHub Desktop opens a normal pull request rather than a draft. That is acceptable once the branch has been intentionally committed and pushed.
-An open pull request is not merge-ready until acceptance criteria are reconciled, required checks pass, preview is reviewed when relevant, and the
-final standards/spec review is recorded.
+An open pull request is not merge-ready until acceptance criteria are reconciled, required checks pass, and the final standards/spec review is
+recorded.
 
 The concise step-by-step procedure, including preferred surfaces, Codex prompts, VS Code tasks, and terminal fallbacks, is
 [`docs/agents/manual-delivery.md`](manual-delivery.md).
 
 ## GitHub enforcement
 
-Pull requests targeting `main` expose six stable required checks:
+Pull requests targeting `main` expose four stable required checks:
 
 - `Quality`
 - `Typecheck`
 - `Tests`
 - `Build`
-- `Preview`
-- `Approval`
 
-The first four checks run the commands in `docs/agents/verification.md`. `Quality` runs Oxfmt and Oxlint. `Preview` starts only after they pass and deploys isolated Convex data and a Cloudflare preview. `Approval` starts only after the preview succeeds and waits for Grégory to approve the protected `pull-request-approval` environment.
+The checks run the commands in `docs/agents/verification.md`. `Quality` runs Oxfmt and Oxlint. Pull requests do not deploy Convex or Cloudflare;
+manual runtime validation happens locally before merge and on persistent staging after merge.
 
-The `main` ruleset requires pull requests, all six checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
+The `main` ruleset requires pull requests, all four checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates.
+GitHub Issues remain disabled because Linear is the issue tracker.
 
 Deployment setup, staging verification, production release, launch boundaries, and rollback are documented in `docs/agents/deployment.md`.
 

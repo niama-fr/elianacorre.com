@@ -5,11 +5,11 @@ Use this runbook for the normal `elianacorre.com` delivery loop. It favors the t
 - Linear App for issue state and acceptance criteria.
 - GitHub Desktop for branch, commit, push, and pull-request creation.
 - Codex for implementation help, PR text, evidence comments, and standards/spec review.
-- GitHub Web for checks, preview, protected approval, squash merge, and staging evidence.
+- GitHub Web for checks, squash merge, production approval, and staging evidence.
 - Terminal only as a precise fallback, always through RTK.
 
 GitHub Desktop creates a normal open pull request, not a draft. That is acceptable after the branch is committed and pushed. Do not treat an open PR
-as merge-ready until acceptance criteria are reconciled, checks pass, preview is reviewed when relevant, and final review is recorded.
+as merge-ready until acceptance criteria are reconciled, checks pass, and final review is recorded.
 
 ## Workflow
 
@@ -25,11 +25,10 @@ as merge-ready until acceptance criteria are reconciled, checks pass, preview is
 | 8. Open the PR                       | GitHub Desktop                  | `Fill the pull-request template for NIA-123.`                         | `Workflow: Open current PR` after creation | `rtk gh pr create --base main --head NIA-123/short-description --title "NIA-123: Meaningful outcome"`   |
 | 9. Link PR and reconcile criteria    | Linear App, with Codex evidence | `Link PR #N to NIA-123 and reconcile objective acceptance criteria.`  | `Workflow: Open current Linear issue`      | None for Linear updates                                                                                 |
 | 10. Move to In Review                | Linear App                      | `Move NIA-123 to In Review if implementation is complete.`            | None                                       | None; use Linear                                                                                        |
-| 11. Watch checks and preview         | GitHub Web                      | `Summarize the current PR checks and preview status for PR #N.`       | `Workflow: Watch current PR checks`        | `rtk gh pr checks PR_NUMBER --watch --interval 10`                                                      |
-| 12. Final review                     | Codex, then GitHub PR comment   | `Make a final standards/spec review before I approve PR #N.`          | None                                       | `rtk git diff main...HEAD --check && rtk gh pr checks PR_NUMBER`                                        |
-| 13. Approve protected environment    | GitHub Web                      | `Tell me whether PR #N is ready for protected approval.`              | None                                       | Use GitHub CLI only for diagnosis; approval is normally GitHub Web                                      |
-| 14. Squash and merge                 | GitHub Web                      | `Tell me whether PR #N is ready to squash and merge.`                 | None                                       | `rtk gh pr merge PR_NUMBER --squash --delete-branch --subject "NIA-123: Meaningful outcome" --body ""`  |
-| 15. Complete Linear                  | Linear App                      | `Write the delivery-complete Linear comment for NIA-123.`             | `Workflow: Open current Linear issue`      | None; use Linear                                                                                        |
+| 11. Watch checks                     | GitHub Web                      | `Summarize the current PR checks for PR #N.`                          | `Workflow: Watch current PR checks`        | `rtk gh pr checks PR_NUMBER --watch --interval 10`                                                      |
+| 12. Final review                     | Codex, then GitHub PR comment   | `Make a final standards/spec review before I merge PR #N.`            | None                                       | `rtk git diff main...HEAD --check && rtk gh pr checks PR_NUMBER`                                        |
+| 13. Squash and merge                 | GitHub Web                      | `Tell me whether PR #N is ready to squash and merge.`                 | None                                       | `rtk gh pr merge PR_NUMBER --squash --delete-branch --subject "NIA-123: Meaningful outcome" --body ""`  |
+| 14. Complete Linear                  | Linear App                      | `Write the delivery-complete Linear comment for NIA-123.`             | `Workflow: Open current Linear issue`      | None; use Linear                                                                                        |
 
 ## Pull-request description
 
@@ -50,9 +49,7 @@ Describe the delivered user-visible, operational, or documentation outcome.
 - [ ] `bun run typecheck`
 - [ ] `bun run check`
 - [ ] `bun run build`
-- [ ] The isolated preview matches the current pull-request commit and was reviewed
 - [ ] Codex reviewed the final diff against repository standards and the Linear issue
-- [ ] Grégory approved the protected `pull-request-approval` environment
 ```
 
 Leave a box unchecked until that exact evidence exists. For docs-only changes, add any extra checks below the template, such as
@@ -70,11 +67,11 @@ Before `In Review`:
 
 ## Final review
 
-Final review is separate from CI. It happens after the final commit and before protected approval.
+Final review is separate from CI. It happens after the final commit and before merge.
 
 Ask Codex:
 
-> Make a final standards/spec review before I approve PR #N.
+> Make a final standards/spec review before I merge PR #N.
 
 The review must cover:
 
@@ -109,6 +106,6 @@ Follow-up issues: LINKS or `None`.
 
 - Branch shows it will push to `main`: unset the upstream, then publish the branch. `rtk git branch --unset-upstream`
 - Check fails: fix on the same branch, push again, and repeat affected verification.
-- New commit after final review: repeat checks, acceptance-criteria reconciliation, preview review if relevant, and final review.
+- New commit after final review: repeat checks, acceptance-criteria reconciliation, and final review.
 - Scope expands: update the Linear issue or create a new one before implementation.
 - Wrong criterion checked: uncheck it and comment with the missing evidence or work.
