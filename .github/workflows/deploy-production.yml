@@ -34,6 +34,11 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
         with:
           script: |
+            if (context.ref !== "refs/heads/main") {
+              core.setFailed("Production releases must be dispatched from main.");
+              return;
+            }
+
             const version = process.env.RELEASE_VERSION;
             const versionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
             if (!versionPattern.test(version)) {
@@ -106,6 +111,7 @@ jobs:
       contents: write
     env:
       DEPLOY_SHA: ${{ needs.prepare.outputs.sha }}
+      RELEASE_REASON: ${{ inputs.reason }}
       RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
     steps:
       - name: Check out validated staging commit
@@ -147,8 +153,6 @@ jobs:
           --keep-vars
       - name: Create GitHub Release
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-        env:
-          RELEASE_REASON: ${{ inputs.reason }}
         with:
           script: |
             const workflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
@@ -173,6 +177,6 @@ jobs:
             echo "## Production release ${RELEASE_TAG}"
             echo
             echo "- Commit: \`${DEPLOY_SHA}\`"
-            echo "- Reason: ${{ inputs.reason }}"
+            echo "- Reason: ${RELEASE_REASON}"
             echo "- URL: ${{ vars.PRODUCTION_URL }}"
           } >> "$GITHUB_STEP_SUMMARY"

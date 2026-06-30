@@ -41,6 +41,11 @@ jobs:
           ROLLBACK_TAG: ${{ inputs.tag }}
         with:
           script: |
+            if (context.ref !== "refs/heads/main") {
+              core.setFailed("Production rollbacks must be dispatched from main.");
+              return;
+            }
+
             const tag = process.env.ROLLBACK_TAG;
             const tagPattern = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
             if (!tagPattern.test(tag)) {
@@ -75,6 +80,7 @@ jobs:
     permissions:
       contents: read
     env:
+      ROLLBACK_REASON: ${{ inputs.reason }}
       ROLLBACK_SHA: ${{ needs.prepare.outputs.sha }}
       ROLLBACK_TAG: ${{ needs.prepare.outputs.tag }}
     steps:
@@ -121,7 +127,7 @@ jobs:
           bunx wrangler deploy
           --name elianacorre-com
           --tag "$ROLLBACK_SHA"
-          --message "Rollback to ${ROLLBACK_TAG}: ${{ inputs.reason }}"
+          --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}"
           --keep-vars
       - name: Record rollback summary
         run: |
@@ -131,5 +137,5 @@ jobs:
             echo "- Release: \`${ROLLBACK_TAG}\`"
             echo "- Commit: \`${ROLLBACK_SHA}\`"
             echo "- Scope: ${{ inputs.scope }}"
-            echo "- Reason: ${{ inputs.reason }}"
+            echo "- Reason: ${ROLLBACK_REASON}"
           } >> "$GITHUB_STEP_SUMMARY"

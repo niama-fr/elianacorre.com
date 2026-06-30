@@ -41,10 +41,14 @@ Dev and staging use the first two callbacks on one non-production client. Produc
 
 ## Local development
 
-Local development uses the personal cloud dev deployment in the staging Convex project. Select it from `packages/backend`:
+Local development uses the personal cloud dev deployment in the staging Convex project. Configure it once from `packages/backend`:
 
 ```bash
-rtk proxy bunx convex deployment select eliana-corre:elianacorre-com-staging:dev
+rtk proxy bunx convex dev --configure existing \
+  --team eliana-corre \
+  --project elianacorre-com-staging \
+  --dev-deployment cloud \
+  --once
 ```
 
 Configure that deployment's environment variables in Convex, set the generated `VITE_CONVEX_URL` for `apps/web`, then run:
@@ -140,8 +144,8 @@ Set the staging Convex `SITE_URL` to the same origin and add its exact Google ca
 
 Release notes include the reason, exact SHA, workflow link, and GitHub's generated list of merged pull requests. The first launch release is `v1.0.0`.
 
-From GitHub Web, open **Actions → Deploy production → Run workflow**, enter a version such as `1.0.0` and the release reason, then approve the
-protected `production` environment.
+From GitHub Web, open **Actions → Deploy production → Run workflow**, select `main`, enter a version such as `1.0.0` and the release reason, then
+approve the protected `production` environment.
 
 ## Rollback
 
