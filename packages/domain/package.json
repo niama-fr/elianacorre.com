@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@unpic/placeholder": "^0.1.2",
-    "convex": "^1.42.0",
+    "convex": "^1.42.1",
     "convex-helpers": "^0.1.120",
     "zod": "^4.4.3"
   },
