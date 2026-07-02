@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.5",
+    "@devwithbobby/loops": "github:gbouteiller/loops#c1c1fd9b9ad1c791b17eed73fb9bf7d36b03e1db",
     "@ec/domain": "workspace:*",
     "better-auth": "~1.6.15",
     "convex": "^1.42.0",
@@ -24,6 +25,7 @@
     "typescript": "^6.0.3"
   },
   "devDependencies": {
+    "@convex-dev/aggregate": "0.2.1",
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
     "@types/node": "^26.0.1",

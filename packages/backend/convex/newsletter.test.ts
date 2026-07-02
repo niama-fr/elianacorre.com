@@ -1,11 +1,20 @@
+import { register as registerAggregate } from "@convex-dev/aggregate/test";
+import { register as registerLoops } from "@devwithbobby/loops/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api, internal } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
-const createBackend = () => convexTest(schema, modules);
+const loopsModules = import.meta.glob("../node_modules/@devwithbobby/loops/src/component/**/*.ts");
+
+const createBackend = () => {
+  const convex = convexTest(schema, modules);
+  registerLoops(convex, "loops", loopsModules);
+  registerAggregate(convex, "loops/contactAggregate");
+  return convex;
+};
 
 const publishEbook = async (convex: TestConvex<typeof schema>) =>
   await convex.run(async (ctx) => {
@@ -268,6 +277,61 @@ describe("newsletter subscription", () => {
     expect(state.capabilities).toHaveLength(2);
   });
 
+  it("projects a confirmed subscriber into the Loops contacts component", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    vi.stubEnv("LOOPS_EBOOK_TRANSACTIONAL_ID", "ebook-template");
+    vi.stubEnv("SITE_URL", "https://staging.elianacorre.com");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>(async (input) => {
+        let url: string;
+        if (typeof input === "string") url = input;
+        else if (input instanceof URL) url = input.href;
+        else ({ url } = input);
+        return await Promise.resolve(
+          url.endsWith("/contacts/create") ? Response.json({ id: "loops-contact" }) : Response.json({ messageId: "loops-message" })
+        );
+      })
+    );
+    const convex = createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.requestSubscription, {
+      consent: true,
+      email: "reader@example.com",
+      firstName: "Ada",
+    });
+    const confirmationToken = await convex.run(async (ctx) => {
+      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      return email?.linkToken;
+    });
+    await convex.mutation(api.newsletter.confirmSubscription, { token: confirmationToken ?? "missing" });
+    const deliveryOutboxId = await convex.run(async (ctx) => {
+      const delivery = await ctx.db
+        .query("newsletterEmailOutbox")
+        .filter((query) => query.eq(query.field("kind"), "ebook-delivery"))
+        .unique();
+      return delivery?._id;
+    });
+    if (deliveryOutboxId === undefined) throw new Error("E-book delivery was not queued");
+
+    await convex.action(internal.newsletter.sendEmail, { outboxId: deliveryOutboxId });
+
+    const delivery = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", deliveryOutboxId));
+    expect(delivery).toMatchObject({ lastError: null, status: "sent" });
+    const contacts = await convex.query(components.loops.queries.listContacts, { limit: 10 });
+    expect(contacts.contacts).toMatchObject([
+      {
+        email: "reader@example.com",
+        firstName: "Ada",
+        source: "elianacorre.com",
+        subscribed: true,
+        userGroup: "newsletter",
+      },
+    ]);
+    expect(contacts.contacts[0]?.userId).toStrictEqual(expect.any(String));
+  });
+
   it("retries failed email work with backoff and prevents duplicate delivery claims", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
@@ -374,11 +438,12 @@ describe("newsletter subscription", () => {
     if (outboxId === undefined) throw new Error("Email work was not queued");
 
     await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    await convex.finishAllScheduledFunctions(vi.runAllTimers);
+    vi.advanceTimersByTime(5 * 60 * 1000);
+    await convex.action(internal.newsletter.sendEmail, { outboxId });
 
-    expect(send).toHaveBeenCalledOnce();
     const sent = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
     expect(sent).toMatchObject({ attempts: 2, leaseExpiresAt: null, status: "sent" });
+    expect(send).toHaveBeenCalledOnce();
   });
 
   it("stops reclaiming abandoned delivery work at the attempt limit", async () => {

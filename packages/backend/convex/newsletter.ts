@@ -1,8 +1,9 @@
+import { Loops } from "@devwithbobby/loops";
 import { CURRENT_NEWSLETTER_LEGAL_COPY, parseNewsletterSubscription } from "@ec/domain/schemas/newsletter";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { env } from "./_generated/server";
@@ -14,13 +15,16 @@ const EMAIL_CLAIM_LEASE_MS = 5 * 60 * 1000;
 const EMAIL_MAX_ATTEMPTS = 8;
 const EMAIL_RETRY_BASE_MS = 60 * 1000;
 const EMAIL_RETRY_MAX_MS = 60 * 60 * 1000;
+const loops = new Loops(components.loops);
 
 type EmailClaim = {
   attempts: number;
   firstName?: string;
   idempotencyKey: string;
   kind: "confirmation" | "ebook-delivery";
+  lastName?: string;
   linkToken: string;
+  profileId: Id<"profiles">;
   recipient: string;
 };
 
@@ -259,7 +263,9 @@ export const claimEmail = zInternalMutation({
       firstName: profile.firstName,
       idempotencyKey: email.idempotencyKey,
       kind: email.kind,
+      lastName: profile.lastName,
       linkToken: email.linkToken,
+      profileId: profile._id,
       recipient: profile.email,
     };
   },
@@ -309,24 +315,23 @@ export const sendEmail = zInternalAction({
     };
 
     try {
-      const response = await fetch("https://app.loops.so/api/v1/transactional", {
-        body: JSON.stringify({
-          dataVariables,
+      if (email.kind === "ebook-delivery")
+        await loops.addContact(ctx, {
           email: email.recipient,
-          transactionalId: email.kind === "confirmation" ? env.LOOPS_CONFIRMATION_TRANSACTIONAL_ID : env.LOOPS_EBOOK_TRANSACTIONAL_ID,
-        }),
-        headers: {
-          Authorization: `Bearer ${env.LOOPS_API_KEY}`,
-          "Content-Type": "application/json",
-          "Idempotency-Key": email.idempotencyKey,
-        },
-        method: "POST",
+          ...(email.firstName === undefined ? {} : { firstName: email.firstName }),
+          ...(email.lastName === undefined ? {} : { lastName: email.lastName }),
+          source: "elianacorre.com",
+          subscribed: true,
+          userGroup: "newsletter",
+          userId: email.profileId,
+        });
+      await loops.sendTransactional(ctx, {
+        dataVariables,
+        email: email.recipient,
+        idempotencyKey: email.idempotencyKey,
+        logOperation: false,
+        transactionalId: email.kind === "confirmation" ? env.LOOPS_CONFIRMATION_TRANSACTIONAL_ID : env.LOOPS_EBOOK_TRANSACTIONAL_ID,
       });
-      if (!(response.ok || response.status === 409)) {
-        const responseText = await response.text();
-        const detail = responseText.slice(0, 500);
-        throw new Error(`Loops returned ${response.status}: ${detail}`);
-      }
       const deliveryResult: EmailResult = await ctx.runMutation(internal.newsletter.recordEmailResult, {
         attempt: email.attempts,
         outboxId,

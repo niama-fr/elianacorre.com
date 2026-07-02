@@ -1,4 +1,5 @@
 import betterAuth from "@convex-dev/better-auth/convex.config";
+import loops from "@devwithbobby/loops/convex.config";
 import { defineApp } from "convex/server";
 import { v } from "convex/values";
 
@@ -16,5 +17,6 @@ const app = defineApp({
   },
 });
 app.use(betterAuth);
+app.use(loops);
 
 export default app;

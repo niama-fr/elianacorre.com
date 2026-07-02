@@ -15,7 +15,7 @@
     },
     "apps/web": {
       "name": "@ec/web",
-      "version": "0.0.1",
+      "version": "0.0.0",
       "dependencies": {
         "@cloudflare/vite-plugin": "^1.42.3",
         "@convex-dev/better-auth": "^0.12.5",
@@ -62,9 +62,10 @@
     },
     "packages/backend": {
       "name": "@ec/backend",
-      "version": "1.0.0",
+      "version": "0.0.0",
       "dependencies": {
         "@convex-dev/better-auth": "^0.12.5",
+        "@devwithbobby/loops": "github:gbouteiller/loops#c1c1fd9b9ad1c791b17eed73fb9bf7d36b03e1db",
         "@ec/domain": "workspace:*",
         "better-auth": "~1.6.15",
         "convex": "^1.42.0",
@@ -72,6 +73,7 @@
         "typescript": "^6.0.3",
       },
       "devDependencies": {
+        "@convex-dev/aggregate": "0.2.1",
         "@edge-runtime/vm": "^5.0.0",
         "@types/bun": "latest",
         "@types/node": "^26.0.1",
@@ -84,7 +86,7 @@
     },
     "packages/domain": {
       "name": "@ec/domain",
-      "version": "1.0.0",
+      "version": "0.0.0",
       "dependencies": {
         "@unpic/placeholder": "^0.1.2",
         "convex": "^1.42.0",
@@ -244,6 +246,8 @@
 
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260625.1", "", { "os": "win32", "cpu": "x64" }, "sha512-LH6iIX1HHaTwVKV5VokDxxUErXJzQoNZFRwVm7Vx/3fB/ApcTcRCUaMqcxI4as94jEUqg+pmX5czOndiveohow=="],
 
+    "@convex-dev/aggregate": ["@convex-dev/aggregate@0.2.1", "", { "peerDependencies": { "convex": "^1.24.8" } }, "sha512-z8GeUC+cIZEgtMXecX6WTBQHNW4E2ioRsc5IkO8BWnCjgDOru/Mw8zXe9JPe35JkqDjlSVKuwxiQHKs/jaYAyA=="],
+
     "@convex-dev/better-auth": ["@convex-dev/better-auth@0.12.5", "", { "dependencies": { "@better-fetch/fetch": "^1.1.18", "common-tags": "^1.8.2", "convex-helpers": "^0.1.95", "jose": "^6.1.0", "remeda": "^2.32.0", "semver": "^7.7.3", "type-fest": "^5.0.0", "zod": "^4.0.0" }, "peerDependencies": { "better-auth": ">=1.6.11 <1.7.0", "convex": "^1.25.0", "react": "^18.3.1 || ^19.0.0" } }, "sha512-YFUbGk04OlINno9FpOTNZN67AP+kSQsblfep5zs1f/WTgMWjD5FymU6rSSh3mu52gukmDNnBJTjC/lj4QRpjlQ=="],
 
     "@convex-dev/react-query": ["@convex-dev/react-query@0.1.0", "", { "peerDependencies": { "@tanstack/react-query": "^5.0.0", "convex": "^1.29.3" } }, "sha512-ULmBZCtAQDUePdBhUv7hj1Yy4QiCelhi6uEIOtMpjW8db6W9CFKvQwLt9heLngccFyMFfAZdOfSrT+cP4AH0Jw=="],
@@ -263,6 +267,8 @@
     "@csstools/css-tokenizer": ["@csstools/css-tokenizer@4.0.0", "", {}, "sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA=="],
 
     "@cyberalien/svg-utils": ["@cyberalien/svg-utils@1.2.15", "", { "dependencies": { "@iconify/types": "^2.0.0" } }, "sha512-ZbKU6npzW5PNocdoLVJYfKzaP+c/RpT6JUkoaKrW1DOcw6lyXub8XtcNpI3xok6FnyNjS6ZbsrrtjTnS9yeZAQ=="],
+
+    "@devwithbobby/loops": ["@devwithbobby/loops@github:gbouteiller/loops#c1c1fd9", { "dependencies": { "@convex-dev/aggregate": "^0.2.1" }, "peerDependencies": { "convex": "^1.0.0" } }, "gbouteiller-loops-c1c1fd9", "sha512-ivY/K4BO2ELsRlxfbZaWC0/Uy9kHWZdVeBMeJKLbqyRkfFXnwX8FEDR+byHo7CE4LdTmsGsSdH2u94XZ0UOFDg=="],
 
     "@dotenvx/dotenvx": ["@dotenvx/dotenvx@1.69.1", "", { "dependencies": { "commander": "^11.1.0", "dotenv": "^17.2.1", "eciesjs": "^0.4.10", "enquirer": "^2.4.1", "execa": "^5.1.1", "fdir": "^6.2.0", "ignore": "^5.3.0", "object-treeify": "1.1.33", "picomatch": "^4.0.4", "which": "^4.0.0", "yocto-spinner": "^1.1.0" }, "bin": { "dotenvx": "src/cli/dotenvx.js" } }, "sha512-kwQB5KcAegxw/+NGUgXAo5ovyOSjlMhoXSSnSEpDhoHJwzMcMO0HE1U0VCYZ7jbAeCMGamed9XdWzOA5ixtTNg=="],
 
@@ -1753,6 +1759,8 @@
     "@babel/helper-create-class-features-plugin/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
     "@cspotcode/source-map-support/@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
+
+    "@devwithbobby/loops/@convex-dev/aggregate": ["@convex-dev/aggregate@0.2.2", "", { "peerDependencies": { "convex": "^1.24.8" } }, "sha512-9sskfPZdiH0mdc33Obcf2+gQSPDpyHqUDkYmXDsUqhqe5lLwGKYbrxw7LgxHmYm9c1YLbaXqxKiM1CgucfKAAw=="],
 
     "@dotenvx/dotenvx/commander": ["commander@11.1.0", "", {}, "sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ=="],
 
