@@ -1,7 +1,13 @@
+import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod/mini";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zContactFields = z.object({
+export const zContactRequestFields = z.object({
+  message: z.string(),
+  profileId: zid("profiles"),
+});
+
+export const zLegacyContactFields = z.object({
   email: z.email(),
   forename: z.string(),
   message: z.string(),
@@ -16,12 +22,8 @@ export const zContactCreateValues = z.object({
   surname: z.string().check(z.minLength(1, "Ce champ est requis")),
 });
 
-// CRUD ------------------------------------------------------------------------------------------------------------------------------------
-export const zContactCreate = zContactFields;
-
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Contacts = {
-  Create: z.infer<typeof zContactCreate>;
   CreateValues: z.infer<typeof zContactCreateValues>;
-  Fields: z.infer<typeof zContactFields>;
+  RequestFields: z.infer<typeof zContactRequestFields>;
 };

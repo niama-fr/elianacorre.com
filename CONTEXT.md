@@ -4,12 +4,16 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 ## Language
 
+**Profile**:
+A person known to the platform through one normalized email address. A Profile has a highest platform role: `contact` for a person without member or administrative access, `member` for a person with qualifying membership or course access, and `admin` for a content administrator. A Profile may exist without an authenticated Account; newsletter activity never demotes an existing role.
+_Avoid_: User, Account
+
 **Contact Request**:
-A message deliberately submitted through the site's contact form for a direct response. It does not create newsletter consent, e-book access, or an authenticated account even when the same email address appears elsewhere.
+A message deliberately submitted through the site's contact form for a direct response. It belongs to the same Profile used for any other relationship with that email address, but does not create newsletter consent, e-book access, or an authenticated Account.
 _Avoid_: Newsletter subscription, subscriber
 
 **Newsletter Subscriber**:
-A person whose single canonical newsletter email address has been confirmed for receiving the monthly newsletter. Addresses are trimmed and compared case-insensitively without provider-specific rewriting of dots or `+tags`, while the submitted spelling remains available for display and evidence. Only that email address is required; an optional first name may be retained for personalization. A newsletter subscriber does not necessarily have an authenticated account.
+A Profile whose newsletter email address has been confirmed for receiving the monthly newsletter. Addresses are stored trimmed and lowercase without provider-specific rewriting of dots or `+tags`. Only that email address is required; an optional first name may be retained for personalization. A newsletter subscriber does not necessarily have an authenticated Account, and newsletter subscription does not change the Profile's role.
 _Avoid_: User, member, account
 
 **Former Newsletter Subscriber**:
@@ -25,16 +29,24 @@ An operator whose Google Workspace email address is explicitly authorized in Con
 _Avoid_: Subscriber, customer account
 
 **Newsletter Consent**:
-The explicit, revocable permission given by a person to receive the newsletter. It can be confirmed only by the person through the confirmation flow, never created administratively. A person may have multiple consent periods after unsubscribing and later confirming again; the history records each request, confirmation, immutable versions of the wording and privacy notice presented, subscription placement, and withdrawal rather than only the current subscription state.
+The explicit, revocable permission given by a person to receive the newsletter. It can be confirmed only by the person through the confirmation flow, never created administratively. A person may have multiple consent periods after unsubscribing and later confirming again; the history records each request, confirmation, the legal wording presented, and withdrawal rather than only the current subscription state.
 _Avoid_: Account creation, email verification
+
+**Legal Document**:
+A published or draft French legal text used to explain a newsletter-related commitment or privacy notice. Published legal documents are historical evidence and must not be changed after publication; future internationalization will be handled as a broader product decision rather than in the current legal document model.
+_Avoid_: Versioned copy, locale-specific copy
+
+**Newsletter Legal Bundle**:
+The pair of legal documents presented together when a person requests the newsletter. The active bundle is the latest published bundle, and the confirmed request keeps the bundle that was presented at the time.
+_Avoid_: Current legal text, superseded legal copy
 
 **Pending Subscription**:
 A newsletter request whose email address has not yet been confirmed. Its identifying data expires after 30 days and does not grant newsletter delivery or welcome e-book access.
 _Avoid_: Newsletter subscriber
 
-**Subscription Placement**:
-The first-party location where a newsletter request was submitted, such as the home page, site footer, or dedicated subscription page. It supports consent evidence and aggregate journey measurement without advertising tracking.
-_Avoid_: Advertising attribution
+**Newsletter Subscription**:
+The lifecycle record for a Profile's newsletter request and consent period. It starts with a request, may be confirmed into active newsletter consent, and may later be unsubscribed; repeated requests before confirmation rotate the confirmation capability on the same lifecycle record.
+_Avoid_: Separate pending request, separate consent row
 
 **Delivery Eligibility**:
 Whether email may currently be sent to a consenting person. A permanent bounce or spam complaint makes the address ineligible independently of consent; a spam complaint requires a new explicit confirmation before eligibility can be restored.
@@ -45,8 +57,12 @@ A short-lived operational record of an email or download attempt used for diagno
 _Avoid_: Consent evidence
 
 **Welcome E-book Access**:
-The continuing right granted after email confirmation to obtain the current version of the free e-book. A personal 72-hour download is offered immediately on the confirmation success page and sent by email; the right to request a replacement link does not expire and is not revoked by newsletter unsubscription. Each delivery records which version was provided, while a verified request to erase the person's identifying data also erases this right.
+The continuing right granted after email confirmation to obtain the current version of the free e-book. A personal 72-hour download is offered immediately on the confirmation success page and sent by email; the right to request a replacement link does not expire and is not revoked by newsletter unsubscription. A verified request to erase the person's identifying data also erases this right.
 _Avoid_: Permanent download link, account entitlement
+
+**E-book Download Capability**:
+A temporary bearer credential that permits its holder to download the current published e-book for 72 hours. It proves possession of a valid download link, while Welcome E-book Access determines whether the associated Profile is entitled to use it.
+_Avoid_: Newsletter capability, permanent download access
 
 **Suppression Record**:
 The minimal non-marketing record retained to prevent email delivery after a person objects to future prospecting. It is separate from the subscriber profile and cannot be used to identify or contact the person for another purpose; a public subscription attempt cannot remove it, and lifting the objection requires a verified privacy request.

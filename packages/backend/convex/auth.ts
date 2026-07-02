@@ -1,5 +1,6 @@
 import { type AuthFunctions, createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { normalizeProfileEmail } from "@ec/domain/schemas/profiles";
 import { betterAuth } from "better-auth/minimal";
 
 import { components, internal } from "./_generated/api";
@@ -18,7 +19,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
       onCreate: async (ctx, doc) => {
         const profile = await ctx.db
           .query("profiles")
-          .withIndex("by_email", (q) => q.eq("email", doc.email))
+          .withIndex("by_email", (q) => q.eq("email", normalizeProfileEmail(doc.email)))
           .unique();
         if (profile?.role === "admin" && profile.userId === null) await ctx.db.patch(profile._id, { userId: doc._id });
       },

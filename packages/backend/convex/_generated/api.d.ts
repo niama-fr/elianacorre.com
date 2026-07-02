@@ -12,6 +12,8 @@ import type * as auth from "../auth.js";
 import type * as contacts from "../contacts.js";
 import type * as ebooks from "../ebooks.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
+import type * as newsletter from "../newsletter.js";
 import type * as profiles from "../profiles.js";
 import type * as zod from "../zod.js";
 
@@ -26,6 +28,8 @@ declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   ebooks: typeof ebooks;
   http: typeof http;
+  migrations: typeof migrations;
+  newsletter: typeof newsletter;
   profiles: typeof profiles;
   zod: typeof zod;
 }>;

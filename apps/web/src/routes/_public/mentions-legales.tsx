@@ -1,3 +1,4 @@
+import { CURRENT_NEWSLETTER_LEGAL_COPY } from "@ec/domain/schemas/newsletter";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -135,41 +136,12 @@ function RouteComponent() {
           <SectionTitle className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }} title={["Données", "personnelles"]} />
           <SectionContent className="gap-2 text-pretty text-start">
             <p>
-              Eliana Corré est soucieuse de la protection des données personnelles et s'engage à assurer le meilleur niveau de protection à
-              ces données.
+              Eliana Corré traite les données personnelles uniquement pour les finalités présentées au moment de leur collecte. Les
+              informations nécessaires au formulaire de contact servent à répondre à la demande envoyée. Une inscription à la lettre repose
+              séparément sur le consentement explicite de la personne.
             </p>
-            <p>Conformément au Règlement Général sur la Protection des Données (RGPD), Eliana Corré vous informe des points suivants :</p>
-            <ul className="ml-2">
-              <li>
-                <span className="icon-[tabler--circle-filled] mr-2 size-2.5 text-secondary" />
-                Les données personnelles collectées sur le site internet{" "}
-                <a className="underline hover:text-secondary" href="http://elianacorre.com">
-                  elianacorre.com
-                </a>{" "}
-                sont traitées uniquement pour les finalités pour lesquelles elles ont été collectées.
-              </li>
-              <li>
-                <span className="icon-[tabler--circle-filled] mr-2 size-2.5 text-secondary" />
-                Eliana Corré ne conserve pas les données personnelles au-delà de la durée nécessaire à la réalisation de ces finalités.
-              </li>
-              <li>
-                <span className="icon-[tabler--circle-filled] mr-2 size-2.5 text-secondary" />
-                Les données personnelles collectées sur le site internet{" "}
-                <a className="underline hover:text-secondary" href="http://elianacorre.com">
-                  elianacorre.com
-                </a>{" "}
-                sont destinées à l'usage exclusif d'Eliana Corré et ne sont pas communiquées à des tiers.
-              </li>
-              <li>
-                <span className="icon-[tabler--circle-filled] mr-2 size-2.5 text-secondary" />
-                Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression des données personnelles vous
-                concernant. Pour exercer ce droit, vous pouvez contacter Eliana Corré par email à l'adresse{" "}
-                <a className="underline hover:text-secondary" href="mailto:me@elianacorre.com">
-                  me@elianacorre.com
-                </a>
-                .
-              </li>
-            </ul>
+            <h3 className="mt-6 text-2xl font-bold">Lettre et e-book de bienvenue</h3>
+            <p className="whitespace-pre-line">{CURRENT_NEWSLETTER_LEGAL_COPY.privacy.text}</p>
           </SectionContent>
         </SectionMain>
       </Section>

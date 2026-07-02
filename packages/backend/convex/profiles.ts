@@ -1,3 +1,4 @@
+import { normalizeProfileEmail } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
 import { env } from "./_generated/server";
@@ -15,7 +16,12 @@ export const seed = zInternalMutation({
       .withIndex("by_role", (q) => q.eq("role", "admin"))
       .collect();
 
-    for (const email of parsed)
-      if (!admins.some((admin) => admin.email === email)) await ctx.db.insert("profiles", { email, role: "admin", userId: null });
+    const existingAdminEmails = new Set(admins.map(({ email }) => email));
+    const seedEmails = new Set(parsed.map(normalizeProfileEmail));
+    await Promise.all(
+      [...seedEmails]
+        .filter((email) => !existingAdminEmails.has(email))
+        .map(async (email) => await ctx.db.insert("profiles", { email, role: "admin", userId: null }))
+    );
   },
 });

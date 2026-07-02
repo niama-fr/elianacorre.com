@@ -28,6 +28,9 @@ type Env = {
   readonly BETTER_AUTH_SECRET: string;
   readonly GOOGLE_CLIENT_ID: string;
   readonly GOOGLE_CLIENT_SECRET: string;
+  readonly LOOPS_API_KEY: string;
+  readonly LOOPS_CONFIRMATION_TRANSACTIONAL_ID: string;
+  readonly LOOPS_EBOOK_TRANSACTIONAL_ID: string;
   readonly SITE_URL: string;
   readonly WHITELIST_SEED: string;
 };
