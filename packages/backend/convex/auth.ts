@@ -21,29 +21,28 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, { _id: adapterId, email }) => {
-        try {
-          const emailParsed = zCanonicalEmail.safeParse(email);
-          if (!emailParsed.success) throw new ConvexError("INVALID_BETTERAUTH_EMAIL");
+        const emailParsed = zCanonicalEmail.safeParse(email);
+        if (!emailParsed.success) throw new ConvexError("INVALID_BETTERAUTH_EMAIL");
 
-          const existingIdentityForService = await ctx.db
-            .query("identities")
-            .withIndex("by_adapter_and_adapter_id", (q) => q.eq("adapter", AUTH_ADAPTER).eq("adapterId", adapterId))
-            .unique();
-          if (existingIdentityForService) throw new ConvexError("IDENTITY_ALREADY_EXISTS");
+        const identityByAdapterId = await ctx.db
+          .query("identities")
+          .withIndex("by_adapter_and_adapter_id", (q) => q.eq("adapter", AUTH_ADAPTER).eq("adapterId", adapterId))
+          .unique();
+        if (identityByAdapterId) return;
 
-          const existingProfile = await ctx.db
-            .query("profiles")
-            .withIndex("by_email", (q) => q.eq("email", emailParsed.data))
-            .unique();
+        const existingProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_email", (q) => q.eq("email", emailParsed.data))
+          .unique();
+        const profileId = existingProfile?._id ?? (await ctx.db.insert("profiles", { email: emailParsed.data, role: "contact" }));
 
-          if (!existingProfile) return;
+        const identityByProfile = await ctx.db
+          .query("identities")
+          .withIndex("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId).eq("adapter", AUTH_ADAPTER))
+          .unique();
+        if (identityByProfile) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
 
-          await ctx.db.insert("identities", { adapter: AUTH_ADAPTER, adapterId, profileId: existingProfile._id });
-        } catch (error) {
-          // oxlint-disable-next-line no-console
-          if (error instanceof ConvexError) console.log("BETTER-AUTH CREATE TRIGGER ERROR", error.message);
-          // Note: for now silently ignore errors, but we should think about how to handle them
-        }
+        await ctx.db.insert("identities", { adapter: AUTH_ADAPTER, adapterId, profileId });
       },
     },
   },

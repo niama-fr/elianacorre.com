@@ -3,7 +3,7 @@ import { zNewsletterSubCreate } from "@ec/domain/schemas/newsletter-subs";
 import { z } from "zod";
 
 import { fulfillEbookRequest } from "../ebook-grants";
-import { createConfirmationEmailJob, scheduleEmailJobRunner } from "../email-jobs";
+import { createConfirmationEmailProviderJob, scheduleEmailProviderJobRunner } from "../email-provider-jobs";
 import { requireActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
 import {
   createNewsletterSub,
@@ -47,13 +47,13 @@ export const upsert = zMutation({
     const subId = currentSub?._id ?? (await createNewsletterSub(ctx, { confirmTokenHash, legalBundleId, profileId, requestedAt: now }));
     if (currentSub) await patchNewsletterSub(ctx, subId, { confirmTokenHash, legalBundleId, requestedAt: now });
 
-    const emailJobId = await createConfirmationEmailJob(ctx, {
+    const emailProviderJobId = await createConfirmationEmailProviderJob(ctx, {
       idempotencyKey: `confirmation:${subId}:${confirmTokenHash.slice(0, 16)}`,
       linkToken,
       nextAttemptAt: now,
       profileId,
     });
-    await scheduleEmailJobRunner(ctx, emailJobId);
+    await scheduleEmailProviderJobRunner(ctx, emailProviderJobId);
 
     return { accepted: true as const };
   },

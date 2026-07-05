@@ -11,10 +11,9 @@
 import type * as auth from "../auth.js";
 import type * as contactRequests from "../contactRequests.js";
 import type * as ebooks from "../ebooks.js";
-import type * as emailJobs from "../emailJobs.js";
-import type * as emailRunner from "../emailRunner.js";
+import type * as emailProviderJobs from "../emailProviderJobs.js";
+import type * as emailProviderRunner from "../emailProviderRunner.js";
 import type * as http from "../http.js";
-import type * as newsletterContacts from "../newsletterContacts.js";
 import type * as newsletterLegalBundles from "../newsletterLegalBundles.js";
 import type * as newsletterSubs from "../newsletterSubs.js";
 import type * as seed from "../seed.js";
@@ -30,10 +29,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   contactRequests: typeof contactRequests;
   ebooks: typeof ebooks;
-  emailJobs: typeof emailJobs;
-  emailRunner: typeof emailRunner;
+  emailProviderJobs: typeof emailProviderJobs;
+  emailProviderRunner: typeof emailProviderRunner;
   http: typeof http;
-  newsletterContacts: typeof newsletterContacts;
   newsletterLegalBundles: typeof newsletterLegalBundles;
   newsletterSubs: typeof newsletterSubs;
   seed: typeof seed;

@@ -3,7 +3,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 
 import type { Id } from "./convex/_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
-import { scheduleNewsletterContactSync } from "./newsletter-contacts";
+import { createNewsletterContactSyncJob, scheduleEmailProviderJobRunner } from "./email-provider-jobs";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -49,6 +49,11 @@ export const patchNewsletterSub = async (ctx: MutationCtx, id: Id<"newsletterSub
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
 export const markNewsletterSubConfirmed = async (ctx: MutationCtx, id: Id<"newsletterSubs">, { now, profileId }: MarkConfirmedOpts) => {
   await patchNewsletterSub(ctx, id, { confirmTokenHash: null, confirmedAt: now });
-  await scheduleNewsletterContactSync(ctx, profileId);
+  const emailProviderJobId = await createNewsletterContactSyncJob(ctx, {
+    idempotencyKey: `newsletter-contact-sync:${id}`,
+    nextAttemptAt: now,
+    profileId,
+  });
+  await scheduleEmailProviderJobRunner(ctx, emailProviderJobId);
 };
 type MarkConfirmedOpts = WithNow<{ profileId: Id<"profiles"> }>;

@@ -10,6 +10,14 @@ export default defineConfig({
   options: {
     typeAware: true,
   },
+  overrides: [
+    {
+      files: ["packages/backend/convex/**/*.ts"],
+      rules: {
+        "unicorn/filename-case": "off",
+      },
+    },
+  ],
   plugins: ["jsx-a11y"],
   rules: {
     "consistent-return": "off",
@@ -40,6 +48,5 @@ export default defineConfig({
     "typescript/no-unsafe-type-assertion": "off",
     "typescript/strict-boolean-expressions": "off",
     "typescript/strict-void-return": "off",
-    "unicorn/filename-case": "off",
   },
 });

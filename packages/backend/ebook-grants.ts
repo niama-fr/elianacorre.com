@@ -5,7 +5,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 import type { Id } from "./convex/_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
 import { getPublishedEbook } from "./ebooks";
-import { createEbookEmailJob, scheduleEmailJobRunner } from "./email-jobs";
+import { createEbookEmailProviderJob, scheduleEmailProviderJobRunner } from "./email-provider-jobs";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 export const DOWNLOAD_TTL_MS = 72 * 60 * 60 * 1000;
@@ -29,7 +29,12 @@ export const fulfillEbookRequest = async (ctx: MutationCtx, { now, profileId }: 
 
   const { token: linkToken, tokenHash } = await createHashedToken();
   const ebookGrantId = await createEbookGrant(ctx, { issuedAt: now, profileId, tokenHash });
-  const emailJobId = await createEbookEmailJob(ctx, { idempotencyKey: `ebook:${ebookGrantId}`, linkToken, nextAttemptAt: now, profileId });
-  await scheduleEmailJobRunner(ctx, emailJobId);
+  const emailProviderJobId = await createEbookEmailProviderJob(ctx, {
+    idempotencyKey: `ebook:${ebookGrantId}`,
+    linkToken,
+    nextAttemptAt: now,
+    profileId,
+  });
+  await scheduleEmailProviderJobRunner(ctx, emailProviderJobId);
   return linkToken;
 };

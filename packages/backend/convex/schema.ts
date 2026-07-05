@@ -1,7 +1,7 @@
 import { zContactRequestFields } from "@ec/domain/schemas/contact-requests";
 import { zEbookGrantFields } from "@ec/domain/schemas/ebook-grants";
 import { zEbookFields } from "@ec/domain/schemas/ebooks";
-import { zEmailJobFields } from "@ec/domain/schemas/email-jobs";
+import { zEmailProviderJobFields } from "@ec/domain/schemas/email-provider-jobs";
 import { zIdentityFields } from "@ec/domain/schemas/identities";
 import { zLegalTextFields } from "@ec/domain/schemas/legal-texts";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
@@ -14,7 +14,7 @@ export default defineSchema({
   contactRequests: defineTable(zodOutputToConvex(zContactRequestFields)).index("by_profile_id", ["profileId"]),
   ebookGrants: defineTable(zodOutputToConvex(zEbookGrantFields)).index("by_token_hash", ["tokenHash"]),
   ebooks: defineTable(zodOutputToConvex(zEbookFields)).index("by_status", ["status"]).index("by_version", ["version"]),
-  emailJobs: defineTable(zodOutputToConvex(zEmailJobFields))
+  emailProviderJobs: defineTable(zodOutputToConvex(zEmailProviderJobFields))
     .index("by_idempotency_key", ["idempotencyKey"])
     .index("by_status_and_next_attempt_at", ["status", "nextAttemptAt"]),
   identities: defineTable(zodOutputToConvex(zIdentityFields))
