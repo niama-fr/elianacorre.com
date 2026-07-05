@@ -9,17 +9,39 @@ import { modules } from "./test.setup";
 
 const loopsModules = import.meta.glob("../node_modules/@devwithbobby/loops/src/component/**/*.ts");
 
-const createBackend = () => {
+const createBackend = async () => {
   const convex = convexTest(schema, modules);
   registerLoops(convex, "loops", loopsModules);
   registerAggregate(convex, "loops/contactAggregate");
+  await convex.run(async (ctx) => {
+    const publishedAt = Date.now();
+    const publishedBy = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
+    const privacyNoticeId = await ctx.db.insert("legalTexts", {
+      content: "it's private",
+      kind: "privacy-notice",
+      publishedAt,
+      publishedBy,
+    });
+    const newsletterConsentId = await ctx.db.insert("legalTexts", {
+      content: "it's consent",
+      kind: "newsletter-consent",
+      publishedAt,
+      publishedBy,
+    });
+    await ctx.db.insert("newsletterLegalBundles", {
+      newsletterConsentId,
+      privacyNoticeId,
+      publishedAt,
+      publishedBy,
+    });
+  });
   return convex;
 };
 
 const publishEbook = async (convex: TestConvex<typeof schema>) =>
   await convex.run(async (ctx) => {
     const now = Date.now();
-    const profileId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin", userId: null });
+    const profileId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
     const storageId = await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
     return await ctx.db.insert("ebooks", {
       fileName: "welcome.pdf",
@@ -42,10 +64,10 @@ describe("newsletter subscription", () => {
   });
 
   it("records an unconfirmed request and queues confirmation", async () => {
-    const convex = createBackend();
+    const convex = await createBackend();
 
     await expect(
-      convex.mutation(api.newsletter.requestSubscription, {
+      convex.mutation(api.newsletterSubs.upsert, {
         consent: true,
         email: "  Reader+Carnet@Example.COM ",
         firstName: "  Ada  ",
@@ -54,20 +76,23 @@ describe("newsletter subscription", () => {
 
     const state = await convex.run(async (ctx) => ({
       bundles: await ctx.db.query("newsletterLegalBundles").collect(),
-      documents: await ctx.db.query("legalDocuments").collect(),
-      outbox: await ctx.db.query("newsletterEmailOutbox").collect(),
+      documents: await ctx.db.query("legalTexts").collect(),
+      outbox: await ctx.db.query("emailJobs").collect(),
       profiles: await ctx.db.query("profiles").collect(),
-      subscriptions: await ctx.db.query("newsletterSubscriptions").collect(),
+      subscriptions: await ctx.db.query("newsletterSubs").collect(),
     }));
-    const consentDocument = state.documents.find(({ type }) => type === "newsletter-consent");
-    const privacyDocument = state.documents.find(({ type }) => type === "privacy-notice");
+    const consentDocument = state.documents.find(({ kind }) => kind === "newsletter-consent");
+    const privacyDocument = state.documents.find(({ kind }) => kind === "privacy-notice");
 
     expect(state.profiles).toMatchObject([
+      {
+        email: "admin@example.com",
+        role: "admin",
+      },
       {
         email: "reader+carnet@example.com",
         firstName: "Ada",
         role: "contact",
-        userId: null,
       },
     ]);
     expect(state.subscriptions).toMatchObject([
@@ -80,8 +105,8 @@ describe("newsletter subscription", () => {
     expect({
       bundle: state.bundles[0],
       consentPublishedAtType: typeof consentDocument?.publishedAt,
-      hasConsentDocument: state.documents.some(({ type }) => type === "newsletter-consent"),
-      hasPrivacyDocument: state.documents.some(({ type }) => type === "privacy-notice"),
+      hasConsentDocument: state.documents.some(({ kind }) => kind === "newsletter-consent"),
+      hasPrivacyDocument: state.documents.some(({ kind }) => kind === "privacy-notice"),
       privacyPublishedAtType: typeof privacyDocument?.publishedAt,
     }).toMatchObject({
       bundle: {
@@ -97,12 +122,10 @@ describe("newsletter subscription", () => {
   });
 
   it("does not demote an existing profile when it requests the newsletter", async () => {
-    const convex = createBackend();
-    const profileId = await convex.run(
-      async (ctx) => await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin", userId: null })
-    );
+    const convex = await createBackend();
+    const profileId = await convex.run(async (ctx) => await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" }));
 
-    await convex.mutation(api.newsletter.requestSubscription, {
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: " ADMIN@EXAMPLE.COM ",
       firstName: "Ada",
@@ -116,55 +139,55 @@ describe("newsletter subscription", () => {
   });
 
   it("allows only the newest pending token to confirm consent and grant e-book access", async () => {
-    const convex = createBackend();
+    const convex = await createBackend();
     const ebookId = await publishEbook(convex);
     const request = { consent: true, email: "reader@example.com" } as const;
 
-    await convex.mutation(api.newsletter.requestSubscription, request);
-    await convex.mutation(api.newsletter.requestSubscription, request);
+    await convex.mutation(api.newsletterSubs.upsert, request);
+    await convex.mutation(api.newsletterSubs.upsert, request);
     const confirmationEmails = await convex.run(
       async (ctx) =>
         await ctx.db
-          .query("newsletterEmailOutbox")
+          .query("emailJobs")
           .filter((query) => query.eq(query.field("kind"), "confirmation"))
           .collect()
     );
 
     await expect(
-      convex.mutation(api.newsletter.confirmSubscription, { token: confirmationEmails[0]?.linkToken ?? "missing" })
-    ).resolves.toStrictEqual({ status: "invalid" });
-    const confirmation = await convex.mutation(api.newsletter.confirmSubscription, {
+      convex.mutation(api.newsletterSubs.confirm, { token: confirmationEmails[0]?.linkToken ?? "missing" })
+    ).resolves.toStrictEqual({ downloadToken: null, status: "invalid" });
+    const confirmation = await convex.mutation(api.newsletterSubs.confirm, {
       token: confirmationEmails[1]?.linkToken ?? "missing",
     });
     expect(confirmation).toMatchObject({ ebookId, status: "confirmed" });
     if (confirmation.status !== "confirmed") throw new Error("Confirmation failed");
 
     const state = await convex.run(async (ctx) => ({
-      capabilities: await ctx.db.query("ebookDownloadCapabilities").collect(),
+      capabilities: await ctx.db.query("ebookGrants").collect(),
       deliveries: await ctx.db
-        .query("newsletterEmailOutbox")
+        .query("emailJobs")
         .filter((query) => query.eq(query.field("kind"), "ebook-delivery"))
         .collect(),
-      subscriptions: await ctx.db.query("newsletterSubscriptions").collect(),
+      subscriptions: await ctx.db.query("newsletterSubs").collect(),
     }));
     expect(state).toMatchObject({
       capabilities: [{ profileId: state.subscriptions[0]?.profileId }],
       deliveries: [{ attempts: 0, kind: "ebook-delivery", status: "pending" }],
-      subscriptions: [{ confirmationTokenHash: null }],
+      subscriptions: [{ confirmTokenHash: null }],
     });
     expect(state.subscriptions.map(({ confirmedAt, legalBundleId }) => [typeof confirmedAt, typeof legalBundleId])).toStrictEqual([
       ["number", "string"],
     ]);
 
-    const repeatedConfirmation = await convex.mutation(api.newsletter.confirmSubscription, {
+    const repeatedConfirmation = await convex.mutation(api.newsletterSubs.confirm, {
       token: confirmationEmails[1]?.linkToken ?? "missing",
     });
     const subscriptionCountAfterRepeat = await convex.run(async (ctx) => {
-      const subscriptions = await ctx.db.query("newsletterSubscriptions").collect();
+      const subscriptions = await ctx.db.query("newsletterSubs").collect();
       return subscriptions.length;
     });
     expect({ repeatedConfirmation, subscriptionCountAfterRepeat }).toStrictEqual({
-      repeatedConfirmation: { status: "invalid" },
+      repeatedConfirmation: { downloadToken: null, status: "invalid" },
       subscriptionCountAfterRepeat: 1,
     });
   });
@@ -172,25 +195,26 @@ describe("newsletter subscription", () => {
   it("rejects an expired confirmation token", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
-    const convex = createBackend();
+    const convex = await createBackend();
     await publishEbook(convex);
-    await convex.mutation(api.newsletter.requestSubscription, {
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
     const token = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?.linkToken;
     });
     vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
 
-    await expect(convex.mutation(api.newsletter.confirmSubscription, { token: token ?? "missing" })).resolves.toStrictEqual({
+    await expect(convex.mutation(api.newsletterSubs.confirm, { token: token ?? "missing" })).resolves.toStrictEqual({
+      downloadToken: null,
       status: "invalid",
     });
     await expect(
       convex.run(async (ctx) => ({
-        capabilities: await ctx.db.query("ebookDownloadCapabilities").collect(),
-        subscriptions: await ctx.db.query("newsletterSubscriptions").collect(),
+        capabilities: await ctx.db.query("ebookGrants").collect(),
+        subscriptions: await ctx.db.query("newsletterSubs").collect(),
       }))
     ).resolves.toMatchObject({ capabilities: [], subscriptions: [{ confirmedAt: null }] });
   });
@@ -198,17 +222,17 @@ describe("newsletter subscription", () => {
   it("serves the latest e-book only while the personal capability is valid", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
-    const convex = createBackend();
+    const convex = await createBackend();
     await publishEbook(convex);
-    await convex.mutation(api.newsletter.requestSubscription, {
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
     const confirmationToken = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?.linkToken;
     });
-    const confirmation = await convex.mutation(api.newsletter.confirmSubscription, {
+    const confirmation = await convex.mutation(api.newsletterSubs.confirm, {
       token: confirmationToken ?? "missing",
     });
     if (confirmation.status !== "confirmed") throw new Error("Confirmation failed");
@@ -238,38 +262,38 @@ describe("newsletter subscription", () => {
       });
     });
 
-    const download = await convex.fetch(`/newsletter/ebook?token=${confirmation.token}`);
+    const download = await convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`);
     expect(download.status).toBe(200);
     await expect(download.text()).resolves.toBe("%PDF-2.0");
 
     vi.advanceTimersByTime(72 * 60 * 60 * 1000 + 1);
-    await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.token}`)).resolves.toMatchObject({ status: 404 });
+    await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 404 });
   });
 
   it("queues a fresh e-book capability instead of another confirmation for an active subscriber", async () => {
-    const convex = createBackend();
+    const convex = await createBackend();
     await publishEbook(convex);
     const request = { consent: true, email: "reader@example.com" } as const;
-    await convex.mutation(api.newsletter.requestSubscription, request);
+    await convex.mutation(api.newsletterSubs.upsert, request);
     const confirmationToken = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?.linkToken;
     });
-    await convex.mutation(api.newsletter.confirmSubscription, { token: confirmationToken ?? "missing" });
+    await convex.mutation(api.newsletterSubs.confirm, { token: confirmationToken ?? "missing" });
 
-    await expect(convex.mutation(api.newsletter.requestSubscription, request)).resolves.toStrictEqual({ accepted: true });
+    await expect(convex.mutation(api.newsletterSubs.upsert, request)).resolves.toStrictEqual({ accepted: true });
 
     const state = await convex.run(async (ctx) => ({
-      capabilities: await ctx.db.query("ebookDownloadCapabilities").collect(),
+      capabilities: await ctx.db.query("ebookGrants").collect(),
       confirmationEmails: await ctx.db
-        .query("newsletterEmailOutbox")
+        .query("emailJobs")
         .filter((query) => query.eq(query.field("kind"), "confirmation"))
         .collect(),
       deliveryEmails: await ctx.db
-        .query("newsletterEmailOutbox")
+        .query("emailJobs")
         .filter((query) => query.eq(query.field("kind"), "ebook-delivery"))
         .collect(),
-      subscriptions: await ctx.db.query("newsletterSubscriptions").collect(),
+      subscriptions: await ctx.db.query("newsletterSubs").collect(),
     }));
     expect(state.confirmationEmails).toHaveLength(1);
     expect(state.subscriptions).toHaveLength(1);
@@ -294,30 +318,30 @@ describe("newsletter subscription", () => {
         );
       })
     );
-    const convex = createBackend();
+    const convex = await createBackend();
     await publishEbook(convex);
-    await convex.mutation(api.newsletter.requestSubscription, {
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
       firstName: "Ada",
     });
     const confirmationToken = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?.linkToken;
     });
-    await convex.mutation(api.newsletter.confirmSubscription, { token: confirmationToken ?? "missing" });
+    await convex.mutation(api.newsletterSubs.confirm, { token: confirmationToken ?? "missing" });
     const deliveryOutboxId = await convex.run(async (ctx) => {
       const delivery = await ctx.db
-        .query("newsletterEmailOutbox")
+        .query("emailJobs")
         .filter((query) => query.eq(query.field("kind"), "ebook-delivery"))
         .unique();
       return delivery?._id;
     });
     if (deliveryOutboxId === undefined) throw new Error("E-book delivery was not queued");
 
-    await convex.action(internal.newsletter.sendEmail, { outboxId: deliveryOutboxId });
+    await convex.action(internal.emailRunner.send, { emailJobId: deliveryOutboxId });
 
-    const delivery = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", deliveryOutboxId));
+    const delivery = await convex.run(async (ctx) => await ctx.db.get("emailJobs", deliveryOutboxId));
     expect(delivery).toMatchObject({ lastError: null, status: "sent" });
     const contacts = await convex.query(components.loops.queries.listContacts, { limit: 10 });
     expect(contacts.contacts).toMatchObject([
@@ -335,42 +359,37 @@ describe("newsletter subscription", () => {
   it("retries failed email work with backoff and prevents duplicate delivery claims", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
-    const convex = createBackend();
-    await convex.mutation(api.newsletter.requestSubscription, {
+    const convex = await createBackend();
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
-    const outboxId = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+    const emailJobId = await convex.run(async (ctx) => {
+      const email = await ctx.db.query("emailJobs").unique();
       return email?._id;
     });
-    if (outboxId === undefined) throw new Error("Email work was not queued");
+    if (emailJobId === undefined) throw new Error("Email work was not queued");
 
-    const firstClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    const duplicateClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    expect({ duplicateClaim, idempotencyKeyType: typeof firstClaim?.idempotencyKey, kind: firstClaim?.kind }).toStrictEqual({
+    const firstClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    const duplicateClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    expect({ duplicateClaim, idempotencyKeyType: typeof firstClaim?.job.idempotencyKey, kind: firstClaim?.job.kind }).toStrictEqual({
       duplicateClaim: null,
       idempotencyKeyType: "string",
       kind: "confirmation",
     });
-    await convex.mutation(internal.newsletter.recordEmailResult, {
-      attempt: firstClaim?.attempts ?? 0,
+    await convex.mutation(internal.emailJobs.recordSendFailure, {
+      attempt: firstClaim?.job.attempts ?? 0,
+      emailJobId,
       error: "Loops unavailable",
-      outboxId,
-      success: false,
     });
-    await expect(convex.mutation(internal.newsletter.claimEmail, { outboxId })).resolves.toBeNull();
+    await expect(convex.mutation(internal.emailJobs.claim, { emailJobId })).resolves.toBeNull();
 
     vi.advanceTimersByTime(60_000);
-    const retryClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    expect(retryClaim?.attempts).toBe(2);
-    await convex.mutation(internal.newsletter.recordEmailResult, {
-      attempt: retryClaim?.attempts ?? 0,
-      outboxId,
-      success: true,
-    });
-    const finalClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    const sentEmail = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
+    const retryClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    expect(retryClaim?.job.attempts).toBe(2);
+    await convex.mutation(internal.emailJobs.recordSendSuccess, { attempt: retryClaim?.job.attempts ?? 0, emailJobId });
+    const finalClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    const sentEmail = await convex.run(async (ctx) => await ctx.db.get("emailJobs", emailJobId));
     expect({ attempts: sentEmail?.attempts, finalClaim, sentAtType: typeof sentEmail?.sentAt, status: sentEmail?.status }).toStrictEqual({
       attempts: 2,
       finalClaim: null,
@@ -382,38 +401,30 @@ describe("newsletter subscription", () => {
   it("reclaims abandoned email work after its delivery lease expires", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
-    const convex = createBackend();
-    await convex.mutation(api.newsletter.requestSubscription, {
+    const convex = await createBackend();
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
-    const outboxId = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+    const emailJobId = await convex.run(async (ctx) => {
+      const email = await ctx.db.query("emailJobs").unique();
       return email?._id;
     });
-    if (outboxId === undefined) throw new Error("Email work was not queued");
+    if (emailJobId === undefined) throw new Error("Email work was not queued");
 
-    const abandonedClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    expect(abandonedClaim?.attempts).toBe(1);
+    const abandonedClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    expect(abandonedClaim?.job.attempts).toBe(1);
 
     vi.advanceTimersByTime(5 * 60 * 1000);
-    const recoveredClaim = await convex.mutation(internal.newsletter.claimEmail, { outboxId });
-    expect(recoveredClaim?.attempts).toBe(2);
+    const recoveredClaim = await convex.mutation(internal.emailJobs.claim, { emailJobId });
+    expect(recoveredClaim?.job.attempts).toBe(2);
 
-    await convex.mutation(internal.newsletter.recordEmailResult, {
-      attempt: abandonedClaim?.attempts ?? 0,
-      outboxId,
-      success: true,
-    });
-    const stillSending = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
+    await convex.mutation(internal.emailJobs.recordSendSuccess, { attempt: abandonedClaim?.job.attempts ?? 0, emailJobId });
+    const stillSending = await convex.run(async (ctx) => await ctx.db.get("emailJobs", emailJobId));
     expect(stillSending?.status).toBe("sending");
 
-    await convex.mutation(internal.newsletter.recordEmailResult, {
-      attempt: recoveredClaim?.attempts ?? 0,
-      outboxId,
-      success: true,
-    });
-    const sent = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
+    await convex.mutation(internal.emailJobs.recordSendSuccess, { attempt: recoveredClaim?.job.attempts ?? 0, emailJobId });
+    const sent = await convex.run(async (ctx) => await ctx.db.get("emailJobs", emailJobId));
     expect(sent).toMatchObject({ attempts: 2, leaseExpiresAt: null, status: "sent" });
   });
 
@@ -426,22 +437,22 @@ describe("newsletter subscription", () => {
     vi.stubEnv("SITE_URL", "https://staging.elianacorre.com");
     const send = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ success: true }));
     vi.stubGlobal("fetch", send);
-    const convex = createBackend();
-    await convex.mutation(api.newsletter.requestSubscription, {
+    const convex = await createBackend();
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
     const outboxId = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?._id;
     });
     if (outboxId === undefined) throw new Error("Email work was not queued");
 
-    await convex.mutation(internal.newsletter.claimEmail, { outboxId });
+    await convex.mutation(internal.emailJobs.claim, { emailJobId: outboxId });
     vi.advanceTimersByTime(5 * 60 * 1000);
-    await convex.action(internal.newsletter.sendEmail, { outboxId });
+    await convex.action(internal.emailRunner.send, { emailJobId: outboxId });
 
-    const sent = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
+    const sent = await convex.run(async (ctx) => await ctx.db.get("emailJobs", outboxId));
     expect(sent).toMatchObject({ attempts: 2, leaseExpiresAt: null, status: "sent" });
     expect(send).toHaveBeenCalledOnce();
   });
@@ -449,27 +460,27 @@ describe("newsletter subscription", () => {
   it("stops reclaiming abandoned delivery work at the attempt limit", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-30T00:00:00Z"));
-    const convex = createBackend();
-    await convex.mutation(api.newsletter.requestSubscription, {
+    const convex = await createBackend();
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
     const outboxId = await convex.run(async (ctx) => {
-      const email = await ctx.db.query("newsletterEmailOutbox").unique();
+      const email = await ctx.db.query("emailJobs").unique();
       return email?._id;
     });
     if (outboxId === undefined) throw new Error("Email work was not queued");
 
-    await convex.mutation(internal.newsletter.claimEmail, { outboxId });
+    await convex.mutation(internal.emailJobs.claim, { emailJobId: outboxId });
     await convex.run(async (ctx) => {
-      await ctx.db.patch("newsletterEmailOutbox", outboxId, {
+      await ctx.db.patch("emailJobs", outboxId, {
         attempts: 8,
         leaseExpiresAt: Date.now() - 1,
       });
     });
 
-    await expect(convex.mutation(internal.newsletter.claimEmail, { outboxId })).resolves.toBeNull();
-    const failed = await convex.run(async (ctx) => await ctx.db.get("newsletterEmailOutbox", outboxId));
+    await expect(convex.mutation(internal.emailJobs.claim, { emailJobId: outboxId })).resolves.toBeNull();
+    const failed = await convex.run(async (ctx) => await ctx.db.get("emailJobs", outboxId));
     expect(failed).toMatchObject({ attempts: 8, leaseExpiresAt: null, status: "failed" });
   });
 
@@ -484,9 +495,9 @@ describe("newsletter subscription", () => {
       .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }))
       .mockResolvedValueOnce(Response.json({ success: true }));
     vi.stubGlobal("fetch", send);
-    const convex = createBackend();
+    const convex = await createBackend();
 
-    await convex.mutation(api.newsletter.requestSubscription, {
+    await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
     });
@@ -498,8 +509,8 @@ describe("newsletter subscription", () => {
     expect(firstHeaders.get("Idempotency-Key")).toBeTruthy();
     expect(secondHeaders.get("Idempotency-Key")).toBe(firstHeaders.get("Idempotency-Key"));
     const state = await convex.run(async (ctx) => ({
-      outbox: await ctx.db.query("newsletterEmailOutbox").unique(),
-      subscription: await ctx.db.query("newsletterSubscriptions").unique(),
+      outbox: await ctx.db.query("emailJobs").unique(),
+      subscription: await ctx.db.query("newsletterSubs").unique(),
     }));
     expect(state).toMatchObject({
       outbox: { attempts: 2, status: "sent" },

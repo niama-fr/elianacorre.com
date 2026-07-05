@@ -1,14 +1,22 @@
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@ec/backend/api";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { NewsletterForm } from "./newsletter/-form";
 
+// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/newsletter/")({
   component: NewsletterPage,
   head: () => ({ meta: [{ title: "Lettre et e-book — Eliana Corré" }] }),
+  loader: async ({ context }) => ({
+    bundle: await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive)),
+  }),
 });
 
+// PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function NewsletterPage() {
+  const { bundle } = Route.useLoaderData();
   return (
     <Section intent="secondary">
       <SectionMain>
@@ -18,7 +26,7 @@ function NewsletterPage() {
           <p>Inscrivez-vous pour recevoir mes prochaines lettres ainsi que mon e-book de bienvenue.</p>
           <p>Aucun compte ne sera créé. Vous devrez confirmer votre adresse e-mail avant de recevoir l’e-book.</p>
         </SectionContent>
-        <NewsletterForm />
+        <NewsletterForm bundle={bundle} />
       </SectionMain>
     </Section>
   );

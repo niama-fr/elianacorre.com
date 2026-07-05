@@ -111,7 +111,7 @@ jobs:
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: bunx convex run profiles:seed
+        run: bunx convex run seed:init
       - name: Build Worker-only rollback
         if: inputs.scope == 'worker'
         working-directory: apps/web

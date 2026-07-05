@@ -1,25 +1,35 @@
-import { z } from "zod/mini";
+import { z } from "zod";
 
-import { zDocCommon } from "./utils";
+import { zCanonicalEmail, zDocCommon } from "./utils";
 
 // ROLE ------------------------------------------------------------------------------------------------------------------------------------
 export const zProfileRole = z.literal(["admin", "contact", "member"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zProfileFields = z.object({
-  email: z.email(),
+  email: zCanonicalEmail,
   firstName: z.optional(z.string()),
   lastName: z.optional(z.string()),
   role: zProfileRole,
-  userId: z.nullable(z.string()),
 });
 export const zProfileDoc = z.object({ ...zDocCommon("profiles").shape, ...zProfileFields.shape });
 
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
 export const zProfile = zProfileDoc;
 
-// NORMALIZATION --------------------------------------------------------------------------------------------------------------------------
-export const normalizeProfileEmail = (email: string): string => z.email().parse(email.trim()).toLocaleLowerCase("en-US");
+// SEED ------------------------------------------------------------------------------------------------------------------------------------
+export const zProfileAdminsSeed = z
+  .string()
+  .trim()
+  .transform((input, { issues }): unknown => {
+    try {
+      return JSON.parse(input);
+    } catch {
+      issues.push({ code: "custom", input, message: "Invalid JSON" });
+      return z.NEVER;
+    }
+  })
+  .pipe(zCanonicalEmail.array().min(1));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Profiles = {

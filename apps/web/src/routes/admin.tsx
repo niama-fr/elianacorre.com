@@ -1,4 +1,3 @@
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { readRootLayout } from "@ec/domain/helpers/layouts";
 import { Button } from "@ec/ui/components/button";
 import { Image } from "@ec/ui/components/image";
@@ -19,17 +18,13 @@ import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { cva } from "class-variance-authority";
 
 import { authClient } from "@/lib/auth/client";
-import { fetchToken } from "@/lib/auth/functions";
 
 import styleCss from "@/styles/admin.css?url";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/admin")({
-  beforeLoad: async (ctx) => {
-    const token = await fetchToken();
-    if (token === undefined) redirect({ search: { redirect: ctx.location.href }, throw: true, to: "/connexion" });
-    if (token !== undefined) ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
-    return { token };
+  beforeLoad: (ctx) => {
+    if (ctx.context.token === undefined) redirect({ search: { redirect: ctx.location.href }, throw: true, to: "/connexion" });
   },
   component: AdminLayout,
   head: () => ({
@@ -49,73 +44,69 @@ export const ADMIN = {
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function AdminLayout() {
   const { logoImg } = Route.useLoaderData();
-  const { convexQueryClient, token } = Route.useRouteContext();
 
   const data = {
     navMain: [{ title: "Ebooks", url: "/admin/ebooks" }],
   };
 
   return (
-    // @ts-expect-error -- The documented client construction is incompatible with the package's AuthClient type under TypeScript 6.
-    <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient} initialToken={token}>
-      <SidebarProvider>
-        <Sidebar variant="floating">
-          <SidebarHeader>
+    <SidebarProvider>
+      <Sidebar variant="floating">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <div className="aspect-square size-16">
+                  <Image
+                    alt={logoImg.alt}
+                    background="transparent"
+                    breakpoints={[80, 96, 160, 192, 320]}
+                    height={logoImg.height}
+                    sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
+                    src={logoImg.src}
+                    width={logoImg.width}
+                  />
+                </div>
+                <span>Tableau de bord</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <div className="aspect-square size-16">
-                    <Image
-                      alt={logoImg.alt}
-                      background="transparent"
-                      breakpoints={[80, 96, 160, 192, 320]}
-                      height={logoImg.height}
-                      sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
-                      src={logoImg.src}
-                      width={logoImg.width}
-                    />
-                  </div>
-                  <span>Tableau de bord</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {data.navMain.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton render={<Link to={item.url} />}>{item.title}</SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarMenu>
-                {data.navMain.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton render={<Link to={item.url} />}>{item.title}</SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-        <SidebarInset className={ADMIN.inset()}>
-          <header className={ADMIN.header()}>
-            <SidebarTrigger />
-            <div className={ADMIN.actions()}>
-              <Button
-                size="icon"
-                onClick={() =>
-                  void authClient.signOut({
-                    fetchOptions: {
-                      onSuccess: () => {
-                        location.reload();
-                      },
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset className={ADMIN.inset()}>
+        <header className={ADMIN.header()}>
+          <SidebarTrigger />
+          <div className={ADMIN.actions()}>
+            <Button
+              size="icon"
+              onClick={() =>
+                void authClient.signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      location.reload();
                     },
-                  })
-                }
-              >
-                <span className={ADMIN.signout()} />
-              </Button>
-              <ModeToggle />
-            </div>
-          </header>
-          <Outlet />
-        </SidebarInset>
-      </SidebarProvider>
-    </ConvexBetterAuthProvider>
+                  },
+                })
+              }
+            >
+              <span className={ADMIN.signout()} />
+            </Button>
+            <ModeToggle />
+          </div>
+        </header>
+        <Outlet />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

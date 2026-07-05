@@ -40,5 +40,6 @@ export default defineConfig({
     "typescript/no-unsafe-type-assertion": "off",
     "typescript/strict-boolean-expressions": "off",
     "typescript/strict-void-return": "off",
+    "unicorn/filename-case": "off",
   },
 });

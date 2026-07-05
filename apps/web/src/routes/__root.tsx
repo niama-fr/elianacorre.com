@@ -1,14 +1,24 @@
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import { ThemeProvider } from "@ec/ui/components/theme-provider";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Toaster } from "sonner";
+
+import { authClient } from "@/lib/auth/client";
+import { fetchToken } from "@/lib/auth/functions";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
 }>()({
+  beforeLoad: async (ctx) => {
+    const token = await fetchToken();
+    if (token !== undefined) ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+    return { token };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -39,6 +49,7 @@ export const Route = createRootRouteWithContext<{
 // DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
 function RootDocument({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { convexQueryClient, token } = Route.useRouteContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,16 +63,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="group/body" data-scrolled={isScrolled ? "" : undefined}>
-        <ThemeProvider defaultTheme="system" storageKey="theme">
-          <TooltipProvider>{children}</TooltipProvider>
-        </ThemeProvider>
-        <Scripts />
-      </body>
-    </html>
+    // @ts-expect-error -- The documented client construction is incompatible with the package's AuthClient type under TypeScript 6.
+    <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient} initialToken={token}>
+      <html lang="fr" suppressHydrationWarning>
+        <head>
+          <HeadContent />
+        </head>
+        <body className="group/body" data-scrolled={isScrolled ? "" : undefined}>
+          <ThemeProvider defaultTheme="system" storageKey="theme">
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </ThemeProvider>
+          <Scripts />
+        </body>
+      </html>
+    </ConvexBetterAuthProvider>
   );
 }

@@ -5,12 +5,14 @@ import { useEffect } from "react";
 
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
 
+// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/newsletter/ebook")({
   component: NewsletterEbookPage,
   head: () => ({ meta: [{ content: "no-referrer", name: "referrer" }, { title: "Votre e-book — Eliana Corré" }] }),
   validateSearch: (search) => ({ token: typeof search.token === "string" ? search.token : "" }),
 });
 
+// PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function NewsletterEbookPage() {
   const { token } = Route.useSearch();
   const downloadUrl = token === "" ? null : getEbookDownloadUrl(token);

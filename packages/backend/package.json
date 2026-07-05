@@ -11,7 +11,7 @@
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
-    "dev": "convex dev --run profiles:seed",
+    "dev": "convex dev --run seed:init",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit"
   },
