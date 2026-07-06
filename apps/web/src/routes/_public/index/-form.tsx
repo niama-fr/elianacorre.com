@@ -1,4 +1,4 @@
-import { zContactCreateValues } from "@ec/domain/schemas/contacts";
+import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import { useAppForm } from "@ec/ui/hooks/public-form";
 import confetti from "canvas-confetti";
 import { useRef } from "react";
@@ -11,7 +11,7 @@ export function IndexForm() {
   const submitRef = useRef<HTMLButtonElement>(null);
 
   const form = useAppForm({
-    defaultValues: { email: "", forename: "", message: "", surname: "" },
+    defaultValues: { email: "", firstName: "", lastName: "", message: "" },
     onSubmit: async ({ value }) => {
       if (!submitRef.current) return;
       const rect = submitRef.current.getBoundingClientRect();
@@ -39,16 +39,16 @@ export function IndexForm() {
       }}
     >
       <form.AppForm>
-        <form.AppField name="forename" validators={{ onChange: zContactCreateValues.shape.forename }}>
+        <form.AppField name="firstName" validators={{ onChange: zContactRequestCreateValues.shape.firstName }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
         </form.AppField>
-        <form.AppField name="surname" validators={{ onChange: zContactCreateValues.shape.surname }}>
+        <form.AppField name="lastName" validators={{ onChange: zContactRequestCreateValues.shape.lastName }}>
           {(f) => <f.InputField label="Nom" type="text" />}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: zContactCreateValues.shape.email }}>
+        <form.AppField name="email" validators={{ onChange: zContactRequestCreateValues.shape.email }}>
           {(f) => <f.InputField label="Courriel" type="email" />}
         </form.AppField>
-        <form.AppField name="message" validators={{ onChange: zContactCreateValues.shape.message }}>
+        <form.AppField name="message" validators={{ onChange: zContactRequestCreateValues.shape.message }}>
           {(f) => <f.TextareaField label="Message" />}
         </form.AppField>
         <form.Submit ref={submitRef} />

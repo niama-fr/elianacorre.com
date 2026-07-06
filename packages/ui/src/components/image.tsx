@@ -21,7 +21,7 @@ function toReactImgProps(props: object): ReactImgProps {
 
       return [nextKey, value];
     })
-  ) as ReactImgProps;
+  );
 }
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

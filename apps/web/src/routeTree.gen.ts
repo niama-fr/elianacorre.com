@@ -17,11 +17,15 @@ import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AdminEbooksRouteImport } from './routes/admin/ebooks'
 import { Route as PublicQuiSuisJeRouteImport } from './routes/_public/qui-suis-je'
 import { Route as PublicOeuvresRouteImport } from './routes/_public/oeuvres'
+import { Route as PublicNewsletterRouteImport } from './routes/_public/newsletter'
 import { Route as PublicMentionsLegalesRouteImport } from './routes/_public/mentions-legales'
 import { Route as PublicCarnetsDeVoyageRouteImport } from './routes/_public/carnets-de-voyage'
 import { Route as PublicOeuvresIndexRouteImport } from './routes/_public/oeuvres.index'
+import { Route as PublicNewsletterIndexRouteImport } from './routes/_public/newsletter.index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PublicOeuvresSlugRouteImport } from './routes/_public/oeuvres.$slug'
+import { Route as PublicNewsletterEbookRouteImport } from './routes/_public/newsletter.ebook'
+import { Route as PublicNewsletterConfirmationRouteImport } from './routes/_public/newsletter.confirmation'
 
 const ConnexionRoute = ConnexionRouteImport.update({
   id: '/connexion',
@@ -62,6 +66,11 @@ const PublicOeuvresRoute = PublicOeuvresRouteImport.update({
   path: '/oeuvres',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicNewsletterRoute = PublicNewsletterRouteImport.update({
+  id: '/newsletter',
+  path: '/newsletter',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicMentionsLegalesRoute = PublicMentionsLegalesRouteImport.update({
   id: '/mentions-legales',
   path: '/mentions-legales',
@@ -77,6 +86,11 @@ const PublicOeuvresIndexRoute = PublicOeuvresIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PublicOeuvresRoute,
 } as any)
+const PublicNewsletterIndexRoute = PublicNewsletterIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicNewsletterRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -87,6 +101,17 @@ const PublicOeuvresSlugRoute = PublicOeuvresSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PublicOeuvresRoute,
 } as any)
+const PublicNewsletterEbookRoute = PublicNewsletterEbookRouteImport.update({
+  id: '/ebook',
+  path: '/ebook',
+  getParentRoute: () => PublicNewsletterRoute,
+} as any)
+const PublicNewsletterConfirmationRoute =
+  PublicNewsletterConfirmationRouteImport.update({
+    id: '/confirmation',
+    path: '/confirmation',
+    getParentRoute: () => PublicNewsletterRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -94,12 +119,16 @@ export interface FileRoutesByFullPath {
   '/connexion': typeof ConnexionRoute
   '/carnets-de-voyage': typeof PublicCarnetsDeVoyageRoute
   '/mentions-legales': typeof PublicMentionsLegalesRoute
+  '/newsletter': typeof PublicNewsletterRouteWithChildren
   '/oeuvres': typeof PublicOeuvresRouteWithChildren
   '/qui-suis-je': typeof PublicQuiSuisJeRoute
   '/admin/ebooks': typeof AdminEbooksRoute
   '/admin/': typeof AdminIndexRoute
+  '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
+  '/newsletter/ebook': typeof PublicNewsletterEbookRoute
   '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/newsletter/': typeof PublicNewsletterIndexRoute
   '/oeuvres/': typeof PublicOeuvresIndexRoute
 }
 export interface FileRoutesByTo {
@@ -110,8 +139,11 @@ export interface FileRoutesByTo {
   '/admin/ebooks': typeof AdminEbooksRoute
   '/': typeof PublicIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
+  '/newsletter/ebook': typeof PublicNewsletterEbookRoute
   '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/newsletter': typeof PublicNewsletterIndexRoute
   '/oeuvres': typeof PublicOeuvresIndexRoute
 }
 export interface FileRoutesById {
@@ -121,13 +153,17 @@ export interface FileRoutesById {
   '/connexion': typeof ConnexionRoute
   '/_public/carnets-de-voyage': typeof PublicCarnetsDeVoyageRoute
   '/_public/mentions-legales': typeof PublicMentionsLegalesRoute
+  '/_public/newsletter': typeof PublicNewsletterRouteWithChildren
   '/_public/oeuvres': typeof PublicOeuvresRouteWithChildren
   '/_public/qui-suis-je': typeof PublicQuiSuisJeRoute
   '/admin/ebooks': typeof AdminEbooksRoute
   '/_public/': typeof PublicIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/_public/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
+  '/_public/newsletter/ebook': typeof PublicNewsletterEbookRoute
   '/_public/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/_public/newsletter/': typeof PublicNewsletterIndexRoute
   '/_public/oeuvres/': typeof PublicOeuvresIndexRoute
 }
 export interface FileRouteTypes {
@@ -138,12 +174,16 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/carnets-de-voyage'
     | '/mentions-legales'
+    | '/newsletter'
     | '/oeuvres'
     | '/qui-suis-je'
     | '/admin/ebooks'
     | '/admin/'
+    | '/newsletter/confirmation'
+    | '/newsletter/ebook'
     | '/oeuvres/$slug'
     | '/api/auth/$'
+    | '/newsletter/'
     | '/oeuvres/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,8 +194,11 @@ export interface FileRouteTypes {
     | '/admin/ebooks'
     | '/'
     | '/admin'
+    | '/newsletter/confirmation'
+    | '/newsletter/ebook'
     | '/oeuvres/$slug'
     | '/api/auth/$'
+    | '/newsletter'
     | '/oeuvres'
   id:
     | '__root__'
@@ -164,13 +207,17 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/_public/carnets-de-voyage'
     | '/_public/mentions-legales'
+    | '/_public/newsletter'
     | '/_public/oeuvres'
     | '/_public/qui-suis-je'
     | '/admin/ebooks'
     | '/_public/'
     | '/admin/'
+    | '/_public/newsletter/confirmation'
+    | '/_public/newsletter/ebook'
     | '/_public/oeuvres/$slug'
     | '/api/auth/$'
+    | '/_public/newsletter/'
     | '/_public/oeuvres/'
   fileRoutesById: FileRoutesById
 }
@@ -239,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicOeuvresRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/newsletter': {
+      id: '/_public/newsletter'
+      path: '/newsletter'
+      fullPath: '/newsletter'
+      preLoaderRoute: typeof PublicNewsletterRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/mentions-legales': {
       id: '/_public/mentions-legales'
       path: '/mentions-legales'
@@ -260,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicOeuvresIndexRouteImport
       parentRoute: typeof PublicOeuvresRoute
     }
+    '/_public/newsletter/': {
+      id: '/_public/newsletter/'
+      path: '/'
+      fullPath: '/newsletter/'
+      preLoaderRoute: typeof PublicNewsletterIndexRouteImport
+      parentRoute: typeof PublicNewsletterRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -274,8 +335,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicOeuvresSlugRouteImport
       parentRoute: typeof PublicOeuvresRoute
     }
+    '/_public/newsletter/ebook': {
+      id: '/_public/newsletter/ebook'
+      path: '/ebook'
+      fullPath: '/newsletter/ebook'
+      preLoaderRoute: typeof PublicNewsletterEbookRouteImport
+      parentRoute: typeof PublicNewsletterRoute
+    }
+    '/_public/newsletter/confirmation': {
+      id: '/_public/newsletter/confirmation'
+      path: '/confirmation'
+      fullPath: '/newsletter/confirmation'
+      preLoaderRoute: typeof PublicNewsletterConfirmationRouteImport
+      parentRoute: typeof PublicNewsletterRoute
+    }
   }
 }
+
+interface PublicNewsletterRouteChildren {
+  PublicNewsletterConfirmationRoute: typeof PublicNewsletterConfirmationRoute
+  PublicNewsletterEbookRoute: typeof PublicNewsletterEbookRoute
+  PublicNewsletterIndexRoute: typeof PublicNewsletterIndexRoute
+}
+
+const PublicNewsletterRouteChildren: PublicNewsletterRouteChildren = {
+  PublicNewsletterConfirmationRoute: PublicNewsletterConfirmationRoute,
+  PublicNewsletterEbookRoute: PublicNewsletterEbookRoute,
+  PublicNewsletterIndexRoute: PublicNewsletterIndexRoute,
+}
+
+const PublicNewsletterRouteWithChildren =
+  PublicNewsletterRoute._addFileChildren(PublicNewsletterRouteChildren)
 
 interface PublicOeuvresRouteChildren {
   PublicOeuvresSlugRoute: typeof PublicOeuvresSlugRoute
@@ -294,6 +384,7 @@ const PublicOeuvresRouteWithChildren = PublicOeuvresRoute._addFileChildren(
 interface PublicRouteChildren {
   PublicCarnetsDeVoyageRoute: typeof PublicCarnetsDeVoyageRoute
   PublicMentionsLegalesRoute: typeof PublicMentionsLegalesRoute
+  PublicNewsletterRoute: typeof PublicNewsletterRouteWithChildren
   PublicOeuvresRoute: typeof PublicOeuvresRouteWithChildren
   PublicQuiSuisJeRoute: typeof PublicQuiSuisJeRoute
   PublicIndexRoute: typeof PublicIndexRoute
@@ -302,6 +393,7 @@ interface PublicRouteChildren {
 const PublicRouteChildren: PublicRouteChildren = {
   PublicCarnetsDeVoyageRoute: PublicCarnetsDeVoyageRoute,
   PublicMentionsLegalesRoute: PublicMentionsLegalesRoute,
+  PublicNewsletterRoute: PublicNewsletterRouteWithChildren,
   PublicOeuvresRoute: PublicOeuvresRouteWithChildren,
   PublicQuiSuisJeRoute: PublicQuiSuisJeRoute,
   PublicIndexRoute: PublicIndexRoute,

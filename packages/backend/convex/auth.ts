@@ -1,7 +1,11 @@
 import { type AuthFunctions, createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { zCanonicalEmail } from "@ec/domain/schemas/utils";
 import { betterAuth } from "better-auth/minimal";
+import { ConvexError } from "convex/values";
 
+import { createIdentity, getIdentityByAdapterId, getIdentityByProfile } from "../identities";
+import { ensureContactProfileId } from "../profiles";
 import { components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { env } from "./_generated/server";
@@ -15,12 +19,19 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   authFunctions,
   triggers: {
     user: {
-      onCreate: async (ctx, doc) => {
-        const profile = await ctx.db
-          .query("profiles")
-          .withIndex("by_email", (q) => q.eq("email", doc.email))
-          .unique();
-        if (profile?.role === "admin" && profile.userId === null) await ctx.db.patch(profile._id, { userId: doc._id });
+      onCreate: async (ctx, { _id: adapterId, email }) => {
+        const emailParsed = zCanonicalEmail.safeParse(email);
+        if (!emailParsed.success) throw new ConvexError("INVALID_BETTERAUTH_EMAIL");
+
+        const identityByAdapterId = await getIdentityByAdapterId(ctx, adapterId);
+        if (identityByAdapterId) return;
+
+        const profileId = await ensureContactProfileId(ctx, { email: emailParsed.data });
+
+        const identityByProfile = await getIdentityByProfile(ctx, profileId);
+        if (identityByProfile) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
+
+        await createIdentity(ctx, { adapterId, profileId });
       },
     },
   },

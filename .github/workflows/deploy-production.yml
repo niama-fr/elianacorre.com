@@ -139,7 +139,7 @@ jobs:
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: bunx convex run profiles:seed
+        run: bunx convex run seed:init
       - name: Deploy Cloudflare Worker
         working-directory: apps/web
         env:

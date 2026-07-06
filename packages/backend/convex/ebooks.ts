@@ -1,47 +1,30 @@
+import { hashToken, isConvexErrorCode } from "@ec/domain/helpers/utils";
 import { zEbookCreate } from "@ec/domain/schemas/ebooks";
-import { zStoragePdfDoc } from "@ec/domain/schemas/storage";
-import { zDocRef } from "@ec/domain/schemas/utils";
+import { zid } from "convex-helpers/server/zod4";
+import z from "zod";
 
-import { zAdminMutation, zAdminQuery } from "./zod";
+import { getValidEbookGrant } from "../ebook-grants";
+import { createEbook, getPublishedEbook, listEbooks, publishEbook } from "../ebooks";
+import { hasConfirmedNewsletterSub } from "../newsletter-subs";
+import { zAdminMutation, zAdminQuery, zInternalQuery } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const readAll = zAdminQuery({
+export const list = zAdminQuery({
   args: {},
-  handler: async (ctx) => {
-    const docs = await ctx.db.query("ebooks").withIndex("by_version").order("desc").collect();
-    return await Promise.all(
-      docs.map(async ({ storageId, ...doc }) => {
-        const [file, url] = await Promise.all([ctx.db.system.get("_storage", storageId), ctx.storage.getUrl(storageId)]);
-        return { ...doc, size: file?.size ?? null, url };
-      })
-    );
-  },
+  handler: async (ctx) => await listEbooks(ctx),
 });
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
 export const create = zAdminMutation({
   args: zEbookCreate,
   handler: async (ctx, args) => {
-    const storageDoc = await ctx.db.system.get("_storage", args.storageId);
-    const parsed = zStoragePdfDoc.safeParse(storageDoc);
-
-    if (!parsed.success) {
+    try {
+      return { data: await createEbook(ctx, { ...args, now: Date.now() }) };
+    } catch (error) {
+      if (!isConvexErrorCode(error, "INVALID_STORAGE_DOC")) throw error;
       await ctx.storage.delete(args.storageId);
       return { error: "INVALID_STORAGE_DOC" };
     }
-
-    const latest = await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
-    const now = Date.now();
-    const _id = await ctx.db.insert("ebooks", {
-      ...args,
-      publishedAt: null,
-      publishedBy: null,
-      status: "draft",
-      updatedAt: now,
-      uploadedBy: ctx.profile._id,
-      version: (latest?.version ?? 0) + 1,
-    });
-    return { data: _id };
   },
 });
 
@@ -51,26 +34,18 @@ export const generateUploadUrl = zAdminMutation({
 });
 
 export const publish = zAdminMutation({
-  args: zDocRef("ebooks"),
-  handler: async (ctx, { _id }) => {
-    const doc = await ctx.db.get("ebooks", _id);
-    if (!doc) throw new Error("E-book was not found");
-    if (doc.status === "published") return _id;
+  args: { ebookId: zid("ebooks") },
+  handler: async (ctx, { ebookId }) => await publishEbook(ctx, ebookId, { now: Date.now() }),
+});
 
-    const now = Date.now();
+// INTERNAL QUERIES ------------------------------------------------------------------------------------------------------------------------
+export const resolveDownload = zInternalQuery({
+  args: { token: z.string() },
+  handler: async (ctx, { token }) => {
+    const grant = await getValidEbookGrant(ctx, { now: Date.now(), tokenHash: await hashToken(token) });
+    if (!grant) return null;
 
-    const publishedDocs = await ctx.db
-      .query("ebooks")
-      .withIndex("by_status", (q) => q.eq("status", "published"))
-      .collect();
-
-    await Promise.all(
-      publishedDocs.map(async (publishedDoc) => {
-        await ctx.db.patch(publishedDoc._id, { status: "archived", updatedAt: now });
-      })
-    );
-
-    await ctx.db.patch(doc._id, { publishedAt: now, publishedBy: ctx.profile._id, status: "published", updatedAt: now });
-    return doc._id;
+    const hasConfirmedSub = await hasConfirmedNewsletterSub(ctx, grant.profileId);
+    return hasConfirmedSub ? await getPublishedEbook(ctx) : null;
   },
 });

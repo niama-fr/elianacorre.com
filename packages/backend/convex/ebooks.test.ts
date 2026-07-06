@@ -56,7 +56,8 @@ const createIdentity = async (convex: TestConvex<typeof schema>, role: "admin" |
     })
   );
   await convex.run(async (ctx) => {
-    await ctx.db.insert("profiles", { email: user.email, role, userId: user._id });
+    const profileId = await ctx.db.insert("profiles", { email: user.email, role });
+    await ctx.db.insert("identities", { adapter: "better-auth", adapterId: user._id, profileId });
   });
   return convex.withIdentity({ sessionId: session._id, subject: user._id });
 };
@@ -65,7 +66,7 @@ describe("e-book administration", () => {
   it("rejects an unauthenticated reader", async () => {
     const convex = createBackend();
 
-    await expect(convex.query(api.ebooks.readAll, {})).rejects.toThrow("Unauthenticated");
+    await expect(convex.query(api.ebooks.list, {})).rejects.toThrow("Unauthenticated");
   });
 
   it("allows an authenticated administrator to create a draft", async () => {
@@ -79,7 +80,7 @@ describe("e-book administration", () => {
       title: "Current e-book",
     });
 
-    await expect(asAdmin.query(api.ebooks.readAll, {})).resolves.toMatchObject([
+    await expect(asAdmin.query(api.ebooks.list, {})).resolves.toMatchObject([
       {
         fileName: "ebook.pdf",
         publishedAt: null,
@@ -140,19 +141,19 @@ describe("e-book administration", () => {
     const firstId = firstResult.data;
     const secondId = secondResult.data;
 
-    await asAdmin.mutation(api.ebooks.publish, { _id: firstId });
-    await asAdmin.mutation(api.ebooks.publish, { _id: secondId });
+    await asAdmin.mutation(api.ebooks.publish, { ebookId: firstId });
+    await asAdmin.mutation(api.ebooks.publish, { ebookId: secondId });
 
-    const ebooks = await asAdmin.query(api.ebooks.readAll, {});
+    const ebooks = await asAdmin.query(api.ebooks.list, {});
     expect(ebooks.filter(({ status }) => status === "published")).toHaveLength(1);
     expect(ebooks).toMatchObject([
       { _id: secondId, status: "published", version: 2 },
       { _id: firstId, status: "archived", version: 1 },
     ]);
 
-    await asAdmin.mutation(api.ebooks.publish, { _id: firstId });
+    await asAdmin.mutation(api.ebooks.publish, { ebookId: firstId });
 
-    const rolledBackEbooks = await asAdmin.query(api.ebooks.readAll, {});
+    const rolledBackEbooks = await asAdmin.query(api.ebooks.list, {});
     expect(rolledBackEbooks.filter(({ status }) => status === "published")).toHaveLength(1);
     expect(rolledBackEbooks).toMatchObject([
       { _id: secondId, status: "archived", version: 2 },
@@ -164,7 +165,7 @@ describe("e-book administration", () => {
     const convex = createBackend();
     const asMember = await createIdentity(convex, "member");
 
-    await expect(asMember.query(api.ebooks.readAll, {})).rejects.toThrow("Unauthorized");
+    await expect(asMember.query(api.ebooks.list, {})).rejects.toThrow("Unauthorized");
     await expect(asMember.mutation(api.ebooks.generateUploadUrl, {})).rejects.toThrow("Unauthorized");
   });
 
@@ -172,6 +173,6 @@ describe("e-book administration", () => {
     const convex = createBackend();
     const asUnverifiedAdmin = await createIdentity(convex, "admin", false);
 
-    await expect(asUnverifiedAdmin.query(api.ebooks.readAll, {})).rejects.toThrow("Unauthenticated");
+    await expect(asUnverifiedAdmin.query(api.ebooks.list, {})).rejects.toThrow("Unauthenticated");
   });
 });

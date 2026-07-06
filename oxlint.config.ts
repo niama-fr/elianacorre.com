@@ -10,6 +10,14 @@ export default defineConfig({
   options: {
     typeAware: true,
   },
+  overrides: [
+    {
+      files: ["packages/backend/convex/**/*.ts"],
+      rules: {
+        "unicorn/filename-case": "off",
+      },
+    },
+  ],
   plugins: ["jsx-a11y"],
   rules: {
     "consistent-return": "off",

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { features, getColumns } from "./ebooks/-table-features";
 
 // SERVER ----------------------------------------------------------------------------------------------------------------------------------
-// export const fetchAllEbooks = createServerFn({ method: "GET" }).handler(async () => await fetchAuthQuery(api.ebooks.readAll));
+// export const fetchAllEbooks = createServerFn({ method: "GET" }).handler(async () => await fetchAuthQuery(api.ebooks.list));
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/admin/ebooks")({
@@ -74,7 +74,7 @@ function AdminEbooksPage() {
 // CURRENT VERSION -------------------------------------------------------------------------------------------------------------------------
 function EbookCurrentVersion() {
   const { data } = useSuspenseQuery({
-    ...convexQuery(api.ebooks.readAll),
+    ...convexQuery(api.ebooks.list),
     select: (docs) => docs.find(({ status }) => status === "published"),
   });
 
@@ -102,6 +102,7 @@ function EbookForm() {
   const create = useMutation({ mutationFn: useConvexMutation(api.ebooks.create) });
 
   const form = useAppForm({
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
     defaultValues: { file: null, title: "" } as Ebooks["CreateDefaultValues"],
     onSubmit: async ({ value: { file, title } }) => {
       if (file === null) return;
@@ -152,12 +153,12 @@ function EbookForm() {
 
 // TABLE -----------------------------------------------------------------------------------------------------------------------------------
 function EbookItems() {
-  const { data, isLoading, isError, isFetched } = useSuspenseQuery(convexQuery(api.ebooks.readAll));
+  const { data, isLoading, isError, isFetched } = useSuspenseQuery(convexQuery(api.ebooks.list));
   const publish = useMutation({ mutationFn: useConvexMutation(api.ebooks.publish) });
 
   const table = useTable({
     columns: getColumns({
-      publish: async (_id: Id<"ebooks">) => await publish.mutateAsync({ _id }),
+      publish: async (ebookId: Id<"ebooks">) => await publish.mutateAsync({ ebookId }),
     }),
     data,
     features,
