@@ -11,12 +11,12 @@
 import type * as auth from "../auth.js";
 import type * as contactRequests from "../contactRequests.js";
 import type * as ebooks from "../ebooks.js";
-import type * as emailProviderJobs from "../emailProviderJobs.js";
-import type * as emailProviderRunner from "../emailProviderRunner.js";
 import type * as http from "../http.js";
+import type * as loops from "../loops.js";
 import type * as newsletterLegalBundles from "../newsletterLegalBundles.js";
 import type * as newsletterSubs from "../newsletterSubs.js";
 import type * as seed from "../seed.js";
+import type * as workflow from "../workflow.js";
 import type * as zod from "../zod.js";
 
 import type {
@@ -29,12 +29,12 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   contactRequests: typeof contactRequests;
   ebooks: typeof ebooks;
-  emailProviderJobs: typeof emailProviderJobs;
-  emailProviderRunner: typeof emailProviderRunner;
   http: typeof http;
+  loops: typeof loops;
   newsletterLegalBundles: typeof newsletterLegalBundles;
   newsletterSubs: typeof newsletterSubs;
   seed: typeof seed;
+  workflow: typeof workflow;
   zod: typeof zod;
 }>;
 
@@ -67,4 +67,5 @@ export declare const internal: FilterApi<
 export declare const components: {
   betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
   loops: import("@devwithbobby/loops/_generated/component.js").ComponentApi<"loops">;
+  workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;
 };

@@ -25,7 +25,7 @@ npm install @devwithbobby/loops
 
 ## How it works
 
-The component mounts to your Convex app via `convex.config.ts` and requires a `LOOPS_API_KEY` environment variable for authentication. It exposes a `Loops` client class that wraps all Loops.so API endpoints as Convex actions, including contact management (`addContact`, `updateContact`, `findContact`), email sending (`sendTransactional`, `sendEvent`, `triggerLoop`), and batch operations.
+The component mounts to your Convex app via `convex.config.ts` and requires a `LOOPS_API_KEY` environment variable for authentication. It exposes a `Loops` client class that wraps all Loops.so API endpoints as Convex actions, including contact management (`syncContact`, `updateContact`, `findContact`), email sending (`sendTransactional`, `sendEvent`, `triggerLoop`), and batch operations.
 
 All email operations are automatically logged to an `emailOperations` table with timestamps, recipient details, and operation metadata. This enables built-in monitoring through functions like `getEmailStats` and spam detection via `detectRecipientSpam` and `detectRapidFirePatterns`. Rate limiting is implemented through queries that check sending frequency against configurable thresholds.
 

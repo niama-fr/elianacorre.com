@@ -4,13 +4,12 @@ import { zCanonicalEmail } from "@ec/domain/schemas/utils";
 import { betterAuth } from "better-auth/minimal";
 import { ConvexError } from "convex/values";
 
+import { createIdentity, getIdentityByAdapterId, getIdentityByProfile } from "../identities";
+import { ensureContactProfileId } from "../profiles";
 import { components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { env } from "./_generated/server";
 import authConfig from "./auth.config";
-
-// CONST -----------------------------------------------------------------------------------------------------------------------------------
-const AUTH_ADAPTER = "better-auth";
 
 // FUNCTIONS -------------------------------------------------------------------------------------------------------------------------------
 const authFunctions: AuthFunctions = internal.auth;
@@ -24,25 +23,15 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
         const emailParsed = zCanonicalEmail.safeParse(email);
         if (!emailParsed.success) throw new ConvexError("INVALID_BETTERAUTH_EMAIL");
 
-        const identityByAdapterId = await ctx.db
-          .query("identities")
-          .withIndex("by_adapter_and_adapter_id", (q) => q.eq("adapter", AUTH_ADAPTER).eq("adapterId", adapterId))
-          .unique();
+        const identityByAdapterId = await getIdentityByAdapterId(ctx, adapterId);
         if (identityByAdapterId) return;
 
-        const existingProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_email", (q) => q.eq("email", emailParsed.data))
-          .unique();
-        const profileId = existingProfile?._id ?? (await ctx.db.insert("profiles", { email: emailParsed.data, role: "contact" }));
+        const profileId = await ensureContactProfileId(ctx, { email: emailParsed.data });
 
-        const identityByProfile = await ctx.db
-          .query("identities")
-          .withIndex("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId).eq("adapter", AUTH_ADAPTER))
-          .unique();
+        const identityByProfile = await getIdentityByProfile(ctx, profileId);
         if (identityByProfile) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
 
-        await ctx.db.insert("identities", { adapter: AUTH_ADAPTER, adapterId, profileId });
+        await createIdentity(ctx, { adapterId, profileId });
       },
     },
   },
