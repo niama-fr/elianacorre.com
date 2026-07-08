@@ -10,5 +10,5 @@ export const createContact = createServerFn({ method: "POST" })
   .validator(zContactRequestCreateValues)
   .handler(async ({ data }) => {
     const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
-    await convex.mutation(api.contactRequests.create, data);
+    return await convex.mutation(api.contactRequests.create, data);
   });

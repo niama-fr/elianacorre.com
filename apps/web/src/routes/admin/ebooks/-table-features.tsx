@@ -12,7 +12,7 @@ export const features = tableFeatures({});
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 const OpenFileBtn = ({ href }: { href: string }) => (
   <Button variant="secondary" size="icon">
-    <a href={href} target="_blank" aria-label="Lien externe" className="size-4">
+    <a href={href} rel="noreferrer" target="_blank" aria-label="Lien externe" className="size-4">
       <span className="icon-[tabler--link] size-4" />
     </a>
   </Button>

@@ -1,5 +1,6 @@
 import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import { useAppForm } from "@ec/ui/hooks/public-form";
+import { useMutation } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -7,18 +8,19 @@ import { toast } from "sonner";
 import { createContact } from "@/lib/contact-form/functions";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function IndexForm() {
+export function ContactForm() {
   const submitRef = useRef<HTMLButtonElement>(null);
+  const createContactMutation = useMutation({ mutationFn: createContact });
 
   const form = useAppForm({
     defaultValues: { email: "", firstName: "", lastName: "", message: "" },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value: data }) => {
       if (!submitRef.current) return;
       const rect = submitRef.current.getBoundingClientRect();
 
-      await createContact({ data: value });
+      await createContactMutation.mutateAsync({ data });
 
-      await confetti({
+      void confetti({
         origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
         particleCount: 100,
         spread: 70,

@@ -1,19 +1,17 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
+import { Toaster } from "@ec/ui/components/sonner";
 import { ThemeProvider } from "@ec/ui/components/theme-provider";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Toaster } from "sonner";
 
 import { authClient } from "@/lib/auth/client";
 import { fetchToken } from "@/lib/auth/functions";
 
-export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
-  convexQueryClient: ConvexQueryClient;
-}>()({
+// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient; convexQueryClient: ConvexQueryClient }>()({
   beforeLoad: async (ctx) => {
     const token = await fetchToken();
     if (token !== undefined) ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
@@ -37,12 +35,6 @@ export const Route = createRootRouteWithContext<{
       { content: "index, follow", name: "robots" },
     ],
   }),
-  notFoundComponent: () => (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>404</h1>
-      <p>The requested page could not be found.</p>
-    </main>
-  ),
   shellComponent: RootDocument,
 });
 

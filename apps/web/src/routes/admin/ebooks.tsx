@@ -61,7 +61,7 @@ function AdminEbooksPage() {
   return (
     <section className={ADMIN.base()}>
       <header>
-        <h1 className={ADMIN.title()}>Publication de l'e-book</h1>
+        <h1 className={ADMIN.title()}>Publication de l&apos;e-book</h1>
         <p className={ADMIN.muted()}>Administration réservée aux adresses Google Workspace explicitement autorisées.</p>
       </header>
       <EbookCurrentVersion />
@@ -173,7 +173,7 @@ function EbookItems() {
       <ItemHeader>
         <ItemTitle>Versions existantes</ItemTitle>
       </ItemHeader>
-      <ItemContent></ItemContent>
+      <ItemContent />
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map(({ headers, id }) => (

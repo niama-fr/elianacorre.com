@@ -1,14 +1,21 @@
-// import { CURRENT_NEWSLETTER_LEGAL_COPY } from "@ec/domain/schemas/newsletter";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@ec/backend/api";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createFileRoute("/_public/mentions-legales")({
+export const Route = createFileRoute("/_public/mentions-legales/")({
   component: RouteComponent,
+  loader: async ({ context }) => {
+    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
+    return { bundle };
+  },
 });
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 function RouteComponent() {
+  const { bundle } = Route.useLoaderData();
+
   return (
     <>
       <Section>
@@ -107,8 +114,8 @@ function RouteComponent() {
               <a className="underline hover:text-secondary" href="http://elianacorre.com">
                 elianacorre.com
               </a>
-              , qu'ils soient visuels ou sonores, y compris la technologie sous-jacente, sont protégés par le droit d'auteur, des marques ou
-              des brevets.
+              , qu&apos;ils soient visuels ou sonores, y compris la technologie sous-jacente, sont protégés par le droit d&apos;auteur, des
+              marques ou des brevets.
             </p>
           </SectionContent>
         </SectionMain>
@@ -122,7 +129,7 @@ function RouteComponent() {
               <a className="underline hover:text-primary" href="http://elianacorre.com">
                 elianacorre.com
               </a>{" "}
-              peut contenir des liens hypertextes pointant vers d'autres sites internet.{" "}
+              peut contenir des liens hypertextes pointant vers d&apos;autres sites internet.{" "}
             </p>
             <p>
               Eliana Corré ne peut être tenue responsable du contenu de ces sites et décline toute responsabilité quant aux informations qui
@@ -141,7 +148,7 @@ function RouteComponent() {
               séparément sur le consentement explicite de la personne.
             </p>
             <h3 className="mt-6 text-2xl font-bold">Lettre et e-book de bienvenue</h3>
-            {/* <p className="whitespace-pre-line">{CURRENT_NEWSLETTER_LEGAL_COPY.privacy.text}</p> */}
+            <p className="whitespace-pre-line">{bundle.privacyNotice.content}</p>
           </SectionContent>
         </SectionMain>
       </Section>

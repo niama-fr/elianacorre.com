@@ -31,7 +31,7 @@ export const SECTION = {
     lg:items-start`
   ),
   title: cva(
-    `group/title flex flex-col items-center font-extrabold text-4xl mb-4
+    `group/title flex flex-col items-center font-extrabold text-4xl mb-4 md:data-[direction=row]:flex-row md:data-[direction=row]:gap-3
     sm:text-6xl 
     lg:items-start 
     2xl:text-7xl`
@@ -109,7 +109,7 @@ type SectionMainProps = React.ComponentProps<"main">;
 
 // TITLE -----------------------------------------------------------------------------------------------------------------------------------
 export function SectionTitle(props: SectionTitleProps) {
-  const { className: C = {}, title, ...rest } = props;
+  const { className: C = {}, direction = "column", title, ...rest } = props;
   const el = useRef<HTMLHeadingElement>(null);
 
   const [visible, setVisible] = useState(false);
@@ -131,7 +131,7 @@ export function SectionTitle(props: SectionTitleProps) {
   }, []);
 
   return (
-    <h2 ref={el} {...rest} className={cn(SECTION.title(), C.title)} data-visible={visible}>
+    <h2 ref={el} {...rest} className={cn(SECTION.title(), C.title)} data-direction={direction} data-visible={visible}>
       <span>{title[0]}</span>
       <div className={cn(SECTION.titleRow(), C.titleRow)}>
         <span className={cn(SECTION.titleRowText(), C.titleRowText)}>{title[1]}</span>
@@ -165,6 +165,7 @@ export type SectionTitleProps = Omit<React.ComponentProps<"h2">, "className" | "
     SectionClass,
     "title" | "titleRow" | "titleRowEffect" | "titleRowPointer" | "titleRowPointerWrapper" | "titleRowRectangle" | "titleRowText"
   >;
+  direction?: "column" | "row";
   title: string[];
 };
 

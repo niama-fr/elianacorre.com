@@ -12,8 +12,12 @@ export const getProfileByEmail = async (ctx: QueryCtx, email: string) =>
     .withIndex("by_email", (query) => query.eq("email", email))
     .unique();
 
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const createContactProfile = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) =>
+  await ctx.db.insert("profiles", { ...create, role: "contact" });
+
 // ENSURE ----------------------------------------------------------------------------------------------------------------------------------
 export const ensureContactProfileId = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) => {
   const profile = await getProfileByEmail(ctx, create.email);
-  return profile?._id ?? (await ctx.db.insert("profiles", { ...create, role: "contact" }));
+  return profile?._id ?? (await createContactProfile(ctx, create));
 };

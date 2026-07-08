@@ -1,7 +1,6 @@
 # Ultracite/Oxc Code Standards
 
-This project uses **Ultracite** for shared quality policy and presets, **Oxfmt** for formatting, and **Oxlint** with
-**oxlint-tsgolint** for JavaScript and TypeScript linting.
+This project uses **Ultracite** for shared quality policy and presets, **Oxfmt** for formatting, and **Oxlint** with **oxlint-tsgolint** for JavaScript and TypeScript linting.
 
 ## Quick Reference
 
@@ -10,8 +9,7 @@ This project uses **Ultracite** for shared quality policy and presets, **Oxfmt**
 - **Inspect formatter configuration**: `oxfmt.config.ts`
 - **Inspect linter configuration**: `oxlint.config.ts`
 
-The repository scripts run Oxfmt and Oxlint with Ultracite's shared presets. Oxfmt formats the repository first; Oxlint then applies the
-configured correctness, type-aware TypeScript, import, Vitest, and accessibility rules.
+The repository scripts run Oxfmt and Oxlint with Ultracite's shared presets. Oxfmt formats the repository first; Oxlint then applies the configured correctness, type-aware TypeScript, import, Vitest, and accessibility rules.
 
 ---
 
@@ -146,8 +144,7 @@ All changes follow the issue, branch, pull request, review, and approval contrac
 
 ### Agent efficiency
 
-Default to the low-consumption collaboration contract in `docs/agents/agent-efficiency.md`. Load documentation progressively, keep successful
-command output concise, and hand routine verification and delivery operations to Grégory unless he explicitly requests autonomous completion.
+Default to the low-consumption collaboration contract in `docs/agents/agent-efficiency.md`. Load documentation progressively, keep successful command output concise, and hand routine verification and delivery operations to Grégory unless he explicitly requests autonomous completion.
 
 ### Project resources
 

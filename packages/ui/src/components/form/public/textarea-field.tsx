@@ -1,26 +1,29 @@
+import { Field, FieldError, FieldLabel } from "@ec/ui/components/form/public/field";
 import { Textarea } from "@ec/ui/components/textarea";
 import { useFieldContext } from "@ec/ui/hooks/public-form-context";
-
-import { Field } from "./field";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export default function TextareaField({ label }: TextareaFieldProps) {
   const { handleBlur, handleChange, name, state } = useFieldContext<string>();
 
   return (
-    <Field label={label}>
+    <Field>
       {(isInvalid) => (
-        <Textarea
-          aria-invalid={isInvalid}
-          className="bg-white"
-          id={name}
-          onBlur={handleBlur}
-          onChange={(e) => {
-            handleChange(e.currentTarget.value);
-          }}
-          placeholder={label}
-          value={state.value}
-        />
+        <>
+          <FieldLabel label={label} hideLabel />
+          <Textarea
+            aria-invalid={isInvalid}
+            className="bg-white"
+            id={name}
+            onBlur={handleBlur}
+            onChange={(e) => {
+              handleChange(e.currentTarget.value);
+            }}
+            placeholder={label}
+            value={state.value}
+          />
+          <FieldError />
+        </>
       )}
     </Field>
   );

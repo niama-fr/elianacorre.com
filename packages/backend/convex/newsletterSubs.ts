@@ -1,10 +1,12 @@
 import { createHashedToken, hashToken } from "@ec/domain/helpers/utils";
-import { zNewsletterSubCreate } from "@ec/domain/schemas/newsletter-subs";
+import { zNewsletterSubUpsert } from "@ec/domain/schemas/newsletter-subs";
 import { z } from "zod";
 
 import { fulfillEbookRequest } from "../ebook-grants";
 import { enqueueSendConfirmationEmail } from "../loops-tasks";
+import { getNewsletterBlockByEmail } from "../newsletter-blocks";
 import { requireActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
+import { tryConsumeNewsletterRateLimit } from "../newsletter-rate-limits";
 import {
   createNewsletterSub,
   getCurrentNewsletterSub,
@@ -12,7 +14,7 @@ import {
   markNewsletterSubConfirmed,
   patchNewsletterSub,
 } from "../newsletter-subs";
-import { ensureContactProfileId } from "../profiles";
+import { createContactProfile, getProfileByEmail } from "../profiles";
 import { zMutation } from "./zod";
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
@@ -31,16 +33,24 @@ export const confirm = zMutation({
 });
 
 export const upsert = zMutation({
-  args: zNewsletterSubCreate,
-  handler: async (ctx, { email, firstName }) => {
+  args: zNewsletterSubUpsert,
+  handler: async (ctx, { email, firstName, requestIp, website }) => {
+    if (website !== "") return { accepted: true as const };
+    if (await getNewsletterBlockByEmail(ctx, email)) return { accepted: true as const };
+
     const now = Date.now();
-    const profileId = await ensureContactProfileId(ctx, { email, firstName });
-    const currentSub = await getCurrentNewsletterSub(ctx, profileId);
+    const profile = await getProfileByEmail(ctx, email);
+    const currentSub = profile ? await getCurrentNewsletterSub(ctx, profile._id) : null;
 
     if (currentSub?.confirmedAt) {
-      await fulfillEbookRequest(ctx, { now, profileId });
+      await fulfillEbookRequest(ctx, { now, profileId: currentSub.profileId });
       return { accepted: true as const };
     }
+
+    const isAllowed = await tryConsumeNewsletterRateLimit(ctx, { email, requestIp });
+    if (!isAllowed) return { accepted: true as const };
+
+    const profileId = profile?._id ?? (await createContactProfile(ctx, { email, firstName }));
 
     const { token: linkToken, tokenHash: confirmTokenHash } = await createHashedToken();
     const { _id: legalBundleId } = await requireActiveNewsletterLegalBundle(ctx);

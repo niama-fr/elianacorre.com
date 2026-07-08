@@ -1,5 +1,5 @@
 import { ScriptOnce } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -40,6 +40,7 @@ export function ThemeProvider({ children, defaultTheme = "system", storageKey = 
 
   useEffect(() => {
     const stored = localStorage.getItem(storageKey);
+    // oxlint-disable-next-line react/react-compiler
     setThemeState(stored === "light" || stored === "dark" || stored === "system" ? stored : defaultTheme);
     setMounted(true);
   }, [defaultTheme, storageKey]);
@@ -62,13 +63,18 @@ export function ThemeProvider({ children, defaultTheme = "system", storageKey = 
     };
   }, [theme, mounted]);
 
-  const setTheme = (next: Theme) => {
-    localStorage.setItem(storageKey, next);
-    setThemeState(next);
-  };
+  const setTheme = useCallback(
+    (next: Theme) => {
+      localStorage.setItem(storageKey, next);
+      setThemeState(next);
+    },
+    [storageKey]
+  );
+
+  const value = useMemo(() => ({ setTheme, theme }), [setTheme, theme]);
 
   return (
-    <ThemeProviderContext value={{ setTheme, theme }}>
+    <ThemeProviderContext value={value}>
       <ScriptOnce>{getThemeScript(storageKey, defaultTheme)}</ScriptOnce>
       {children}
     </ThemeProviderContext>

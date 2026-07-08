@@ -9,14 +9,14 @@ type RootNav = {
   hash?: string;
   key: "carnets-de-voyage" | "contact" | "oeuvres" | "qui-suis-je";
   text: string;
-  to: "/" | "/carnets-de-voyage" | "/oeuvres" | "/qui-suis-je";
+  to: "/" | "/contact" | "/carnets-de-voyage" | "/oeuvres" | "/qui-suis-je";
 };
 
 const navs = [
   { hash: undefined, key: "carnets-de-voyage", text: "Carnets de voyage", to: "/carnets-de-voyage" },
   { hash: undefined, key: "qui-suis-je", text: "Qui suis-je?", to: "/qui-suis-je" },
   { hash: undefined, key: "oeuvres", text: "Œuvres", to: "/oeuvres" },
-  { activeOptions: { includeHash: true }, hash: "contact", key: "contact", text: "Contact", to: "/" },
+  { hash: undefined, key: "contact", text: "Contact", to: "/contact" },
 ] as const satisfies readonly RootNav[];
 
 export const readRootLayout = () => ({

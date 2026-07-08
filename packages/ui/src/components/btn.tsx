@@ -1,6 +1,7 @@
 import { cn } from "@ec/ui/lib/utils";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
+import { useMemo } from "react";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const BTN = {
@@ -74,30 +75,50 @@ export const BTN = {
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function Btn(props: BtnProps) {
-  const { children, className: C = {}, icon, intent, reverse, ...rest } = props;
-  return (
-    <button className={cn(BTN.base({ intent }), C.base)} {...rest}>
-      <BtnContent className={C} icon={icon} intent={intent} reverse={reverse}>
+  const { children, className = {}, icon, intent, kind, reverse } = props;
+  const content = useMemo(
+    () => (
+      <BtnContent className={className} icon={icon} intent={intent} reverse={reverse}>
         {children}
       </BtnContent>
-    </button>
+    ),
+    [className, children, icon, intent, reverse]
   );
-}
-type BtnProps = Omit<React.ComponentProps<"button">, "className"> & BtnStyles & { icon?: string };
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export function BtnLink(props: BtnLinkProps) {
-  const { className: C = {}, children, icon, intent, reverse, ...rest } = props;
+  const baseClassName = cn(BTN.base({ intent }), className.base);
 
-  return (
-    <Link className={cn(BTN.base({ intent }), C.base)} {...rest}>
-      <BtnContent className={C} icon={icon} intent={intent} reverse={reverse}>
-        {children}
-      </BtnContent>
-    </Link>
-  );
+  if (kind === "link") {
+    const { children: _1, className: _2, icon: _3, intent: _4, kind: _5, reverse: _6, ...rest } = props;
+    return (
+      <Link className={baseClassName} {...rest}>
+        {content}
+      </Link>
+    );
+  }
+  if (kind === "button") {
+    const { children: _1, className: _2, icon: _3, intent: _4, kind: _5, reverse: _6, ...rest } = props;
+    return (
+      <button className={baseClassName} {...rest}>
+        {content}
+      </button>
+    );
+  }
+  if (kind === "external") {
+    const { children: _1, className: _2, icon: _3, intent: _4, kind: _5, reverse: _6, ...rest } = props;
+    return (
+      <a className={baseClassName} {...rest}>
+        {content}
+      </a>
+    );
+  }
 }
-type BtnLinkProps = React.PropsWithChildren<LinkProps & BtnStyles & { icon?: string }>;
+
+type BtnButtonProps = Omit<React.ComponentProps<"button">, "className"> & { kind: "button" };
+type BtnExternalProps = Omit<React.ComponentProps<"a">, "className"> & { kind: "external" };
+type BtnLinkProps = Omit<React.PropsWithChildren<LinkProps>, "className"> & { kind: "link" };
+type BtnMainProps = BtnButtonProps | BtnExternalProps | BtnLinkProps;
+export type BtnKind = "button" | "external" | "link";
+export type BtnProps = BtnMainProps & BtnStyles & { icon?: string };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
 export function BtnContent(props: BtnContentProps) {

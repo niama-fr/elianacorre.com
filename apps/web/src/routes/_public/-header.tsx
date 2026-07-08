@@ -7,7 +7,7 @@ import type { Store } from "@tanstack/react-store";
 import { cva } from "class-variance-authority";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { createStain, Stain, type StainActions, type StainState } from "./-header.stain";
+import { createStain, Stain, type StainActions, type StainState } from "@/routes/_public/-header.stain";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const HEADER_TRANSITION = "duration-1000 ease-in-out motion-reduce:transition-none";

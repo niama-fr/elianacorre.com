@@ -6,19 +6,15 @@ Accepted for newsletter phase 1.
 
 ## Context
 
-Development and staging need realistic testing without exposing production subscriber data or accidentally sending to arbitrary real
-addresses.
+Development and staging need realistic testing without exposing production subscriber data or accidentally sending to arbitrary real addresses.
 
 ## Decision
 
-Development and staging environments must never synchronize production subscribers or use production Loops credentials or contact
-identifiers. They use a separate Loops environment or a local test adapter. Any manual delivery is restricted to an explicit allowlist of
-project Google Workspace addresses.
+Development and staging environments must never synchronize production subscribers or use production Loops credentials or contact identifiers. They use a separate Loops environment or a local test adapter. Any manual delivery is restricted to an explicit allowlist of project Google Workspace addresses.
 
 ## Consequences
 
-Delivery issues must include environment-isolation checks and recovery steps for accidental credential exposure. Non-production verification
-must prove that arbitrary real recipients and production contacts are unavailable.
+Delivery issues must include environment-isolation checks and recovery steps for accidental credential exposure. Non-production verification must prove that arbitrary real recipients and production contacts are unavailable.
 
 ## Links
 

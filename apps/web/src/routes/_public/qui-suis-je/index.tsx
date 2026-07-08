@@ -3,7 +3,7 @@ import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from
 import { createFileRoute } from "@tanstack/react-router";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createFileRoute("/_public/qui-suis-je")({
+export const Route = createFileRoute("/_public/qui-suis-je/")({
   component: RouteComponent,
   loader: () => readAboutPage(),
 });

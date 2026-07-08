@@ -44,6 +44,8 @@ export default defineConfig({
     "no-console": "error",
     "no-empty-function": ["error", { allow: ["arrowFunctions"] }],
     "no-use-before-define": ["error", { functions: false, typedefs: false }],
+    "react/button-has-type": "off",
+    "react/hook-use-state": "off",
     "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/no-unsafe-type-assertion": "off",
     "typescript/strict-boolean-expressions": "off",

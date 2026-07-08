@@ -131,10 +131,7 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: >-
-          bunx convex deploy
-          --cmd "cd ../../apps/web && bun run build"
-          --cmd-url-env-var-name VITE_CONVEX_URL
-          --message "GitHub release ${RELEASE_TAG} at ${DEPLOY_SHA}"
+          bunx convex deploy --cmd "cd ../../apps/web && bun run build" --cmd-url-env-var-name VITE_CONVEX_URL --message "GitHub release ${RELEASE_TAG} at ${DEPLOY_SHA}"
       - name: Seed administrator profiles
         working-directory: packages/backend
         env:
@@ -146,11 +143,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
-          bunx wrangler deploy
-          --name elianacorre-com
-          --tag "$DEPLOY_SHA"
-          --message "GitHub release ${RELEASE_TAG} at ${DEPLOY_SHA}"
-          --keep-vars
+          bunx wrangler deploy --name elianacorre-com --tag "$DEPLOY_SHA" --message "GitHub release ${RELEASE_TAG} at ${DEPLOY_SHA}" --keep-vars
       - name: Create GitHub Release
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:

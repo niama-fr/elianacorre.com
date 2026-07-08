@@ -36,10 +36,7 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: >-
-          bunx convex deploy
-          --cmd "cd ../../apps/web && bun run build"
-          --cmd-url-env-var-name VITE_CONVEX_URL
-          --message "GitHub staging deployment ${DEPLOY_SHA}"
+          bunx convex deploy --cmd "cd ../../apps/web && bun run build" --cmd-url-env-var-name VITE_CONVEX_URL --message "GitHub staging deployment ${DEPLOY_SHA}"
       - name: Seed administrator profiles
         working-directory: packages/backend
         env:
@@ -51,11 +48,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
-          bunx wrangler deploy
-          --name elianacorre-com-staging
-          --tag "$DEPLOY_SHA"
-          --message "GitHub staging deployment ${DEPLOY_SHA}"
-          --keep-vars
+          bunx wrangler deploy --name elianacorre-com-staging --tag "$DEPLOY_SHA" --message "GitHub staging deployment ${DEPLOY_SHA}" --keep-vars
       - name: Record deployment summary
         run: |
           {
