@@ -1,4 +1,5 @@
 import { Field, FieldError, FieldLabel } from "@ec/ui/components/form/public/field";
+import type { InputProps } from "@ec/ui/components/input";
 import { Input } from "@ec/ui/components/input";
 import { useFieldContext } from "@ec/ui/hooks/public-form-context";
 import { cva } from "class-variance-authority";
@@ -13,7 +14,7 @@ export const INPUT_FIELD = {
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
-export default function InputField({ label, type }: InputFieldProps) {
+export default function InputField({ label, ...rest }: InputFieldProps) {
   const { handleBlur, handleChange, name, state } = useFieldContext<string>();
 
   return (
@@ -22,6 +23,7 @@ export default function InputField({ label, type }: InputFieldProps) {
         <>
           <FieldLabel label={label} hideLabel />
           <Input
+            {...rest}
             aria-invalid={isInvalid}
             className={INPUT_FIELD.input()}
             id={name}
@@ -30,7 +32,6 @@ export default function InputField({ label, type }: InputFieldProps) {
               handleChange(e.target.value);
             }}
             placeholder={label}
-            type={type}
             value={state.value}
           />
           <FieldError />
@@ -39,4 +40,4 @@ export default function InputField({ label, type }: InputFieldProps) {
     </Field>
   );
 }
-export type InputFieldProps = { label: string; type: string };
+export type InputFieldProps = InputProps & { label: string };

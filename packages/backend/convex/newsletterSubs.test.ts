@@ -1,4 +1,5 @@
 import { register as registerAggregate } from "@convex-dev/aggregate/test";
+import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -21,12 +22,14 @@ vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
 });
 
 const loopsModules = import.meta.glob("../node_modules/@devwithbobby/loops/src/component/**/*.ts");
+const NEWSLETTER_REQUEST_DEFAULTS = { firstName: "", requestIp: "127.0.0.1", website: "" } as const;
 
 const getLinkToken = (job: Doc<"loopsTasks"> | null | undefined): string | undefined =>
   job?.kind === "sendConfirmationEmail" || job?.kind === "sendEbookEmail" ? job.linkToken : undefined;
 
 const createBackend = async () => {
   const convex = convexTest(schema, modules);
+  registerRateLimiter(convex);
   registerLoops(convex, "loops", loopsModules);
   registerAggregate(convex, "loops/contactAggregate");
   await convex.run(async (ctx) => {
@@ -95,6 +98,8 @@ describe("newsletter subscription", () => {
         consent: true,
         email: "  Reader+Carnet@Example.COM ",
         firstName: "  Ada  ",
+        requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+        website: "",
       })
     ).resolves.toStrictEqual({ accepted: true });
 
@@ -145,6 +150,32 @@ describe("newsletter subscription", () => {
     expect(state.outbox).toMatchObject([{ kind: "sendConfirmationEmail", status: "pending" }]);
   });
 
+  it("accepts honeypot submissions without creating consent or queueing email", async () => {
+    const convex = await createBackend();
+
+    await expect(
+      convex.mutation(api.newsletterSubs.upsert, {
+        consent: true,
+        email: "reader@example.com",
+        firstName: "Ada",
+        requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+        website: "https://spam.example.com",
+      })
+    ).resolves.toStrictEqual({ accepted: true });
+
+    await expect(
+      convex.run(async (ctx) => ({
+        outbox: await ctx.db.query("loopsTasks").collect(),
+        profiles: await ctx.db.query("profiles").collect(),
+        subscriptions: await ctx.db.query("newsletterSubs").collect(),
+      }))
+    ).resolves.toMatchObject({
+      outbox: [],
+      profiles: [{ email: "admin@example.com", role: "admin" }],
+      subscriptions: [],
+    });
+  });
+
   it("does not modify an existing profile when its email requests the newsletter", async () => {
     const convex = await createBackend();
     const profileId = await convex.run(async (ctx) => {
@@ -160,6 +191,8 @@ describe("newsletter subscription", () => {
       consent: true,
       email: " ADMIN@EXAMPLE.COM ",
       firstName: "Ada",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
     });
 
     const profile = await convex.run(async (ctx) => await ctx.db.get("profiles", profileId));
@@ -173,7 +206,7 @@ describe("newsletter subscription", () => {
   it("allows only the newest pending token to confirm consent and grant e-book access", async () => {
     const convex = await createBackend();
     await publishEbook(convex);
-    const request = { consent: true, email: "reader@example.com" } as const;
+    const request = { consent: true, email: "reader@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
 
     await convex.mutation(api.newsletterSubs.upsert, request);
     await convex.mutation(api.newsletterSubs.upsert, request);
@@ -243,6 +276,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
+      ...NEWSLETTER_REQUEST_DEFAULTS,
     });
     const token = await convex.run(async (ctx) => {
       const email = await ctx.db.query("loopsTasks").unique();
@@ -277,6 +311,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
+      ...NEWSLETTER_REQUEST_DEFAULTS,
     });
     const confirmationToken = await convex.run(async (ctx) => {
       const email = await ctx.db.query("loopsTasks").unique();
@@ -327,7 +362,7 @@ describe("newsletter subscription", () => {
   it("queues a fresh e-book capability instead of another confirmation for an active subscriber", async () => {
     const convex = await createBackend();
     await publishEbook(convex);
-    const request = { consent: true, email: "reader@example.com" } as const;
+    const request = { consent: true, email: "reader@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
     await convex.mutation(api.newsletterSubs.upsert, request);
     const confirmationToken = await convex.run(async (ctx) => {
       const email = await ctx.db.query("loopsTasks").unique();
@@ -357,6 +392,269 @@ describe("newsletter subscription", () => {
     expect(state.capabilities).toHaveLength(2);
   });
 
+  it("creates a fresh pending consent period for a former subscriber", async () => {
+    const convex = await createBackend();
+    const request = { consent: true, email: "reader@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
+
+    await convex.mutation(api.newsletterSubs.upsert, request);
+    const firstConfirmationToken = await convex.run(async (ctx) => {
+      const email = await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .unique();
+      return getLinkToken(email);
+    });
+    await convex.mutation(api.newsletterSubs.confirm, {
+      token: firstConfirmationToken ?? "missing",
+    });
+    await convex.run(async (ctx) => {
+      const subscription = await ctx.db.query("newsletterSubs").unique();
+      if (subscription === null) throw new Error("Newsletter subscription was not found");
+      await ctx.db.patch(subscription._id, { unsubscribedAt: Date.now() });
+    });
+
+    await expect(convex.mutation(api.newsletterSubs.upsert, request)).resolves.toStrictEqual({ accepted: true });
+
+    const state = await convex.run(async (ctx) => ({
+      confirmationEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect(),
+      subscriptions: await ctx.db.query("newsletterSubs").collect(),
+    }));
+
+    expect(state.confirmationEmails).toHaveLength(2);
+    expect(state.subscriptions).toHaveLength(2);
+    expect(state.subscriptions).toMatchObject([
+      { confirmedAt: expect.any(Number), unsubscribedAt: expect.any(Number) },
+      { confirmedAt: null, unsubscribedAt: null },
+    ]);
+  });
+
+  it("returns the same neutral accepted response across request states", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+
+    const pendingRequest = { consent: true, email: "pending@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
+    const activeRequest = { consent: true, email: "active@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
+    const formerRequest = { consent: true, email: "former@example.com", ...NEWSLETTER_REQUEST_DEFAULTS } as const;
+    const throttledIp = "203.0.113.50";
+
+    await convex.mutation(api.newsletterSubs.upsert, pendingRequest);
+
+    await convex.mutation(api.newsletterSubs.upsert, activeRequest);
+    const activeConfirmationToken = await convex.run(async (ctx) => {
+      const emails = await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect();
+      return getLinkToken(emails.find((email) => email.profileId !== undefined && email.linkToken));
+    });
+    await convex.mutation(api.newsletterSubs.confirm, {
+      token: activeConfirmationToken ?? "missing",
+    });
+
+    await convex.mutation(api.newsletterSubs.upsert, formerRequest);
+    const formerConfirmationToken = await convex.run(async (ctx) => {
+      const emails = await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect();
+      return getLinkToken(emails.at(-1));
+    });
+    await convex.mutation(api.newsletterSubs.confirm, {
+      token: formerConfirmationToken ?? "missing",
+    });
+    await convex.run(async (ctx) => {
+      const formerProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "former@example.com"))
+        .unique();
+      if (formerProfile === null) throw new Error("Former profile was not found");
+      const formerSubscription = await ctx.db
+        .query("newsletterSubs")
+        .withIndex("by_profile_id_and_unsubscribed_at", (query) => query.eq("profileId", formerProfile._id).eq("unsubscribedAt", null))
+        .unique();
+      if (formerSubscription === null) throw new Error("Former subscription was not found");
+      await ctx.db.patch(formerSubscription._id, { unsubscribedAt: Date.now() });
+    });
+
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "throttle-1@example.com",
+      firstName: "",
+      requestIp: throttledIp,
+      website: "",
+    });
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "throttle-2@example.com",
+      firstName: "",
+      requestIp: throttledIp,
+      website: "",
+    });
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "throttle-3@example.com",
+      firstName: "",
+      requestIp: throttledIp,
+      website: "",
+    });
+
+    await expect(Promise.all([
+      convex.mutation(api.newsletterSubs.upsert, pendingRequest),
+      convex.mutation(api.newsletterSubs.upsert, activeRequest),
+      convex.mutation(api.newsletterSubs.upsert, formerRequest),
+      convex.mutation(api.newsletterSubs.upsert, {
+        consent: true,
+        email: "honeypot@example.com",
+        firstName: "",
+        requestIp: "198.51.100.200",
+        website: "https://spam.example.com",
+      }),
+      convex.mutation(api.newsletterSubs.upsert, {
+        consent: true,
+        email: "throttle-4@example.com",
+        firstName: "",
+        requestIp: throttledIp,
+        website: "",
+      }),
+    ])).resolves.toStrictEqual([
+      { accepted: true },
+      { accepted: true },
+      { accepted: true },
+      { accepted: true },
+      { accepted: true },
+    ]);
+  });
+
+  it("rejects the fourth email request within fifteen minutes and allows requests again when the window resets", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-08T00:00:00Z"));
+    const convex = await createBackend();
+    const createRequest = (requestIp: string) => ({
+      consent: true,
+      email: "reader@example.com",
+      firstName: "",
+      requestIp,
+      website: "",
+    });
+
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("198.51.100.1"));
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("198.51.100.2"));
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("198.51.100.3"));
+    await expect(convex.mutation(api.newsletterSubs.upsert, createRequest("198.51.100.4"))).resolves.toStrictEqual({ accepted: true });
+
+    const limitedState = await convex.run(async (ctx) => ({
+      confirmationEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect(),
+    }));
+    expect(limitedState.confirmationEmails).toHaveLength(3);
+
+    vi.advanceTimersByTime(15 * 60 * 1000 + 1);
+    await expect(convex.mutation(api.newsletterSubs.upsert, createRequest("198.51.100.5"))).resolves.toStrictEqual({ accepted: true });
+
+    const resumedState = await convex.run(async (ctx) => ({
+      confirmationEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect(),
+    }));
+    expect(resumedState.confirmationEmails).toHaveLength(4);
+  });
+
+  it("rejects the fourth IP request within fifteen minutes and keeps blocked unknown requests side-effect free", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-08T00:00:00Z"));
+    const convex = await createBackend();
+    const requestIp = "203.0.113.10";
+    const createRequest = (email: string) => ({
+      consent: true,
+      email,
+      firstName: "",
+      requestIp,
+      website: "",
+    });
+
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("reader-1@example.com"));
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("reader-2@example.com"));
+    await convex.mutation(api.newsletterSubs.upsert, createRequest("reader-3@example.com"));
+    await expect(convex.mutation(api.newsletterSubs.upsert, createRequest("reader-4@example.com"))).resolves.toStrictEqual({ accepted: true });
+
+    const state = await convex.run(async (ctx) => ({
+      confirmationEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect(),
+      profiles: await ctx.db.query("profiles").collect(),
+    }));
+
+    expect(state.confirmationEmails).toHaveLength(3);
+    expect(state.profiles).not.toMatchObject([{ email: "reader-4@example.com" }]);
+  });
+
+  it("still refreshes e-book access for an active subscriber after email and IP capacity are exhausted", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-08T00:00:00Z"));
+    const convex = await createBackend();
+    await publishEbook(convex);
+    const request = {
+      consent: true,
+      email: "reader@example.com",
+      ...NEWSLETTER_REQUEST_DEFAULTS,
+    } as const;
+
+    await convex.mutation(api.newsletterSubs.upsert, request);
+    const confirmationToken = await convex.run(async (ctx) => {
+      const email = await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .unique();
+      return getLinkToken(email);
+    });
+    await convex.mutation(api.newsletterSubs.confirm, {
+      token: confirmationToken ?? "missing",
+    });
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "another-1@example.com",
+      firstName: "",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
+    });
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "another-2@example.com",
+      firstName: "",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
+    });
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "another-3@example.com",
+      firstName: "",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
+    });
+
+    await expect(convex.mutation(api.newsletterSubs.upsert, request)).resolves.toStrictEqual({ accepted: true });
+
+    const state = await convex.run(async (ctx) => ({
+      confirmationEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .collect(),
+      deliveryEmails: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendEbookEmail"))
+        .collect(),
+    }));
+    expect(state.confirmationEmails).toHaveLength(3);
+    expect(state.deliveryEmails).toHaveLength(2);
+  });
+
   it("projects a confirmed subscriber into the Loops contacts component", async () => {
     vi.useFakeTimers();
     vi.stubEnv("LOOPS_API_KEY", "test-key");
@@ -381,6 +679,8 @@ describe("newsletter subscription", () => {
       consent: true,
       email: "reader@example.com",
       firstName: "Ada",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
     });
     const confirmationToken = await convex.run(async (ctx) => {
       const email = await ctx.db
@@ -459,6 +759,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
+      ...NEWSLETTER_REQUEST_DEFAULTS,
     });
     const confirmationToken = await convex.run(async (ctx) => {
       const confirmation = await ctx.db
@@ -529,6 +830,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletterSubs.upsert, {
       consent: true,
       email: "reader@example.com",
+      ...NEWSLETTER_REQUEST_DEFAULTS,
     });
 
     const confirmationTaskId = await convex.run(async (ctx) => {

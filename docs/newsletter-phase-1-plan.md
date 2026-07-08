@@ -120,7 +120,7 @@ Cloudflare continues to host and protect the public application. Server-side val
 6. A newer request invalidates previous confirmation tokens.
 7. Unconfirmed identifying data expires after 30 days.
 
-Repeated requests are limited to three per email and three per IP address within 15 minutes, followed by a one-hour block. A honeypot is used initially; Turnstile remains an escalation.
+Repeated requests are limited to three per email and three per IP address within 15 minutes, then may retry when capacity returns. A honeypot is used initially; Turnstile remains an escalation.
 
 ### Confirmation and e-book delivery
 

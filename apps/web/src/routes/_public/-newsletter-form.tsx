@@ -1,5 +1,5 @@
 import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
-import { zNewsletterSubCreateValues } from "@ec/domain/schemas/newsletter-subs";
+import { zNewsletterSubUpsertValues } from "@ec/domain/schemas/newsletter-subs";
 import { useAppForm } from "@ec/ui/hooks/public-form";
 import { useMutation } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
@@ -20,7 +20,7 @@ export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Ent
   const upsertNewsletterSubMutation = useMutation({ mutationFn: upsertNewsletterSub });
 
   const form = useAppForm({
-    defaultValues: { consent: false, email: "", firstName: "" },
+    defaultValues: { consent: false, email: "", firstName: "", website: "" },
     onSubmit: async ({ value: data }) => {
       if (!submitRef.current) return;
       const rect = submitRef.current.getBoundingClientRect();
@@ -55,13 +55,20 @@ export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Ent
       }}
     >
       <form.AppForm>
-        <form.AppField name="email" validators={{ onChange: zNewsletterSubCreateValues.shape.email }}>
+        <form.AppField name="email" validators={{ onChange: zNewsletterSubUpsertValues.shape.email }}>
           {(f) => <f.InputField label="Adresse e-mail" type="email" />}
         </form.AppField>
-        <form.AppField name="firstName" validators={{ onChange: zNewsletterSubCreateValues.shape.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: zNewsletterSubUpsertValues.shape.firstName }}>
           {(f) => <f.InputField label="Prénom (facultatif)" type="text" />}
         </form.AppField>
-        <form.AppField name="consent" validators={{ onChange: zNewsletterSubCreateValues.shape.consent }}>
+        <form.AppField name="website" validators={{ onChange: zNewsletterSubUpsertValues.shape.website }}>
+          {(f) => (
+            <div aria-hidden="true" className="sr-only">
+              <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />
+            </div>
+          )}
+        </form.AppField>
+        <form.AppField name="consent" validators={{ onChange: zNewsletterSubUpsertValues.shape.consent }}>
           {(f) => <f.CheckboxField label={bundle.newsletterConsent.content} />}
         </form.AppField>
 

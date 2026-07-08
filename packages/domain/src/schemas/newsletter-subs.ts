@@ -18,27 +18,30 @@ export const zNewsletterSubDoc = z.object({ ...zDocCommon("newsletterSubs").shap
 export const zNewsletterSub = zNewsletterSubDoc;
 
 // VALUES ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSubCreateValues = z.object({
+export const zNewsletterSubUpsertValues = z.object({
   consent: z.boolean().refine((v) => v, "Vous devez accepter de recevoir la lettre"),
   email: zCanonicalEmailValue,
   firstName: z.string().trim(),
+  website: z.string().trim(),
 });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSubCreate = z.object({
+export const zNewsletterSubUpsert = z.object({
   consent: z.boolean().refine((v) => v),
   email: zCanonicalEmail,
   firstName: z
     .string()
     .trim()
     .transform((v) => (v === "" ? undefined : v)),
+  requestIp: z.string().trim().min(1),
+  website: z.string().trim().default(""),
 });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsletterSubs = {
-  Create: z.infer<typeof zNewsletterSubCreate>;
-  CreateValues: z.infer<typeof zNewsletterSubCreateValues>;
   Doc: z.infer<typeof zNewsletterSubDoc>;
   Entity: z.infer<typeof zNewsletterSub>;
   Fields: z.infer<typeof zNewsletterSubFields>;
+  Upsert: z.infer<typeof zNewsletterSubUpsert>;
+  UpsertValues: z.infer<typeof zNewsletterSubUpsertValues>;
 };
