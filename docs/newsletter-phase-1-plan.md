@@ -2,10 +2,7 @@
 
 ## Status
 
-This plan is published by Linear issue
-[NIA-20](https://linear.app/niama/issue/NIA-20/publish-the-newsletter-phase-1-domain-model-and-architecture-plan) as
-the stable source of truth for later delivery issues. It is not an implementation authorization, and no production service has been
-configured.
+This plan is published by Linear issue [NIA-20](https://linear.app/niama/issue/NIA-20/publish-the-newsletter-phase-1-domain-model-and-architecture-plan) as the stable source of truth for later delivery issues. It is not an implementation authorization, and no production service has been configured.
 
 ## Outcome
 
@@ -131,12 +128,7 @@ Repeated requests are limited to three per email and three per IP address within
 5. A subscriber may request a replacement link indefinitely while their identifying record and e-book right remain.
 6. Each delivery records the e-book version supplied.
 
-Loops failure does not roll back confirmation or access. Convex Workflow retries delivery asynchronously, and the success-page download remains
-available. The initial implementation makes three attempts with exponential backoff beginning at one second; NIA-28 must replace this baseline
-with the agreed production policy: confirmation email makes up to 12 attempts from a 30-second initial backoff over about 17 hours; e-book email
-makes up to 14 attempts from 30 seconds over about 68 hours; and contact synchronization makes up to 10 attempts from 60 seconds over about 8.5
-hours. All use exponential base 2. Only network failures, HTTP 429, and HTTP 5xx retry. Permanent failures stop immediately, each task retains its
-Workflow ID, terminal failures alert an administrator, and replay reuses the original idempotency key.
+Loops failure does not roll back confirmation or access. Convex Workflow retries delivery asynchronously, and the success-page download remains available. The initial implementation makes three attempts with exponential backoff beginning at one second; NIA-28 must replace this baseline with the agreed production policy: confirmation email makes up to 12 attempts from a 30-second initial backoff over about 17 hours; e-book email makes up to 14 attempts from 30 seconds over about 68 hours; and contact synchronization makes up to 10 attempts from 60 seconds over about 8.5 hours. All use exponential base 2. Only network failures, HTTP 429, and HTTP 5xx retry. Permanent failures stop immediately, each task retains its Workflow ID, terminal failures alert an administrator, and replay reuses the original idempotency key.
 
 ### Repeated subscription
 
@@ -173,8 +165,7 @@ The concrete delivery mechanism must account for the final file size. Convex HTT
 
 - Newsletter consent is separate from contact requests, authentication, purchases, and delivery eligibility.
 - Contact-form submissions never imply newsletter subscription.
-- Application Loops task outcomes and detailed provider operations are retained for 90 days; Workflow execution history follows the component's
-  configured retention policy.
+- Application Loops task outcomes and detailed provider operations are retained for 90 days; Workflow execution history follows the component's configured retention policy.
 - Pending unconfirmed records are removed after 30 days.
 - Former-subscriber identifying data and e-book access are retained for at most three years after unsubscription or last relevant contact, unless another active relationship establishes a separate legal basis.
 - Expired former-subscriber records are anonymized without sending a reminder.

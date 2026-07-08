@@ -114,8 +114,8 @@ function RouteComponent() {
               <a className="underline hover:text-secondary" href="http://elianacorre.com">
                 elianacorre.com
               </a>
-              , qu'ils soient visuels ou sonores, y compris la technologie sous-jacente, sont protégés par le droit d'auteur, des marques ou
-              des brevets.
+              , qu&apos;ils soient visuels ou sonores, y compris la technologie sous-jacente, sont protégés par le droit d&apos;auteur, des
+              marques ou des brevets.
             </p>
           </SectionContent>
         </SectionMain>
@@ -129,7 +129,7 @@ function RouteComponent() {
               <a className="underline hover:text-primary" href="http://elianacorre.com">
                 elianacorre.com
               </a>{" "}
-              peut contenir des liens hypertextes pointant vers d'autres sites internet.{" "}
+              peut contenir des liens hypertextes pointant vers d&apos;autres sites internet.{" "}
             </p>
             <p>
               Eliana Corré ne peut être tenue responsable du contenu de ces sites et décline toute responsabilité quant aux informations qui

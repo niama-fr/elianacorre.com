@@ -34,9 +34,7 @@ Use the Niama team template **Elianacorre.com delivery issue** from the Linear i
 5. Replace every placeholder and delete sections that genuinely do not apply.
 6. Keep the issue in `Backlog` until it meets all Ready criteria in `docs/agents/delivery-workflow.md`.
 
-The template is guidance, not proof that an issue is Ready. Before moving it to `Ready`, confirm the outcome is independently verifiable,
-acceptance criteria are observable, dependencies and exclusions are explicit, and verification can be performed by someone other than the
-author.
+The template is guidance, not proof that an issue is Ready. Before moving it to `Ready`, confirm the outcome is independently verifiable, acceptance criteria are observable, dependencies and exclusions are explicit, and verification can be performed by someone other than the author.
 
 ## Template structure
 

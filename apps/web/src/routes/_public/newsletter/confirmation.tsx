@@ -9,14 +9,15 @@ import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
 const zSearch = z.object({ token: z.string().optional() });
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
+// oxlint-disable-next-line sort-keys
 export const Route = createFileRoute("/_public/newsletter/confirmation")({
   component: NewsletterConfirmationPage,
   head: () => ({ meta: [{ content: "no-referrer", name: "referrer" }, { title: "Confirmation — Eliana Corré" }] }),
+  loaderDeps: ({ search: { token } }) => ({ token }),
   loader: async ({ deps: { token } }) => {
     if (!token) return { downloadToken: null, status: "invalid" } as const;
     return await confirmNewsletterSub({ data: { token } });
   },
-  loaderDeps: ({ search: { token } }) => ({ token }),
   validateSearch: zSearch,
 });
 

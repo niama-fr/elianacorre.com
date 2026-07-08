@@ -54,13 +54,11 @@ Before moving an issue from `In Progress` to `In Review`:
 4. Name the human owner and the required validation for every unchecked criterion in an issue comment.
 5. Do not move the issue to `In Review` if any unchecked criterion represents missing implementation rather than pending human validation.
 
-Codex owns checking objective technical criteria it has verified. Grégory owns criteria requiring human judgment and may also independently
-recheck technical criteria. A checked criterion must have evidence in the pull request, issue comments, test results, or linked artifact.
+Codex owns checking objective technical criteria it has verified. Grégory owns criteria requiring human judgment and may also independently recheck technical criteria. A checked criterion must have evidence in the pull request, issue comments, test results, or linked artifact.
 
 Before moving an issue to `Done`:
 
-- Every acceptance criterion must be checked, or the issue description must be explicitly revised to remove or replace a criterion before
-  completion.
+- Every acceptance criterion must be checked, or the issue description must be explicitly revised to remove or replace a criterion before completion.
 - The approved pull request must be merged and required follow-up work must be complete.
 - The issue must contain the pull request and merge evidence.
 
@@ -76,8 +74,7 @@ If a commit changes after criteria were reviewed, re-evaluate affected criteria 
 6. Pull requests are squash-merged. The squash commit title matches the pull request title.
 7. Direct commits and pushes to `main` are prohibited. NIA-5 was the one-time repository-bootstrap exception.
 8. Required checks and review must pass before merge. The branch must be current with `main`.
-9. Codex reconciles and checks objective Linear acceptance criteria before moving the issue to `In Review`, then performs a final two-axis
-   review against repository standards and the issue before merge.
+9. Codex reconciles and checks objective Linear acceptance criteria before moving the issue to `In Review`, then performs a final two-axis review against repository standards and the issue before merge.
 10. Grégory reviews the required checks and manually merges the pull request. The merge action is the human gate for this solo repository.
 11. Approved merges deploy automatically to persistent staging.
 12. Production releases promote the latest successful staging commit through a separate SemVer workflow dispatch and protected environment approval.
@@ -98,12 +95,9 @@ The day-to-day manual workflow is:
 10. GitHub Web: review the required checks, then squash and merge.
 11. Linear App: add the delivery-complete comment and move the issue to `Done`.
 
-GitHub Desktop opens a normal pull request rather than a draft. That is acceptable once the branch has been intentionally committed and pushed.
-An open pull request is not merge-ready until acceptance criteria are reconciled, required checks pass, and the final standards/spec review is
-recorded.
+GitHub Desktop opens a normal pull request rather than a draft. That is acceptable once the branch has been intentionally committed and pushed. An open pull request is not merge-ready until acceptance criteria are reconciled, required checks pass, and the final standards/spec review is recorded.
 
-The concise step-by-step procedure, including preferred surfaces, Codex prompts, VS Code tasks, and terminal fallbacks, is
-[`docs/agents/manual-delivery.md`](manual-delivery.md).
+The concise step-by-step procedure, including preferred surfaces, Codex prompts, VS Code tasks, and terminal fallbacks, is [`docs/agents/manual-delivery.md`](manual-delivery.md).
 
 ## GitHub enforcement
 
@@ -114,16 +108,13 @@ Pull requests targeting `main` expose four stable required checks:
 - `Tests`
 - `Build`
 
-The checks run the commands in `docs/agents/verification.md`. `Quality` runs Oxfmt and Oxlint. Pull requests do not deploy Convex or Cloudflare;
-manual runtime validation happens locally before merge and on persistent staging after merge.
+The checks run the commands in `docs/agents/verification.md`. `Quality` runs Oxfmt and Oxlint. Pull requests do not deploy Convex or Cloudflare; manual runtime validation happens locally before merge and on persistent staging after merge.
 
-The `main` ruleset requires pull requests, all four checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates.
-GitHub Issues remain disabled because Linear is the issue tracker.
+The `main` ruleset requires pull requests, all four checks, and a branch current with `main`. It blocks branch deletion and non-fast-forward updates. GitHub Issues remain disabled because Linear is the issue tracker.
 
 Deployment setup, staging verification, production release, launch boundaries, and rollback are documented in `docs/agents/deployment.md`.
 
-The complete human-operated procedure, including recommended interfaces, terminal fallbacks, evidence requirements, and copyable comment
-templates, is documented in [`docs/agents/manual-delivery.md`](manual-delivery.md).
+The complete human-operated procedure, including recommended interfaces, terminal fallbacks, evidence requirements, and copyable comment templates, is documented in [`docs/agents/manual-delivery.md`](manual-delivery.md).
 
 ## Codex authority
 
@@ -149,8 +140,7 @@ Google Drive holds source assets and collaborative drafts. Optimize and copy pro
 
 ## Production application replacement
 
-`apps/web` is the production application. Framework experiments and replacement applications do not remain as parallel workspaces after a
-migration is accepted.
+`apps/web` is the production application. Framework experiments and replacement applications do not remain as parallel workspaces after a migration is accepted.
 
 A replacement may become the production application only when:
 
@@ -160,5 +150,4 @@ A replacement may become the production application only when:
 - Type checking and production builds pass.
 - An isolated staging deployment has been reviewed and approved by Grégory.
 
-The replacement happens in a dedicated issue and pull request that removes the previous implementation and updates delivery and deployment
-documentation.
+The replacement happens in a dedicated issue and pull request that removes the previous implementation and updates delivery and deployment documentation.

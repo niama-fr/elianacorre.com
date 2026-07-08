@@ -42,12 +42,12 @@ function PublicLayout() {
           <div className="flex flex-col gap-16 sm:flex-row">
             <SectionContent className="flex-1 gap-4">
               <p>
-                Inscris-toi à ma newsletter “le carnet du quotidien” et reçois l'ebook Commencer son carnet de voyage en cadeau, puis chaque
-                mois, un mail personnel pour t'inspirer et nourrir ta pratique et te rappeler que la beauté du quotidien mérite d'être
-                capturée.
+                Inscris-toi à ma newsletter “le carnet du quotidien” et reçois l&apos;ebook Commencer son carnet de voyage en cadeau, puis
+                chaque mois, un mail personnel pour t&apos;inspirer et nourrir ta pratique et te rappeler que la beauté du quotidien mérite
+                d&apos;être capturée.
               </p>
               <Alert className="bg-secondary/30 border-none  text-xs px-3 py-2 text-pretty">
-                Vos données sont utilisées pour confirmer votre adresse, vous envoyer la lettre et vous délivrer l’e-book de bienvenue.
+                Vos données sont utilisées pour confirmer votre adresse, vous envoyer la lettre et vous délivrer l&apos;e-book de bienvenue.
                 <Link className="contents hover:text-amber-800" to="/confidentialite">
                   {" "}
                   En savoir plus dans la politique de confidentialité

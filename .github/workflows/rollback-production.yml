@@ -102,10 +102,7 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
         run: >-
-          bunx convex deploy
-          --cmd "cd ../../apps/web && bun run build"
-          --cmd-url-env-var-name VITE_CONVEX_URL
-          --message "Rollback to ${ROLLBACK_TAG} at ${ROLLBACK_SHA}"
+          bunx convex deploy --cmd "cd ../../apps/web && bun run build" --cmd-url-env-var-name VITE_CONVEX_URL --message "Rollback to ${ROLLBACK_TAG} at ${ROLLBACK_SHA}"
       - name: Seed administrator profiles after Convex rollback
         if: inputs.scope == 'worker-and-convex'
         working-directory: packages/backend
@@ -124,11 +121,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
-          bunx wrangler deploy
-          --name elianacorre-com
-          --tag "$ROLLBACK_SHA"
-          --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}"
-          --keep-vars
+          bunx wrangler deploy --name elianacorre-com --tag "$ROLLBACK_SHA" --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}" --keep-vars
       - name: Record rollback summary
         run: |
           {

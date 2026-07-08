@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { fulfillEbookRequest } from "../ebook-grants";
 import { enqueueSendConfirmationEmail } from "../loops-tasks";
+import { getNewsletterBlockByEmail } from "../newsletter-blocks";
 import { requireActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
 import { tryConsumeNewsletterRateLimit } from "../newsletter-rate-limits";
 import {
@@ -35,6 +36,7 @@ export const upsert = zMutation({
   args: zNewsletterSubUpsert,
   handler: async (ctx, { email, firstName, requestIp, website }) => {
     if (website !== "") return { accepted: true as const };
+    if (await getNewsletterBlockByEmail(ctx, email)) return { accepted: true as const };
 
     const now = Date.now();
     const profile = await getProfileByEmail(ctx, email);

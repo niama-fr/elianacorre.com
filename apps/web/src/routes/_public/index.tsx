@@ -52,18 +52,18 @@ function IndexPage() {
         <SectionMain>
           <SectionTitle title={["Le carnet", "de voyage"]} />
           <p>
-            L'art du carnet de voyage, ce n'est pas juste représenter ce qu'on a sous les yeux. C'est une pratique dans laquelle tu couches
-            sur papier ce qui attire ton regard, ce que tu ressens, ce que tu ne veux pas oublier. Moi, c'est ce qui me fait revenir au
-            carnet encore et encore, cette façon de ralentir, de vraiment voir ce qui m'entoure, de garder une trace vivante du monde tel
-            que je le traverse.
+            L&apos;art du carnet de voyage, ce n&apos;est pas juste représenter ce qu&apos;on a sous les yeux. C&apos;est une pratique dans
+            laquelle tu couches sur papier ce qui attire ton regard, ce que tu ressens, ce que tu ne veux pas oublier. Moi, c&apos;est ce
+            qui me fait revenir au carnet encore et encore, cette façon de ralentir, de vraiment voir ce qui m&apos;entoure, de garder une
+            trace vivante du monde tel que je le traverse.
           </p>
           <p>
-            Et la bonne nouvelle, c'est que tu n'as pas besoin de savoir dessiner, ni de voyager pour en créer un. Le carnet de voyage
-            s'invite dans le quotidien, dans les petits moments autant que dans les grands départs.
+            Et la bonne nouvelle, c&apos;est que tu n&apos;as pas besoin de savoir dessiner, ni de voyager pour en créer un. Le carnet de
+            voyage s&apos;invite dans le quotidien, dans les petits moments autant que dans les grands départs.
           </p>
           <p>
-            Si l'idée te tente mais que tu ne sais pas par où commencer, j'ai créé un guide gratuit pour t'accompagner dans tes premiers
-            pas.
+            Si l&apos;idée te tente mais que tu ne sais pas par où commencer, j&apos;ai créé un guide gratuit pour t&apos;accompagner dans
+            tes premiers pas.
           </p>
           <Btn kind="link" intent="secondary" to="/carnets-de-voyage">
             En savoir plus

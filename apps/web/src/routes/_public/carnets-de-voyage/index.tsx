@@ -5,5 +5,5 @@ export const Route = createFileRoute("/_public/carnets-de-voyage/")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/carnets-de-voyage"!</div>;
+  return <div>Hello !</div>;
 }

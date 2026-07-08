@@ -19,10 +19,12 @@ describe("newsletter subscription", () => {
         consent: true,
         email: "eliana@example.com",
         firstName: "",
+        requestIp: "127.0.0.1",
         website: "",
       })
     ).toMatchObject({
       firstName: undefined,
+      requestIp: "127.0.0.1",
       website: "",
     });
   });
@@ -33,9 +35,11 @@ describe("newsletter subscription", () => {
         consent: true,
         email: "eliana@example.com",
         firstName: "Eliana",
+        requestIp: "127.0.0.1",
         website: "  trap  ",
       })
     ).toMatchObject({
+      requestIp: "127.0.0.1",
       website: "trap",
     });
   });

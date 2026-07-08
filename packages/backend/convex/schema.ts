@@ -4,6 +4,7 @@ import { zEbookFields } from "@ec/domain/schemas/ebooks";
 import { zIdentityFields } from "@ec/domain/schemas/identities";
 import { zLegalTextFields } from "@ec/domain/schemas/legal-texts";
 import { zLoopsTaskFields } from "@ec/domain/schemas/loops-tasks";
+import { zNewsletterBlockFields } from "@ec/domain/schemas/newsletter-blocks";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { zNewsletterSubFields } from "@ec/domain/schemas/newsletter-subs";
 import { zProfileFields } from "@ec/domain/schemas/profiles";
@@ -19,6 +20,7 @@ export default defineSchema({
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
   loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields)).index("by_idempotency_key", ["idempotencyKey"]),
+  newsletterBlocks: defineTable(zodOutputToConvex(zNewsletterBlockFields)).index("by_email", ["email"]),
   newsletterLegalBundles: defineTable(zodOutputToConvex(zNewsletterLegalBundleFields)).index("by_published_at", ["publishedAt"]),
   newsletterSubs: defineTable(zodOutputToConvex(zNewsletterSubFields))
     .index("by_confirm_token_hash", ["confirmTokenHash"])
