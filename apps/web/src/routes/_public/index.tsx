@@ -1,18 +1,22 @@
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@ec/backend/api";
 import { readIndexPage } from "@ec/domain/helpers/pages";
-import { BTN, BtnContent } from "@ec/ui/components/btn";
+import { Btn } from "@ec/ui/components/btn";
 import { GridBackground } from "@ec/ui/components/grid-background";
 import { Hero, HeroContent } from "@ec/ui/components/hero";
-import { Section, SectionContent, SectionImage, SectionMain, SectionTitle } from "@ec/ui/components/section";
+import { Section, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { WorksGrid } from "@ec/ui/components/works-grid";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
-
-import { IndexForm } from "./index/-form";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/")({
   component: IndexPage,
-  loader: () => readIndexPage(),
+  loader: async ({ context }) => {
+    const page = readIndexPage();
+    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
+    return { ...page, bundle };
+  },
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -34,17 +38,39 @@ const QUOTE = {
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function IndexPage() {
-  const { contact, hero, quote, works } = Route.useLoaderData();
+  const { hero, quote, works } = Route.useLoaderData();
 
   return (
     <>
       <Hero className={{ aside: "flex" }} image={hero.image} title={hero.title}>
         <HeroContent>{hero.content}</HeroContent>
-        <Link className={BTN.base()} hash="contact" to="/">
-          <BtnContent>{hero.button}</BtnContent>
-        </Link>
+        <Btn kind="link" hash="contact" to="/">
+          {hero.button}
+        </Btn>
       </Hero>
       <Section className={{ base: "lg:-mt-20" }} intent="secondary">
+        <SectionMain>
+          <SectionTitle title={["Le carnet", "de voyage"]} />
+          <p>
+            L'art du carnet de voyage, ce n'est pas juste représenter ce qu'on a sous les yeux. C'est une pratique dans laquelle tu couches
+            sur papier ce qui attire ton regard, ce que tu ressens, ce que tu ne veux pas oublier. Moi, c'est ce qui me fait revenir au
+            carnet encore et encore, cette façon de ralentir, de vraiment voir ce qui m'entoure, de garder une trace vivante du monde tel
+            que je le traverse.
+          </p>
+          <p>
+            Et la bonne nouvelle, c'est que tu n'as pas besoin de savoir dessiner, ni de voyager pour en créer un. Le carnet de voyage
+            s'invite dans le quotidien, dans les petits moments autant que dans les grands départs.
+          </p>
+          <p>
+            Si l'idée te tente mais que tu ne sais pas par où commencer, j'ai créé un guide gratuit pour t'accompagner dans tes premiers
+            pas.
+          </p>
+          <Btn kind="link" intent="secondary" to="/carnets-de-voyage">
+            En savoir plus
+          </Btn>
+        </SectionMain>
+      </Section>
+      <Section intent="primary">
         <SectionMain>
           <SectionTitle title={works.title} />
           <WorksGrid works={works.items} />
@@ -57,14 +83,6 @@ function IndexPage() {
           <h4 className={QUOTE.author()}>{quote.author}</h4>
         </div>
       </section>
-      <Section id="contact" intent="primary" reverse>
-        <SectionImage image={contact.image} />
-        <SectionMain>
-          <SectionTitle title={contact.title} />
-          <SectionContent>{contact.content}</SectionContent>
-          <IndexForm />
-        </SectionMain>
-      </Section>
     </>
   );
 }

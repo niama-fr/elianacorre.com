@@ -11,7 +11,11 @@ export const HERO = {
   base: cva(
     "container relative z-10 mx-auto flex flex-col items-center gap-8 px-4 py-8 sm:px-8 lg:flex-row lg:items-start xl:items-center"
   ),
-  content: cva("text-balance text-center font-light text-lg sm:text-xl lg:text-start 2xl:text-2xl"),
+  content: cva(`text-balance text-center font-light text-lg flex flex-col gap-4
+  data-pretty:border-dashed data-pretty:border-3 data-pretty:border-primary data-pretty:rounded-2xl data-pretty:p-6 data-pretty:bg-white 
+  sm:text-xl 
+  lg:text-start 
+  2xl:text-2xl`),
   img: cva("size-full object-cover"),
   main: cva("flex flex-col items-center gap-8 lg:items-start"),
   title: cva("flex flex-col items-center font-black text-[42px] leading-none sm:text-7xl lg:items-start 2xl:text-8xl"),
@@ -37,36 +41,37 @@ export function Hero(props: HeroProps) {
         </h1>
         {children}
       </main>
-      <aside className={cn(HERO.aside(), C.aside)}>
-        <Image
-          alt={image.alt}
-          aspectRatio={1}
-          background={image.background}
-          breakpoints={[406, 576, 724, 812, 1152, 1340, 1448, 1624]}
-          className={cn(HERO.img())}
-          operations={{ imagekit: { f: "avif" } }}
-          priority={true}
-          sizes="(min-width: 1536px) 724px, (min-width: 1280px) 612px, (min-width: 1024px) 406px, (min-width: 768px) 670px, (min-width: 640px) 576px, 100vw"
-          src={image.src}
-          width={image.width}
-        />
-      </aside>
+      {image && (
+        <aside className={cn(HERO.aside(), C.aside)}>
+          <Image
+            alt={image.alt}
+            aspectRatio={1}
+            background={image.background}
+            breakpoints={[406, 576, 724, 812, 1152, 1340, 1448, 1624]}
+            className={cn(HERO.img())}
+            operations={{ imagekit: { f: "avif" } }}
+            priority={true}
+            sizes="(min-width: 1536px) 724px, (min-width: 1280px) 612px, (min-width: 1024px) 406px, (min-width: 768px) 670px, (min-width: 640px) 576px, 100vw"
+            src={image.src}
+            width={image.width}
+          />
+        </aside>
+      )}
     </section>
   );
 }
-type HeroProps = Omit<React.ComponentProps<"section">, "className" | "title"> & HeroStyles & { image: Images["Entity"]; title: string[] };
+export type HeroProps = Omit<React.ComponentProps<"section">, "className" | "title"> &
+  HeroStyles & { image?: Images["Entity"]; title: string[] };
 
 // CONTENT ---------------------------------------------------------------------------------------------------------------------------------
-export function HeroContent(props: HeroContentProps) {
-  const { children, className, ...rest } = props;
-
+export function HeroContent({ children, className, pretty = false, ...rest }: HeroContentProps) {
   return (
-    <div className={cn(HERO.content(), className)} {...rest}>
+    <div className={cn(HERO.content(), className)} {...rest} data-pretty={pretty ? "" : undefined}>
       {children}
     </div>
   );
 }
-type HeroContentProps = React.ComponentProps<"div">;
+type HeroContentProps = React.ComponentProps<"div"> & { pretty?: boolean };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type HeroClass = Partial<Record<keyof typeof HERO, string>>;

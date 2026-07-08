@@ -14,6 +14,11 @@ Run these commands from the repository root before opening or merging a pull req
 Backend tests use `convex-test` with the Better Auth component registered. They exercise real Convex functions against isolated in-memory data and
 do not require network access or deployment credentials.
 
+The Convex Workflow component is not currently exercised end to end because of an open upstream `convex-test` compatibility issue. Newsletter
+tests mock Workflow startup and drive the application task execution, provider failure, stable idempotency key, and outcome mutations directly.
+When upstream compatibility is restored, register `@convex-dev/workflow/test` and replace this seam with scheduled Workflow execution and retry
+coverage.
+
 Domain tests verify contact validation independently from persistence. Backend coverage verifies unauthenticated and unauthorized rejection,
 administrator bootstrap assumptions, contact persistence, and the e-book draft-to-published lifecycle.
 

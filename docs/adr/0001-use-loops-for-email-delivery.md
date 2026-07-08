@@ -16,14 +16,22 @@ Use Loops from the first newsletter phase for transactional emails, monthly camp
 source of truth and provides provider-independent CSV or JSON export. Loops receives only confirmed contacts and the event properties needed
 for email delivery.
 
+The application uses the `@devwithbobby/loops` Convex component for the Loops API boundary and its local provider projection. Application-owned
+`loopsTasks` records retain the delivery intent and visible outcome, while the `@convex-dev/workflow` component durably executes those tasks and
+owns scheduling, retries, and recovery of interrupted steps. Neither component owns Profiles, newsletter consent, delivery eligibility, or
+Welcome E-book Access.
+
 Campaigns are drafted, previewed, tested, and scheduled in Loops, with Google Docs available for collaborative drafting. The site
 administration does not include a newsletter editor in phase 1.
 
 ## Consequences
 
-This accepts a REST integration without a dedicated Convex component in exchange for one email platform that covers the planned newsletter,
-subscription, and training journeys. Delivery issues must keep provider identifiers as lookup attributes, not primary identity keys, and must
-avoid coupling business state to Loops availability.
+This accepts Loops-specific operational code and records for one email platform that covers the planned newsletter, subscription, and training
+journeys. Provider identifiers remain lookup attributes rather than primary identity keys, and business state must not depend on Loops or either
+delivery component being available.
+
+Replacing Loops would require a new provider integration and migration of the provider projection and pending operational tasks. It would not
+require changing authoritative Profiles, consent, delivery eligibility, or e-book rights.
 
 ## Links
 

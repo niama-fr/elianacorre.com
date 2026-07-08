@@ -25,7 +25,8 @@ Phase 1 includes:
 - immediate e-book access after confirmation and a separate delivery email;
 - renewable personal e-book links valid for 72 hours;
 - Loops transactional email, campaigns, contacts, automations, and delivery webhooks;
-- a durable Convex email queue with retries, backoff, idempotency, and administrative failure alerts;
+- application-owned Loops task records executed durably by Convex Workflow, with retry backoff and transactional-send idempotency;
+- production failure alerts and operator replay delivered by NIA-28;
 - one-click unsubscription;
 - bounce, complaint, and suppression handling;
 - a minimal authenticated administration area;
@@ -65,7 +66,7 @@ Convex is the source of truth for:
 - e-book versions and access rights;
 - temporary confirmation and download capabilities;
 - privacy requests and administrative audit events;
-- durable outbound email work and retry state;
+- durable Loops task intent and outcome, with Workflow owning execution and retry state;
 - provider-independent exports.
 
 External provider identifiers and normalized email addresses are lookup attributes, not primary identity keys.
@@ -130,7 +131,12 @@ Repeated requests are limited to three per email and three per IP address within
 5. A subscriber may request a replacement link indefinitely while their identifying record and e-book right remain.
 6. Each delivery records the e-book version supplied.
 
-Loops failure does not roll back confirmation or access. Delivery retries occur asynchronously, and the success-page download remains available.
+Loops failure does not roll back confirmation or access. Convex Workflow retries delivery asynchronously, and the success-page download remains
+available. The initial implementation makes three attempts with exponential backoff beginning at one second; NIA-28 must replace this baseline
+with the agreed production policy: confirmation email makes up to 12 attempts from a 30-second initial backoff over about 17 hours; e-book email
+makes up to 14 attempts from 30 seconds over about 68 hours; and contact synchronization makes up to 10 attempts from 60 seconds over about 8.5
+hours. All use exponential base 2. Only network failures, HTTP 429, and HTTP 5xx retry. Permanent failures stop immediately, each task retains its
+Workflow ID, terminal failures alert an administrator, and replay reuses the original idempotency key.
 
 ### Repeated subscription
 
@@ -167,7 +173,8 @@ The concrete delivery mechanism must account for the final file size. Convex HTT
 
 - Newsletter consent is separate from contact requests, authentication, purchases, and delivery eligibility.
 - Contact-form submissions never imply newsletter subscription.
-- Detailed email and download attempts are retained for 90 days.
+- Application Loops task outcomes and detailed provider operations are retained for 90 days; Workflow execution history follows the component's
+  configured retention policy.
 - Pending unconfirmed records are removed after 30 days.
 - Former-subscriber identifying data and e-book access are retained for at most three years after unsubscription or last relevant contact, unless another active relationship establishes a separate legal basis.
 - Expired former-subscriber records are anonymized without sending a reminder.
@@ -208,7 +215,7 @@ Before implementation is considered operationally complete, runbooks must docume
 2. configuring the sending subdomain, SPF, DKIM, DMARC, reply address, and webhooks;
 3. uploading, previewing, publishing, replacing, and rolling back an e-book version;
 4. drafting, testing, scheduling, and cancelling a Loops campaign;
-5. diagnosing and replaying failed queued emails without duplicating delivery;
+5. diagnosing failed Loops tasks and their Workflow runs, then replaying them with the original idempotency key;
 6. handling access, rectification, export, objection, unsubscription, suppression removal, and erasure requests;
 7. exporting data before provider migration and reconciling Loops with Convex;
 8. verifying environment isolation and recovering from accidental credential exposure;
@@ -225,7 +232,7 @@ Each runbook must name prerequisites, expected results, verification, recovery, 
 - The separate Loops email provides a renewable 72-hour personal link.
 - Duplicate, former, suppressed, bounced, and complained addresses follow their defined flows without status disclosure.
 - Unsubscription prevents subsequent campaigns and does not revoke e-book access.
-- Confirmed state survives Loops downtime, and queued email eventually retries without duplication.
+- Confirmed state survives Loops downtime, and Workflow retries queued email without duplicating transactional delivery.
 - Open tracking is disabled and allowed tracking is disclosed.
 - Detailed operational records expire after 90 days; pending records expire after 30 days.
 - Non-production cannot send to arbitrary real addresses or access production contacts.

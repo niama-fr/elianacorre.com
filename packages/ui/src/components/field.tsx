@@ -53,7 +53,7 @@ const fieldVariants = cva("group/field flex w-full gap-3 data-[invalid=true]:tex
   },
 });
 
-function Field({ className, orientation = "vertical", ...props }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
+function Field({ className, orientation = "vertical", ...props }: FieldProps) {
   return (
     <div
       // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
@@ -65,6 +65,7 @@ function Field({ className, orientation = "vertical", ...props }: React.Componen
     />
   );
 }
+export type FieldProps = React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>;
 
 function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
   return (

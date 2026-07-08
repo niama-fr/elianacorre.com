@@ -60,9 +60,9 @@ _Avoid_: Separate pending request, separate consent row
 Whether email may currently be sent to a consenting person. A permanent bounce or spam complaint makes the address ineligible independently of consent; a spam complaint requires a new explicit confirmation before eligibility can be restored.
 _Avoid_: Newsletter consent
 
-**Delivery Attempt**:
-A short-lived operational record of an email or download attempt used for diagnosis and retry. Detailed attempt data is retained for 90 days, while only the resulting business event remains in longer-lived consent, delivery eligibility, or e-book history.
-_Avoid_: Consent evidence
+**Loops Task**:
+An application-owned, short-lived record requesting a Loops contact synchronization or transactional email and recording whether it is pending, succeeded, or failed. Convex Workflow owns durable execution, retry scheduling, and interrupted-step recovery; the Loops component owns the provider API boundary and its local contact and operation projection. Detailed operational data is retained for 90 days, while only the resulting business event remains in longer-lived consent, delivery eligibility, or e-book history.
+_Avoid_: Consent evidence, Workflow run
 
 **Welcome E-book Access**:
 The continuing right granted after email confirmation to obtain the current version of the free e-book. A personal 72-hour download is offered immediately on the confirmation success page and sent by email; the right to request a replacement link does not expire and is not revoked by newsletter unsubscription. A verified request to erase the person's identifying data also erases this right.

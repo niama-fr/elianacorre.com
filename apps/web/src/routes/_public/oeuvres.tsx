@@ -1,6 +1,6 @@
 import { readWorksLayout } from "@ec/domain/helpers/layouts";
 import type { Sets } from "@ec/domain/helpers/sets";
-import { BtnLink } from "@ec/ui/components/btn";
+import { Btn } from "@ec/ui/components/btn";
 import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { Image } from "@ec/ui/components/image";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
@@ -119,12 +119,12 @@ export function WorksLayoutSets(props: WorksLayoutSetsProps) {
           <SectionContent>{activeSet.content}</SectionContent>
         </div>
         <div className={WORKS.nav()}>
-          <BtnLink {...previousLink} icon="icon-lucide--chevron-left" intent="secondary" reverse>
+          <Btn kind="link" {...previousLink} icon="icon-lucide--chevron-left" intent="secondary" reverse>
             Précédente
-          </BtnLink>
-          <BtnLink {...nextLink} intent="secondary">
+          </Btn>
+          <Btn kind="link" {...nextLink} intent="secondary">
             Suivante
-          </BtnLink>
+          </Btn>
         </div>
       </SectionMain>
     </Section>

@@ -1,14 +1,21 @@
-// import { CURRENT_NEWSLETTER_LEGAL_COPY } from "@ec/domain/schemas/newsletter";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "@ec/backend/api";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { createFileRoute } from "@tanstack/react-router";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createFileRoute("/_public/mentions-legales")({
+export const Route = createFileRoute("/_public/confidentialite/")({
   component: RouteComponent,
+  loader: async ({ context }) => {
+    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
+    return { bundle };
+  },
 });
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 function RouteComponent() {
+  const { bundle } = Route.useLoaderData();
+
   return (
     <>
       <Section>
@@ -141,7 +148,7 @@ function RouteComponent() {
               séparément sur le consentement explicite de la personne.
             </p>
             <h3 className="mt-6 text-2xl font-bold">Lettre et e-book de bienvenue</h3>
-            {/* <p className="whitespace-pre-line">{CURRENT_NEWSLETTER_LEGAL_COPY.privacy.text}</p> */}
+            <p className="whitespace-pre-line">{bundle.privacyNotice.content}</p>
           </SectionContent>
         </SectionMain>
       </Section>

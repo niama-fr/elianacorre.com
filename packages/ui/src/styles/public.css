@@ -104,8 +104,8 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: var(--color-orange-200);
   --accent-foreground: var(--color-gray-950);
-  --destructive: var(--color-red-200);
-  --destructive-foreground: var(--color-red-600);
+  --destructive: var(--color-rose-600);
+  --destructive-foreground: var(--color-white);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: var(--color-blue-500);
