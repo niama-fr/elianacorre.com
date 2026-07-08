@@ -28,7 +28,7 @@ const zLoopsTaskSendEbookEmailFields = zLoopsTaskCommonFields.extend({
   linkToken: z.string(),
 });
 
-const zLoopsTaskSyncContactFields = zLoopsTaskCommonFields.extend({ kind: z.literal("syncContact") });
+const zLoopsTaskSyncContactFields = zLoopsTaskCommonFields.extend({ kind: z.literal("syncContact"), subscribed: z.boolean().optional() });
 
 export const zLoopsTaskFields = z.discriminatedUnion("kind", [
   zLoopsTaskSendConfirmationEmailFields,
@@ -53,7 +53,7 @@ const zLoopsTaskCommonCreate = zLoopsTaskCommonFields.pick({ idempotencyKey: tru
 export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
   zLoopsTaskCommonCreate.extend({ kind: z.literal("sendConfirmationEmail"), linkToken: z.string() }),
   zLoopsTaskCommonCreate.extend({ kind: z.literal("sendEbookEmail"), linkToken: z.string() }),
-  zLoopsTaskCommonCreate.extend({ kind: z.literal("syncContact") }),
+  zLoopsTaskCommonCreate.extend({ kind: z.literal("syncContact"), subscribed: z.boolean() }),
 ]);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------

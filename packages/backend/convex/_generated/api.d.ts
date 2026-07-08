@@ -13,6 +13,7 @@ import type * as contactRequests from "../contactRequests.js";
 import type * as ebooks from "../ebooks.js";
 import type * as http from "../http.js";
 import type * as loops from "../loops.js";
+import type * as loopsWebhooks from "../loopsWebhooks.js";
 import type * as newsletterLegalBundles from "../newsletterLegalBundles.js";
 import type * as newsletterSubs from "../newsletterSubs.js";
 import type * as seed from "../seed.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   ebooks: typeof ebooks;
   http: typeof http;
   loops: typeof loops;
+  loopsWebhooks: typeof loopsWebhooks;
   newsletterLegalBundles: typeof newsletterLegalBundles;
   newsletterSubs: typeof newsletterSubs;
   seed: typeof seed;

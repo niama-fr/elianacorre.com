@@ -49,6 +49,6 @@ export const patchNewsletterSub = async (ctx: MutationCtx, id: Id<"newsletterSub
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
 export const markNewsletterSubConfirmed = async (ctx: MutationCtx, id: Id<"newsletterSubs">, { now, profileId }: MarkConfirmedOpts) => {
   await patchNewsletterSub(ctx, id, { confirmTokenHash: null, confirmedAt: now });
-  await enqueueSyncContact(ctx, { idempotencyKey: `newsletter-contact-sync:${id}`, profileId });
+  await enqueueSyncContact(ctx, { idempotencyKey: `newsletter-contact-sync:${id}`, profileId, subscribed: true });
 };
 type MarkConfirmedOpts = WithNow<{ profileId: Id<"profiles"> }>;

@@ -22,6 +22,8 @@ Each deployment declares:
 
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
+- `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
+- `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
 - `SITE_URL`: exact application origin with no trailing path.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
 
@@ -92,6 +94,22 @@ Variables:
 The production environment is restricted to protected branches and requires Grégory's approval. Its Convex key has the same two minimal permissions as staging.
 
 Secrets never belong in Git, Linear, Obsidian, comments, command arguments, or prompts. Store them through GitHub or the Convex dashboard.
+
+## Loops webhooks
+
+Configure each Loops environment under **Settings → Webhooks** with its matching Convex HTTP URL:
+
+```text
+https://<deployment>.convex.site/webhooks/loops
+```
+
+Enable `email.delivered`, `email.hardBounced`, `email.spamReported`, and `email.unsubscribed`. Copy the generated signing secret directly into that deployment's `LOOPS_WEBHOOK_SECRET` environment variable; never paste it into source control, task comments, or command arguments. Send Loops' test event to verify endpoint connectivity, then replay signed non-production fixtures for the enabled events. Authentic supported events return HTTP 204, missing or invalid signatures return 401, and malformed or unsupported payloads return 400.
+
+For every campaign and workflow, preview Loops' automatic footer and verify that its visible unsubscribe link reads **« Se désabonner »** and completes without an Account or a second confirmation. This wording is provider configuration, not application source code.
+
+Convex stores `Webhook-Id` for idempotency. A permanent bounce or complaint suppresses campaign delivery without changing historical consent; unsubscribe ends the current consent period without deleting e-book grants. The application then queues Loops contact unsubscription so Convex remains authoritative. To recover from a wrong secret, replace only the affected deployment's `LOOPS_WEBHOOK_SECRET` and resend the event from Loops' webhook history. If the endpoint URL is wrong, correct it in Loops and use the same history view to retry. Loops retains webhook history for 30 days.
+
+Update this section whenever enabled events, the endpoint path, signature contract, or recovery procedure changes.
 
 ## Pull-request verification
 

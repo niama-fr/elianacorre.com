@@ -14,6 +14,7 @@ const app = defineApp({
     LOOPS_API_KEY: v.string(),
     LOOPS_CONFIRMATION_TRANSACTIONAL_ID: v.string(),
     LOOPS_EBOOK_TRANSACTIONAL_ID: v.string(),
+    LOOPS_WEBHOOK_SECRET: v.string(),
     SITE_URL: v.string(),
     WHITELIST_SEED: v.string(),
   },

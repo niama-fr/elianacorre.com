@@ -31,6 +31,7 @@ type Env = {
   readonly LOOPS_API_KEY: string;
   readonly LOOPS_CONFIRMATION_TRANSACTIONAL_ID: string;
   readonly LOOPS_EBOOK_TRANSACTIONAL_ID: string;
+  readonly LOOPS_WEBHOOK_SECRET: string;
   readonly SITE_URL: string;
   readonly WHITELIST_SEED: string;
 };

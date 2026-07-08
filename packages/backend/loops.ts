@@ -10,8 +10,18 @@ import { env, type ActionCtx } from "./convex/_generated/server";
 const loops = new Loops(components.loops);
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
-const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId } }: SyncContactOpts) =>
-  await loops.addContact(ctx, { email, firstName, lastName, source: "elianacorre.com", subscribed: true, userGroup: "newsletter", userId });
+const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) =>
+  task.subscribed === false
+    ? await loops.unsubscribeContact(ctx, email)
+    : await loops.addContact(ctx, {
+        email,
+        firstName,
+        lastName,
+        source: "elianacorre.com",
+        subscribed: true,
+        userGroup: "newsletter",
+        userId,
+      });
 type SyncContactOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SyncContactDoc"] };
 
 const sendConfirmationEmail = async (ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) =>

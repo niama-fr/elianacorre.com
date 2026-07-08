@@ -256,6 +256,92 @@ describe("newsletter subscription", () => {
     });
   });
 
+  it("keeps a complaint block through a public request and restores eligibility only after explicit confirmation", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("newsletterBlocks", {
+        createdAt: now,
+        email: "admin@example.com",
+        reason: "complained",
+        source: "provider-webhook",
+        updatedAt: now,
+      });
+    });
+
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "admin@example.com",
+      firstName: "",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
+    });
+
+    const beforeConfirmation = await convex.run(async (ctx) => ({
+      block: await ctx.db.query("newsletterBlocks").unique(),
+      confirmation: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "sendConfirmationEmail"))
+        .unique(),
+    }));
+    expect(beforeConfirmation.block).toMatchObject({ reason: "complained" });
+    const token = getLinkToken(beforeConfirmation.confirmation);
+    await expect(convex.mutation(api.newsletterSubs.confirm, { token: token ?? "missing" })).resolves.toMatchObject({
+      status: "confirmed",
+    });
+
+    const afterConfirmation = await convex.run(async (ctx) => ({
+      block: await ctx.db.query("newsletterBlocks").unique(),
+      grants: await ctx.db.query("ebookGrants").collect(),
+      syncTasks: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "syncContact"))
+        .collect(),
+    }));
+    expect(afterConfirmation.block).toBeNull();
+    expect(afterConfirmation.grants).toHaveLength(1);
+    expect(afterConfirmation.syncTasks).toMatchObject([{ subscribed: true }]);
+  });
+
+  it("does not let a confirmation issued before a complaint restore delivery eligibility", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-08T00:00:00Z"));
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletterSubs.upsert, {
+      consent: true,
+      email: "reader@example.com",
+      firstName: "",
+      requestIp: NEWSLETTER_REQUEST_DEFAULTS.requestIp,
+      website: "",
+    });
+    const token = await getLatestConfirmationTokenForEmail(convex, "reader@example.com");
+    vi.advanceTimersByTime(1);
+    await convex.run(async (ctx) => {
+      await ctx.db.insert("newsletterBlocks", {
+        createdAt: Date.now(),
+        email: "reader@example.com",
+        reason: "complained",
+        source: "provider-webhook",
+        updatedAt: Date.now(),
+      });
+    });
+
+    await expect(convex.mutation(api.newsletterSubs.confirm, { token: token ?? "missing" })).resolves.toMatchObject({
+      status: "confirmed",
+    });
+    const state = await convex.run(async (ctx) => ({
+      block: await ctx.db.query("newsletterBlocks").unique(),
+      syncTasks: await ctx.db
+        .query("loopsTasks")
+        .filter((query) => query.eq(query.field("kind"), "syncContact"))
+        .collect(),
+    }));
+    expect(state.block).toMatchObject({ reason: "complained" });
+    expect(state.syncTasks).toHaveLength(0);
+  });
+
   it("does not modify an existing profile when its email requests the newsletter", async () => {
     const convex = await createBackend();
     const profileId = await convex.run(async (ctx) => {

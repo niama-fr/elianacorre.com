@@ -8,6 +8,8 @@ export const zNewsletterBlockSource = z.literal(["manual-admin", "privacy-reques
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsletterBlockFields = z.object({
+  confirmRequestedAt: z.number().optional(),
+  confirmTokenHash: z.string().optional(),
   createdAt: z.number(),
   email: zCanonicalEmail,
   reason: zNewsletterBlockReason,
