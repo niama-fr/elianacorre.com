@@ -1,5 +1,5 @@
 import { Loops } from "@devwithbobby/loops";
-import { getLink } from "@ec/domain/helpers/utils";
+import { createCapabilityToken, getLink } from "@ec/domain/helpers/utils";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 
@@ -27,7 +27,11 @@ type SyncContactOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SyncContact
 const sendConfirmationEmail = async (ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) =>
   await loops.sendTransactional(ctx, {
     dataVariables: {
-      confirmationUrl: getLink({ base: env.SITE_URL, path: "/newsletter/confirmation", token: task.linkToken }),
+      confirmationUrl: getLink({
+        base: env.SITE_URL,
+        path: "/newsletter/confirmation",
+        token: await createCapabilityToken({ capabilityId: task.newsConfirmationId, secret: env.CAPABILITY_SIGNING_SECRET }),
+      }),
       firstName: profile.firstName,
     },
     email: profile.email,
@@ -39,7 +43,11 @@ type SendConfirmationEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["S
 const sendEbookEmail = async (ctx: ActionCtx, { profile, task }: SendEbookEmailOpts) =>
   await loops.sendTransactional(ctx, {
     dataVariables: {
-      downloadUrl: getLink({ base: env.SITE_URL, path: "/newsletter/ebook", token: task.linkToken }),
+      downloadUrl: getLink({
+        base: env.SITE_URL,
+        path: "/newsletter/ebook",
+        token: await createCapabilityToken({ capabilityId: task.ebookDownloadId, secret: env.CAPABILITY_SIGNING_SECRET }),
+      }),
       firstName: profile.firstName,
     },
     email: profile.email,

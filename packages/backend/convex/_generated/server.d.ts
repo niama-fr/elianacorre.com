@@ -26,6 +26,7 @@ import type { DataModel } from "./dataModel.js";
  */
 type Env = {
   readonly BETTER_AUTH_SECRET: string;
+  readonly CAPABILITY_SIGNING_SECRET: string;
   readonly GOOGLE_CLIENT_ID: string;
   readonly GOOGLE_CLIENT_SECRET: string;
   readonly LOOPS_API_KEY: string;
@@ -33,6 +34,7 @@ type Env = {
   readonly LOOPS_EBOOK_TRANSACTIONAL_ID: string;
   readonly LOOPS_WEBHOOK_SECRET: string;
   readonly SITE_URL: string;
+  readonly SUPPRESSION_HASH_SECRET: string;
   readonly WHITELIST_SEED: string;
 };
 

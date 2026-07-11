@@ -1,18 +1,17 @@
-import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
 import { zDocCommon } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookGrantFields = z.object({ profileId: zid("profiles") });
-export const zEbookGrantDoc = z.object({ ...zDocCommon("ebookGrants").shape, ...zEbookGrantFields.shape });
+export const zNewsSuppressionFields = z.object({ canonicalEmailHash: z.string() });
+export const zNewsSuppressionDoc = z.object({ ...zDocCommon("newsSuppressions").shape, ...zNewsSuppressionFields.shape });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookGrantCreate = zEbookGrantFields;
+export const zNewsSuppressionCreate = zNewsSuppressionFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type EbookGrants = {
-  Create: z.infer<typeof zEbookGrantCreate>;
-  Doc: z.infer<typeof zEbookGrantDoc>;
-  Fields: z.infer<typeof zEbookGrantFields>;
+export type NewsSuppressions = {
+  Create: z.infer<typeof zNewsSuppressionCreate>;
+  Doc: z.infer<typeof zNewsSuppressionDoc>;
+  Fields: z.infer<typeof zNewsSuppressionFields>;
 };

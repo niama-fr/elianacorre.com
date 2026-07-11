@@ -83,13 +83,13 @@ describe("Loops webhooks", () => {
     ).resolves.toMatchObject({ status: 204 });
 
     const state = await convex.run(async (ctx) => ({
-      block: await ctx.db.query("newsletterBlocks").unique(),
       event: await ctx.db.query("loopsWebhooks").unique(),
+      restriction: await ctx.db.query("newsRestrictions").unique(),
       tasks: await ctx.db.query("loopsTasks").collect(),
     }));
     expect(state).toMatchObject({
-      block: { email: "reader@example.com", reason: "bounced", source: "provider-webhook" },
-      event: { email: "reader@example.com", kind: "email.hardBounced", sentAt: 10_000, webhookId },
+      event: { email: "reader@example.com", kind: "email.hardBounced", occurredAt: 10_000, webhookId },
+      restriction: { reason: "permanentBounce", source: "provider" },
       tasks: [{ profileId, subscribed: false }],
     });
   });
@@ -117,26 +117,21 @@ describe("Loops webhooks", () => {
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const insertedSubscriptionId = await ctx.db.insert("newsletterSubs", {
-        confirmTokenHash: null,
+      const insertedSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2,
         legalBundleId,
         profileId: insertedProfileId,
         requestedAt: 1,
         unsubscribedAt: null,
       });
-      const insertedGrantId = await ctx.db.insert("ebookGrants", {
-        issuedAt: 3,
-        profileId: insertedProfileId,
-        tokenHash: "token",
-      });
+      const insertedGrantId = await ctx.db.insert("ebookGrants", { profileId: insertedProfileId });
       return { grantId: insertedGrantId, profileId: insertedProfileId, subscriptionId: insertedSubscriptionId };
     });
     const event = {
       email: "reader@example.com",
       kind: "email.unsubscribed" as const,
       messageId: "message-1",
-      sentAt: 10_000,
+      occurredAt: 10_000,
       webhookId: "webhook-1",
     };
 
@@ -158,8 +153,7 @@ describe("Loops webhooks", () => {
     const restoredSubscriptionId = await convex.run(async (ctx) => {
       const previous = await ctx.db.get(subscriptionId);
       if (previous === null) throw new Error("Previous subscription was not found");
-      return await ctx.db.insert("newsletterSubs", {
-        confirmTokenHash: null,
+      return await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20_000,
         legalBundleId: previous.legalBundleId,
         profileId,
@@ -169,11 +163,15 @@ describe("Loops webhooks", () => {
     });
     await convex.mutation(internal.loops.processWebhook, {
       ...event,
-      sentAt: 5000,
+      occurredAt: 5000,
       webhookId: "older-unsubscribe",
     });
-    const restoredSubscription = await convex.run(async (ctx) => await ctx.db.get(restoredSubscriptionId));
-    expect(restoredSubscription?.unsubscribedAt).toBeNull();
+    const restored = await convex.run(async (ctx) => ({
+      subscription: await ctx.db.get(restoredSubscriptionId),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(restored.subscription?.unsubscribedAt).toBeNull();
+    expect(restored.tasks).toHaveLength(1);
   });
 
   it("keeps complaint suppression when an older bounce arrives later", async () => {
@@ -186,21 +184,21 @@ describe("Loops webhooks", () => {
     await convex.mutation(internal.loops.processWebhook, {
       ...base,
       kind: "email.spamReported",
-      sentAt: 20_000,
+      occurredAt: 20_000,
       webhookId: "complaint",
     });
     await convex.mutation(internal.loops.processWebhook, {
       ...base,
       kind: "email.hardBounced",
-      sentAt: 10_000,
+      occurredAt: 10_000,
       webhookId: "older-bounce",
     });
     const state = await convex.run(async (ctx) => ({
-      block: await ctx.db.query("newsletterBlocks").unique(),
       events: await ctx.db.query("loopsWebhooks").collect(),
+      restriction: await ctx.db.query("newsRestrictions").unique(),
       tasks: await ctx.db.query("loopsTasks").collect(),
     }));
-    expect(state.block).toMatchObject({ reason: "complained", source: "provider-webhook" });
+    expect(state.restriction).toMatchObject({ reason: "spamComplaint", source: "provider" });
     expect(state.events).toHaveLength(2);
     expect(state.tasks).toMatchObject([{ subscribed: false }, { subscribed: false }]);
   });

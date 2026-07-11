@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { zNewsletterSubUpsert, zNewsletterSubUpsertValues } from "./newsletter-subs";
+import { zNewsSubscriptionUpsert, zNewsSubscriptionUpsertValues } from "./news-subscriptions";
 
 describe("newsletter subscription", () => {
   it("requires explicit newsletter consent", () => {
     expect(
-      zNewsletterSubUpsertValues.safeParse({
+      zNewsSubscriptionUpsertValues.safeParse({
         consent: false,
         email: "eliana@example.com",
         website: "",
@@ -15,7 +15,7 @@ describe("newsletter subscription", () => {
 
   it("accepts an empty honeypot field in the server payload", () => {
     expect(
-      zNewsletterSubUpsert.parse({
+      zNewsSubscriptionUpsert.parse({
         consent: true,
         email: "eliana@example.com",
         firstName: "",
@@ -31,7 +31,7 @@ describe("newsletter subscription", () => {
 
   it("trims the honeypot field in the server payload", () => {
     expect(
-      zNewsletterSubUpsert.parse({
+      zNewsSubscriptionUpsert.parse({
         consent: true,
         email: "eliana@example.com",
         firstName: "Eliana",

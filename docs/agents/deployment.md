@@ -21,10 +21,12 @@ Every Convex deployment owns separate data, files, functions, environment variab
 Each deployment declares:
 
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
+- `CAPABILITY_SIGNING_SECRET`: unique secret generated from at least 32 random bytes; signs short-lived newsletter confirmation and e-book download URLs.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
 - `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
 - `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
 - `SITE_URL`: exact application origin with no trailing path.
+- `SUPPRESSION_HASH_SECRET`: unique secret generated from at least 32 random bytes; creates the irreversible suppression lookup value.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
 
 The Google OAuth clients authorize these callbacks:

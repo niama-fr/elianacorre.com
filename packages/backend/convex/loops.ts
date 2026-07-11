@@ -47,7 +47,7 @@ export const markTaskFailed = zInternalMutation({
   handler: async (ctx, { error, loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!isLoopsTaskPending(task)) return;
-    await markLoopsTaskFailed(ctx, loopsTaskId, { error });
+    await markLoopsTaskFailed(ctx, loopsTaskId, { error, now: Date.now() });
   },
 });
 

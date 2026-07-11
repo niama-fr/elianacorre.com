@@ -19,7 +19,7 @@ export const requireLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">) => {
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
-  await ctx.db.insert("loopsTasks", { ...create, error: null, status: "pending", succeededAt: null });
+  await ctx.db.insert("loopsTasks", { ...create, error: null, finishedAt: null, status: "pending", workflowId: null });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
 export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["CommonFields"]>) => {
@@ -27,24 +27,31 @@ export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, pat
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markLoopsTaskFailed = async (ctx: MutationCtx, id: Id<"loopsTasks">, { error }: { error: string }) => {
-  await patchLoopsTask(ctx, id, { error, status: "failed" });
+export const markLoopsTaskFailed = async (ctx: MutationCtx, id: Id<"loopsTasks">, { error, now }: WithNow<{ error: string }>) => {
+  await patchLoopsTask(ctx, id, { error, finishedAt: now, status: "failed" });
 };
 
 export const markLoopsTaskSucceeded = async (ctx: MutationCtx, id: Id<"loopsTasks">, { now }: WithNow) => {
-  await patchLoopsTask(ctx, id, { error: null, status: "succeeded", succeededAt: now });
+  await patchLoopsTask(ctx, id, { error: null, finishedAt: now, status: "succeeded" });
 };
 
 // ENQUEUE ---------------------------------------------------------------------------------------------------------------------------------
+const enqueueLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) => {
+  const loopsTaskId = await createLoopsTask(ctx, create);
+  const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
+  await patchLoopsTask(ctx, loopsTaskId, { workflowId });
+  return workflowId;
+};
+
 export const enqueueSendConfirmationEmail = async (
   ctx: MutationCtx,
   create: Omit<Extract<LoopsTasks["Create"], { kind: "sendConfirmationEmail" }>, "kind">
-) => await start(ctx, internal.loops.run, { loopsTaskId: await createLoopsTask(ctx, { ...create, kind: "sendConfirmationEmail" }) });
+) => await enqueueLoopsTask(ctx, { ...create, kind: "sendConfirmationEmail" });
 
 export const enqueueSendEbookEmail = async (
   ctx: MutationCtx,
   create: Omit<Extract<LoopsTasks["Create"], { kind: "sendEbookEmail" }>, "kind">
-) => await start(ctx, internal.loops.run, { loopsTaskId: await createLoopsTask(ctx, { ...create, kind: "sendEbookEmail" }) });
+) => await enqueueLoopsTask(ctx, { ...create, kind: "sendEbookEmail" });
 
 export const enqueueSyncContact = async (ctx: MutationCtx, create: Omit<Extract<LoopsTasks["Create"], { kind: "syncContact" }>, "kind">) =>
-  await start(ctx, internal.loops.run, { loopsTaskId: await createLoopsTask(ctx, { ...create, kind: "syncContact" }) });
+  await enqueueLoopsTask(ctx, { ...create, kind: "syncContact" });

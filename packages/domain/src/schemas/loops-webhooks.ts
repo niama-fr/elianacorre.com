@@ -10,7 +10,7 @@ export const zLoopsWebhookFields = z.object({
   email: zCanonicalEmail,
   kind: zLoopsWebhookKind,
   messageId: z.string(),
-  sentAt: z.number(),
+  occurredAt: z.number(),
   webhookId: z.string(),
 });
 export const zLoopsWebhookDoc = z.object({ ...zDocCommon("loopsWebhooks").shape, ...zLoopsWebhookFields.shape });
@@ -29,7 +29,7 @@ export const zLoopsWebhookValues = z
     email,
     kind,
     messageId,
-    sentAt: eventTime * 1000,
+    occurredAt: eventTime * 1000,
     webhookId,
   }));
 

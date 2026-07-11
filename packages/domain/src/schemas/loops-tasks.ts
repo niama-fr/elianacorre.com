@@ -12,20 +12,21 @@ export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zLoopsTaskCommonFields = z.object({
   error: z.string().nullable(),
+  finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
   profileId: zid("profiles"),
   status: zLoopsTaskStatus,
-  succeededAt: z.number().nullable(),
+  workflowId: z.string().nullable(),
 });
 
 const zLoopsTaskSendConfirmationEmailFields = zLoopsTaskCommonFields.extend({
   kind: z.literal("sendConfirmationEmail"),
-  linkToken: z.string(),
+  newsConfirmationId: zid("newsConfirmations"),
 });
 
 const zLoopsTaskSendEbookEmailFields = zLoopsTaskCommonFields.extend({
+  ebookDownloadId: zid("ebookDownloads"),
   kind: z.literal("sendEbookEmail"),
-  linkToken: z.string(),
 });
 
 const zLoopsTaskSyncContactFields = zLoopsTaskCommonFields.extend({
@@ -54,8 +55,8 @@ export const zLoopsTaskDoc = z.discriminatedUnion("kind", [
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const zLoopsTaskCommonCreate = zLoopsTaskCommonFields.pick({ idempotencyKey: true, profileId: true });
 export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
-  zLoopsTaskCommonCreate.extend({ kind: z.literal("sendConfirmationEmail"), linkToken: z.string() }),
-  zLoopsTaskCommonCreate.extend({ kind: z.literal("sendEbookEmail"), linkToken: z.string() }),
+  zLoopsTaskCommonCreate.extend({ kind: z.literal("sendConfirmationEmail"), newsConfirmationId: zid("newsConfirmations") }),
+  zLoopsTaskCommonCreate.extend({ ebookDownloadId: zid("ebookDownloads"), kind: z.literal("sendEbookEmail") }),
   zLoopsTaskCommonCreate.extend({ kind: z.literal("syncContact"), subscribed: z.boolean() }),
 ]);
 

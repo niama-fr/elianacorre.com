@@ -4,44 +4,41 @@ import z from "zod";
 import { zCanonicalEmail, zCanonicalEmailValue, zDocCommon } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSubFields = z.object({
-  confirmTokenHash: z.string().nullable(),
+export const zNewsSubscriptionFields = z.object({
   confirmedAt: z.number().nullable(),
   legalBundleId: zid("newsletterLegalBundles"),
   profileId: zid("profiles"),
   requestedAt: z.number(),
   unsubscribedAt: z.number().nullable(),
 });
-export const zNewsletterSubDoc = z.object({ ...zDocCommon("newsletterSubs").shape, ...zNewsletterSubFields.shape });
-
-// ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSub = zNewsletterSubDoc;
+export const zNewsSubscriptionDoc = z.object({ ...zDocCommon("newsSubscriptions").shape, ...zNewsSubscriptionFields.shape });
 
 // VALUES ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSubUpsertValues = z.object({
-  consent: z.boolean().refine((v) => v, "Vous devez accepter de recevoir la lettre"),
+export const zNewsSubscriptionUpsertValues = z.object({
+  consent: z.boolean().refine((value) => value, "Vous devez accepter de recevoir la lettre"),
   email: zCanonicalEmailValue,
   firstName: z.string().trim(),
   website: z.string().trim(),
 });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterSubUpsert = z.object({
-  consent: z.boolean().refine((v) => v),
+export const zNewsSubscriptionCreate = zNewsSubscriptionFields.pick({ legalBundleId: true, profileId: true, requestedAt: true });
+export const zNewsSubscriptionUpsert = z.object({
+  consent: z.boolean().refine((value) => value),
   email: zCanonicalEmail,
   firstName: z
     .string()
     .trim()
-    .transform((v) => (v === "" ? undefined : v)),
+    .transform((value) => (value === "" ? undefined : value)),
   requestIp: z.string().trim().min(1),
   website: z.string().trim().default(""),
 });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type NewsletterSubs = {
-  Doc: z.infer<typeof zNewsletterSubDoc>;
-  Entity: z.infer<typeof zNewsletterSub>;
-  Fields: z.infer<typeof zNewsletterSubFields>;
-  Upsert: z.infer<typeof zNewsletterSubUpsert>;
-  UpsertValues: z.infer<typeof zNewsletterSubUpsertValues>;
+export type NewsSubscriptions = {
+  Create: z.infer<typeof zNewsSubscriptionCreate>;
+  Doc: z.infer<typeof zNewsSubscriptionDoc>;
+  Fields: z.infer<typeof zNewsSubscriptionFields>;
+  Upsert: z.infer<typeof zNewsSubscriptionUpsert>;
+  UpsertValues: z.infer<typeof zNewsSubscriptionUpsertValues>;
 };
