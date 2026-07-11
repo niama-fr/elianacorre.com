@@ -28,7 +28,10 @@ const zLoopsTaskSendEbookEmailFields = zLoopsTaskCommonFields.extend({
   linkToken: z.string(),
 });
 
-const zLoopsTaskSyncContactFields = zLoopsTaskCommonFields.extend({ kind: z.literal("syncContact"), subscribed: z.boolean().optional() });
+const zLoopsTaskSyncContactFields = zLoopsTaskCommonFields.extend({
+  kind: z.literal("syncContact"),
+  subscribed: z.boolean(),
+});
 
 export const zLoopsTaskFields = z.discriminatedUnion("kind", [
   zLoopsTaskSendConfirmationEmailFields,

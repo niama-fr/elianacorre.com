@@ -4,7 +4,7 @@ import { zEbookFields } from "@ec/domain/schemas/ebooks";
 import { zIdentityFields } from "@ec/domain/schemas/identities";
 import { zLegalTextFields } from "@ec/domain/schemas/legal-texts";
 import { zLoopsTaskFields } from "@ec/domain/schemas/loops-tasks";
-import { zLoopsWebhookEventFields } from "@ec/domain/schemas/loops-webhook-events";
+import { zLoopsWebhookFields } from "@ec/domain/schemas/loops-webhooks";
 import { zNewsletterBlockFields } from "@ec/domain/schemas/newsletter-blocks";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { zNewsletterSubFields } from "@ec/domain/schemas/newsletter-subs";
@@ -21,7 +21,7 @@ export default defineSchema({
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
   loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields)).index("by_idempotency_key", ["idempotencyKey"]),
-  loopsWebhookEvents: defineTable(zodOutputToConvex(zLoopsWebhookEventFields)).index("by_webhook_id", ["webhookId"]),
+  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_webhook_id", ["webhookId"]),
   newsletterBlocks: defineTable(zodOutputToConvex(zNewsletterBlockFields))
     .index("by_email", ["email"])
     .index("by_confirm_token_hash", ["confirmTokenHash"]),

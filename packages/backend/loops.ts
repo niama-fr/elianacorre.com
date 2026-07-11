@@ -11,9 +11,8 @@ const loops = new Loops(components.loops);
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
 const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) =>
-  task.subscribed === false
-    ? await loops.unsubscribeContact(ctx, email)
-    : await loops.addContact(ctx, {
+  task.subscribed
+    ? await loops.addContact(ctx, {
         email,
         firstName,
         lastName,
@@ -21,7 +20,8 @@ const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastNa
         subscribed: true,
         userGroup: "newsletter",
         userId,
-      });
+      })
+    : await loops.unsubscribeContact(ctx, email);
 type SyncContactOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SyncContactDoc"] };
 
 const sendConfirmationEmail = async (ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) =>

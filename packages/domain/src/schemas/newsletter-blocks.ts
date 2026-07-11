@@ -24,8 +24,12 @@ export const zNewsletterBlockDoc = z.object({
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsletterBlock = zNewsletterBlockDoc;
 
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const zNewsletterBlockCreate = zNewsletterBlockFields;
+
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsletterBlocks = {
+  Create: z.infer<typeof zNewsletterBlockCreate>;
   Doc: z.infer<typeof zNewsletterBlockDoc>;
   Entity: z.infer<typeof zNewsletterBlock>;
   Fields: z.infer<typeof zNewsletterBlockFields>;

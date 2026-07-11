@@ -1,7 +1,7 @@
+import { zLoopsWebhookValues } from "@ec/domain/schemas/loops-webhooks";
 import { httpRouter } from "convex/server";
+import { Webhook, WebhookVerificationError } from "standardwebhooks";
 
-import { verifyLoopsWebhookSignature } from "../loops-webhook-signatures";
-import { parseLoopsWebhookPayload } from "../loops-webhooks";
 import { internal } from "./_generated/api";
 import { env, httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
@@ -13,24 +13,27 @@ authComponent.registerRoutes(http, createAuth, { cors: true });
 
 http.route({
   handler: httpAction(async (ctx, request) => {
-    const id = request.headers.get("webhook-id");
-    const signature = request.headers.get("webhook-signature");
-    const timestamp = request.headers.get("webhook-timestamp");
-    if (id === null || signature === null || timestamp === null) return new Response("Unauthorized", { status: 401 });
     const body = await request.text();
-    const verified = await verifyLoopsWebhookSignature({ body, id, secret: env.LOOPS_WEBHOOK_SECRET, signature, timestamp });
-    if (!verified) return new Response("Unauthorized", { status: 401 });
+    const webhookId = request.headers.get("webhook-id");
+    let values: unknown;
 
     try {
-      const event = parseLoopsWebhookPayload(body, { receivedAt: Date.now(), webhookId: id });
-      await ctx.runMutation(internal.loopsWebhooks.process, event);
-    } catch {
-      return new Response("Bad request", { status: 400 });
+      values = new Webhook(env.LOOPS_WEBHOOK_SECRET).verify(body, Object.fromEntries(request.headers.entries()));
+    } catch (error) {
+      if (error instanceof WebhookVerificationError) return new Response("Unauthorized", { status: 401 });
+      if (error instanceof SyntaxError) return new Response("Bad request", { status: 400 });
+      throw error;
     }
+
+    if (typeof values !== "object" || !values) return new Response("Bad request", { status: 400 });
+    const parsed = zLoopsWebhookValues.safeParse({ ...values, webhookId });
+    if (!parsed.success) return new Response("Bad request", { status: 400 });
+
+    await ctx.runMutation(internal.loops.processWebhook, parsed.data);
     return new Response(null, { status: 204 });
   }),
   method: "POST",
-  path: "/webhooks/loops",
+  path: "/loops/webhook",
 });
 
 http.route({

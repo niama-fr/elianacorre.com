@@ -33,31 +33,65 @@ const createBackend = () => {
 describe("Loops webhooks", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("rejects unsigned requests and accepts an authentic Loops delivery event", async () => {
+  it("rejects unsigned and stale requests, then accepts an authentic Loops webhook", async () => {
     vi.stubEnv("LOOPS_WEBHOOK_SECRET", WEBHOOK_SECRET);
     const convex = createBackend();
+    const profileId = await convex.run(async (ctx) => await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" }));
     const body = JSON.stringify({
+      contactIdentity: { email: "reader@example.com", id: "contact-1", userId: null },
+      email: { id: "message-1" },
+      eventName: "email.hardBounced",
+      eventTime: 10,
+      webhookSchemaVersion: "1.0.0",
+    });
+    await expect(convex.fetch("/loops/webhook", { body, method: "POST" })).resolves.toMatchObject({ status: 401 });
+
+    const webhookId = "webhook-authentic";
+    const timestamp = `${Math.floor(Date.now() / 1000)}`;
+    const signature = await signWebhook(webhookId, timestamp, body);
+    const staleTimestamp = `${Number(timestamp) - 301}`;
+    const staleSignature = await signWebhook(webhookId, staleTimestamp, body);
+    await expect(
+      convex.fetch("/loops/webhook", {
+        body,
+        headers: { "webhook-id": webhookId, "webhook-signature": staleSignature, "webhook-timestamp": staleTimestamp },
+        method: "POST",
+      })
+    ).resolves.toMatchObject({ status: 401 });
+    const unsupportedBody = JSON.stringify({
       contactIdentity: { email: "reader@example.com", id: "contact-1", userId: null },
       email: { id: "message-1" },
       eventName: "email.delivered",
       eventTime: 10,
       webhookSchemaVersion: "1.0.0",
     });
-    await expect(convex.fetch("/webhooks/loops", { body, method: "POST" })).resolves.toMatchObject({ status: 401 });
-
-    const id = "webhook-authentic";
-    const timestamp = "10";
-    const signature = await signWebhook(id, timestamp, body);
+    const unsupportedWebhookId = "webhook-unsupported";
+    const unsupportedSignature = await signWebhook(unsupportedWebhookId, timestamp, unsupportedBody);
     await expect(
-      convex.fetch("/webhooks/loops", {
+      convex.fetch("/loops/webhook", {
+        body: unsupportedBody,
+        headers: { "webhook-id": unsupportedWebhookId, "webhook-signature": unsupportedSignature, "webhook-timestamp": timestamp },
+        method: "POST",
+      })
+    ).resolves.toMatchObject({ status: 400 });
+    await expect(
+      convex.fetch("/loops/webhook", {
         body,
-        headers: { "webhook-id": id, "webhook-signature": signature, "webhook-timestamp": timestamp },
+        headers: { "webhook-id": webhookId, "webhook-signature": signature, "webhook-timestamp": timestamp },
         method: "POST",
       })
     ).resolves.toMatchObject({ status: 204 });
 
-    const event = await convex.run(async (ctx) => await ctx.db.query("loopsWebhookEvents").unique());
-    expect(event).toMatchObject({ email: "reader@example.com", eventName: "email.delivered", webhookId: id });
+    const state = await convex.run(async (ctx) => ({
+      block: await ctx.db.query("newsletterBlocks").unique(),
+      event: await ctx.db.query("loopsWebhooks").unique(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state).toMatchObject({
+      block: { email: "reader@example.com", reason: "bounced", source: "provider-webhook" },
+      event: { email: "reader@example.com", kind: "email.hardBounced", sentAt: 10_000, webhookId },
+      tasks: [{ profileId, subscribed: false }],
+    });
   });
 
   it("records an unsubscribe once, ends consent, and preserves e-book access", async () => {
@@ -100,19 +134,16 @@ describe("Loops webhooks", () => {
     });
     const event = {
       email: "reader@example.com",
-      eventName: "email.unsubscribed" as const,
-      eventTime: 10,
+      kind: "email.unsubscribed" as const,
       messageId: "message-1",
-      receivedAt: 11_000,
+      sentAt: 10_000,
       webhookId: "webhook-1",
     };
 
-    await expect(
-      Promise.all([convex.mutation(internal.loopsWebhooks.process, event), convex.mutation(internal.loopsWebhooks.process, event)])
-    ).resolves.toStrictEqual([{ duplicate: false }, { duplicate: true }]);
+    await Promise.all([convex.mutation(internal.loops.processWebhook, event), convex.mutation(internal.loops.processWebhook, event)]);
 
     const state = await convex.run(async (ctx) => ({
-      events: await ctx.db.query("loopsWebhookEvents").collect(),
+      events: await ctx.db.query("loopsWebhooks").collect(),
       grant: await ctx.db.get(grantId),
       subscription: await ctx.db.get(subscriptionId),
       tasks: await ctx.db.query("loopsTasks").collect(),
@@ -136,42 +167,41 @@ describe("Loops webhooks", () => {
         unsubscribedAt: null,
       });
     });
-    await convex.mutation(internal.loopsWebhooks.process, { ...event, eventTime: 5, webhookId: "older-unsubscribe" });
+    await convex.mutation(internal.loops.processWebhook, {
+      ...event,
+      sentAt: 5000,
+      webhookId: "older-unsubscribe",
+    });
     const restoredSubscription = await convex.run(async (ctx) => await ctx.db.get(restoredSubscriptionId));
     expect(restoredSubscription?.unsubscribedAt).toBeNull();
   });
 
-  it("keeps complaint suppression through duplicate and out-of-order delivery events", async () => {
+  it("keeps complaint suppression when an older bounce arrives later", async () => {
     const convex = createBackend();
     await convex.run(async (ctx) => {
       await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
     });
-    const base = { email: "reader@example.com", messageId: "message-1", receivedAt: 20_000 } as const;
+    const base = { email: "reader@example.com", messageId: "message-1" } as const;
 
-    await convex.mutation(internal.loopsWebhooks.process, {
+    await convex.mutation(internal.loops.processWebhook, {
       ...base,
-      eventName: "email.spamReported",
-      eventTime: 20,
+      kind: "email.spamReported",
+      sentAt: 20_000,
       webhookId: "complaint",
     });
-    await convex.mutation(internal.loopsWebhooks.process, {
+    await convex.mutation(internal.loops.processWebhook, {
       ...base,
-      eventName: "email.hardBounced",
-      eventTime: 30,
-      webhookId: "newer-bounce",
+      kind: "email.hardBounced",
+      sentAt: 10_000,
+      webhookId: "older-bounce",
     });
-    await convex.mutation(internal.loopsWebhooks.process, {
-      ...base,
-      eventName: "email.delivered",
-      eventTime: 10,
-      webhookId: "older-delivery",
-    });
-
     const state = await convex.run(async (ctx) => ({
       block: await ctx.db.query("newsletterBlocks").unique(),
-      events: await ctx.db.query("loopsWebhookEvents").collect(),
+      events: await ctx.db.query("loopsWebhooks").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
     }));
     expect(state.block).toMatchObject({ reason: "complained", source: "provider-webhook" });
-    expect(state.events).toHaveLength(3);
+    expect(state.events).toHaveLength(2);
+    expect(state.tasks).toMatchObject([{ subscribed: false }, { subscribed: false }]);
   });
 });
