@@ -23,6 +23,7 @@ const SUPPRESSION_SECRET = "test-suppression-secret";
 const NEWSLETTER_REQUEST_DEFAULTS = { firstName: "", requestIp: "127.0.0.1", website: "" } as const;
 
 const createRequest = (email = "reader@example.com") => ({ consent: true, email, ...NEWSLETTER_REQUEST_DEFAULTS });
+const createEbookRecoveryRequest = (email = "reader@example.com") => ({ email, requestIp: "127.0.0.1", website: "" });
 
 const createBackend = async () => {
   vi.stubEnv("CAPABILITY_SIGNING_SECRET", CAPABILITY_SECRET);
@@ -202,6 +203,200 @@ describe("newsletter subscription", () => {
     expect(state.issuances).toMatchObject([{ kind: "initial" }, { kind: "replacement" }]);
     expect(state.downloads).toHaveLength(2);
     expect(state.confirmations).toHaveLength(0);
+  });
+
+  it("issues a replacement e-book download when an active subscriber requests recovery", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+
+    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
+      accepted: true,
+    });
+
+    const state = await convex.run(async (ctx) => ({
+      downloads: await ctx.db.query("ebookDownloads").collect(),
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      subscriptions: await ctx.db.query("newsSubscriptions").collect(),
+    }));
+    expect(state.issuances).toMatchObject([{ kind: "initial" }, { kind: "replacement" }]);
+    expect(state.downloads).toHaveLength(2);
+    expect(state.subscriptions).toMatchObject([{ unsubscribedAt: null }]);
+  });
+
+  it("recovers Welcome E-book Access once a version is published after confirmation", async () => {
+    const convex = await createBackend();
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    await expect(convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) })).resolves.toStrictEqual({
+      confirmed: true,
+      downloadToken: null,
+    });
+    await publishEbook(convex);
+
+    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
+      accepted: true,
+    });
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state.issuances).toMatchObject([{ kind: "replacement" }]);
+    expect(state.tasks.filter((task) => task.kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("preserves Welcome E-book Access after ordinary unsubscription", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+    await convex.run(async (ctx) => {
+      const subscription = await ctx.db.query("newsSubscriptions").unique();
+      if (subscription === null) throw new Error("Subscription was not found");
+      await ctx.db.patch(subscription._id, { unsubscribedAt: Date.now() });
+    });
+
+    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
+      accepted: true,
+    });
+
+    const state = await convex.run(async (ctx) => ({
+      confirmations: await ctx.db.query("newsConfirmations").collect(),
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      subscriptions: await ctx.db.query("newsSubscriptions").collect(),
+    }));
+    expect(state.issuances).toMatchObject([{ kind: "initial" }, { kind: "replacement" }]);
+    expect(state.confirmations).toHaveLength(0);
+    expect(state.subscriptions).toHaveLength(1);
+    expect(state.subscriptions[0]?.unsubscribedAt).toStrictEqual(expect.any(Number));
+  });
+
+  it("does not recover an expired Former Newsletter Subscriber's e-book access", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2020-01-01T00:00:00Z"));
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const confirmation = await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+    await convex.run(async (ctx) => {
+      const subscription = await ctx.db.query("newsSubscriptions").unique();
+      if (subscription === null) throw new Error("Subscription was not found");
+      await ctx.db.patch(subscription._id, { unsubscribedAt: Date.now() });
+    });
+    vi.setSystemTime(new Date("2023-01-02T00:00:00Z"));
+
+    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
+      accepted: true,
+    });
+    await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 404 });
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state.issuances).toHaveLength(1);
+    expect(state.tasks.filter((task) => task.kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("keeps unknown and suppressed recovery requests neutral without delivery", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+    const suppressedHash = await hashCanonicalEmail({ email: "reader@example.com", secret: SUPPRESSION_SECRET });
+    await convex.run(async (ctx) => {
+      await ctx.db.insert("newsSuppressions", { canonicalEmailHash: suppressedHash });
+    });
+
+    await expect(
+      Promise.all([
+        convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest("unknown@example.com")),
+        convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest("reader@example.com")),
+      ])
+    ).resolves.toStrictEqual([{ accepted: true }, { accepted: true }]);
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state.issuances).toHaveLength(1);
+    expect(state.tasks.filter((task) => task.kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("revokes Welcome E-book Access when the Profile is erased", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const confirmation = await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+    await convex.run(async (ctx) => {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
+        .unique();
+      if (profile === null) throw new Error("Profile was not found");
+      await ctx.db.delete(profile._id);
+    });
+
+    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
+      accepted: true,
+    });
+    await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 404 });
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state.issuances).toHaveLength(1);
+    expect(state.tasks.filter((task) => task.kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("records the current published version for each recovery, including publication rollback", async () => {
+    const convex = await createBackend();
+    const firstEbookId = await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+    const secondEbookId = await convex.run(async (ctx) => {
+      const admin = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
+        .unique();
+      if (admin === null) throw new Error("Admin profile was not found");
+      const storageId = await ctx.storage.store(new Blob(["%PDF-1.7 v2"], { type: "application/pdf" }));
+      await ctx.db.patch(firstEbookId, { status: "archived" });
+      return await ctx.db.insert("ebooks", {
+        fileName: "welcome-v2.pdf",
+        publishedAt: Date.now(),
+        publishedBy: admin._id,
+        status: "published",
+        storageId,
+        title: "Welcome v2",
+        updatedAt: Date.now(),
+        uploadedBy: admin._id,
+        version: 2,
+      });
+    });
+
+    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+    await convex.run(async (ctx) => {
+      await ctx.db.patch(secondEbookId, { status: "archived" });
+      await ctx.db.patch(firstEbookId, { status: "published" });
+    });
+    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+
+    const issuances = await convex.run(async (ctx) => await ctx.db.query("ebookIssuances").collect());
+    expect(issuances.map((issuance) => issuance.ebookId)).toStrictEqual([firstEbookId, secondEbookId, firstEbookId]);
+  });
+
+  it("keeps each e-book capability usable until its own 72-hour expiry", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const confirmation = await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+
+    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+
+    await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 200 });
   });
 
   it("creates a fresh consent period for a former subscriber", async () => {

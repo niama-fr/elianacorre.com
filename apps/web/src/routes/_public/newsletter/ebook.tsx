@@ -37,9 +37,15 @@ function NewsletterEbookPage() {
         title: ["Votre téléchargement", "va commencer"],
       }
     : {
+        btn: {
+          children: "Recevoir un nouveau lien",
+          icon: "icon-[lucide--mail]",
+          kind: "link",
+          to: "/newsletter/recuperer-ebook",
+        },
         content: [
           `Il a peut-être expiré ou été remplacé par une demande plus récente.`,
-          `N'hésitez pas à obtenir un nouveau lien personnel en réitérant votre démarche d'inscription depuis la section newsletter.`,
+          `Vous pouvez demander un nouveau lien personnel sans vous réinscrire à la newsletter.`,
         ],
         title: ["Ce lien n’est", "plus valide"],
       };

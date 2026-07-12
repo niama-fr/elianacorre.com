@@ -1,3 +1,4 @@
+import { zEbookRecoveryRequest } from "@ec/domain/schemas/ebook-recoveries";
 import { zNewsSubscriptionUpsert } from "@ec/domain/schemas/news-subscriptions";
 import z from "zod";
 
@@ -18,8 +19,9 @@ import {
 } from "../news-subscriptions";
 import { getNewsSuppressionByEmail } from "../news-suppressions";
 import { requireActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
-import { tryConsumeNewsletterRateLimit } from "../newsletter-rate-limits";
+import { tryConsumeEbookRecoveryRateLimit, tryConsumeNewsletterRateLimit } from "../newsletter-rate-limits";
 import { createContactProfile, getProfile, getProfileIdByEmail } from "../profiles";
+import { hasWelcomeEbookAccess } from "../welcome-ebook-access";
 import { zMutation } from "./zod";
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
@@ -76,6 +78,23 @@ export const subscribe = zMutation({
     if (subscription) await patchNewsSubscription(ctx, subscriptionId, { legalBundleId, requestedAt: now });
 
     await requestNewsConfirmationSubscription(ctx, { profileId, restriction, subscriptionId });
+    return { accepted: true as const };
+  },
+});
+
+export const requestEbookRecovery = zMutation({
+  args: zEbookRecoveryRequest,
+  handler: async (ctx, { email, requestIp, website }) => {
+    if (website !== "") return { accepted: true as const };
+    const isAllowed = await tryConsumeEbookRecoveryRateLimit(ctx, { email, requestIp });
+    if (!isAllowed) return { accepted: true as const };
+
+    if (await getNewsSuppressionByEmail(ctx, email)) return { accepted: true as const };
+    const profileId = await getProfileIdByEmail(ctx, email);
+    if (!profileId || (await getActiveNewsRestriction(ctx, profileId))) return { accepted: true as const };
+    if (!(await hasWelcomeEbookAccess(ctx, { now: Date.now(), profileId }))) return { accepted: true as const };
+
+    await issueReplacementEbookDownload(ctx, { profileId, sendEmail: true });
     return { accepted: true as const };
   },
 });

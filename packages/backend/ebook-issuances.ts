@@ -7,9 +7,11 @@ import { env, type MutationCtx, type QueryCtx } from "./convex/_generated/server
 import { createEbookDownload, getEbookDownload } from "./ebook-downloads";
 import { getPublishedEbook } from "./ebooks";
 import { enqueueSendEbookEmail } from "./loops-tasks";
+import { hasWelcomeEbookAccess } from "./welcome-ebook-access";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 export const EBOOK_DOWNLOAD_TTL_MS = 72 * 60 * 60 * 1000;
+// Each capability may be downloaded repeatedly until it expires. A replacement creates an independent capability rather than revoking one.
 
 // GET ----------------------------------------------------------------------------------------------------------------------------------
 export const getEbookIssuance = async (ctx: QueryCtx, id: Id<"ebookIssuances">) => await ctx.db.get("ebookIssuances", id);
@@ -22,7 +24,9 @@ export const getValidEbookIssuanceByToken = async (ctx: QueryCtx, { now, token }
   const download = await getEbookDownload(ctx, downloadId);
   if (!download || download._creationTime + EBOOK_DOWNLOAD_TTL_MS <= now) return null;
 
-  return await getEbookIssuance(ctx, download.ebookIssuanceId);
+  const issuance = await getEbookIssuance(ctx, download.ebookIssuanceId);
+  if (!issuance || !(await hasWelcomeEbookAccess(ctx, { now, profileId: issuance.profileId }))) return null;
+  return issuance;
 };
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------

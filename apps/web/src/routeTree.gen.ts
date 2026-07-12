@@ -25,6 +25,7 @@ import { Route as PublicConfidentialiteIndexRouteImport } from './routes/_public
 import { Route as PublicCarnetsDeVoyageIndexRouteImport } from './routes/_public/carnets-de-voyage/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PublicOeuvresSlugRouteImport } from './routes/_public/oeuvres/$slug'
+import { Route as PublicNewsletterRecupererEbookRouteImport } from './routes/_public/newsletter/recuperer-ebook'
 import { Route as PublicNewsletterEbookRouteImport } from './routes/_public/newsletter/ebook'
 import { Route as PublicNewsletterConfirmationRouteImport } from './routes/_public/newsletter/confirmation'
 
@@ -110,6 +111,12 @@ const PublicOeuvresSlugRoute = PublicOeuvresSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => PublicOeuvresRoute,
 } as any)
+const PublicNewsletterRecupererEbookRoute =
+  PublicNewsletterRecupererEbookRouteImport.update({
+    id: '/newsletter/recuperer-ebook',
+    path: '/newsletter/recuperer-ebook',
+    getParentRoute: () => PublicRoute,
+  } as any)
 const PublicNewsletterEbookRoute = PublicNewsletterEbookRouteImport.update({
   id: '/newsletter/ebook',
   path: '/newsletter/ebook',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
   '/newsletter/ebook': typeof PublicNewsletterEbookRoute
+  '/newsletter/recuperer-ebook': typeof PublicNewsletterRecupererEbookRoute
   '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/carnets-de-voyage/': typeof PublicCarnetsDeVoyageIndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
   '/newsletter/ebook': typeof PublicNewsletterEbookRoute
+  '/newsletter/recuperer-ebook': typeof PublicNewsletterRecupererEbookRoute
   '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/carnets-de-voyage': typeof PublicCarnetsDeVoyageIndexRoute
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_public/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
   '/_public/newsletter/ebook': typeof PublicNewsletterEbookRoute
+  '/_public/newsletter/recuperer-ebook': typeof PublicNewsletterRecupererEbookRoute
   '/_public/oeuvres/$slug': typeof PublicOeuvresSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_public/carnets-de-voyage/': typeof PublicCarnetsDeVoyageIndexRoute
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/newsletter/confirmation'
     | '/newsletter/ebook'
+    | '/newsletter/recuperer-ebook'
     | '/oeuvres/$slug'
     | '/api/auth/$'
     | '/carnets-de-voyage/'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/newsletter/confirmation'
     | '/newsletter/ebook'
+    | '/newsletter/recuperer-ebook'
     | '/oeuvres/$slug'
     | '/api/auth/$'
     | '/carnets-de-voyage'
@@ -228,6 +240,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_public/newsletter/confirmation'
     | '/_public/newsletter/ebook'
+    | '/_public/newsletter/recuperer-ebook'
     | '/_public/oeuvres/$slug'
     | '/api/auth/$'
     | '/_public/carnets-de-voyage/'
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicOeuvresSlugRouteImport
       parentRoute: typeof PublicOeuvresRoute
     }
+    '/_public/newsletter/recuperer-ebook': {
+      id: '/_public/newsletter/recuperer-ebook'
+      path: '/newsletter/recuperer-ebook'
+      fullPath: '/newsletter/recuperer-ebook'
+      preLoaderRoute: typeof PublicNewsletterRecupererEbookRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/newsletter/ebook': {
       id: '/_public/newsletter/ebook'
       path: '/newsletter/ebook'
@@ -396,6 +416,7 @@ interface PublicRouteChildren {
   PublicIndexRoute: typeof PublicIndexRoute
   PublicNewsletterConfirmationRoute: typeof PublicNewsletterConfirmationRoute
   PublicNewsletterEbookRoute: typeof PublicNewsletterEbookRoute
+  PublicNewsletterRecupererEbookRoute: typeof PublicNewsletterRecupererEbookRoute
   PublicCarnetsDeVoyageIndexRoute: typeof PublicCarnetsDeVoyageIndexRoute
   PublicConfidentialiteIndexRoute: typeof PublicConfidentialiteIndexRoute
   PublicContactIndexRoute: typeof PublicContactIndexRoute
@@ -409,6 +430,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicIndexRoute: PublicIndexRoute,
   PublicNewsletterConfirmationRoute: PublicNewsletterConfirmationRoute,
   PublicNewsletterEbookRoute: PublicNewsletterEbookRoute,
+  PublicNewsletterRecupererEbookRoute: PublicNewsletterRecupererEbookRoute,
   PublicCarnetsDeVoyageIndexRoute: PublicCarnetsDeVoyageIndexRoute,
   PublicConfidentialiteIndexRoute: PublicConfidentialiteIndexRoute,
   PublicContactIndexRoute: PublicContactIndexRoute,
