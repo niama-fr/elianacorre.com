@@ -8,12 +8,14 @@ import type { QueryCtx } from "./convex/_generated/server";
 import type { AdminMutationCtx } from "./convex/zod";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
+export const getEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => await ctx.db.get("ebooks", id);
+
 export const getLatestEbook = async (ctx: QueryCtx) => await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
 
 export const getPublishedEbook = async (ctx: QueryCtx) =>
   await ctx.db
     .query("ebooks")
-    .withIndex("by_status", (query) => query.eq("status", "published"))
+    .withIndex("by_status", (q) => q.eq("status", "published"))
     .unique();
 
 // REQUIRE ---------------------------------------------------------------------------------------------------------------------------------

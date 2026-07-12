@@ -9,12 +9,15 @@ import { v } from "convex/values";
 const app = defineApp({
   env: {
     BETTER_AUTH_SECRET: v.string(),
+    CAPABILITY_SIGNING_SECRET: v.string(),
     GOOGLE_CLIENT_ID: v.string(),
     GOOGLE_CLIENT_SECRET: v.string(),
     LOOPS_API_KEY: v.string(),
     LOOPS_CONFIRMATION_TRANSACTIONAL_ID: v.string(),
     LOOPS_EBOOK_TRANSACTIONAL_ID: v.string(),
+    LOOPS_WEBHOOK_SECRET: v.string(),
     SITE_URL: v.string(),
+    SUPPRESSION_HASH_SECRET: v.string(),
     WHITELIST_SEED: v.string(),
   },
 });

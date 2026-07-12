@@ -1,11 +1,10 @@
-import { hashToken, isConvexErrorCode } from "@ec/domain/helpers/utils";
+import { isConvexErrorCode } from "@ec/domain/helpers/errors";
 import { zEbookCreate } from "@ec/domain/schemas/ebooks";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { getValidEbookGrant } from "../ebook-grants";
-import { createEbook, getPublishedEbook, listEbooks, publishEbook } from "../ebooks";
-import { hasConfirmedNewsletterSub } from "../newsletter-subs";
+import { getValidEbookIssuanceByToken } from "../ebook-issuances";
+import { createEbook, getEbook, listEbooks, publishEbook } from "../ebooks";
 import { zAdminMutation, zAdminQuery, zInternalQuery } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
@@ -42,10 +41,7 @@ export const publish = zAdminMutation({
 export const resolveDownload = zInternalQuery({
   args: { token: z.string() },
   handler: async (ctx, { token }) => {
-    const grant = await getValidEbookGrant(ctx, { now: Date.now(), tokenHash: await hashToken(token) });
-    if (!grant) return null;
-
-    const hasConfirmedSub = await hasConfirmedNewsletterSub(ctx, grant.profileId);
-    return hasConfirmedSub ? await getPublishedEbook(ctx) : null;
+    const issuance = await getValidEbookIssuanceByToken(ctx, { now: Date.now(), token });
+    return issuance ? await getEbook(ctx, issuance.ebookId) : null;
   },
 });

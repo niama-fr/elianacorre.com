@@ -1,7 +1,7 @@
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 
-// EMAILS-----------------------------------------------------------------------------------------------------------------------------------
+// EMAILS ----------------------------------------------------------------------------------------------------------------------------------
 export const zCanonicalEmail = z.string().trim().toLowerCase().pipe(z.email());
 export const zCanonicalEmailValue = z.string().trim().toLowerCase().pipe(z.email("Ce champ doit être un courriel valide"));
 

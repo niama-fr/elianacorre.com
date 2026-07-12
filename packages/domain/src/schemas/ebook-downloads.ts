@@ -1,22 +1,19 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
-
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookGrantFields = z.object({
-  issuedAt: z.number(),
-  profileId: zid("profiles"),
-  tokenHash: z.string(),
+export const zEbookDownloadFields = z.object({
+  ebookIssuanceId: zid("ebookIssuances"),
 });
-export const zEbookGrantDoc = z.object({ ...zDocCommon("ebookGrants").shape, ...zEbookGrantFields.shape });
+export const zEbookDownloadDoc = z.object({ ...zDocCommon("ebookDownloads").shape, ...zEbookDownloadFields.shape });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookGrantCreate = zEbookGrantFields;
+export const zEbookDownloadCreate = zEbookDownloadFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type EbookGrants = {
-  Create: z.infer<typeof zEbookGrantCreate>;
-  Doc: z.infer<typeof zEbookGrantDoc>;
-  Fields: z.infer<typeof zEbookGrantFields>;
+export type EbookDownloads = {
+  Create: z.infer<typeof zEbookDownloadCreate>;
+  Doc: z.infer<typeof zEbookDownloadDoc>;
+  Fields: z.infer<typeof zEbookDownloadFields>;
 };

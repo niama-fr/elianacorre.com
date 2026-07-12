@@ -1,5 +1,6 @@
 import { Loops } from "@devwithbobby/loops";
-import { getLink } from "@ec/domain/helpers/utils";
+import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
+import { getLink } from "@ec/domain/helpers/links";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 
@@ -10,14 +11,28 @@ import { env, type ActionCtx } from "./convex/_generated/server";
 const loops = new Loops(components.loops);
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
-const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId } }: SyncContactOpts) =>
-  await loops.addContact(ctx, { email, firstName, lastName, source: "elianacorre.com", subscribed: true, userGroup: "newsletter", userId });
+const syncContact = async (ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) =>
+  task.subscribed
+    ? await loops.addContact(ctx, {
+        email,
+        firstName,
+        lastName,
+        source: "elianacorre.com",
+        subscribed: true,
+        userGroup: "newsletter",
+        userId,
+      })
+    : await loops.unsubscribeContact(ctx, email);
 type SyncContactOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SyncContactDoc"] };
 
 const sendConfirmationEmail = async (ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) =>
   await loops.sendTransactional(ctx, {
     dataVariables: {
-      confirmationUrl: getLink({ base: env.SITE_URL, path: "/newsletter/confirmation", token: task.linkToken }),
+      confirmationUrl: getLink({
+        base: env.SITE_URL,
+        path: "/newsletter/confirmation",
+        token: await createCapabilityToken({ capabilityId: task.newsConfirmationId, secret: env.CAPABILITY_SIGNING_SECRET }),
+      }),
       firstName: profile.firstName,
     },
     email: profile.email,
@@ -29,7 +44,11 @@ type SendConfirmationEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["S
 const sendEbookEmail = async (ctx: ActionCtx, { profile, task }: SendEbookEmailOpts) =>
   await loops.sendTransactional(ctx, {
     dataVariables: {
-      downloadUrl: getLink({ base: env.SITE_URL, path: "/newsletter/ebook", token: task.linkToken }),
+      downloadUrl: getLink({
+        base: env.SITE_URL,
+        path: "/newsletter/ebook",
+        token: await createCapabilityToken({ capabilityId: task.ebookDownloadId, secret: env.CAPABILITY_SIGNING_SECRET }),
+      }),
       firstName: profile.firstName,
     },
     email: profile.email,

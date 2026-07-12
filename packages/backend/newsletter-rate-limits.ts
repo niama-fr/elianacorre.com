@@ -1,5 +1,5 @@
 import { MINUTE, RateLimiter } from "@convex-dev/rate-limiter";
-import type { NewsletterSubs } from "@ec/domain/schemas/newsletter-subs";
+import type { NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
 
 import { components } from "./convex/_generated/api";
 import type { MutationCtx } from "./convex/_generated/server";
@@ -22,4 +22,4 @@ export const tryConsumeNewsletterRateLimit = async (ctx: MutationCtx, { email, r
 
   return emailLimit.ok && ipLimit.ok;
 };
-type TryConsumeNewsletterRateLimitOpts = Pick<NewsletterSubs["Upsert"], "email" | "requestIp">;
+type TryConsumeNewsletterRateLimitOpts = Pick<NewsSubscriptions["Upsert"], "email" | "requestIp">;

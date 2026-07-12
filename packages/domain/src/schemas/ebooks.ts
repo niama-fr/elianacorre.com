@@ -1,8 +1,7 @@
 import { PDF_ACCEPTED_TYPES, MAX_SIZE } from "@ec/domain/helpers/storage";
+import { zDocCommon, zStorageRef } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
-
-import { zDocCommon, zStorageRef } from "./utils";
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zEbookStatus = z.literal(["archived", "draft", "published"]);

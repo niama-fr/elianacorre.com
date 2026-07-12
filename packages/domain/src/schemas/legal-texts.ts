@@ -1,10 +1,10 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
-
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
-export const zLegalTextKind = z.literal(["newsletter-consent", "privacy-notice"]);
+const kinds = ["newsletterConsent", "privacyNotice"] as const;
+export const zLegalTextKind = z.literal(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zLegalTextFields = z.object({

@@ -3,7 +3,7 @@ import z from "zod";
 import { MAX_SIZE, PDF_ACCEPTED_TYPES } from "../helpers/storage";
 import { zDocCommon } from "./utils";
 
-// CONTENT_TYPES ---------------------------------------------------------------------------------------------------------------------------
+// CONTENT TYPES ---------------------------------------------------------------------------------------------------------------------------
 export const zStorageContentTypePdf = z.literal(PDF_ACCEPTED_TYPES);
 export const zStorageContentType = z.union([zStorageContentTypePdf]);
 
@@ -14,7 +14,7 @@ export const zStorageFields = z.object({
   size: z.int().nonnegative().max(MAX_SIZE),
 });
 export const zStorageDoc = z.object({ ...zDocCommon("_storage").shape, ...zStorageFields.shape });
-export const zStoragePdfDoc = zStorageDoc.extend({ contentType: zStorageContentTypePdf });
+export const zStoragePdfDoc = z.object({ ...zStorageDoc.shape, contentType: zStorageContentTypePdf });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Storage = {

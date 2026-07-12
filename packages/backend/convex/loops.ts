@@ -1,5 +1,6 @@
 import { isLoopsTaskPending } from "@ec/domain/helpers/loops-tasks";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
+import { zLoopsWebhookCreate } from "@ec/domain/schemas/loops-webhooks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { zid } from "convex-helpers/server/zod4";
 import { ConvexError, v } from "convex/values";
@@ -7,6 +8,7 @@ import z from "zod";
 
 import { executeTask } from "../loops";
 import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../loops-tasks";
+import { processLoopsWebhook } from "../loops-webhooks";
 import { getProfile } from "../profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
@@ -45,7 +47,7 @@ export const markTaskFailed = zInternalMutation({
   handler: async (ctx, { error, loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!isLoopsTaskPending(task)) return;
-    await markLoopsTaskFailed(ctx, loopsTaskId, { error });
+    await markLoopsTaskFailed(ctx, loopsTaskId, { error, now: Date.now() });
   },
 });
 
@@ -55,6 +57,13 @@ export const markTaskSucceeded = zInternalMutation({
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!isLoopsTaskPending(task)) return;
     await markLoopsTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });
+  },
+});
+
+export const processWebhook = zInternalMutation({
+  args: zLoopsWebhookCreate,
+  handler: async (ctx, create) => {
+    await processLoopsWebhook(ctx, create);
   },
 });
 

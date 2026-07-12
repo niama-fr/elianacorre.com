@@ -36,7 +36,7 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 **Welcome E-book Access**: The continuing right granted after email confirmation to obtain the current version of the free e-book. A personal 72-hour download is offered immediately on the confirmation success page and sent by email; the right to request a replacement link does not expire and is not revoked by newsletter unsubscription. A verified request to erase the person's identifying data also erases this right. _Avoid_: Permanent download link, account entitlement
 
-**E-book Download Capability**: A temporary bearer credential that permits its holder to download the current published e-book for 72 hours. It proves possession of a valid download link, while Welcome E-book Access determines whether the associated Profile is entitled to use it. _Avoid_: Newsletter capability, permanent download access
+**E-book Download Capability**: A temporary bearer credential that permits its holder to download the published e-book version recorded by its issuance for 72 hours. It proves possession of a valid download link, while Welcome E-book Access determines whether the associated Profile is entitled to use it. A replacement issuance always records the current published version. _Avoid_: Newsletter capability, permanent download access
 
 **Suppression Record**: The minimal non-marketing record retained to prevent email delivery after a person objects to future prospecting. It is separate from the subscriber profile and cannot be used to identify or contact the person for another purpose; a public subscription attempt cannot remove it, and lifting the objection requires a verified privacy request. _Avoid_: Newsletter subscriber, active contact
 

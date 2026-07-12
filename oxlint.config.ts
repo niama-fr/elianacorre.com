@@ -12,6 +12,13 @@ export default defineConfig({
   },
   overrides: [
     {
+      // Convex mutations sometimes must serially invalidate related capabilities in one transaction.
+      files: ["packages/backend/**/*.ts"],
+      rules: {
+        "no-await-in-loop": "off",
+      },
+    },
+    {
       files: ["packages/backend/convex/**/*.ts"],
       rules: {
         "unicorn/filename-case": "off",

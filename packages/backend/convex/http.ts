@@ -1,13 +1,40 @@
+import { zLoopsWebhookValues } from "@ec/domain/schemas/loops-webhooks";
 import { httpRouter } from "convex/server";
+import { Webhook, WebhookVerificationError } from "standardwebhooks";
 
 import { internal } from "./_generated/api";
-import { httpAction } from "./_generated/server";
+import { env, httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 
 // HTTP ------------------------------------------------------------------------------------------------------------------------------------
 const http = httpRouter();
 
 authComponent.registerRoutes(http, createAuth, { cors: true });
+
+http.route({
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.text();
+    const webhookId = request.headers.get("webhook-id");
+    let values: unknown;
+
+    try {
+      values = new Webhook(env.LOOPS_WEBHOOK_SECRET).verify(body, Object.fromEntries(request.headers.entries()));
+    } catch (error) {
+      if (error instanceof WebhookVerificationError) return new Response("Unauthorized", { status: 401 });
+      if (error instanceof SyntaxError) return new Response("Bad request", { status: 400 });
+      throw error;
+    }
+
+    if (typeof values !== "object" || !values) return new Response("Bad request", { status: 400 });
+    const parsed = zLoopsWebhookValues.safeParse({ ...values, webhookId });
+    if (!parsed.success) return new Response("Bad request", { status: 400 });
+
+    await ctx.runMutation(internal.loops.processWebhook, parsed.data);
+    return new Response(null, { status: 204 });
+  }),
+  method: "POST",
+  path: "/loops/webhook",
+});
 
 http.route({
   handler: httpAction(async (ctx, request) => {
