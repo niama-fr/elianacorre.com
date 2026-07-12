@@ -1,9 +1,9 @@
+import { zCanonicalEmail, zDocCommon } from "@ec/domain/schemas/utils";
 import z from "zod";
 
-import { zCanonicalEmail, zDocCommon } from "./utils";
-
-// ENUMS -----------------------------------------------------------------------------------------------------------------------------------
-export const zLoopsWebhookKind = z.literal(["email.hardBounced", "email.spamReported", "email.unsubscribed"]);
+// NAME ------------------------------------------------------------------------------------------------------------------------------------
+const kinds = ["email.hardBounced", "email.spamReported", "email.unsubscribed"] as const;
+export const zLoopsWebhookKind = z.literal(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zLoopsWebhookFields = z.object({

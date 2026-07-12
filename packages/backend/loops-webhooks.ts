@@ -1,10 +1,10 @@
 import type { LoopsWebhooks } from "@ec/domain/schemas/loops-webhooks";
 
 import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
-import { enqueueSyncContact } from "./loops-tasks";
-import { recordProviderNewsRestriction } from "./news-restrictions";
-import { getCurrentNewsSubscription, patchNewsSubscription } from "./news-subscriptions";
-import { getProfileByEmail } from "./profiles";
+import { enqueueSyncContactForUnsubscription } from "./loops-tasks";
+import { markNewsRestrictionByProvider } from "./news-restrictions";
+import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "./news-subscriptions";
+import { getProfileIdByEmail } from "./profiles";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getLoopsWebhookById = async (ctx: QueryCtx, webhookId: string) =>
@@ -21,20 +21,18 @@ export const processLoopsWebhook = async (ctx: MutationCtx, { email, kind, messa
   const existing = await getLoopsWebhookById(ctx, webhookId);
   if (existing) return;
 
-  await createLoopsWebhook(ctx, { email, kind, messageId, occurredAt, webhookId });
-  const profile = await getProfileByEmail(ctx, email);
-  if (!profile) return;
+  const id = await createLoopsWebhook(ctx, { email, kind, messageId, occurredAt, webhookId });
+  const profileId = await getProfileIdByEmail(ctx, email);
+  if (!profileId) return;
 
   if (kind === "email.unsubscribed") {
-    const subscription = await getCurrentNewsSubscription(ctx, profile._id);
+    const subscription = await getCurrentNewsSubscription(ctx, profileId);
     if (!subscription || occurredAt < subscription.requestedAt) return;
-    await patchNewsSubscription(ctx, subscription._id, { unsubscribedAt: occurredAt });
-  } else
-    await recordProviderNewsRestriction(ctx, {
-      occurredAt,
-      profileId: profile._id,
-      reason: kind === "email.hardBounced" ? "permanentBounce" : "spamComplaint",
-    });
+    await markNewsSubscriptionUnsubscribed(ctx, subscription._id, occurredAt);
+  } else {
+    const reason = kind === "email.hardBounced" ? "permanentBounce" : "spamComplaint";
+    await markNewsRestrictionByProvider(ctx, { occurredAt, profileId, reason });
+  }
 
-  await enqueueSyncContact(ctx, { idempotencyKey: `loops-webhook-contact-sync:${webhookId}`, profileId: profile._id, subscribed: false });
+  await enqueueSyncContactForUnsubscription(ctx, { profileId, webhookId: id });
 };

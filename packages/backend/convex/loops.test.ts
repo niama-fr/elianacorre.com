@@ -1,5 +1,6 @@
 import { register as registerAggregate } from "@convex-dev/aggregate/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
+import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -16,6 +17,7 @@ vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
 const loopsModules = import.meta.glob("../node_modules/@devwithbobby/loops/src/component/**/*.ts");
 const WEBHOOK_SECRET_BYTES = new TextEncoder().encode("test-signing-secret");
 const WEBHOOK_SECRET = `whsec_${btoa(String.fromCodePoint(...WEBHOOK_SECRET_BYTES))}`;
+const CAPABILITY_SECRET = "test-capability-secret";
 
 const signWebhook = async (id: string, timestamp: string, body: string) => {
   const key = await crypto.subtle.importKey("raw", WEBHOOK_SECRET_BYTES, { hash: "SHA-256", name: "HMAC" }, false, ["sign"]);
@@ -89,25 +91,26 @@ describe("Loops webhooks", () => {
     }));
     expect(state).toMatchObject({
       event: { email: "reader@example.com", kind: "email.hardBounced", occurredAt: 10_000, webhookId },
-      restriction: { reason: "permanentBounce", source: "provider" },
+      restriction: { reason: "permanentBounce", restrictedBy: "provider" },
       tasks: [{ profileId, subscribed: false }],
     });
   });
 
   it("records an unsubscribe once, ends consent, and preserves e-book access", async () => {
+    vi.stubEnv("CAPABILITY_SIGNING_SECRET", CAPABILITY_SECRET);
     const convex = createBackend();
-    const { grantId, profileId, subscriptionId } = await convex.run(async (ctx) => {
+    const { ebookDownloadId, profileId, subscriptionId } = await convex.run(async (ctx) => {
       const insertedProfileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
       const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
       const privacyNoticeId = await ctx.db.insert("legalTexts", {
         content: "privacy",
-        kind: "privacy-notice",
+        kind: "privacyNotice",
         publishedAt: 1,
         publishedBy: adminId,
       });
       const newsletterConsentId = await ctx.db.insert("legalTexts", {
         content: "consent",
-        kind: "newsletter-consent",
+        kind: "newsletterConsent",
         publishedAt: 1,
         publishedBy: adminId,
       });
@@ -124,9 +127,23 @@ describe("Loops webhooks", () => {
         requestedAt: 1,
         unsubscribedAt: null,
       });
-      const insertedGrantId = await ctx.db.insert("ebookGrants", { profileId: insertedProfileId });
-      return { grantId: insertedGrantId, profileId: insertedProfileId, subscriptionId: insertedSubscriptionId };
+      const storageId = await ctx.storage.store(new Blob(["e-book"], { type: "application/pdf" }));
+      const ebookId = await ctx.db.insert("ebooks", {
+        fileName: "welcome.pdf",
+        publishedAt: 2,
+        publishedBy: adminId,
+        status: "published",
+        storageId,
+        title: "Welcome",
+        updatedAt: 2,
+        uploadedBy: adminId,
+        version: 1,
+      });
+      const ebookIssuanceId = await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId: insertedProfileId });
+      const insertedEbookDownloadId = await ctx.db.insert("ebookDownloads", { ebookIssuanceId });
+      return { ebookDownloadId: insertedEbookDownloadId, profileId: insertedProfileId, subscriptionId: insertedSubscriptionId };
     });
+    const ebookDownloadToken = await createCapabilityToken({ capabilityId: ebookDownloadId, secret: CAPABILITY_SECRET });
     const event = {
       email: "reader@example.com",
       kind: "email.unsubscribed" as const,
@@ -139,16 +156,15 @@ describe("Loops webhooks", () => {
 
     const state = await convex.run(async (ctx) => ({
       events: await ctx.db.query("loopsWebhooks").collect(),
-      grant: await ctx.db.get(grantId),
       subscription: await ctx.db.get(subscriptionId),
       tasks: await ctx.db.query("loopsTasks").collect(),
     }));
     expect({
       eventCount: state.events.length,
-      grantId: state.grant?._id,
       tasks: state.tasks,
       unsubscribedAt: state.subscription?.unsubscribedAt,
-    }).toMatchObject({ eventCount: 1, grantId, tasks: [{ profileId, subscribed: false }], unsubscribedAt: 10_000 });
+    }).toMatchObject({ eventCount: 1, tasks: [{ profileId, subscribed: false }], unsubscribedAt: 10_000 });
+    await expect(convex.fetch(`/newsletter/ebook?token=${ebookDownloadToken}`)).resolves.toMatchObject({ status: 200 });
 
     const restoredSubscriptionId = await convex.run(async (ctx) => {
       const previous = await ctx.db.get(subscriptionId);
@@ -198,7 +214,7 @@ describe("Loops webhooks", () => {
       restriction: await ctx.db.query("newsRestrictions").unique(),
       tasks: await ctx.db.query("loopsTasks").collect(),
     }));
-    expect(state.restriction).toMatchObject({ reason: "spamComplaint", source: "provider" });
+    expect(state.restriction).toMatchObject({ reason: "spamComplaint", restrictedBy: "provider" });
     expect(state.events).toHaveLength(2);
     expect(state.tasks).toMatchObject([{ subscribed: false }, { subscribed: false }]);
   });

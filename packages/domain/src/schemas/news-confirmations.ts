@@ -1,29 +1,32 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
+// KIND ------------------------------------------------------------------------------------------------------------------------------------
+const kinds = ["subscription", "reactivation"] as const;
+export const zNewsConfirmationKind = z.literal(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-const zNewsConfirmationCommonFields = z.object({
-  expiresAt: z.number(),
+const zCommonFields = z.object({
   subscriptionId: zid("newsSubscriptions"),
 });
-
-const zNewsSubscriptionConfirmationFields = zNewsConfirmationCommonFields.extend({
-  kind: z.literal("confirmSubscription"),
+const zSubscriptionFields = z.object({
+  ...zCommonFields.shape,
+  kind: z.literal(kinds[0]),
+  restrictionId: z.nullable(zid("newsRestrictions")),
+  restrictionVersion: z.nullable(z.number()),
 });
-
-const zNewsDeliveryConfirmationFields = zNewsConfirmationCommonFields.extend({
-  expectedRestrictionVersion: z.number(),
-  kind: z.literal("restoreDelivery"),
+const zReactivationFields = z.object({
+  ...zCommonFields.shape,
+  kind: z.literal(kinds[1]),
   restrictionId: zid("newsRestrictions"),
+  restrictionVersion: z.number(),
 });
+export const zNewsConfirmationFields = z.discriminatedUnion("kind", [zSubscriptionFields, zReactivationFields]);
 
-export const zNewsConfirmationFields = z.discriminatedUnion("kind", [zNewsSubscriptionConfirmationFields, zNewsDeliveryConfirmationFields]);
-
-const zNewsSubscriptionConfirmationDoc = zNewsSubscriptionConfirmationFields.extend(zDocCommon("newsConfirmations").shape);
-const zNewsDeliveryConfirmationDoc = zNewsDeliveryConfirmationFields.extend(zDocCommon("newsConfirmations").shape);
-export const zNewsConfirmationDoc = z.discriminatedUnion("kind", [zNewsSubscriptionConfirmationDoc, zNewsDeliveryConfirmationDoc]);
+const zSubscriptionDoc = z.object({ ...zDocCommon("newsConfirmations").shape, ...zSubscriptionFields.shape });
+const zReactivationDoc = z.object({ ...zDocCommon("newsConfirmations").shape, ...zReactivationFields.shape });
+export const zNewsConfirmationDoc = z.discriminatedUnion("kind", [zSubscriptionDoc, zReactivationDoc]);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsConfirmationCreate = zNewsConfirmationFields;
@@ -33,4 +36,6 @@ export type NewsConfirmations = {
   Create: z.infer<typeof zNewsConfirmationCreate>;
   Doc: z.infer<typeof zNewsConfirmationDoc>;
   Fields: z.infer<typeof zNewsConfirmationFields>;
+  ReactivationDoc: z.infer<typeof zReactivationDoc>;
+  SubscriptionDoc: z.infer<typeof zSubscriptionDoc>;
 };

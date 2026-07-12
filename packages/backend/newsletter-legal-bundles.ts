@@ -13,6 +13,6 @@ export const getActiveNewsletterLegalBundle = async (ctx: QueryCtx) =>
 // REQUIRE ---------------------------------------------------------------------------------------------------------------------------------
 export const requireActiveNewsletterLegalBundle = async (ctx: QueryCtx) => {
   const doc = await getActiveNewsletterLegalBundle(ctx);
-  if (!doc) throw new ConvexError("NO_ACTIVE_NEWLETTER_LEGAL_BUNDLE");
+  if (!doc) throw new ConvexError("NO_ACTIVE_NEWSLETTER_LEGAL_BUNDLE");
   return doc;
 };

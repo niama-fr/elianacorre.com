@@ -1,10 +1,10 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
-
-// ENUMS -----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookIssuanceKind = z.literal(["initial", "replacement"]);
+// KIND ------------------------------------------------------------------------------------------------------------------------------------
+const kinds = ["initial", "replacement"] as const;
+export const zEbookIssuanceKind = z.literal(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zEbookIssuanceFields = z.object({
@@ -22,4 +22,5 @@ export type EbookIssuances = {
   Create: z.infer<typeof zEbookIssuanceCreate>;
   Doc: z.infer<typeof zEbookIssuanceDoc>;
   Fields: z.infer<typeof zEbookIssuanceFields>;
+  Kind: z.infer<typeof zEbookIssuanceKind>;
 };

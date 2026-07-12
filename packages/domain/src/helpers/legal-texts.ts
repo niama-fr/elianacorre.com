@@ -4,7 +4,7 @@ import type { LegalTexts } from "@ec/domain/schemas/legal-texts";
 export const NEWSLETTER_CONSENT: LegalTexts["Create"] = {
   content:
     "Je souhaite recevoir par e-mail la lettre d’Eliana Corré. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre.",
-  kind: "newsletter-consent",
+  kind: "newsletterConsent",
 };
 
 export const PRIVACY_NOTICE: LegalTexts["Create"] = {
@@ -44,5 +44,5 @@ Vous pouvez introduire une réclamation auprès de la CNIL.
 Transferts internationaux
 
 Certains prestataires peuvent traiter des données hors de l’Espace économique européen. Lorsque cela se produit, ces transferts doivent être encadrés par un mécanisme reconnu par le RGPD.`,
-  kind: "privacy-notice",
+  kind: "privacyNotice",
 };

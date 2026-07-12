@@ -1,12 +1,11 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
-
 // ENUMS -----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsRestrictionReason = z.literal(["permanentBounce", "spamComplaint"]);
-export const zNewsRestrictionSource = z.literal(["admin", "provider"]);
 export const zNewsRestrictionResolvedBy = z.literal(["admin", "confirmation"]);
+export const zNewsRestrictionRestrictedBy = z.literal(["admin", "provider"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsRestrictionFields = z.object({
@@ -16,13 +15,17 @@ export const zNewsRestrictionFields = z.object({
   resolvedAt: z.number().nullable(),
   resolvedBy: zNewsRestrictionResolvedBy.nullable(),
   restrictedAt: z.number(),
-  source: zNewsRestrictionSource,
+  restrictedBy: zNewsRestrictionRestrictedBy,
   version: z.number(),
 });
 export const zNewsRestrictionDoc = z.object({ ...zDocCommon("newsRestrictions").shape, ...zNewsRestrictionFields.shape });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsRestrictionCreate = zNewsRestrictionFields;
+export const zNewsRestrictionCreate = zNewsRestrictionFields.pick({
+  lastOccurredAt: true,
+  profileId: true,
+  reason: true,
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsRestrictions = {

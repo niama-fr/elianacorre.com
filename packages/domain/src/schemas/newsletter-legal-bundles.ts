@@ -13,13 +13,15 @@ export const zNewsletterLegalBundleFields = z.object({
 });
 export const zNewsletterLegalBundleDoc = z.object({ ...zDocCommon("newsletterLegalBundles").shape, ...zNewsletterLegalBundleFields.shape });
 
-export const zNewsletterLegalBundleEntry = zNewsletterLegalBundleDoc.extend({
+export const zNewsletterLegalBundleEntry = z.object({
+  ...zNewsletterLegalBundleDoc.shape,
   newsletterConsent: zLegalTextEntry,
   privacyNotice: zLegalTextEntry,
 });
 
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsletterLegalBundle = zNewsletterLegalBundleEntry.extend({
+export const zNewsletterLegalBundle = z.object({
+  ...zNewsletterLegalBundleEntry.shape,
   newsletterConsent: zLegalText,
   privacyNotice: zLegalText,
 });

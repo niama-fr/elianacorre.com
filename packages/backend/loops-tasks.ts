@@ -1,5 +1,6 @@
 import { start } from "@convex-dev/workflow";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
+import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
 
@@ -36,22 +37,35 @@ export const markLoopsTaskSucceeded = async (ctx: MutationCtx, id: Id<"loopsTask
 };
 
 // ENQUEUE ---------------------------------------------------------------------------------------------------------------------------------
-const enqueueLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) => {
-  const loopsTaskId = await createLoopsTask(ctx, create);
+const enqueueLoopsTask = async (ctx: MutationCtx, payload: LoopsTasks["Create"]) => {
+  const loopsTaskId = await createLoopsTask(ctx, payload);
   const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
   await patchLoopsTask(ctx, loopsTaskId, { workflowId });
   return workflowId;
 };
 
-export const enqueueSendConfirmationEmail = async (
-  ctx: MutationCtx,
-  create: Omit<Extract<LoopsTasks["Create"], { kind: "sendConfirmationEmail" }>, "kind">
-) => await enqueueLoopsTask(ctx, { ...create, kind: "sendConfirmationEmail" });
+export const enqueueSendConfirmationEmail = async (ctx: MutationCtx, payload: EnqueueSendConfirmationEmailOpts) =>
+  await enqueueLoopsTask(ctx, { ...payload, idempotencyKey: payload.newsConfirmationId, kind: "sendConfirmationEmail" });
+type EnqueueSendConfirmationEmailOpts = Omit<LoopsTasks["SendConfirmationEmailCreate"], "idempotencyKey" | "kind">;
 
-export const enqueueSendEbookEmail = async (
-  ctx: MutationCtx,
-  create: Omit<Extract<LoopsTasks["Create"], { kind: "sendEbookEmail" }>, "kind">
-) => await enqueueLoopsTask(ctx, { ...create, kind: "sendEbookEmail" });
+export const enqueueSendEbookEmail = async (ctx: MutationCtx, payload: Omit<LoopsTasks["SendEbookEmailCreate"], "kind">) =>
+  await enqueueLoopsTask(ctx, { ...payload, kind: "sendEbookEmail" });
 
-export const enqueueSyncContact = async (ctx: MutationCtx, create: Omit<Extract<LoopsTasks["Create"], { kind: "syncContact" }>, "kind">) =>
-  await enqueueLoopsTask(ctx, { ...create, kind: "syncContact" });
+const enqueueSyncContact = async (ctx: MutationCtx, payload: Omit<LoopsTasks["SyncContactCreate"], "kind">) =>
+  await enqueueLoopsTask(ctx, { ...payload, kind: "syncContact" });
+
+export const enqueueSyncContactForReactivation = async (ctx: MutationCtx, { confirmation, profileId }: ForReactivationOpts) =>
+  await enqueueSyncContact(ctx, {
+    idempotencyKey: `news-contact-reactivation:${confirmation.restrictionId}:${confirmation.restrictionVersion}`,
+    profileId,
+    subscribed: true,
+  });
+type ForReactivationOpts = { confirmation: NewsConfirmations["ReactivationDoc"]; profileId: Id<"profiles"> };
+
+export const enqueueSyncContactForSubscription = async (ctx: MutationCtx, { profileId, subscriptionId }: ForSubscriptionOpts) =>
+  await enqueueSyncContact(ctx, { idempotencyKey: `news-contact-subscription:${subscriptionId}`, profileId, subscribed: true });
+type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"newsSubscriptions"> };
+
+export const enqueueSyncContactForUnsubscription = async (ctx: MutationCtx, { profileId, webhookId }: ForUnsubscriptionOpts) =>
+  await enqueueSyncContact(ctx, { idempotencyKey: `loops-webhook-contact-unsubscription:${webhookId}`, profileId, subscribed: false });
+type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWebhooks"> };

@@ -1,12 +1,10 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
-
-import { zDocCommon } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zEbookDownloadFields = z.object({
   ebookIssuanceId: zid("ebookIssuances"),
-  expiresAt: z.number(),
 });
 export const zEbookDownloadDoc = z.object({ ...zDocCommon("ebookDownloads").shape, ...zEbookDownloadFields.shape });
 

@@ -1,7 +1,6 @@
+import { zCanonicalEmailValue } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
-
-import { zCanonicalEmailValue } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zContactRequestFields = z.object({

@@ -1,7 +1,6 @@
+import { zCanonicalEmail, zCanonicalEmailValue, zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
-
-import { zCanonicalEmail, zCanonicalEmailValue, zDocCommon } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsSubscriptionFields = z.object({
@@ -23,6 +22,7 @@ export const zNewsSubscriptionUpsertValues = z.object({
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsSubscriptionCreate = zNewsSubscriptionFields.pick({ legalBundleId: true, profileId: true, requestedAt: true });
+
 export const zNewsSubscriptionUpsert = z.object({
   consent: z.boolean().refine((value) => value),
   email: zCanonicalEmail,

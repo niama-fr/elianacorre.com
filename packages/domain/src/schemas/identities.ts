@@ -1,8 +1,7 @@
+import { zAuthAdapter } from "@ec/domain/schemas/auth";
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
-
-import { zAuthAdapter } from "./auth";
-import { zDocCommon } from "./utils";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zIdentityFields = z.object({

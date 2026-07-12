@@ -1,6 +1,5 @@
 import { zContactRequestFields } from "@ec/domain/schemas/contact-requests";
 import { zEbookDownloadFields } from "@ec/domain/schemas/ebook-downloads";
-import { zEbookGrantFields } from "@ec/domain/schemas/ebook-grants";
 import { zEbookIssuanceFields } from "@ec/domain/schemas/ebook-issuances";
 import { zEbookFields } from "@ec/domain/schemas/ebooks";
 import { zIdentityFields } from "@ec/domain/schemas/identities";
@@ -19,7 +18,6 @@ import { defineSchema, defineTable } from "convex/server";
 export default defineSchema({
   contactRequests: defineTable(zodOutputToConvex(zContactRequestFields)).index("by_profile_id", ["profileId"]),
   ebookDownloads: defineTable(zodOutputToConvex(zEbookDownloadFields)).index("by_ebook_issuance_id", ["ebookIssuanceId"]),
-  ebookGrants: defineTable(zodOutputToConvex(zEbookGrantFields)).index("by_profile_id", ["profileId"]),
   ebookIssuances: defineTable(zodOutputToConvex(zEbookIssuanceFields)).index("by_profile_id", ["profileId"]),
   ebooks: defineTable(zodOutputToConvex(zEbookFields)).index("by_status", ["status"]).index("by_version", ["version"]),
   identities: defineTable(zodOutputToConvex(zIdentityFields))

@@ -1,11 +1,10 @@
-import { isConvexErrorCode } from "@ec/domain/helpers/utils";
+import { isConvexErrorCode } from "@ec/domain/helpers/errors";
 import { zEbookCreate } from "@ec/domain/schemas/ebooks";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
-import { getValidEbookDownload } from "../ebook-grants";
-import { createEbook, listEbooks, publishEbook } from "../ebooks";
-import { env } from "./_generated/server";
+import { getValidEbookIssuanceByToken } from "../ebook-issuances";
+import { createEbook, getEbook, listEbooks, publishEbook } from "../ebooks";
 import { zAdminMutation, zAdminQuery, zInternalQuery } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
@@ -42,7 +41,7 @@ export const publish = zAdminMutation({
 export const resolveDownload = zInternalQuery({
   args: { token: z.string() },
   handler: async (ctx, { token }) => {
-    const download = await getValidEbookDownload(ctx, { now: Date.now(), secret: env.CAPABILITY_SIGNING_SECRET, token });
-    return download ? await ctx.db.get("ebooks", download.issuance.ebookId) : null;
+    const issuance = await getValidEbookIssuanceByToken(ctx, { now: Date.now(), token });
+    return issuance ? await getEbook(ctx, issuance.ebookId) : null;
   },
 });

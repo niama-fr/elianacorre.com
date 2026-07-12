@@ -9,8 +9,13 @@ export const getProfile = async (ctx: QueryCtx, id: Id<"profiles">) => await ctx
 export const getProfileByEmail = async (ctx: QueryCtx, email: string) =>
   await ctx.db
     .query("profiles")
-    .withIndex("by_email", (query) => query.eq("email", email))
+    .withIndex("by_email", (q) => q.eq("email", email))
     .unique();
+
+export const getProfileIdByEmail = async (ctx: QueryCtx, email: string) => {
+  const profile = await getProfileByEmail(ctx, email);
+  return profile?._id ?? null;
+};
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createContactProfile = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) =>

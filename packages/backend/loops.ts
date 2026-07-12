@@ -1,5 +1,6 @@
 import { Loops } from "@devwithbobby/loops";
-import { createCapabilityToken, getLink } from "@ec/domain/helpers/utils";
+import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
+import { getLink } from "@ec/domain/helpers/links";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 

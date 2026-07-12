@@ -7,7 +7,7 @@ import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
-import { upsertNewsletterSub } from "@/lib/newsletter/functions";
+import { subscribeToNewsletter } from "@/lib/newsletter/functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FORM = {
@@ -17,7 +17,7 @@ const FORM = {
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Entity"] }) {
   const submitRef = useRef<HTMLButtonElement>(null);
-  const upsertNewsletterSubMutation = useMutation({ mutationFn: upsertNewsletterSub });
+  const subscribeToNewsletterMutation = useMutation({ mutationFn: subscribeToNewsletter });
 
   const form = useAppForm({
     defaultValues: { consent: false, email: "", firstName: "", website: "" },
@@ -25,7 +25,7 @@ export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Ent
       if (!submitRef.current) return;
       const rect = submitRef.current.getBoundingClientRect();
       try {
-        await upsertNewsletterSubMutation.mutateAsync({ data });
+        await subscribeToNewsletterMutation.mutateAsync({ data });
 
         void confetti({
           origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },

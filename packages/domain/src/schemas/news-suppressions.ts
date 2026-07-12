@@ -1,9 +1,10 @@
+import { zDocCommon } from "@ec/domain/schemas/utils";
 import z from "zod";
 
-import { zDocCommon } from "./utils";
-
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSuppressionFields = z.object({ canonicalEmailHash: z.string() });
+export const zNewsSuppressionFields = z.object({
+  canonicalEmailHash: z.string(),
+});
 export const zNewsSuppressionDoc = z.object({ ...zDocCommon("newsSuppressions").shape, ...zNewsSuppressionFields.shape });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
