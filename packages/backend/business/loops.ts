@@ -12,9 +12,9 @@ import type { Profiles } from "@ec/domain/schemas/profiles";
 
 import { createLoopsTask, patchLoopsTask } from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
-import { markNewsRestrictionByProvider } from "../data/news-restrictions";
 import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { getProfileIdByEmail } from "../data/profiles";
+import { applyProviderNewsRestriction } from "./news-restrictions";
 
 // CLIENT ----------------------------------------------------------------------------------------------------------------------------------
 const loops = new Loops(components.loops);
@@ -66,7 +66,7 @@ export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messa
     await markNewsSubscriptionUnsubscribed(ctx, subscription._id, occurredAt);
   } else {
     const reason = kind === "email.hardBounced" ? "permanentBounce" : "spamComplaint";
-    await markNewsRestrictionByProvider(ctx, { occurredAt, profileId, reason });
+    await applyProviderNewsRestriction(ctx, { occurredAt, profileId, reason });
   }
 
   await enqueueSyncContactForUnsubscription(ctx, { profileId, webhookId: id });

@@ -334,8 +334,11 @@ describe("newsletter subscription", () => {
 
     await convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest());
 
+    vi.setSystemTime(new Date("2025-12-31T11:59:00Z"));
+    await convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest());
+
     const issuances = await convex.run(async (ctx) => await ctx.db.query("ebookIssuances").collect());
-    expect(issuances).toMatchObject([{ kind: "initial" }, { kind: "replacement" }]);
+    expect(issuances).toMatchObject([{ kind: "initial" }, { kind: "replacement" }, { kind: "replacement" }]);
   });
 
   it("keeps unknown and suppressed recovery requests neutral without delivery", async () => {
@@ -388,6 +391,27 @@ describe("newsletter subscription", () => {
     }));
     expect(state.issuances).toHaveLength(1);
     expect(state.tasks.filter((task) => task.kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("returns invalid tokens and missing files to the neutral recovery page", async () => {
+    const convex = await createBackend();
+    await publishEbook(convex);
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const confirmation = await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
+
+    const invalidTokenResponse = await convex.fetch("/newsletter/ebook?token=invalid");
+    await convex.run(async (ctx) => {
+      const ebook = await ctx.db.query("ebooks").unique();
+      if (ebook === null) throw new Error("Published e-book was not found");
+      await ctx.storage.delete(ebook.storageId);
+    });
+    const missingFileResponse = await convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`);
+
+    expect([invalidTokenResponse.status, missingFileResponse.status]).toStrictEqual([302, 302]);
+    expect([invalidTokenResponse.headers.get("location"), missingFileResponse.headers.get("location")]).toStrictEqual([
+      "https://www.elianacorre.com/newsletter/ebook",
+      "https://www.elianacorre.com/newsletter/ebook",
+    ]);
   });
 
   it("records the current published version for each recovery, including publication rollback", async () => {

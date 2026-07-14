@@ -15,6 +15,16 @@ An eligible person can request a fresh personal Welcome E-book download link wit
 - The deployment has its Loops transactional-email configuration and capability-signing secret. Keep those values only in the deployment environment.
 - Test email delivery only in the isolated non-production environment and to an allowlisted address.
 
+From the repository root, identify the canonical environments in `docs/agents/project-resources.md`. Use `eliana-corre:elianacorre-com-staging` for manual delivery tests; `eliana-corre:elianacorre-com-b1869` is production and requires explicit approval for writes. Then select the backend package and inspect the configured non-production deployment and public URL:
+
+```bash
+cd packages/backend
+rtk proxy bunx convex dashboard
+rtk proxy bunx convex env get SITE_URL
+```
+
+The dashboard command opens the deployment selected by the package's local Convex configuration. Confirm its project and deployment name before inspecting data. `SITE_URL` is the public application base URL for that deployment; append `/newsletter/ebook`. If the command has no configured deployment, return to the repository root with `cd ../..`, run `rtk proxy bun run dev`, and follow the printed Convex authorization prompt. Never switch these commands to production merely to obtain test data.
+
 ## Canonical systems
 
 - Linear records delivery work and acceptance evidence.
@@ -24,7 +34,7 @@ An eligible person can request a fresh personal Welcome E-book download link wit
 
 ## Manual procedure
 
-1. Open `/newsletter/ebook` without a token, or open an expired or otherwise invalid personal e-book link.
+1. Open `<SITE_URL>/newsletter/ebook` without a token, or open an expired or otherwise invalid personal e-book link. Discover `<SITE_URL>` with the prerequisite command above.
 2. Select **Recevoir un nouveau lien** to open the recovery dialog, then submit the email address without using the newsletter subscription form.
 3. Confirm the same neutral acknowledgement appears whether the address is eligible, unknown, suppressed, erased, or expired.
 4. For an eligible active or ordinary Former Newsletter Subscriber, open the delivered email and use its personal link within 72 hours.

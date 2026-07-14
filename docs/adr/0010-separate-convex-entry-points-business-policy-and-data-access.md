@@ -16,7 +16,7 @@ Organize the backend into three explicit layers:
 - `business/` owns application policy and orchestration, including newsletter lifecycles, e-book access, and Loops delivery intent;
 - `data/` owns focused Convex table reads and writes.
 
-Public callers continue to use generated Convex APIs. Business modules may compose data modules, while data modules do not import business modules or public entry points. This is an organizational boundary inside the existing backend package, not a new deployable service or generic repository abstraction.
+Public callers continue to use generated Convex APIs. Business modules may compose data modules, while data modules do not import business modules or public entry points. Data creation functions may enforce single-record persistence invariants such as storage metadata, initial audit fields, and schema-valid defaults; cross-record decisions and lifecycle transitions remain business policy. This is an organizational boundary inside the existing backend package, not a new deployable service or generic repository abstraction.
 
 ## Consequences
 

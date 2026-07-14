@@ -8,7 +8,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 
 import { components } from "../convex/_generated/api";
 import { deleteNewsConfirmation, getNewsConfirmation, replaceNewsConfirmationForSubscription } from "../data/news-confirmations";
-import { getActiveNewsRestriction, markNewsRestrictionResolvedByConfirmation } from "../data/news-restrictions";
+import { getActiveNewsRestriction } from "../data/news-restrictions";
 import {
   createNewsSubscription,
   getCurrentNewsSubscription,
@@ -21,6 +21,7 @@ import { requireActiveNewsletterLegalBundle } from "../data/newsletter-legal-bun
 import { createContactProfile, getProfile, getProfileIdByEmail } from "../data/profiles";
 import { issueInitialEbookDownload, issueReplacementEbookDownload } from "./ebooks";
 import { enqueueSendConfirmationEmail, enqueueSyncContactForReactivation, enqueueSyncContactForSubscription } from "./loops";
+import { resolveNewsRestrictionByConfirmation } from "./news-restrictions";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -97,7 +98,7 @@ async function confirmReactivation(ctx: MutationCtx, { confirmation, now, profil
   if (subscription.confirmedAt === null) return { confirmed: false, downloadToken: null };
 
   const { restrictionId, restrictionVersion } = confirmation;
-  const restored = await markNewsRestrictionResolvedByConfirmation(ctx, { now, restrictionId, restrictionVersion });
+  const restored = await resolveNewsRestrictionByConfirmation(ctx, { now, restrictionId, restrictionVersion });
   await deleteNewsConfirmation(ctx, confirmation._id);
   if (!restored) return { confirmed: false, downloadToken: null };
 
@@ -118,7 +119,7 @@ async function confirmSubscription(ctx: MutationCtx, { confirmation, now, profil
     activeRestriction._id === confirmation.restrictionId &&
     activeRestriction.version === confirmation.restrictionVersion
   )
-    isEmailDeliveryAllowed = await markNewsRestrictionResolvedByConfirmation(ctx, {
+    isEmailDeliveryAllowed = await resolveNewsRestrictionByConfirmation(ctx, {
       now,
       restrictionId: activeRestriction._id,
       restrictionVersion: activeRestriction.version,
