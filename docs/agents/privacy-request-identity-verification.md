@@ -15,13 +15,13 @@ Only authorized Content Administrators may perform this procedure. Access to the
 
 ## Canonical systems
 
-| Information | Canonical system |
-| --- | --- |
-| Request correspondence and temporary verification material | `confidentialite@elianacorre.com` mailbox |
-| Request type, verification outcome, administrator, time, and operation outcome | Convex privacy-operation audit history |
-| Subscriber, consent, delivery, e-book, and suppression state | Convex |
-| Delivery-provider projection | Loops, reconciled from Convex |
-| Actionable follow-up work | Linear |
+| Information                                                                    | Canonical system                          |
+| ------------------------------------------------------------------------------ | ----------------------------------------- |
+| Request correspondence and temporary verification material                     | `confidentialite@elianacorre.com` mailbox |
+| Request type, verification outcome, administrator, time, and operation outcome | Convex privacy-operation audit history    |
+| Subscriber, consent, delivery, e-book, and suppression state                   | Convex                                    |
+| Delivery-provider projection                                                   | Loops, reconciled from Convex             |
+| Actionable follow-up work                                                      | Linear                                    |
 
 Do not copy identity documents, mailbox contents, or exported subscriber data into Linear, GitHub, repository files, Obsidian, application logs, or general chat systems.
 
@@ -48,8 +48,8 @@ Requests made by a representative require a mandate identifying the requester, r
 2. Normalize the claimed email address using the canonical-email rule. Do not search by approximate name or enumerate similar addresses.
 3. Confirm that the requester can receive a fresh single-use verification message at the canonical address.
 4. Review for reasonable doubt: inconsistent addresses, a requested response to another destination, suspected mailbox compromise, a representative, third-party information, contradictory claims, or an unusually sensitive or destructive request.
-5. If there is no reasonable doubt, record the verification method as `canonical_email_challenge` and its success or failure. Do not retain the token or message content.
-6. If doubt remains, pause all disclosure and mutation. Ask for the minimum additional evidence needed, explain why it is required, and record only `additional_evidence_requested` plus the outcome.
+5. If there is no reasonable doubt, record the verification method as `canonicalEmailChallenge` and its success or failure. Do not retain the token or message content.
+6. If doubt remains, pause all disclosure and mutation. Ask for the minimum additional evidence needed, explain why it is required, and record only `additionalEvidence` plus the outcome.
 7. If an identity document is exceptionally necessary, tell the requester which visible fields are required and invite them to mask unrelated fields. Keep the document only in the restricted mailbox while verification is pending.
 8. Record the verification result in Convex: authorized administrator, time, request type, verification method category, and outcome. Do not record tokens, document numbers, copies, or unnecessary request content.
 9. Delete temporary verification evidence and mailbox attachments as soon as the verification decision is recorded. Retain only ordinary correspondence needed to manage the request under the approved mailbox-retention policy.
@@ -103,4 +103,3 @@ Grégory owns approval of this procedure. Update it whenever the privacy adminis
 - [CNIL — Professionnels : comment répondre à une demande de droit d’accès ?](https://www.cnil.fr/fr/repondre-une-demande-de-droit-dacces)
 - [CNIL — Dois-je fournir obligatoirement une copie de ma carte d’identité ?](https://www.cnil.fr/fr/cnil-direct/question/exercice-de-mes-droits-informatique-et-libertes-dois-je-fournir-obligatoirement)
 - [CNIL — Questions-réponses sur l’exercice des droits par un mandat](https://www.cnil.fr/fr/les-questions-reponses-de-la-cnil-sur-la-recommandation-sur-lexercice-des-droits-par-un-mandat)
-

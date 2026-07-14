@@ -7,7 +7,7 @@ import { ConvexError, v } from "convex/values";
 import z from "zod";
 
 import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
-import { deleteLoopsTask, getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
+import { getLoopsTask, markDeleteContactTaskSucceeded, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
@@ -58,7 +58,7 @@ export const markTaskSucceeded = zInternalMutation({
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!task || !isLoopsTaskPending(task)) return;
     if (task.kind === "deleteContact") {
-      await deleteLoopsTask(ctx, loopsTaskId);
+      await markDeleteContactTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });
       return;
     }
     await markLoopsTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });

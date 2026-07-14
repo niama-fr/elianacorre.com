@@ -1,3 +1,4 @@
+import { zPrivacyRequestKind, zPrivacyVerificationMethod } from "@ec/domain/schemas/privacy-audits";
 import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
 import z from "zod";
 
@@ -10,6 +11,7 @@ import {
   processPrivacyRectification,
   processPrivacySuppressionRemoval,
   processPrivacyUnsubscription,
+  processPrivacyVerification,
 } from "../business/privacy";
 import { zAdminMutation, zAdminQuery } from "./zod";
 
@@ -59,4 +61,15 @@ export const fulfillSuppressionRemovalRequest = zAdminMutation({
 export const fulfillUnsubscriptionRequest = zAdminMutation({
   args: zConfirmedEmailPayload,
   handler: async (ctx, { email }) => await processPrivacyUnsubscription(ctx, email),
+});
+
+export const recordVerification = zAdminMutation({
+  args: z.object({
+    ...zConfirmedEmailPayload.shape,
+    method: zPrivacyVerificationMethod,
+    requestKind: zPrivacyRequestKind,
+    verified: z.boolean(),
+  }),
+  handler: async (ctx, { email, method, requestKind, verified }) =>
+    await processPrivacyVerification(ctx, { email, method, requestKind, verified }),
 });

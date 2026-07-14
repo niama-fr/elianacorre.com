@@ -15,6 +15,7 @@ export const Route = createFileRoute("/admin/privacy")({ component: AdminPrivacy
 
 type PrivacySubject = NonNullable<FunctionReturnType<typeof api.privacy.inspectSubject>>;
 type Operation = "access" | "erasure" | "export" | "objection" | "rectification" | "suppressionRemoval" | "unsubscription";
+type VerificationMethod = "additionalEvidence" | "canonicalEmailChallenge";
 
 const OPERATION_LABELS: Record<Operation, string> = {
   access: "Traiter la demande d’accès",
@@ -80,6 +81,7 @@ function PrivacySubjectView({ email, subject }: { email: string; subject: Privac
       <DeliverySection subject={subject} />
       <EbookSection subject={subject} />
       <AuditSection subject={subject} />
+      <VerificationSection email={email} />
       <PrivacyOperations email={email} subject={subject} />
     </div>
   );
@@ -177,13 +179,113 @@ function AuditSection({ subject }: { subject: PrivacySubject }) {
           {subject.privacyState.audits.map((audit) => (
             <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-4" key={audit._id}>
               <span>{formatDate(audit._creationTime)}</span>
-              <span>{audit.kind}</span>
+              <span>
+                {audit.kind}
+                {audit.requestKind ? ` · ${audit.requestKind}` : ""}
+                {audit.verificationMethod ? ` · ${audit.verificationMethod}` : ""}
+              </span>
               <span>{audit.outcome}</span>
               <span className="break-all text-muted-foreground">Admin : {audit.performedBy}</span>
             </li>
           ))}
         </ul>
       )}
+    </PrivacySection>
+  );
+}
+
+function VerificationSection({ email }: { email: string }) {
+  const [method, setMethod] = useState<VerificationMethod>("canonicalEmailChallenge");
+  const [requestKind, setRequestKind] = useState<Operation>("access");
+  const [verified, setVerified] = useState<boolean>();
+  const verification = useMutation({ mutationFn: useConvexMutation(api.privacy.recordVerification) });
+
+  const confirm = async () => {
+    if (verified === undefined) return;
+    try {
+      await verification.mutateAsync({ confirmed: true, email, method, requestKind, verified });
+      toast.success("Résultat de vérification enregistré.");
+      setVerified(undefined);
+    } catch {
+      toast.error("Le résultat de vérification n’a pas été enregistré.");
+    }
+  };
+
+  return (
+    <PrivacySection title="Vérification d’identité">
+      <p className="mb-4 text-muted-foreground text-sm">
+        Enregistrez uniquement la catégorie de méthode et son résultat, jamais les preuves.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-2 text-sm">
+          Demande concernée
+          <select
+            className="h-9 rounded-md border bg-transparent px-3"
+            value={requestKind}
+            onChange={(event) => {
+              setRequestKind(event.target.value as Operation);
+            }}
+          >
+            {Object.entries(OPERATION_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-2 text-sm">
+          Méthode
+          <select
+            className="h-9 rounded-md border bg-transparent px-3"
+            value={method}
+            onChange={(event) => {
+              setMethod(event.target.value as VerificationMethod);
+            }}
+          >
+            <option value="canonicalEmailChallenge">Défi envoyé à l’adresse canonique</option>
+            <option value="additionalEvidence">Preuve supplémentaire proportionnée</option>
+          </select>
+        </label>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button
+          type="button"
+          onClick={() => {
+            setVerified(true);
+          }}
+        >
+          Enregistrer comme vérifiée
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setVerified(false);
+          }}
+        >
+          Enregistrer comme non vérifiée
+        </Button>
+      </div>
+      <Dialog
+        open={verified !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setVerified(undefined);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer le résultat de vérification</DialogTitle>
+            <DialogDescription>
+              Enregistrer la demande {requestKind} pour {email} comme {verified ? "vérifiée" : "non vérifiée"}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton>
+            <Button disabled={verification.isPending} onClick={() => void confirm()}>
+              {verification.isPending ? "Enregistrement…" : "Confirmer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PrivacySection>
   );
 }

@@ -21,7 +21,7 @@ const zProfileTaskFields = z.object({ ...zCommonFields.shape, profileId: zid("pr
 
 const zDeleteContactFields = z.object({
   ...zCommonFields.shape,
-  email: zCanonicalEmail,
+  email: zCanonicalEmail.nullable(),
   kind: z.literal(kinds[0]),
 });
 const zSendConfirmationEmailFields = z.object({
@@ -59,7 +59,7 @@ export const zLoopsTaskDoc = z.discriminatedUnion("kind", [
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonCreate = zProfileTaskFields.pick({ idempotencyKey: true, profileId: true });
-const zDeleteContactCreate = zDeleteContactFields.pick({ email: true, idempotencyKey: true, kind: true });
+const zDeleteContactCreate = z.object({ email: zCanonicalEmail, idempotencyKey: z.string(), kind: z.literal(kinds[0]) });
 const zSendConfirmationEmailCreate = z.object({
   ...zCommonCreate.shape,
   kind: z.literal(kinds[1]),

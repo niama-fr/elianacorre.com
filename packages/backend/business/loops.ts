@@ -59,8 +59,10 @@ type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"news
 
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
-  if (task.kind === "deleteContact") await loops.deleteContact(ctx, task.email);
-  else if (!profile) throw new Error("Loops task profile is required");
+  if (task.kind === "deleteContact") {
+    if (task.email === null) throw new Error("Delete-contact task email was already redacted");
+    await loops.deleteContact(ctx, task.email);
+  } else if (!profile) throw new Error("Loops task profile is required");
   else if (task.kind === "syncContact") await syncContact(ctx, { profile, task });
   else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
   else if (task.kind === "sendEbookEmail") await sendEbookEmail(ctx, { profile, task });

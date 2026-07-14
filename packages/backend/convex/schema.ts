@@ -11,8 +11,8 @@ import { zNewsRestrictionFields } from "@ec/domain/schemas/news-restrictions";
 import { zNewsSubscriptionFields } from "@ec/domain/schemas/news-subscriptions";
 import { zNewsSuppressionFields } from "@ec/domain/schemas/news-suppressions";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
-import { zProfileFields } from "@ec/domain/schemas/profiles";
 import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
+import { zProfileFields } from "@ec/domain/schemas/profiles";
 import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { defineSchema, defineTable } from "convex/server";
 
