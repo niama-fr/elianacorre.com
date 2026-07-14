@@ -34,7 +34,7 @@ export default function InputField({ label, ...rest }: InputFieldProps) {
             placeholder={label}
             value={state.value}
           />
-          <FieldError />
+          {isInvalid && <FieldError />}
         </>
       )}
     </Field>

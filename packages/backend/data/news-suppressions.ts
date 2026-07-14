@@ -1,6 +1,5 @@
+import { env, type QueryCtx } from "@ec/backend/server";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
-
-import { env, type QueryCtx } from "./convex/_generated/server";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getNewsSuppressionByEmail = async (ctx: QueryCtx, email: string) => {

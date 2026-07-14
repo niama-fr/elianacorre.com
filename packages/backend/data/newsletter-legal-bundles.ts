@@ -1,6 +1,5 @@
+import type { QueryCtx } from "@ec/backend/server";
 import { ConvexError } from "convex/values";
-
-import type { QueryCtx } from "./convex/_generated/server";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getActiveNewsletterLegalBundle = async (ctx: QueryCtx) =>

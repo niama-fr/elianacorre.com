@@ -99,9 +99,7 @@ describe("newsletter subscription", () => {
   it("records a pending consent period and queues a confirmation by capability id", async () => {
     const convex = await createBackend();
 
-    await expect(convex.mutation(api.newsletter.subscribe, createRequest("  Reader+Carnet@Example.COM "))).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.newsletter.subscribe, createRequest("  Reader+Carnet@Example.COM "))).resolves.toBeNull();
 
     const state = await convex.run(async (ctx) => ({
       confirmations: await ctx.db.query("newsConfirmations").collect(),
@@ -131,14 +129,8 @@ describe("newsletter subscription", () => {
       await ctx.db.insert("newsSuppressions", { canonicalEmailHash: suppressedHash });
     });
 
-    await expect(
-      convex.mutation(api.newsletter.subscribe, { ...createRequest("trap@example.com"), website: "bot" })
-    ).resolves.toStrictEqual({
-      accepted: true,
-    });
-    await expect(convex.mutation(api.newsletter.subscribe, createRequest("suppressed@example.com"))).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.newsletter.subscribe, { ...createRequest("trap@example.com"), website: "bot" })).resolves.toBeNull();
+    await expect(convex.mutation(api.newsletter.subscribe, createRequest("suppressed@example.com"))).resolves.toBeNull();
 
     const state = await convex.run(async (ctx) => ({
       profiles: await ctx.db.query("profiles").collect(),
@@ -211,9 +203,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletter.subscribe, createRequest());
     await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
 
-    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest())).resolves.toBeNull();
 
     const state = await convex.run(async (ctx) => ({
       downloads: await ctx.db.query("ebookDownloads").collect(),
@@ -234,9 +224,7 @@ describe("newsletter subscription", () => {
     });
     await publishEbook(convex);
 
-    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest())).resolves.toBeNull();
 
     const state = await convex.run(async (ctx) => ({
       issuances: await ctx.db.query("ebookIssuances").collect(),
@@ -257,9 +245,7 @@ describe("newsletter subscription", () => {
       await ctx.db.patch(subscription._id, { unsubscribedAt: Date.now() });
     });
 
-    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest())).resolves.toBeNull();
 
     const state = await convex.run(async (ctx) => ({
       confirmations: await ctx.db.query("newsConfirmations").collect(),
@@ -286,9 +272,7 @@ describe("newsletter subscription", () => {
     });
     vi.setSystemTime(new Date("2023-01-02T00:00:00Z"));
 
-    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest())).resolves.toBeNull();
     await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 404 });
 
     const state = await convex.run(async (ctx) => ({
@@ -311,10 +295,10 @@ describe("newsletter subscription", () => {
 
     await expect(
       Promise.all([
-        convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest("unknown@example.com")),
-        convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest("reader@example.com")),
+        convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest("unknown@example.com")),
+        convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest("reader@example.com")),
       ])
-    ).resolves.toStrictEqual([{ accepted: true }, { accepted: true }]);
+    ).resolves.toStrictEqual([null, null]);
 
     const state = await convex.run(async (ctx) => ({
       issuances: await ctx.db.query("ebookIssuances").collect(),
@@ -338,9 +322,7 @@ describe("newsletter subscription", () => {
       await ctx.db.delete(profile._id);
     });
 
-    await expect(convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest())).resolves.toStrictEqual({
-      accepted: true,
-    });
+    await expect(convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest())).resolves.toBeNull();
     await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 404 });
 
     const state = await convex.run(async (ctx) => ({
@@ -377,12 +359,12 @@ describe("newsletter subscription", () => {
       });
     });
 
-    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+    await convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest());
     await convex.run(async (ctx) => {
       await ctx.db.patch(secondEbookId, { status: "archived" });
       await ctx.db.patch(firstEbookId, { status: "published" });
     });
-    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+    await convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest());
 
     const issuances = await convex.run(async (ctx) => await ctx.db.query("ebookIssuances").collect());
     expect(issuances.map((issuance) => issuance.ebookId)).toStrictEqual([firstEbookId, secondEbookId, firstEbookId]);
@@ -394,7 +376,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletter.subscribe, createRequest());
     const confirmation = await convex.mutation(api.newsletter.confirm, { token: await getConfirmationToken(convex) });
 
-    await convex.mutation(api.newsletter.requestEbookRecovery, createEbookRecoveryRequest());
+    await convex.mutation(api.ebooks.requestRecovery, createEbookRecoveryRequest());
 
     await expect(convex.fetch(`/newsletter/ebook?token=${confirmation.downloadToken}`)).resolves.toMatchObject({ status: 200 });
   });
@@ -459,7 +441,7 @@ describe("newsletter subscription", () => {
       webhookId: "bounce",
     });
 
-    await expect(convex.mutation(api.newsletter.subscribe, createRequest())).resolves.toStrictEqual({ accepted: true });
+    await expect(convex.mutation(api.newsletter.subscribe, createRequest())).resolves.toBeNull();
     const state = await convex.run(async (ctx) => ({
       confirmationTasks: await ctx.db
         .query("loopsTasks")
@@ -571,7 +553,7 @@ describe("newsletter subscription", () => {
     await convex.mutation(api.newsletter.subscribe, createRequest());
     await convex.mutation(api.newsletter.subscribe, createRequest());
     await convex.mutation(api.newsletter.subscribe, createRequest());
-    await expect(convex.mutation(api.newsletter.subscribe, createRequest())).resolves.toStrictEqual({ accepted: true });
+    await expect(convex.mutation(api.newsletter.subscribe, createRequest())).resolves.toBeNull();
 
     const tasks = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").collect());
     expect(tasks).toHaveLength(3);

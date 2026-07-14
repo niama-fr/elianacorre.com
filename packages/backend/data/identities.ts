@@ -1,7 +1,6 @@
+import type { MutationCtx, QueryCtx } from "@ec/backend/server";
+import type { Id } from "@ec/backend/types";
 import type { Identities } from "@ec/domain/schemas/identities";
-
-import type { Id } from "./convex/_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
 
 // CONST -----------------------------------------------------------------------------------------------------------------------------------
 const AUTH_ADAPTER = "better-auth";

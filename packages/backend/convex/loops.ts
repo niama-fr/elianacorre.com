@@ -6,10 +6,9 @@ import { zid } from "convex-helpers/server/zod4";
 import { ConvexError, v } from "convex/values";
 import z from "zod";
 
-import { executeTask } from "../loops";
-import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../loops-tasks";
-import { processLoopsWebhook } from "../loops-webhooks";
-import { getProfile } from "../profiles";
+import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
+import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
+import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
 import { zInternalAction, zInternalMutation, zInternalQuery } from "./zod";
@@ -72,6 +71,6 @@ export const execute = zInternalAction({
   args: { loopsTaskId: zid("loopsTasks") },
   handler: async (ctx, { loopsTaskId }): Promise<void> => {
     const payload = await ctx.runQuery(internal.loops.getExecutionPayload, { loopsTaskId });
-    if (payload) await executeTask(ctx, payload);
+    if (payload) await executeLoopsTask(ctx, payload);
   },
 });

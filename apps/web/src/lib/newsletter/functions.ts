@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { clientEnv } from "@/config/env";
 
+// CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
 export const confirmNewsletter = createServerFn({ method: "POST" })
   .validator(z.object({ token: z.string() }))
   .handler(async ({ data }) => {
@@ -15,19 +16,18 @@ export const confirmNewsletter = createServerFn({ method: "POST" })
     return await convex.mutation(api.newsletter.confirm, data);
   });
 
+// REQUEST EBOOK RECOVERY ------------------------------------------------------------------------------------------------------------------
+export const requestEbookRecovery = createServerFn({ method: "POST" })
+  .validator(zEbookRecoveryRequestValues)
+  .handler(async ({ data }) => {
+    const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
+    return await convex.mutation(api.ebooks.requestRecovery, { ...data, requestIp: getRequestIP({ xForwardedFor: true }) ?? "unknown" });
+  });
+
+// SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
 export const subscribeToNewsletter = createServerFn({ method: "POST" })
   .validator(zNewsSubscriptionUpsertValues)
   .handler(async ({ data }) => {
     const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
     return await convex.mutation(api.newsletter.subscribe, { ...data, requestIp: getRequestIP({ xForwardedFor: true }) ?? "unknown" });
-  });
-
-export const requestEbookRecovery = createServerFn({ method: "POST" })
-  .validator(zEbookRecoveryRequestValues)
-  .handler(async ({ data }) => {
-    const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
-    return await convex.mutation(api.newsletter.requestEbookRecovery, {
-      ...data,
-      requestIp: getRequestIP({ xForwardedFor: true }) ?? "unknown",
-    });
   });

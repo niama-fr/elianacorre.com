@@ -22,7 +22,7 @@ export default function TextareaField({ label }: TextareaFieldProps) {
             placeholder={label}
             value={state.value}
           />
-          <FieldError />
+          {isInvalid && <FieldError />}
         </>
       )}
     </Field>

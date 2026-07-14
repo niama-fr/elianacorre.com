@@ -1,8 +1,7 @@
+import type { MutationCtx, QueryCtx } from "@ec/backend/server";
+import type { Id } from "@ec/backend/types";
 import type { NewsRestrictions } from "@ec/domain/schemas/news-restrictions";
 import type { WithNow } from "@ec/domain/schemas/utils";
-
-import type { Id } from "./convex/_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getNewsRestriction = async (ctx: QueryCtx, id: Id<"newsRestrictions">) => await ctx.db.get("newsRestrictions", id);

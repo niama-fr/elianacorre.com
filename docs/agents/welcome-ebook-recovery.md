@@ -20,8 +20,8 @@ An eligible person can request a fresh personal Welcome E-book download link wit
 
 ## Manual procedure
 
-1. Open `/newsletter/recuperer-ebook` in the target environment.
-2. Submit the email address without using the newsletter subscription form.
+1. Open `/newsletter/ebook` without a token, or open an expired or otherwise invalid personal e-book link.
+2. Select **Recevoir un nouveau lien** to open the recovery dialog, then submit the email address without using the newsletter subscription form.
 3. Confirm the same neutral acknowledgement appears whether the address is eligible, unknown, suppressed, erased, or expired.
 4. For an eligible active or ordinary Former Newsletter Subscriber, open the delivered email and use its personal link within 72 hours.
 5. In Convex, verify that a replacement `ebookIssuance` records the current published e-book version and that one `sendEbookEmail` Loops task was queued. Verify Newsletter Consent did not change.
@@ -54,4 +54,4 @@ An eligible person can request a fresh personal Welcome E-book download link wit
 
 The application automates the neutral eligibility decision, capability signing, issuance history, and durable Loops task creation. The equivalent human action is the manual procedure above, followed by Convex and Loops inspection.
 
-Update this runbook when recovery eligibility, retention, capability reuse, transactional templates, Loops task handling, or the public route changes. NIA-26 owns the verified privacy-operation interface; NIA-27 owns scheduled retention cleanup.
+Update this runbook when recovery eligibility, retention, capability reuse, transactional templates, Loops task handling, or the invalid-link dialog entry point changes. NIA-26 owns the verified privacy-operation interface; NIA-27 owns scheduled retention cleanup.

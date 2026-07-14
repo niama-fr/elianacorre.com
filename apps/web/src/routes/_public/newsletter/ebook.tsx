@@ -1,9 +1,13 @@
+import { Button } from "@ec/ui/components/button";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
-import { createFileRoute } from "@tanstack/react-router";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ec/ui/components/tooltip";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import z from "zod";
 
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
+
+import { EbookRecoveryFormDialog } from "./-ebook-recovery-form-dialog";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
 const zSearch = z.object({ token: z.string().optional() });
@@ -29,7 +33,7 @@ function NewsletterEbookPage() {
         btn: {
           children: "Télécharger l'e-book",
           href: downloadUrl,
-          icon: "icon-[lucide--download]",
+          icon: "icon-[tabler--book-download]",
           kind: "external",
           referrerPolicy: "no-referrer",
         },
@@ -37,18 +41,26 @@ function NewsletterEbookPage() {
         title: ["Votre téléchargement", "va commencer"],
       }
     : {
-        btn: {
-          children: "Recevoir un nouveau lien",
-          icon: "icon-[lucide--mail]",
-          kind: "link",
-          to: "/newsletter/recuperer-ebook",
-        },
         content: [
           `Il a peut-être expiré ou été remplacé par une demande plus récente.`,
           `Vous pouvez demander un nouveau lien personnel sans vous réinscrire à la newsletter.`,
         ],
-        title: ["Ce lien n’est", "plus valide"],
+        title: ["Ce lien", "n’est plus valide"],
       };
 
-  return <HeroInfo {...info} />;
+  return (
+    <HeroInfo {...info}>
+      {downloadUrl ? null : (
+        <>
+          <Tooltip>
+            <TooltipTrigger render={<Button size="icon-lg" render={<Link to="/" />} nativeButton={false} />}>
+              <span className="icon-[tabler--home] size-5" />
+            </TooltipTrigger>
+            <TooltipContent>Retourner à l&apos;accueil</TooltipContent>
+          </Tooltip>
+          <EbookRecoveryFormDialog />
+        </>
+      )}
+    </HeroInfo>
+  );
 }

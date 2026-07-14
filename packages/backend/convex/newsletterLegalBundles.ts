@@ -1,5 +1,5 @@
-import { requireLegalText } from "../legal-texts";
-import { requireActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
+import { requireLegalText } from "../data/legal-texts";
+import { requireActiveNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
 import { zQuery } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
