@@ -6,15 +6,10 @@ import type { Id } from "@ec/backend/types";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { getLink } from "@ec/domain/helpers/links";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
-import type { LoopsWebhooks } from "@ec/domain/schemas/loops-webhooks";
 import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 
 import { createLoopsTask, patchLoopsTask } from "../data/loops-tasks";
-import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
-import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
-import { getProfileIdByEmail } from "../data/profiles";
-import { applyProviderNewsRestriction } from "./news-restrictions";
 
 // CLIENT ----------------------------------------------------------------------------------------------------------------------------------
 const loops = new Loops(components.loops);
@@ -51,33 +46,12 @@ export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: Execut
 }
 type ExecuteTaskOpts = { profile: Profiles["Doc"]; task: LoopsTasks["Doc"] };
 
-// PROCESS WEBHOOKS ------------------------------------------------------------------------------------------------------------------------
-export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messageId, occurredAt, webhookId }: LoopsWebhooks["Create"]) {
-  const existing = await getLoopsWebhookById(ctx, webhookId);
-  if (existing) return;
-
-  const id = await createLoopsWebhook(ctx, { email, kind, messageId, occurredAt, webhookId });
-  const profileId = await getProfileIdByEmail(ctx, email);
-  if (!profileId) return;
-
-  if (kind === "email.unsubscribed") {
-    const subscription = await getCurrentNewsSubscription(ctx, profileId);
-    if (!subscription || occurredAt < subscription.requestedAt) return;
-    await markNewsSubscriptionUnsubscribed(ctx, subscription._id, occurredAt);
-  } else {
-    const reason = kind === "email.hardBounced" ? "permanentBounce" : "spamComplaint";
-    await applyProviderNewsRestriction(ctx, { occurredAt, profileId, reason });
-  }
-
-  await enqueueSyncContactForUnsubscription(ctx, { profileId, webhookId: id });
-}
-
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
 async function enqueueSyncContact(ctx: MutationCtx, payload: Omit<LoopsTasks["SyncContactCreate"], "kind">) {
   return await enqueueTask(ctx, { ...payload, kind: "syncContact" });
 }
 
-async function enqueueSyncContactForUnsubscription(ctx: MutationCtx, { profileId, webhookId }: ForUnsubscriptionOpts) {
+export async function enqueueSyncContactForUnsubscription(ctx: MutationCtx, { profileId, webhookId }: ForUnsubscriptionOpts) {
   return await enqueueSyncContact(ctx, {
     idempotencyKey: `loops-webhook-contact-unsubscription:${webhookId}`,
     profileId,
