@@ -50,6 +50,7 @@ export type Ebooks = {
   CreateValues: z.infer<typeof zEbookCreateValues>;
   Doc: z.infer<typeof zEbookDoc>;
   Entity: z.infer<typeof zEbook>;
+  Entry: z.infer<typeof zEbookEntry>;
   Fields: z.infer<typeof zEbookFields>;
   Status: z.infer<typeof zEbookStatus>;
 };
