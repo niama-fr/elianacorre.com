@@ -1,4 +1,4 @@
-import { env, type QueryCtx } from "@ec/backend/server";
+import { env, type MutationCtx, type QueryCtx } from "@ec/backend/server";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 
@@ -14,4 +14,10 @@ export const listPrivacyAuditsByEmail = async (ctx: QueryCtx, email: string) => 
     .order("desc")
     .collect();
   return docs.map(privacyAuditFromDoc);
+};
+
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const createPrivacyAudit = async (ctx: MutationCtx, { email, ...create }: PrivacyAudits["Create"]) => {
+  const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  return await ctx.db.insert("privacyAudits", { ...create, subjectHash });
 };

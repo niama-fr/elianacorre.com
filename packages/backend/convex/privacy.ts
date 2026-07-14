@@ -1,10 +1,62 @@
-import { zCanonicalEmail } from "@ec/domain/schemas/utils";
+import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
+import z from "zod";
 
-import { inspectPerson as inspectPersonData } from "../business/privacy";
-import { zAdminQuery } from "./zod";
+import {
+  inspectPrivacySubject,
+  processPrivacyAccess,
+  processPrivacyErasure,
+  processPrivacyExport,
+  processPrivacyObjection,
+  processPrivacyRectification,
+  processPrivacySuppressionRemoval,
+  processPrivacyUnsubscription,
+} from "../business/privacy";
+import { zAdminMutation, zAdminQuery } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const inspectPerson = zAdminQuery({
+export const inspectSubject = zAdminQuery({
   args: { email: zCanonicalEmail },
-  handler: async (ctx, { email }) => await inspectPersonData(ctx, email),
+  handler: async (ctx, { email }) => await inspectPrivacySubject(ctx, email),
+});
+
+// MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
+export const fulfillAccessRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacyAccess(ctx, email),
+});
+
+export const fulfillErasureRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacyErasure(ctx, email),
+});
+
+export const fulfillExportRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacyExport(ctx, email),
+});
+
+export const fulfillObjectionRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacyObjection(ctx, email),
+});
+
+export const fulfillRectificationRequest = zAdminMutation({
+  args: z.object({
+    ...zConfirmedEmailPayload.shape,
+    firstName: z
+      .string()
+      .trim()
+      .transform((value) => (value === "" ? undefined : value)),
+  }),
+  handler: async (ctx, { email, firstName }) => await processPrivacyRectification(ctx, { email, firstName }),
+});
+
+export const fulfillSuppressionRemovalRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacySuppressionRemoval(ctx, email),
+});
+
+export const fulfillUnsubscriptionRequest = zAdminMutation({
+  args: zConfirmedEmailPayload,
+  handler: async (ctx, { email }) => await processPrivacyUnsubscription(ctx, email),
 });

@@ -23,7 +23,7 @@ export const zPrivacyAuditDoc = z.object({ ...zDocCommon("privacyAudits").shape,
 export const zPrivacyAuditEntry = zPrivacyAuditDoc.omit({ subjectHash: true });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zPrivacyAuditCreate = zPrivacyAuditFields;
+export const zPrivacyAuditCreate = z.object({ ...zPrivacyAuditFields.omit({ subjectHash: true }).shape, email: z.string() });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type PrivacyAudits = {

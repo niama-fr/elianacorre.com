@@ -7,7 +7,7 @@ import { ConvexError, v } from "convex/values";
 import z from "zod";
 
 import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
-import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
+import { deleteLoopsTask, getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
@@ -27,11 +27,13 @@ export const run = workflow.define({ args: { loopsTaskId: v.id("loopsTasks") } }
 // INTERNAL QUERIES ------------------------------------------------------------------------------------------------------------------------
 export const getExecutionPayload = zInternalQuery({
   args: { loopsTaskId: zid("loopsTasks") },
-  handler: async (ctx, { loopsTaskId }): Promise<{ profile: Profiles["Doc"]; task: LoopsTasks["Doc"] } | null> => {
+  handler: async (ctx, { loopsTaskId }): Promise<{ profile: Profiles["Doc"] | null; task: LoopsTasks["Doc"] } | null> => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
     if (task.status === "succeeded") return null;
     if (task.status === "failed") throw new ConvexError("LOOPS_TASK_ALREADY_FAILED");
+
+    if (task.kind === "deleteContact") return { profile: null, task };
 
     const profile = await getProfile(ctx, task.profileId);
     if (!profile) throw new ConvexError("LOOPS_TASK_PROFILE_NOT_FOUND");
@@ -45,7 +47,7 @@ export const markTaskFailed = zInternalMutation({
   args: { error: z.string(), loopsTaskId: zid("loopsTasks") },
   handler: async (ctx, { error, loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
-    if (!isLoopsTaskPending(task)) return;
+    if (!task || !isLoopsTaskPending(task)) return;
     await markLoopsTaskFailed(ctx, loopsTaskId, { error, now: Date.now() });
   },
 });
@@ -54,7 +56,11 @@ export const markTaskSucceeded = zInternalMutation({
   args: { loopsTaskId: zid("loopsTasks") },
   handler: async (ctx, { loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
-    if (!isLoopsTaskPending(task)) return;
+    if (!task || !isLoopsTaskPending(task)) return;
+    if (task.kind === "deleteContact") {
+      await deleteLoopsTask(ctx, loopsTaskId);
+      return;
+    }
     await markLoopsTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });
   },
 });

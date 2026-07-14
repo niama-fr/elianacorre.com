@@ -18,6 +18,11 @@ export const requireLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">) => {
 export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
   await ctx.db.insert("loopsTasks", { ...create, error: null, finishedAt: null, status: "pending", workflowId: null });
 
+// DELETE ----------------------------------------------------------------------------------------------------------------------------------
+export const deleteLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">) => {
+  await ctx.db.delete("loopsTasks", id);
+};
+
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
 export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["CommonFields"]>) => {
   await ctx.db.patch("loopsTasks", id, patch);

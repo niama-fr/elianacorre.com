@@ -25,8 +25,10 @@ export default defineSchema({
     .index("by_profile_id_and_adapter", ["profileId", "adapter"])
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
-  loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields)).index("by_idempotency_key", ["idempotencyKey"]),
-  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_webhook_id", ["webhookId"]),
+  loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields))
+    .index("by_idempotency_key", ["idempotencyKey"])
+    .index("by_profile_id", ["profileId"]),
+  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_email", ["email"]).index("by_webhook_id", ["webhookId"]),
   newsConfirmations: defineTable(zodOutputToConvex(zNewsConfirmationFields)).index("by_subscription_id", ["subscriptionId"]),
   newsRestrictions: defineTable(zodOutputToConvex(zNewsRestrictionFields))
     .index("by_profile_id_and_resolved_at", ["profileId", "resolvedAt"])

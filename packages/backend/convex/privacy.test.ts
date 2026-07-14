@@ -8,6 +8,12 @@ import { api, components } from "./_generated/api";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
+vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
+  const actual = await importOriginal();
+  const workflowId = "test-workflow-id" as Awaited<ReturnType<typeof actual.start>>;
+  return { ...actual, start: vi.fn<typeof actual.start>().mockResolvedValue(workflowId) } satisfies typeof actual;
+});
+
 const createBackend = () => {
   vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");
   const convex = convexTest(schema, modules);
@@ -43,6 +49,42 @@ const createIdentity = async (convex: TestConvex<typeof schema>, role: "admin" |
   return convex.withIdentity({ sessionId: session._id, subject: user._id });
 };
 
+const createSubscriber = async (convex: TestConvex<typeof schema>, email = "reader@example.com") =>
+  await convex.run(async (ctx) => {
+    const admin = await ctx.db
+      .query("profiles")
+      .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
+      .unique();
+    if (admin === null) throw new Error("Admin profile was not found");
+    const profileId = await ctx.db.insert("profiles", { email, firstName: "Before", role: "contact" });
+    const privacyNoticeId = await ctx.db.insert("legalTexts", {
+      content: "Privacy",
+      kind: "privacyNotice",
+      publishedAt: 1,
+      publishedBy: admin._id,
+    });
+    const newsletterConsentId = await ctx.db.insert("legalTexts", {
+      content: "Consent",
+      kind: "newsletterConsent",
+      publishedAt: 1,
+      publishedBy: admin._id,
+    });
+    const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
+      newsletterConsentId,
+      privacyNoticeId,
+      publishedAt: 1,
+      publishedBy: admin._id,
+    });
+    const subscriptionId = await ctx.db.insert("newsSubscriptions", {
+      confirmedAt: 20,
+      legalBundleId,
+      profileId,
+      requestedAt: 10,
+      unsubscribedAt: null,
+    });
+    return { profileId, subscriptionId };
+  });
+
 describe("privacy administration", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -51,7 +93,7 @@ describe("privacy administration", () => {
   it("does not expose a person's data to an unauthenticated requester", async () => {
     const convex = createBackend();
 
-    await expect(convex.query(api.privacy.inspectPerson, { email: "reader@example.com" })).rejects.toThrow("Unauthenticated");
+    await expect(convex.query(api.privacy.inspectSubject, { email: "reader@example.com" })).rejects.toThrow("Unauthenticated");
   });
 
   it("finds one person by canonical email", async () => {
@@ -61,7 +103,7 @@ describe("privacy administration", () => {
       await ctx.db.insert("profiles", { email: "reader@example.com", firstName: "Eliana", role: "contact" });
     });
 
-    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "  Reader@Example.COM " })).resolves.toMatchObject({
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "  Reader@Example.COM " })).resolves.toMatchObject({
       profile: { email: "reader@example.com", firstName: "Eliana", role: "contact" },
     });
   });
@@ -126,7 +168,7 @@ describe("privacy administration", () => {
       await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
     });
 
-    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "reader@example.com" })).resolves.toMatchObject({
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" })).resolves.toMatchObject({
       deliveryEligibility: {
         eligible: false,
         restriction: { reason: "spamComplaint", restrictedBy: "provider" },
@@ -146,7 +188,7 @@ describe("privacy administration", () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
 
-    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "missing@example.com" })).resolves.toBeNull();
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "missing@example.com" })).resolves.toBeNull();
   });
 
   it("finds a retained objection after identifying profile data has been erased", async () => {
@@ -160,7 +202,7 @@ describe("privacy administration", () => {
       await ctx.db.insert("newsSuppressions", { canonicalEmailHash });
     });
 
-    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "erased@example.com" })).resolves.toStrictEqual({
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "erased@example.com" })).resolves.toStrictEqual({
       deliveryEligibility: { eligible: false, restriction: null, status: "suppressed" },
       newsletterConsent: { periods: [] },
       privacyState: { audits: [], suppressed: true },
@@ -197,7 +239,7 @@ describe("privacy administration", () => {
       });
     });
 
-    const person = await asAdmin.query(api.privacy.inspectPerson, { email: "reader@example.com" });
+    const person = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
 
     expect(person?.privacyState.audits).toMatchObject([
       { kind: "erasure", outcome: "rejected" },
@@ -227,7 +269,7 @@ describe("privacy administration", () => {
       });
     });
 
-    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "erased-without-objection@example.com" })).resolves.toMatchObject({
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "erased-without-objection@example.com" })).resolves.toMatchObject({
       privacyState: {
         audits: [{ kind: "erasure", outcome: "completed" }],
         suppressed: false,
@@ -240,6 +282,181 @@ describe("privacy administration", () => {
     const convex = createBackend();
     const asMember = await createIdentity(convex, "member");
 
-    await expect(asMember.query(api.privacy.inspectPerson, { email: "reader@example.com" })).rejects.toThrow("Unauthorized");
+    await expect(asMember.query(api.privacy.inspectSubject, { email: "reader@example.com" })).rejects.toThrow("Unauthorized");
+  });
+
+  it("requires an explicit confirmation before a privacy mutation", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+
+    await expect(
+      asAdmin.mutation(api.privacy.fulfillRectificationRequest, {
+        // @ts-expect-error -- exercise the runtime confirmation validator.
+        confirmed: false,
+        email: "reader@example.com",
+        firstName: "After",
+      })
+    ).rejects.toThrow("Validator");
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" })).resolves.toMatchObject({
+      privacyState: { audits: [] },
+      profile: { firstName: "Before" },
+    });
+  });
+
+  it("audits confirmed access and export separately", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+
+    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, { confirmed: true, email: "reader@example.com" })).resolves.toMatchObject({
+      data: { profile: { email: "reader@example.com" } },
+      outcome: "completed",
+    });
+    await expect(asAdmin.mutation(api.privacy.fulfillExportRequest, { confirmed: true, email: "reader@example.com" })).resolves.toMatchObject({
+      data: { profile: { email: "reader@example.com" } },
+      outcome: "completed",
+    });
+    const person = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
+    expect(person?.privacyState.audits.map(({ kind }) => kind)).toStrictEqual(["export", "access"]);
+  });
+
+  it("does not turn rejected access audits into a known person", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+
+    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, { confirmed: true, email: "unknown@example.com" })).resolves.toStrictEqual({
+      data: null,
+      outcome: "rejected",
+    });
+    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, { confirmed: true, email: "unknown@example.com" })).resolves.toStrictEqual({
+      data: null,
+      outcome: "rejected",
+    });
+  });
+
+  it("rectifies only the optional first name and records the administrator", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+
+    await expect(
+      asAdmin.mutation(api.privacy.fulfillRectificationRequest, { confirmed: true, email: "reader@example.com", firstName: "After" })
+    ).resolves.toStrictEqual({ outcome: "completed" });
+    const person = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
+    expect(person).toMatchObject({
+      privacyState: { audits: [{ kind: "rectification", outcome: "completed" }] },
+      profile: { email: "reader@example.com", firstName: "After" },
+    });
+    expect(person?.privacyState.audits[0]?.performedBy).toBeDefined();
+  });
+
+  it("unsubscribes without removing Welcome E-book Access", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+
+    await expect(asAdmin.mutation(api.privacy.fulfillUnsubscriptionRequest, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
+      outcome: "completed",
+    });
+    const person = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
+    expect(person).toMatchObject({
+      deliveryEligibility: { eligible: false, status: "notConsenting" },
+      privacyState: { audits: [{ kind: "unsubscription", outcome: "completed" }] },
+    });
+    expect(person?.newsletterConsent.periods[0]?.unsubscribedAt).toBeTypeOf("number");
+  });
+
+  it("records and lifts an objection without recreating consent", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+
+    await expect(asAdmin.mutation(api.privacy.fulfillObjectionRequest, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
+      outcome: "completed",
+    });
+    await expect(asAdmin.mutation(api.privacy.fulfillSuppressionRemovalRequest, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
+      outcome: "completed",
+    });
+    const person = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
+    expect(person).toMatchObject({
+      deliveryEligibility: { eligible: false, status: "notConsenting" },
+      privacyState: {
+        audits: [
+          { kind: "suppressionRemoval", outcome: "completed" },
+          { kind: "objection", outcome: "completed" },
+        ],
+        suppressed: false,
+      },
+    });
+    expect(person?.newsletterConsent.periods[0]?.unsubscribedAt).toBeTypeOf("number");
+  });
+
+  it("erases identifying subscriber data and Welcome E-book Access while retaining the minimal audit", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const { profileId } = await createSubscriber(convex);
+    await convex.run(async (ctx) => {
+      const admin = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
+        .unique();
+      if (admin === null) throw new Error("Admin profile was not found");
+      const storageId = await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
+      const ebookId = await ctx.db.insert("ebooks", {
+        fileName: "ebook.pdf",
+        publishedAt: 5,
+        publishedBy: admin._id,
+        status: "published",
+        storageId,
+        title: "Carnet",
+        updatedAt: 5,
+        uploadedBy: admin._id,
+        version: 1,
+      });
+      const ebookIssuanceId = await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
+      await ctx.db.insert("ebookDownloads", { ebookIssuanceId });
+    });
+
+    await expect(asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
+      outcome: "completed",
+    });
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" })).resolves.toMatchObject({
+      privacyState: { audits: [{ kind: "erasure", outcome: "completed" }] },
+      profile: null,
+      welcomeEbookAccess: { issuances: [] },
+    });
+    const retained = await convex.run(async (ctx) => ({
+      deleteTasks: await ctx.db
+        .query("loopsTasks")
+        .filter((q) => q.eq(q.field("kind"), "deleteContact"))
+        .collect(),
+      downloads: await ctx.db.query("ebookDownloads").collect(),
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      reader: await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
+        .unique(),
+    }));
+    expect(retained).toMatchObject({
+      deleteTasks: [{ email: "reader@example.com", kind: "deleteContact" }],
+      downloads: [],
+      issuances: [],
+      reader: null,
+    });
+  });
+
+  it("rejects subscriber erasure for a Profile with a member relationship", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createIdentity(convex, "member");
+
+    await expect(asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "member@example.com" })).resolves.toStrictEqual({
+      outcome: "rejected",
+    });
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: "member@example.com" })).resolves.toMatchObject({
+      privacyState: { audits: [{ kind: "erasure", outcome: "rejected" }] },
+      profile: { email: "member@example.com", role: "member" },
+    });
   });
 });

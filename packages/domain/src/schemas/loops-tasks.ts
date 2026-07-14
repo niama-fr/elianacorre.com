@@ -1,9 +1,9 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
+import { zCanonicalEmail, zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
 
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
-const kinds = ["sendConfirmationEmail", "sendEbookEmail", "syncContact"] as const;
+const kinds = ["deleteContact", "sendConfirmationEmail", "sendEbookEmail", "syncContact"] as const;
 export const zLoopsTaskKind = z.literal(kinds);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
@@ -14,45 +14,70 @@ const zCommonFields = z.object({
   error: z.string().nullable(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
-  profileId: zid("profiles"),
   status: zLoopsTaskStatus,
   workflowId: z.string().nullable(),
 });
-const zSendConfirmationEmailFields = z.object({
+const zProfileTaskFields = z.object({ ...zCommonFields.shape, profileId: zid("profiles") });
+
+const zDeleteContactFields = z.object({
   ...zCommonFields.shape,
+  email: zCanonicalEmail,
   kind: z.literal(kinds[0]),
+});
+const zSendConfirmationEmailFields = z.object({
+  ...zProfileTaskFields.shape,
+  kind: z.literal(kinds[1]),
   newsConfirmationId: zid("newsConfirmations"),
 });
 const zSendEbookEmailFields = z.object({
-  ...zCommonFields.shape,
+  ...zProfileTaskFields.shape,
   ebookDownloadId: zid("ebookDownloads"),
-  kind: z.literal(kinds[1]),
+  kind: z.literal(kinds[2]),
 });
 const zSyncContactFields = z.object({
-  ...zCommonFields.shape,
-  kind: z.literal(kinds[2]),
+  ...zProfileTaskFields.shape,
+  kind: z.literal(kinds[3]),
   subscribed: z.boolean(),
 });
-export const zLoopsTaskFields = z.discriminatedUnion("kind", [zSendConfirmationEmailFields, zSendEbookEmailFields, zSyncContactFields]);
+export const zLoopsTaskFields = z.discriminatedUnion("kind", [
+  zDeleteContactFields,
+  zSendConfirmationEmailFields,
+  zSendEbookEmailFields,
+  zSyncContactFields,
+]);
 
+const zDeleteContactDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zDeleteContactFields.shape });
 const zSendConfirmationEmailDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSendConfirmationEmailFields.shape });
 const zSendEbookEmailDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSendEbookEmailFields.shape });
 const zSyncContactDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSyncContactFields.shape });
-export const zLoopsTaskDoc = z.discriminatedUnion("kind", [zSendConfirmationEmailDoc, zSendEbookEmailDoc, zSyncContactDoc]);
+export const zLoopsTaskDoc = z.discriminatedUnion("kind", [
+  zDeleteContactDoc,
+  zSendConfirmationEmailDoc,
+  zSendEbookEmailDoc,
+  zSyncContactDoc,
+]);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-const zCommonCreate = zCommonFields.pick({ idempotencyKey: true, profileId: true });
+const zCommonCreate = zProfileTaskFields.pick({ idempotencyKey: true, profileId: true });
+const zDeleteContactCreate = zDeleteContactFields.pick({ email: true, idempotencyKey: true, kind: true });
 const zSendConfirmationEmailCreate = z.object({
   ...zCommonCreate.shape,
-  kind: z.literal(kinds[0]),
+  kind: z.literal(kinds[1]),
   newsConfirmationId: zid("newsConfirmations"),
 });
-const zSendEbookEmailCreate = z.object({ ...zCommonCreate.shape, ebookDownloadId: zid("ebookDownloads"), kind: z.literal(kinds[1]) });
-const zSyncContactCreate = z.object({ ...zCommonCreate.shape, kind: z.literal(kinds[2]), subscribed: z.boolean() });
-export const zLoopsTaskCreate = z.discriminatedUnion("kind", [zSendConfirmationEmailCreate, zSendEbookEmailCreate, zSyncContactCreate]);
+const zSendEbookEmailCreate = z.object({ ...zCommonCreate.shape, ebookDownloadId: zid("ebookDownloads"), kind: z.literal(kinds[2]) });
+const zSyncContactCreate = z.object({ ...zCommonCreate.shape, kind: z.literal(kinds[3]), subscribed: z.boolean() });
+export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
+  zDeleteContactCreate,
+  zSendConfirmationEmailCreate,
+  zSendEbookEmailCreate,
+  zSyncContactCreate,
+]);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type LoopsTasks = {
+  DeleteContactCreate: z.infer<typeof zDeleteContactCreate>;
+  DeleteContactDoc: z.infer<typeof zDeleteContactDoc>;
   SyncContactCreate: z.infer<typeof zSyncContactCreate>;
   SyncContactDoc: z.infer<typeof zSyncContactDoc>;
   CommonFields: z.infer<typeof zCommonFields>;
