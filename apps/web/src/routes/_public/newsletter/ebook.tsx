@@ -42,7 +42,7 @@ function NewsletterEbookPage() {
       }
     : {
         content: [
-          `Il a peut-être expiré ou été remplacé par une demande plus récente.`,
+          `Il a peut-être expiré ou n’est plus utilisable.`,
           `Vous pouvez demander un nouveau lien personnel sans vous réinscrire à la newsletter.`,
         ],
         title: ["Ce lien", "n’est plus valide"],

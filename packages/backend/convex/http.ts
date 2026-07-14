@@ -39,11 +39,11 @@ http.route({
 http.route({
   handler: httpAction(async (ctx, request) => {
     const token = new URL(request.url).searchParams.get("token");
-    if (token === null) return new Response("Not found", { status: 404 });
+    if (token === null) return redirectToEbookRecovery();
     const ebook = await ctx.runQuery(internal.ebooks.resolveDownload, { token });
-    if (ebook === null) return new Response("Not found", { status: 404 });
+    if (ebook === null) return redirectToEbookRecovery();
     const file = await ctx.storage.get(ebook.storageId);
-    if (file === null) return new Response("Not found", { status: 404 });
+    if (file === null) return redirectToEbookRecovery();
     const fileName = ebook.fileName.replaceAll('"', "");
     return new Response(file, {
       headers: {
@@ -56,5 +56,9 @@ http.route({
   method: "GET",
   path: "/newsletter/ebook",
 });
+
+function redirectToEbookRecovery() {
+  return Response.redirect(new URL("/newsletter/ebook", env.SITE_URL), 302);
+}
 
 export default http;

@@ -18,7 +18,7 @@ import { enqueueSendEbookEmail } from "./loops";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const DOWNLOAD_TTL_MS = 72 * 60 * 60 * 1000;
-const FORMER_NEWSLETTER_SUBSCRIBER_RETENTION_MS = 3 * 365 * 24 * 60 * 60 * 1000;
+const FORMER_NEWSLETTER_SUBSCRIBER_RETENTION_YEARS = 3;
 const RATE_LIMIT_WINDOW_MS = 15 * MINUTE;
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
@@ -90,7 +90,18 @@ async function hasAccess(ctx: QueryCtx, { now, profileId }: WithNow<{ profileId:
   if (subscription.unsubscribedAt === null) return true;
 
   const lastRelevantContactAt = Math.max(subscription.unsubscribedAt, issuance?._creationTime ?? 0);
-  return now < lastRelevantContactAt + FORMER_NEWSLETTER_SUBSCRIBER_RETENTION_MS;
+  return now < addCalendarYears(lastRelevantContactAt, FORMER_NEWSLETTER_SUBSCRIBER_RETENTION_YEARS);
+}
+
+function addCalendarYears(timestamp: number, years: number) {
+  const anniversary = new Date(timestamp);
+  const originalMonth = anniversary.getUTCMonth();
+  anniversary.setUTCFullYear(anniversary.getUTCFullYear() + years);
+
+  // JavaScript rolls 29 February into March in a non-leap target year. The
+  // calendar anniversary for retention is the final day of February instead.
+  if (anniversary.getUTCMonth() !== originalMonth) anniversary.setUTCDate(0);
+  return anniversary.getTime();
 }
 
 async function issueDownload(ctx: MutationCtx, { kind, profileId, sendEmail }: IssueDownloadOpts) {

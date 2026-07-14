@@ -87,7 +87,7 @@ export function EbookRecoveryFormDialog() {
                 - Vous ne serez pas réinscrit·e si vous ne l&apos;êtes plus.
               </AlertDescription>
               <AlertDescription className={EBOOK_RECOVERY_FORM_DIALOG.alertDescription()}>
-                - Votre inscription ne doit pas avoir pris fin depuis plus de 3 ans.
+                - Votre dernier contact lié à l’e-book doit dater de moins de 3 ans.
               </AlertDescription>
             </Alert>
           </form.AppForm>
