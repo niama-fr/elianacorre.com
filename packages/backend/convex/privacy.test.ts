@@ -163,9 +163,76 @@ describe("privacy administration", () => {
     await expect(asAdmin.query(api.privacy.inspectPerson, { email: "erased@example.com" })).resolves.toStrictEqual({
       deliveryEligibility: { eligible: false, restriction: null, status: "suppressed" },
       newsletterConsent: { periods: [] },
-      privacyState: { suppressed: true },
+      privacyState: { audits: [], suppressed: true },
       profile: null,
       welcomeEbookAccess: { issuances: [] },
+    });
+  });
+
+  it("shows the minimal privacy-operation history newest first", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const subjectHash = await hashCanonicalEmail({
+      email: "reader@example.com",
+      secret: "test-suppression-secret",
+    });
+    await convex.run(async (ctx) => {
+      const performedBy = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
+        .unique();
+      if (performedBy === null) throw new Error("Admin profile was not found");
+      await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
+      await ctx.db.insert("privacyAudits", {
+        kind: "access",
+        outcome: "completed",
+        performedBy: performedBy._id,
+        subjectHash,
+      });
+      await ctx.db.insert("privacyAudits", {
+        kind: "erasure",
+        outcome: "rejected",
+        performedBy: performedBy._id,
+        subjectHash,
+      });
+    });
+
+    const person = await asAdmin.query(api.privacy.inspectPerson, { email: "reader@example.com" });
+
+    expect(person?.privacyState.audits).toMatchObject([
+      { kind: "erasure", outcome: "rejected" },
+      { kind: "access", outcome: "completed" },
+    ]);
+    expect(person?.privacyState.audits[0]).not.toHaveProperty("subjectHash");
+  });
+
+  it("retains minimal audit history after identifying profile data is erased", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const subjectHash = await hashCanonicalEmail({
+      email: "erased-without-objection@example.com",
+      secret: "test-suppression-secret",
+    });
+    await convex.run(async (ctx) => {
+      const performedBy = await ctx.db
+        .query("profiles")
+        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
+        .unique();
+      if (performedBy === null) throw new Error("Admin profile was not found");
+      await ctx.db.insert("privacyAudits", {
+        kind: "erasure",
+        outcome: "completed",
+        performedBy: performedBy._id,
+        subjectHash,
+      });
+    });
+
+    await expect(asAdmin.query(api.privacy.inspectPerson, { email: "erased-without-objection@example.com" })).resolves.toMatchObject({
+      privacyState: {
+        audits: [{ kind: "erasure", outcome: "completed" }],
+        suppressed: false,
+      },
+      profile: null,
     });
   });
 

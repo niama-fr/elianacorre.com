@@ -12,6 +12,7 @@ import { zNewsSubscriptionFields } from "@ec/domain/schemas/news-subscriptions";
 import { zNewsSuppressionFields } from "@ec/domain/schemas/news-suppressions";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { zProfileFields } from "@ec/domain/schemas/profiles";
+import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
 import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { defineSchema, defineTable } from "convex/server";
 
@@ -35,5 +36,6 @@ export default defineSchema({
     .index("by_profile_id_and_confirmed_at", ["profileId", "confirmedAt"]),
   newsSuppressions: defineTable(zodOutputToConvex(zNewsSuppressionFields)).index("by_canonical_email_hash", ["canonicalEmailHash"]),
   newsletterLegalBundles: defineTable(zodOutputToConvex(zNewsletterLegalBundleFields)).index("by_published_at", ["publishedAt"]),
+  privacyAudits: defineTable(zodOutputToConvex(zPrivacyAuditFields)).index("by_subject_hash", ["subjectHash"]),
   profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
 });

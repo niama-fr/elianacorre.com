@@ -4,18 +4,27 @@ import { ebookIssuanceFromDoc, listEbookIssuances } from "../data/ebook-issuance
 import { getActiveNewsRestriction } from "../data/news-restrictions";
 import { listNewsSubscriptions } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
+import { listPrivacyAuditsByEmail } from "../data/privacy-audits";
 import { getProfileByEmail } from "../data/profiles";
 
 // INSPECT ---------------------------------------------------------------------------------------------------------------------------------
 export async function inspectPerson(ctx: QueryCtx, email: string) {
-  const [profile, suppression] = await Promise.all([getProfileByEmail(ctx, email), getNewsSuppressionByEmail(ctx, email)]);
-  if (!profile && !suppression) return null;
+  const [profile, suppression, audits] = await Promise.all([
+    getProfileByEmail(ctx, email),
+    getNewsSuppressionByEmail(ctx, email),
+    listPrivacyAuditsByEmail(ctx, email),
+  ]);
+  if (!profile && !suppression && audits.length === 0) return null;
 
   if (!profile)
     return {
-      deliveryEligibility: { eligible: false, restriction: null, status: "suppressed" as const },
+      deliveryEligibility: {
+        eligible: false,
+        restriction: null,
+        status: suppression ? ("suppressed" as const) : ("notConsenting" as const),
+      },
       newsletterConsent: { periods: [] },
-      privacyState: { suppressed: true },
+      privacyState: { audits, suppressed: !!suppression },
       profile: null,
       welcomeEbookAccess: { issuances: [] },
     };
@@ -39,7 +48,7 @@ export async function inspectPerson(ctx: QueryCtx, email: string) {
   return {
     deliveryEligibility: { eligible: status === "eligible", restriction, status },
     newsletterConsent: { periods: consentPeriods },
-    privacyState: { suppressed: suppression !== null },
+    privacyState: { audits, suppressed: !!suppression },
     profile,
     welcomeEbookAccess: { issuances },
   };
