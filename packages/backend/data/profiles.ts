@@ -1,7 +1,6 @@
+import type { MutationCtx, QueryCtx } from "@ec/backend/server";
+import type { Id } from "@ec/backend/types";
 import type { Profiles } from "@ec/domain/schemas/profiles";
-
-import type { Id } from "./convex/_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./convex/_generated/server";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getProfile = async (ctx: QueryCtx, id: Id<"profiles">) => await ctx.db.get("profiles", id);

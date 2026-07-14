@@ -1,7 +1,6 @@
+import type { QueryCtx } from "@ec/backend/server";
+import type { Id } from "@ec/backend/types";
 import { ConvexError } from "convex/values";
-
-import type { Id } from "./convex/_generated/dataModel";
-import type { QueryCtx } from "./convex/_generated/server";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getActiveNewsletterConsent = async (ctx: QueryCtx) =>

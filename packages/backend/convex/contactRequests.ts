@@ -1,6 +1,6 @@
 import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 
-import { ensureContactProfileId } from "../profiles";
+import { ensureContactProfileId } from "../data/profiles";
 import { zMutation } from "./zod";
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------

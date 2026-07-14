@@ -2,9 +2,9 @@ import { NEWSLETTER_CONSENT, PRIVACY_NOTICE } from "@ec/domain/helpers/legal-tex
 import { zProfileAdminsSeed } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
-import { getActiveNewsletterConsent, getActivePrivacyNotice } from "../legal-texts";
-import { getActiveNewsletterLegalBundle } from "../newsletter-legal-bundles";
-import { getProfileByEmail } from "../profiles";
+import { getActiveNewsletterConsent, getActivePrivacyNotice } from "../data/legal-texts";
+import { getActiveNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
+import { getProfileByEmail } from "../data/profiles";
 import type { Id } from "./_generated/dataModel";
 import { env } from "./_generated/server";
 import { zInternalMutation } from "./zod";
