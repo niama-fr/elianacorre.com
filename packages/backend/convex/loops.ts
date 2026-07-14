@@ -6,8 +6,7 @@ import { zid } from "convex-helpers/server/zod4";
 import { ConvexError, v } from "convex/values";
 import z from "zod";
 
-import { executeLoopsTask } from "../business/loops";
-import { processNewsletterProviderWebhook } from "../business/newsletter";
+import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
 import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
@@ -63,7 +62,7 @@ export const markTaskSucceeded = zInternalMutation({
 export const processWebhook = zInternalMutation({
   args: zLoopsWebhookCreate,
   handler: async (ctx, create) => {
-    await processNewsletterProviderWebhook(ctx, create);
+    await processLoopsWebhook(ctx, create);
   },
 });
 
