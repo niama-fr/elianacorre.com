@@ -5,11 +5,26 @@ description: Search, create, and manage notes in the Obsidian vault with wikilin
 
 # Obsidian Vault
 
-## Vault location
+## Resolve the vault
 
-`/mnt/d/Obsidian Vault/AI Research/`
+Resolve the vault before reading or writing notes. Store the selected absolute path in `VAULT_ROOT` and reuse it throughout the task.
 
-Mostly flat at root level.
+1. Use an explicit vault path supplied by the user when available.
+2. Otherwise, read Obsidian's vault registry:
+   - macOS: `~/Library/Application Support/obsidian/obsidian.json`
+   - Linux: `~/.config/obsidian/obsidian.json`
+   - Windows: `%APPDATA%/obsidian/obsidian.json`
+3. For this repository, select the registered Niama vault, normally a path containing `/niama/`. Do not select another vault merely because it has `"open": true`.
+4. If the registry is unavailable, use `/Users/gregorybouteiller/Coding/niama/vault` only when that path exists.
+5. If no candidate exists or multiple candidates remain ambiguous, ask the user for the vault path before writing.
+
+On macOS, list registered paths with:
+
+```bash
+jq -r '.vaults[].path' "$HOME/Library/Application Support/obsidian/obsidian.json"
+```
+
+The Niama vault is mostly flat at its root.
 
 ## Naming conventions
 
@@ -29,10 +44,10 @@ Mostly flat at root level.
 
 ```bash
 # Search by filename
-find "/mnt/d/Obsidian Vault/AI Research/" -name "*.md" | grep -i "keyword"
+rg --files "$VAULT_ROOT" | rg -i 'keyword.*\.md$'
 
 # Search by content
-grep -rl "keyword" "/mnt/d/Obsidian Vault/AI Research/" --include="*.md"
+rg -l 'keyword' "$VAULT_ROOT" --glob '*.md'
 ```
 
 Or use Grep/Glob tools directly on the vault path.
@@ -49,11 +64,11 @@ Or use Grep/Glob tools directly on the vault path.
 Search for `[[Note Title]]` across the vault to find backlinks:
 
 ```bash
-grep -rl "\\[\\[Note Title\\]\\]" "/mnt/d/Obsidian Vault/AI Research/"
+rg -l '\[\[Note Title\]\]' "$VAULT_ROOT" --glob '*.md'
 ```
 
 ### Find index notes
 
 ```bash
-find "/mnt/d/Obsidian Vault/AI Research/" -name "*Index*"
+rg --files "$VAULT_ROOT" | rg '/[^/]*Index[^/]*\.md$'
 ```
