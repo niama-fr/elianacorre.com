@@ -22,7 +22,11 @@ const zCommonFields = z.object({
   performedBy: zid("profiles"),
   subjectHash: z.string(),
 });
-const zRequestFields = z.object({ ...zCommonFields.shape, kind: zPrivacyAuditRequestKind });
+const zRequestFields = z.object({
+  ...zCommonFields.shape,
+  kind: zPrivacyAuditRequestKind,
+  verificationAuditId: zid("privacyAudits"),
+});
 const zVerificationFields = z.object({
   ...zCommonFields.shape,
   kind: z.literal("verification"),

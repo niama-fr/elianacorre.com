@@ -81,7 +81,7 @@ function PrivacySubjectView({ email, subject }: { email: string; subject: Privac
       <DeliverySection subject={subject} />
       <EbookSection subject={subject} />
       <AuditSection subject={subject} />
-      <VerificationSection email={email} />
+      <VerificationSection email={email} subject={subject} />
       <PrivacyOperations email={email} subject={subject} />
     </div>
   );
@@ -193,7 +193,7 @@ function AuditSection({ subject }: { subject: PrivacySubject }) {
   );
 }
 
-function VerificationSection({ email }: { email: string }) {
+function VerificationSection({ email, subject }: { email: string; subject: PrivacySubject }) {
   const [method, setMethod] = useState<VerificationMethod>("emailChallenge");
   const [requestKind, setRequestKind] = useState<Operation>("access");
   const [outcome, setOutcome] = useState<"completed" | "rejected">();
@@ -215,6 +215,15 @@ function VerificationSection({ email }: { email: string }) {
       <p className="mb-4 text-muted-foreground text-sm">
         Enregistrez uniquement la catégorie de méthode et son résultat, jamais les preuves.
       </p>
+      {subject.privacyState.authorizations.length > 0 && (
+        <ul className="mb-4 flex flex-col gap-1 text-sm">
+          {subject.privacyState.authorizations.map((authorization) => (
+            <li key={authorization.requestKind}>
+              Autorisation {authorization.requestKind} valable jusqu’au {formatDate(authorization.expiresAt)}
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-2 text-sm">
           Demande concernée
@@ -300,6 +309,8 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
   const removeSuppression = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillSuppressionRemovalRequest) });
   const unsubscribe = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillUnsubscriptionRequest) });
   const isPending = [access, erase, exportData, object, rectify, removeSuppression, unsubscribe].some(({ isPending: pending }) => pending);
+  const isAuthorized = (requestKind: Operation) =>
+    subject.privacyState.authorizations.some((authorization) => authorization.requestKind === requestKind);
 
   const confirmOperation = async () => {
     if (!operation) return;
@@ -327,15 +338,19 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
 
   return (
     <PrivacySection title="Opérations confirmées">
-      <p className="mb-4 text-muted-foreground text-sm">Chaque opération est indépendante, confirmée et auditée.</p>
+      <p className="mb-4 text-muted-foreground text-sm">
+        Chaque opération exige une vérification correspondante, indépendante, confirmée et à usage unique.
+      </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <OperationButton
+          disabled={!isAuthorized("access")}
           label={OPERATION_LABELS.access}
           onClick={() => {
             setOperation("access");
           }}
         />
         <OperationButton
+          disabled={!isAuthorized("export")}
           label={OPERATION_LABELS.export}
           onClick={() => {
             setOperation("export");
@@ -350,6 +365,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             }}
           />
           <OperationButton
+            disabled={!isAuthorized("rectification")}
             label={OPERATION_LABELS.rectification}
             onClick={() => {
               setOperation("rectification");
@@ -357,18 +373,21 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
           />
         </div>
         <OperationButton
+          disabled={!isAuthorized("unsubscription")}
           label={OPERATION_LABELS.unsubscription}
           onClick={() => {
             setOperation("unsubscription");
           }}
         />
         <OperationButton
+          disabled={!isAuthorized("objection")}
           label={OPERATION_LABELS.objection}
           onClick={() => {
             setOperation("objection");
           }}
         />
         <OperationButton
+          disabled={!isAuthorized("suppressionRemoval")}
           label={OPERATION_LABELS.suppressionRemoval}
           onClick={() => {
             setOperation("suppressionRemoval");
@@ -376,6 +395,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
         />
         <OperationButton
           destructive
+          disabled={!isAuthorized("erasure")}
           label={OPERATION_LABELS.erasure}
           onClick={() => {
             setOperation("erasure");
@@ -431,9 +451,19 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function OperationButton({ destructive = false, label, onClick }: { destructive?: boolean; label: string; onClick: () => void }) {
+function OperationButton({
+  destructive = false,
+  disabled = false,
+  label,
+  onClick,
+}: {
+  destructive?: boolean;
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
   return (
-    <Button type="button" variant={destructive ? "destructive" : "outline"} onClick={onClick}>
+    <Button disabled={disabled} type="button" variant={destructive ? "destructive" : "outline"} onClick={onClick}>
       {label}
     </Button>
   );

@@ -1,5 +1,6 @@
 import { zPrivacyAuditRequestKind, zPrivacyAuditVerificationMethod } from "@ec/domain/schemas/privacy-audits";
 import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
+import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
 import {
@@ -13,7 +14,8 @@ import {
   processPrivacyUnsubscription,
   processPrivacyVerification,
 } from "../business/privacy";
-import { zAdminMutation, zAdminQuery } from "./zod";
+import { deletePrivacyAuthorization } from "../data/privacy-authorizations";
+import { zAdminMutation, zAdminQuery, zInternalMutation } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
 export const inspectSubject = zAdminQuery({
@@ -71,4 +73,12 @@ export const recordVerification = zAdminMutation({
     requestKind: zPrivacyAuditRequestKind,
   }),
   handler: async (ctx, payload) => await processPrivacyVerification(ctx, payload),
+});
+
+// INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
+export const expireAuthorization = zInternalMutation({
+  args: { privacyAuthorizationId: zid("privacyAuthorizations") },
+  handler: async (ctx, { privacyAuthorizationId }) => {
+    await deletePrivacyAuthorization(ctx, privacyAuthorizationId);
+  },
 });

@@ -40,4 +40,6 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 **Suppression Record**: The minimal non-marketing record retained to prevent email delivery after a person objects to future prospecting. It is separate from the subscriber profile and cannot be used to identify or contact the person for another purpose; a public subscription attempt cannot remove it, and lifting the objection requires a verified privacy request. _Avoid_: Newsletter subscriber, active contact
 
-**Privacy Request**: A verified request received through `confidentialite@elianacorre.com` to access, rectify, export, restrict, object to, or erase a person's data. Its handling is recorded separately from newsletter consent and marketing activity. _Avoid_: Unsubscription
+**Privacy Request**: A request received through `confidentialite@elianacorre.com` to access, rectify, export, restrict, object to, or erase a person's data. Its handling is recorded separately from newsletter consent and marketing activity. _Avoid_: Unsubscription
+
+**Privacy Authorization**: A temporary, single-use permission created by a successful identity-verification decision for one canonical email and one exact Privacy Request kind. It expires after 30 minutes, is consumed by the matching operation, and is separate from the immutable verification and request audits. _Avoid_: Privacy Request, Newsletter capability

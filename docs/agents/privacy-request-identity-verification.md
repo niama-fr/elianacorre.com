@@ -51,15 +51,15 @@ Requests made by a representative require a mandate identifying the requester, r
 5. If there is no reasonable doubt, record the verification method as `emailChallenge` and its success or failure. Do not retain the token or message content.
 6. If doubt remains, pause all disclosure and mutation. Ask for the minimum additional evidence needed, explain why it is required, and record only `additionalEvidence` plus the outcome.
 7. If an identity document is exceptionally necessary, tell the requester which visible fields are required and invite them to mask unrelated fields. Keep the document only in the restricted mailbox while verification is pending.
-8. Record the verification result in Convex: authorized administrator, time, request type, verification method category, and outcome. Do not record tokens, document numbers, copies, or unnecessary request content.
+8. Record the verification result in Convex: authorized administrator, time, request type, verification method category, and outcome. A successful result creates a 30-minute, single-use authorization for that canonical email and exact request type. A rejected result revokes any existing authorization for the same request. Do not record tokens, document numbers, copies, or unnecessary request content.
 9. Delete temporary verification evidence and mailbox attachments as soon as the verification decision is recorded. Retain only ordinary correspondence needed to manage the request under the approved mailbox-retention policy.
-10. Perform each requested privacy operation separately in the administration area. Reconfirm destructive operations. Never use verification to create Newsletter Consent or silently restore eligibility after a complaint.
+10. Perform each requested privacy operation separately in the administration area before its authorization expires. Convex must reject an operation without a matching authorization and consume the authorization when processing begins. Reconfirm destructive operations. Never use verification to create Newsletter Consent or silently restore eligibility after a complaint.
 11. Send access or export results only to the verified destination using the approved secure delivery mechanism. Review the result first and remove or mask third-party data.
 12. Inform the requester of the outcome. Escalate any proposed refusal, deadline extension, or unresolved legal question to Grégory; this runbook does not authorize those decisions.
 
 ## Expected results
 
-- A verified request has one auditable verification outcome without stored verification secrets or identity-document contents.
+- A verified request has one auditable verification outcome and one short-lived, single-use authorization without stored verification secrets or identity-document contents.
 - An unverified or doubtful request causes no disclosure, rectification, suppression removal, or erasure.
 - Every subsequent operation remains separate, confirmed, and attributable to the authorized administrator.
 - Temporary verification evidence is deleted after the verification decision.
@@ -74,6 +74,7 @@ For a synthetic test identity:
 4. Introduce a destination-address mismatch and confirm the operation pauses for additional verification.
 5. Confirm neither the challenge token nor request content appears in Convex logs, audit history, Linear, or application logs.
 6. Confirm temporary evidence can be deleted without removing the minimal operation audit.
+7. Confirm an authorization cannot fulfill another request type, cannot be reused, and is rejected after 30 minutes.
 
 ## Recovery and rollback
 
