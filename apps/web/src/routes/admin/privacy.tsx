@@ -215,11 +215,11 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
       <p className="mb-4 text-muted-foreground text-sm">
         Enregistrez uniquement la catégorie de méthode et son résultat, jamais les preuves.
       </p>
-      {subject.privacyState.authorizations.length > 0 && (
+      {subject.privacyState.grants.length > 0 && (
         <ul className="mb-4 flex flex-col gap-1 text-sm">
-          {subject.privacyState.authorizations.map((authorization) => (
-            <li key={authorization.requestKind}>
-              Autorisation {authorization.requestKind} valable jusqu’au {formatDate(authorization.expiresAt)}
+          {subject.privacyState.grants.map((grant) => (
+            <li key={grant.requestKind}>
+              Permission {grant.requestKind} valable jusqu’au {formatDate(grant.expiresAt)}
             </li>
           ))}
         </ul>
@@ -309,8 +309,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
   const removeSuppression = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillSuppressionRemovalRequest) });
   const unsubscribe = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillUnsubscriptionRequest) });
   const isPending = [access, erase, exportData, object, rectify, removeSuppression, unsubscribe].some(({ isPending: pending }) => pending);
-  const isAuthorized = (requestKind: Operation) =>
-    subject.privacyState.authorizations.some((authorization) => authorization.requestKind === requestKind);
+  const isAuthorized = (requestKind: Operation) => subject.privacyState.grants.some((grant) => grant.requestKind === requestKind);
 
   const confirmOperation = async () => {
     if (!operation) return;

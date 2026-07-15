@@ -221,7 +221,7 @@ describe("privacy administration", () => {
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: "erased@example.com" })).resolves.toStrictEqual({
       deliveryEligibility: { eligible: false, restriction: null, status: "suppressed" },
       newsletterConsent: { periods: [] },
-      privacyState: { audits: [], authorizations: [], suppressed: true },
+      privacyState: { audits: [], grants: [], suppressed: true },
       profile: null,
       welcomeEbookAccess: { issuances: [] },
     });
@@ -442,7 +442,7 @@ describe("privacy administration", () => {
     await createSubscriber(convex);
     const request = { confirmed: true as const, email: "reader@example.com" };
 
-    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, request)).rejects.toThrow("PRIVACY_VERIFICATION_REQUIRED");
+    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, request)).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
     await asAdmin.mutation(api.privacy.recordVerification, {
       email: request.email,
       method: "emailChallenge",
@@ -450,13 +450,13 @@ describe("privacy administration", () => {
       requestKind: "access",
     });
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: request.email })).resolves.toMatchObject({
-      privacyState: { authorizations: [{ requestKind: "access" }] },
+      privacyState: { grants: [{ requestKind: "access" }] },
     });
     await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, request)).resolves.toMatchObject({ outcome: "completed" });
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: request.email })).resolves.toMatchObject({
-      privacyState: { authorizations: [] },
+      privacyState: { grants: [] },
     });
-    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, request)).rejects.toThrow("PRIVACY_VERIFICATION_REQUIRED");
+    await expect(asAdmin.mutation(api.privacy.fulfillAccessRequest, request)).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
   });
 
   it("does not authorize a different privacy-request kind", async () => {
@@ -466,7 +466,7 @@ describe("privacy administration", () => {
     await verifyRequest(asAdmin, "access");
 
     await expect(asAdmin.mutation(api.privacy.fulfillExportRequest, { confirmed: true, email: "reader@example.com" })).rejects.toThrow(
-      "PRIVACY_VERIFICATION_REQUIRED"
+      "PRIVACY_GRANT_REQUIRED"
     );
     await expect(
       asAdmin.mutation(api.privacy.fulfillAccessRequest, { confirmed: true, email: "reader@example.com" })
@@ -487,7 +487,7 @@ describe("privacy administration", () => {
     expect(requestAudit.verificationAuditId).toBe(verificationAudit?._id);
   });
 
-  it("revokes an active authorization when a later verification is rejected", async () => {
+  it("revokes an active grant when a later verification is rejected", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
     await createSubscriber(convex);
@@ -500,11 +500,11 @@ describe("privacy administration", () => {
     });
 
     await expect(asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "reader@example.com" })).rejects.toThrow(
-      "PRIVACY_VERIFICATION_REQUIRED"
+      "PRIVACY_GRANT_REQUIRED"
     );
   });
 
-  it("rejects an expired privacy authorization", async () => {
+  it("rejects an expired privacy grant", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
     await createSubscriber(convex);
@@ -519,7 +519,7 @@ describe("privacy administration", () => {
         email: "reader@example.com",
         firstName: "After",
       })
-    ).rejects.toThrow("PRIVACY_VERIFICATION_REQUIRED");
+    ).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
   });
 
   it("audits confirmed access and export separately", async () => {

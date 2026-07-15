@@ -1,4 +1,4 @@
-import { zPrivacyAuditRequestKind, zPrivacyAuditVerificationMethod } from "@ec/domain/schemas/privacy-audits";
+import { zPrivacyAuditVerificationCreate } from "@ec/domain/schemas/privacy-audits";
 import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
@@ -14,7 +14,7 @@ import {
   processPrivacyUnsubscription,
   processPrivacyVerification,
 } from "../business/privacy";
-import { deletePrivacyAuthorization } from "../data/privacy-authorizations";
+import { deletePrivacyGrant } from "../data/privacy-grants";
 import { zAdminMutation, zAdminQuery, zInternalMutation } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
@@ -66,19 +66,14 @@ export const fulfillUnsubscriptionRequest = zAdminMutation({
 });
 
 export const recordVerification = zAdminMutation({
-  args: z.object({
-    email: zCanonicalEmail,
-    method: zPrivacyAuditVerificationMethod,
-    outcome: z.literal(["completed", "rejected"]),
-    requestKind: zPrivacyAuditRequestKind,
-  }),
+  args: zPrivacyAuditVerificationCreate.omit({ performedBy: true }).extend({ outcome: z.literal(["completed", "rejected"]) }),
   handler: async (ctx, payload) => await processPrivacyVerification(ctx, payload),
 });
 
 // INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
-export const expireAuthorization = zInternalMutation({
-  args: { privacyAuthorizationId: zid("privacyAuthorizations") },
-  handler: async (ctx, { privacyAuthorizationId }) => {
-    await deletePrivacyAuthorization(ctx, privacyAuthorizationId);
+export const expireGrant = zInternalMutation({
+  args: { privacyGrantId: zid("privacyGrants") },
+  handler: async (ctx, { privacyGrantId }) => {
+    await deletePrivacyGrant(ctx, privacyGrantId);
   },
 });

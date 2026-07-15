@@ -1,4 +1,4 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
+import { zCanonicalEmail, zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
@@ -45,13 +45,15 @@ const zVerificationEntry = zVerificationDoc.omit({ subjectHash: true });
 export const zPrivacyAuditEntry = z.discriminatedUnion("kind", [zRequestEntry, zVerificationEntry]);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-const zRequestCreate = z.object({ ...zRequestFields.omit({ subjectHash: true }).shape, email: z.string() });
-const zVerificationCreate = z.object({ ...zVerificationFields.omit({ subjectHash: true }).shape, email: z.string() });
-export const zPrivacyAuditCreate = z.discriminatedUnion("kind", [zRequestCreate, zVerificationCreate]);
+const zRequestCreate = z.object({ ...zRequestFields.omit({ subjectHash: true }).shape, email: zCanonicalEmail });
+
+export const zPrivacyAuditVerificationCreate = z.object({
+  ...zVerificationFields.omit({ kind: true, subjectHash: true }).shape,
+  email: zCanonicalEmail,
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type PrivacyAudits = {
-  Create: z.infer<typeof zPrivacyAuditCreate>;
   Doc: z.infer<typeof zPrivacyAuditDoc>;
   Entry: z.infer<typeof zPrivacyAuditEntry>;
   Fields: z.infer<typeof zPrivacyAuditFields>;
@@ -59,6 +61,6 @@ export type PrivacyAudits = {
   Outcome: z.infer<typeof zPrivacyAuditOutcome>;
   RequestCreate: z.infer<typeof zRequestCreate>;
   RequestKind: z.infer<typeof zPrivacyAuditRequestKind>;
-  VerificationCreate: z.infer<typeof zVerificationCreate>;
+  VerificationCreate: z.infer<typeof zPrivacyAuditVerificationCreate>;
   VerificationMethod: z.infer<typeof zPrivacyAuditVerificationMethod>;
 };

@@ -24,5 +24,5 @@ export const createPrivacyAuditRequest = async (ctx: MutationCtx, { email, ...cr
 
 export const createPrivacyAuditVerification = async (ctx: MutationCtx, { email, ...create }: PrivacyAudits["VerificationCreate"]) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  return await ctx.db.insert("privacyAudits", { ...create, subjectHash });
+  return await ctx.db.insert("privacyAudits", { ...create, kind: "verification", subjectHash });
 };

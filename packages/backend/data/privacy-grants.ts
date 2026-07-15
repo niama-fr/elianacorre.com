@@ -2,59 +2,59 @@ import { env, type MutationCtx, type QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
-import type { PrivacyAuthorizations } from "@ec/domain/schemas/privacy-authorizations";
+import type { PrivacyGrants } from "@ec/domain/schemas/privacy-grants";
 import { ConvexError } from "convex/values";
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listActivePrivacyAuthorizations = async (ctx: QueryCtx, email: string) => {
+export const listActivePrivacyGrants = async (ctx: QueryCtx, email: string) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  const authorizations = await ctx.db
-    .query("privacyAuthorizations")
-    .withIndex("by_subject_hash_and_request_kind", (query) => query.eq("subjectHash", subjectHash))
+  const grants = await ctx.db
+    .query("privacyGrants")
+    .withIndex("by_subject_hash_and_request_kind", (q) => q.eq("subjectHash", subjectHash))
     .collect();
   const now = Date.now();
-  return authorizations.filter(({ expiresAt }) => expiresAt > now);
+  return grants.filter(({ expiresAt }) => expiresAt > now);
 };
 
 // REPLACE ---------------------------------------------------------------------------------------------------------------------------------
-export const replacePrivacyAuthorization = async (ctx: MutationCtx, { email, ...create }: PrivacyAuthorizations["Create"]) => {
+export const replacePrivacyGrant = async (ctx: MutationCtx, { email, ...create }: PrivacyGrants["Create"]) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   await deleteBySubjectAndKind(ctx, subjectHash, create.requestKind);
-  return await ctx.db.insert("privacyAuthorizations", { ...create, subjectHash });
+  return await ctx.db.insert("privacyGrants", { ...create, subjectHash });
 };
 
 // REVOKE ----------------------------------------------------------------------------------------------------------------------------------
-export const revokePrivacyAuthorization = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
+export const revokePrivacyGrant = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   await deleteBySubjectAndKind(ctx, subjectHash, requestKind);
 };
 
 // CONSUME ---------------------------------------------------------------------------------------------------------------------------------
-export const consumePrivacyAuthorization = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
+export const consumePrivacyGrant = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  const authorization = await ctx.db
-    .query("privacyAuthorizations")
+  const grant = await ctx.db
+    .query("privacyGrants")
     .withIndex("by_subject_hash_and_request_kind", (query) => query.eq("subjectHash", subjectHash).eq("requestKind", requestKind))
     .unique();
-  if (!authorization || authorization.expiresAt <= Date.now()) {
-    if (authorization) await ctx.db.delete("privacyAuthorizations", authorization._id);
-    throw new ConvexError("PRIVACY_VERIFICATION_REQUIRED");
+  if (!grant || grant.expiresAt <= Date.now()) {
+    if (grant) await ctx.db.delete("privacyGrants", grant._id);
+    throw new ConvexError("PRIVACY_GRANT_REQUIRED");
   }
-  await ctx.db.delete("privacyAuthorizations", authorization._id);
-  return authorization.verificationAuditId;
+  await ctx.db.delete("privacyGrants", grant._id);
+  return grant.verificationAuditId;
 };
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
-export const deletePrivacyAuthorization = async (ctx: MutationCtx, id: Id<"privacyAuthorizations">) => {
-  const authorization = await ctx.db.get("privacyAuthorizations", id);
-  if (authorization) await ctx.db.delete("privacyAuthorizations", id);
+export const deletePrivacyGrant = async (ctx: MutationCtx, id: Id<"privacyGrants">) => {
+  const grant = await ctx.db.get("privacyGrants", id);
+  if (grant) await ctx.db.delete("privacyGrants", id);
 };
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
 async function deleteBySubjectAndKind(ctx: MutationCtx, subjectHash: string, requestKind: PrivacyAudits["RequestKind"]) {
-  const authorizations = await ctx.db
-    .query("privacyAuthorizations")
+  const grants = await ctx.db
+    .query("privacyGrants")
     .withIndex("by_subject_hash_and_request_kind", (query) => query.eq("subjectHash", subjectHash).eq("requestKind", requestKind))
     .collect();
-  for (const authorization of authorizations) await ctx.db.delete("privacyAuthorizations", authorization._id);
+  for (const grant of grants) await ctx.db.delete("privacyGrants", grant._id);
 }

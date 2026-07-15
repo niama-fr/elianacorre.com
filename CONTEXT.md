@@ -42,4 +42,4 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 **Privacy Request**: A request received through `confidentialite@elianacorre.com` to access, rectify, export, restrict, object to, or erase a person's data. Its handling is recorded separately from newsletter consent and marketing activity. _Avoid_: Unsubscription
 
-**Privacy Authorization**: A temporary, single-use permission created by a successful identity-verification decision for one canonical email and one exact Privacy Request kind. It expires after 30 minutes, is consumed by the matching operation, and is separate from the immutable verification and request audits. _Avoid_: Privacy Request, Newsletter capability
+**Privacy Grant**: A temporary, single-use permission created by a successful identity-verification decision for one canonical email and one exact Privacy Request kind. It expires after 30 minutes, is consumed by the matching operation, and is separate from the immutable verification and request audits. _Avoid_: Privacy Request, Newsletter capability
