@@ -13,7 +13,7 @@ const verificationMethods = ["additionalEvidence", "emailChallenge"] as const;
 export const zPrivacyAuditVerificationMethod = z.literal(verificationMethods);
 
 // OUTCOME ---------------------------------------------------------------------------------------------------------------------------------
-const outcomes = ["completed", "failed", "rejected"] as const;
+const outcomes = ["completed", "rejected"] as const;
 export const zPrivacyAuditOutcome = z.literal(outcomes);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------

@@ -428,7 +428,7 @@ describe("privacy administration", () => {
       asAdmin.mutation(api.privacy.recordVerification, {
         ...verification,
         // @ts-expect-error -- exercise the runtime outcome validator.
-        outcome: "failed",
+        outcome: "pending",
       })
     ).rejects.toThrow("Validator");
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: verification.email })).resolves.toMatchObject({
