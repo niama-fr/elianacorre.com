@@ -6,7 +6,7 @@ import { Input } from "@ec/ui/components/input";
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@ec/ui/components/item";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery as useConvexQuery } from "convex/react";
+import { useConvex, useQuery as useConvexQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -31,9 +31,30 @@ const formatDate = (timestamp: number | null) =>
   timestamp === null ? "—" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(timestamp);
 
 function AdminPrivacyPage() {
+  const convex = useConvex();
   const [emailInput, setEmailInput] = useState("");
+  const [exporting, setExporting] = useState<"csv" | "json">();
   const [searchedEmail, setSearchedEmail] = useState<string>();
   const subject = useConvexQuery(api.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
+  const retentionRuns = useConvexQuery(api.privacy.listRetentionRuns, {});
+
+  const downloadPortabilityExport = async (format: "csv" | "json") => {
+    setExporting(format);
+    try {
+      const result = await convex.query(api.privacy.exportNewsletter, { format });
+      const url = URL.createObjectURL(new Blob([result.content], { type: result.contentType }));
+      const link = document.createElement("a");
+      link.download = `newsletter-portability-${new Date().toISOString()}.${format}`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Export ${format.toUpperCase()} généré.`);
+    } catch {
+      toast.error("L’export global n’a pas pu être généré.");
+    } finally {
+      setExporting(undefined);
+    }
+  };
 
   return (
     <section className="flex flex-col gap-8">
@@ -41,6 +62,57 @@ function AdminPrivacyPage() {
         <h1 className="font-extrabold text-3xl text-foreground">Demandes de confidentialité</h1>
         <p className="text-muted-foreground text-sm">Recherche exacte par adresse canonique. Aucune opération groupée n’est disponible.</p>
       </header>
+
+      <PrivacySection title="Portabilité globale de la newsletter">
+        <p className="mb-4 text-muted-foreground text-sm">
+          Exporte l’état fournisseur-indépendant des personnes, consentements, éligibilités, accès e-book et suppressions. Aucun jeton actif
+          ni journal technique court n’est inclus.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            disabled={exporting !== undefined}
+            type="button"
+            onClick={() => {
+              void downloadPortabilityExport("json");
+            }}
+          >
+            {exporting === "json" ? "Génération…" : "Télécharger JSON"}
+          </Button>
+          <Button
+            disabled={exporting !== undefined}
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void downloadPortabilityExport("csv");
+            }}
+          >
+            {exporting === "csv" ? "Génération…" : "Télécharger CSV"}
+          </Button>
+        </div>
+      </PrivacySection>
+
+      <PrivacySection title="Dernières exécutions de rétention">
+        {retentionRuns === undefined && <p className="text-muted-foreground text-sm">Chargement…</p>}
+        {retentionRuns?.length === 0 && <p className="text-muted-foreground text-sm">Aucune exécution enregistrée.</p>}
+        {retentionRuns && retentionRuns.length > 0 && (
+          <ul className="flex flex-col gap-2 text-sm">
+            {retentionRuns.map((run) => (
+              <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-3" key={run._id}>
+                <span>{formatDate(run.startedAt)}</span>
+                <span>
+                  {run.status === "completed" && `Terminée ${formatDate(run.finishedAt)}`}
+                  {run.status === "running" && "En cours"}
+                  {run.status === "failed" && `Interrompue ${formatDate(run.failedAt)} · phase ${run.failurePhase}`}
+                </span>
+                <span>
+                  Profils en attente : {run.anonymizedPendingProfiles} · anciens abonnés : {run.anonymizedFormerProfiles} · journaux :{" "}
+                  {run.deletedTechnicalLogs} · téléchargements : {run.deletedDownloads}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PrivacySection>
 
       <form
         className="flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-end"

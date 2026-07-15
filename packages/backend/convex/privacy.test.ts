@@ -112,6 +112,20 @@ describe("privacy administration", () => {
     await expect(convex.query(api.privacy.inspectSubject, { email: "reader@example.com" })).rejects.toThrow("Unauthenticated");
   });
 
+  it("restricts portability exports and retention evidence to administrators", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const asMember = await createIdentity(convex, "member");
+
+    await expect(convex.query(api.privacy.exportNewsletter, { format: "json" })).rejects.toThrow("Unauthenticated");
+    await expect(asMember.query(api.privacy.exportNewsletter, { format: "csv" })).rejects.toThrow("Unauthorized");
+    await expect(asMember.query(api.privacy.listRetentionRuns, {})).rejects.toThrow("Unauthorized");
+    await expect(asAdmin.query(api.privacy.exportNewsletter, { format: "json" })).resolves.toMatchObject({
+      contentType: "application/json",
+    });
+    await expect(asAdmin.query(api.privacy.listRetentionRuns, {})).resolves.toStrictEqual([]);
+  });
+
   it("finds one person by canonical email", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");

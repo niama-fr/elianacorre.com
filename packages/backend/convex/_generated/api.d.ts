@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as contactRequests from "../contactRequests.js";
+import type * as crons from "../crons.js";
 import type * as ebooks from "../ebooks.js";
 import type * as http from "../http.js";
 import type * as loops from "../loops.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   contactRequests: typeof contactRequests;
+  crons: typeof crons;
   ebooks: typeof ebooks;
   http: typeof http;
   loops: typeof loops;
