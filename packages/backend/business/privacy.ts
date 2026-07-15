@@ -83,12 +83,7 @@ export async function processPrivacyErasure(ctx: AdminMutationCtx, email: string
   const profile = await getProfileByEmail(ctx, email);
   if (profile && profile.role !== "contact") return await rejectRequest(ctx, { email, kind: "erasure", verificationAuditId });
 
-  const { outcome, privacyAuditId } = await recordAuditRequest(ctx, {
-    email,
-    kind: "erasure",
-    outcome: "completed",
-    verificationAuditId,
-  });
+  const { outcome, privacyAuditId } = await completeRequest(ctx, { email, kind: "erasure", verificationAuditId });
   await enqueueDeleteContactForPrivacy(ctx, { email, privacyAuditId });
   if (profile) await deleteProfileWithRelations(ctx, profile._id);
   return { outcome };
@@ -108,12 +103,7 @@ export async function processPrivacyObjection(ctx: AdminMutationCtx, email: stri
     const subscription = await getCurrentNewsSubscription(ctx, profileId);
     if (subscription) await markNewsSubscriptionUnsubscribed(ctx, subscription._id, Date.now());
   }
-  const { outcome, privacyAuditId } = await recordAuditRequest(ctx, {
-    email,
-    kind: "objection",
-    outcome: "completed",
-    verificationAuditId,
-  });
+  const { outcome, privacyAuditId } = await completeRequest(ctx, { email, kind: "objection", verificationAuditId });
   if (profileId) await enqueueSyncContactForPrivacy(ctx, { privacyAuditId, profileId });
   return { outcome };
 }
@@ -123,12 +113,7 @@ export async function processPrivacyRectification(ctx: AdminMutationCtx, { email
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "rectification" });
   const profileId = await getProfileIdByEmail(ctx, email);
   if (profileId) await patchProfile(ctx, profileId, { firstName });
-  const { outcome } = await recordAuditRequest(ctx, {
-    email,
-    kind: "rectification",
-    outcome: profileId ? "completed" : "rejected",
-    verificationAuditId,
-  });
+  const { outcome } = await recordRequest(ctx, { email, isCompleted: !!profileId, kind: "rectification", verificationAuditId });
   return { outcome };
 }
 
@@ -136,12 +121,7 @@ export async function processPrivacyRectification(ctx: AdminMutationCtx, { email
 export async function processPrivacySuppressionRemoval(ctx: AdminMutationCtx, email: string) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "suppressionRemoval" });
   const deleted = await deleteNewsSuppressionByEmail(ctx, email);
-  const { outcome } = await recordAuditRequest(ctx, {
-    email,
-    kind: "suppressionRemoval",
-    outcome: deleted ? "completed" : "rejected",
-    verificationAuditId,
-  });
+  const { outcome } = await recordRequest(ctx, { email, isCompleted: deleted, kind: "suppressionRemoval", verificationAuditId });
   return { outcome };
 }
 
@@ -153,12 +133,7 @@ export async function processPrivacyUnsubscription(ctx: AdminMutationCtx, email:
 
   const subscription = await getCurrentNewsSubscription(ctx, profileId);
   if (subscription) await markNewsSubscriptionUnsubscribed(ctx, subscription._id, Date.now());
-  const { outcome, privacyAuditId } = await recordAuditRequest(ctx, {
-    email,
-    kind: "unsubscription",
-    outcome: "completed",
-    verificationAuditId,
-  });
+  const { outcome, privacyAuditId } = await completeRequest(ctx, { email, kind: "unsubscription", verificationAuditId });
   await enqueueSyncContactForPrivacy(ctx, { privacyAuditId, profileId });
   return { outcome };
 }
@@ -166,7 +141,6 @@ export async function processPrivacyUnsubscription(ctx: AdminMutationCtx, email:
 // PROCESS VERIFICATION --------------------------------------------------------------------------------------------------------------------
 export async function processPrivacyVerification(ctx: AdminMutationCtx, { outcome, ...create }: ProcessVerificationOpts) {
   const verificationAuditId = await createPrivacyAuditVerification(ctx, { ...create, outcome, performedBy: ctx.profile._id });
-  await revokePrivacyGrant(ctx, { email: create.email, requestKind: create.requestKind });
   if (outcome === "completed") {
     const expiresAt = Date.now() + PRIVACY_GRANT_TTL_MS;
     const privacyGrantId = await replacePrivacyGrant(ctx, {
@@ -176,7 +150,7 @@ export async function processPrivacyVerification(ctx: AdminMutationCtx, { outcom
       verificationAuditId,
     });
     await ctx.scheduler.runAt(expiresAt, internal.privacy.expireGrant, { privacyGrantId });
-  }
+  } else await revokePrivacyGrant(ctx, { email: create.email, requestKind: create.requestKind });
 
   return { outcome };
 }
@@ -191,20 +165,21 @@ async function processDataRetrieval(ctx: AdminMutationCtx, email: string, kind: 
     (!!data.profile ||
       data.privacyState.suppressed ||
       data.privacyState.audits.some((entry) => entry.kind === "erasure" && entry.outcome === "completed"));
-  const { outcome } = await recordAuditRequest(ctx, {
-    email,
-    kind,
-    outcome: isKnownSubject ? "completed" : "rejected",
-    verificationAuditId,
-  });
+  const { outcome } = await recordRequest(ctx, { email, isCompleted: isKnownSubject, kind, verificationAuditId });
   return { data: isKnownSubject ? data : null, outcome };
 }
 
-async function recordAuditRequest(ctx: AdminMutationCtx, { outcome, ...create }: Omit<PrivacyAudits["RequestCreate"], "performedBy">) {
+async function recordRequest(ctx: AdminMutationCtx, { isCompleted, ...create }: RecordRequestOpts) {
+  const outcome: PrivacyAudits["Outcome"] = isCompleted ? "completed" : "rejected";
   return { outcome, privacyAuditId: await createPrivacyAuditRequest(ctx, { ...create, outcome, performedBy: ctx.profile._id }) };
+}
+type RecordRequestOpts = Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy"> & { isCompleted: boolean };
+
+async function completeRequest(ctx: AdminMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
+  return await recordRequest(ctx, { ...create, isCompleted: true });
 }
 
 async function rejectRequest(ctx: AdminMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
-  const { outcome } = await recordAuditRequest(ctx, { ...create, outcome: "rejected" });
+  const { outcome } = await recordRequest(ctx, { ...create, isCompleted: false });
   return { outcome };
 }

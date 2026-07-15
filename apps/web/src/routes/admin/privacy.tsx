@@ -315,7 +315,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
     if (!operation) return;
     try {
       const payload = { confirmed: true as const, email };
-      let outcome: "completed" | "failed" | "rejected";
+      let outcome: "completed" | "rejected";
       if (operation === "access") ({ outcome } = await access.mutateAsync(payload));
       else if (operation === "export") {
         const result = await exportData.mutateAsync(payload);

@@ -66,7 +66,7 @@ export const fulfillUnsubscriptionRequest = zAdminMutation({
 });
 
 export const recordVerification = zAdminMutation({
-  args: zPrivacyAuditVerificationCreate.omit({ performedBy: true }).extend({ outcome: z.literal(["completed", "rejected"]) }),
+  args: zPrivacyAuditVerificationCreate.omit({ performedBy: true }),
   handler: async (ctx, payload) => await processPrivacyVerification(ctx, payload),
 });
 
