@@ -3,16 +3,16 @@ import type { Id } from "@ec/backend/types";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 import type { PrivacyGrants } from "@ec/domain/schemas/privacy-grants";
+import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listActivePrivacyGrants = async (ctx: QueryCtx, email: string) => {
+export const listActivePrivacyGrants = async (ctx: QueryCtx, { email, now }: WithNow<{ email: string }>) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   const grants = await ctx.db
     .query("privacyGrants")
     .withIndex("by_subject_hash_and_request_kind", (q) => q.eq("subjectHash", subjectHash))
     .collect();
-  const now = Date.now();
   return grants.filter(({ expiresAt }) => expiresAt > now);
 };
 
@@ -24,19 +24,19 @@ export const replacePrivacyGrant = async (ctx: MutationCtx, { email, ...create }
 };
 
 // REVOKE ----------------------------------------------------------------------------------------------------------------------------------
-export const revokePrivacyGrant = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
+export const revokePrivacyGrant = async (ctx: MutationCtx, { email, requestKind }: GrantRef) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   await deleteBySubjectAndKind(ctx, subjectHash, requestKind);
 };
 
 // CONSUME ---------------------------------------------------------------------------------------------------------------------------------
-export const consumePrivacyGrant = async (ctx: MutationCtx, email: string, requestKind: PrivacyAudits["RequestKind"]) => {
+export const consumePrivacyGrant = async (ctx: MutationCtx, { email, now, requestKind }: WithNow<GrantRef>) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   const grant = await ctx.db
     .query("privacyGrants")
     .withIndex("by_subject_hash_and_request_kind", (query) => query.eq("subjectHash", subjectHash).eq("requestKind", requestKind))
     .unique();
-  if (!grant || grant.expiresAt <= Date.now()) {
+  if (!grant || grant.expiresAt <= now) {
     if (grant) await ctx.db.delete("privacyGrants", grant._id);
     throw new ConvexError("PRIVACY_GRANT_REQUIRED");
   }
@@ -58,3 +58,6 @@ async function deleteBySubjectAndKind(ctx: MutationCtx, subjectHash: string, req
     .collect();
   for (const grant of grants) await ctx.db.delete("privacyGrants", grant._id);
 }
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+type GrantRef = { email: string; requestKind: PrivacyAudits["RequestKind"] };
