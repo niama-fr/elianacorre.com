@@ -320,10 +320,10 @@ describe("privacy administration", () => {
       convex.mutation(api.privacy.fulfillSuppressionRemovalRequest, payload),
       convex.mutation(api.privacy.fulfillUnsubscriptionRequest, payload),
       convex.mutation(api.privacy.recordVerification, {
-        ...payload,
-        method: "canonicalEmailChallenge",
+        email: payload.email,
+        method: "emailChallenge",
+        outcome: "completed",
         requestKind: "access",
-        verified: true,
       }),
     ];
     const unauthorized = [
@@ -335,10 +335,10 @@ describe("privacy administration", () => {
       asMember.mutation(api.privacy.fulfillSuppressionRemovalRequest, payload),
       asMember.mutation(api.privacy.fulfillUnsubscriptionRequest, payload),
       asMember.mutation(api.privacy.recordVerification, {
-        ...payload,
-        method: "canonicalEmailChallenge",
+        email: payload.email,
+        method: "emailChallenge",
+        outcome: "completed",
         requestKind: "access",
-        verified: true,
       }),
     ];
 
@@ -352,22 +352,45 @@ describe("privacy administration", () => {
 
     await expect(
       asAdmin.mutation(api.privacy.recordVerification, {
-        confirmed: true,
         email: "reader@example.com",
-        method: "canonicalEmailChallenge",
+        method: "emailChallenge",
+        outcome: "completed",
         requestKind: "export",
-        verified: true,
       })
     ).resolves.toStrictEqual({ outcome: "completed" });
     const subject = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
     expect(subject?.privacyState.audits).toMatchObject([
       {
         kind: "verification",
+        method: "emailChallenge",
         outcome: "completed",
         requestKind: "export",
-        verificationMethod: "canonicalEmailChallenge",
       },
     ]);
+  });
+
+  it("records a rejected verification and rejects unsupported outcomes", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const verification = {
+      email: "reader@example.com",
+      method: "emailChallenge" as const,
+      requestKind: "erasure" as const,
+    };
+
+    await expect(asAdmin.mutation(api.privacy.recordVerification, { ...verification, outcome: "rejected" })).resolves.toStrictEqual({
+      outcome: "rejected",
+    });
+    await expect(
+      asAdmin.mutation(api.privacy.recordVerification, {
+        ...verification,
+        // @ts-expect-error -- exercise the runtime outcome validator.
+        outcome: "failed",
+      })
+    ).rejects.toThrow("Validator");
+    await expect(asAdmin.query(api.privacy.inspectSubject, { email: verification.email })).resolves.toMatchObject({
+      privacyState: { audits: [{ kind: "verification", outcome: "rejected", requestKind: "erasure" }] },
+    });
   });
 
   it("audits confirmed access and export separately", async () => {

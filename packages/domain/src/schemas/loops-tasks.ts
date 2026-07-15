@@ -59,7 +59,7 @@ export const zLoopsTaskDoc = z.discriminatedUnion("kind", [
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonCreate = zProfileTaskFields.pick({ idempotencyKey: true, profileId: true });
-const zDeleteContactCreate = z.object({ email: zCanonicalEmail, idempotencyKey: z.string(), kind: z.literal(kinds[0]) });
+const zDeleteContactCreate = z.object({ email: zCanonicalEmail, ...zDeleteContactFields.pick({ idempotencyKey: true, kind: true }).shape });
 const zSendConfirmationEmailCreate = z.object({
   ...zCommonCreate.shape,
   kind: z.literal(kinds[1]),

@@ -7,7 +7,7 @@ import { ConvexError, v } from "convex/values";
 import z from "zod";
 
 import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
-import { getLoopsTask, markDeleteContactTaskSucceeded, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
+import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
@@ -48,7 +48,7 @@ export const markTaskFailed = zInternalMutation({
   handler: async (ctx, { error, loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!task || !isLoopsTaskPending(task)) return;
-    await markLoopsTaskFailed(ctx, loopsTaskId, { error, now: Date.now() });
+    await markLoopsTaskFailed(ctx, task, { error, now: Date.now() });
   },
 });
 
@@ -57,11 +57,7 @@ export const markTaskSucceeded = zInternalMutation({
   handler: async (ctx, { loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!task || !isLoopsTaskPending(task)) return;
-    if (task.kind === "deleteContact") {
-      await markDeleteContactTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });
-      return;
-    }
-    await markLoopsTaskSucceeded(ctx, loopsTaskId, { now: Date.now() });
+    await markLoopsTaskSucceeded(ctx, task, { now: Date.now() });
   },
 });
 

@@ -6,9 +6,11 @@ import z from "zod";
 const requestKinds = ["access", "erasure", "export", "objection", "rectification", "suppressionRemoval", "unsubscription"] as const;
 const kinds = [...requestKinds, "verification"] as const;
 export const zPrivacyAuditKind = z.literal(kinds);
+export const zPrivacyAuditRequestKind = z.literal(requestKinds);
 
-export const zPrivacyVerificationMethod = z.literal(["additionalEvidence", "canonicalEmailChallenge"]);
-export const zPrivacyRequestKind = z.literal(requestKinds);
+// VERIFICATION METHOD ---------------------------------------------------------------------------------------------------------------------
+const verificationMethods = ["additionalEvidence", "emailChallenge"] as const;
+export const zPrivacyAuditVerificationMethod = z.literal(verificationMethods);
 
 // OUTCOME ---------------------------------------------------------------------------------------------------------------------------------
 const outcomes = ["completed", "failed", "rejected"] as const;
@@ -20,27 +22,28 @@ const zCommonFields = z.object({
   performedBy: zid("profiles"),
   subjectHash: z.string(),
 });
-const zOperationFields = z.object({ ...zCommonFields.shape, kind: zPrivacyRequestKind });
+const zRequestFields = z.object({ ...zCommonFields.shape, kind: zPrivacyAuditRequestKind });
 const zVerificationFields = z.object({
   ...zCommonFields.shape,
   kind: z.literal("verification"),
-  requestKind: zPrivacyRequestKind,
-  verificationMethod: zPrivacyVerificationMethod,
+  method: zPrivacyAuditVerificationMethod,
+  requestKind: zPrivacyAuditRequestKind,
 });
-export const zPrivacyAuditFields = z.discriminatedUnion("kind", [zOperationFields, zVerificationFields]);
-const zOperationDoc = z.object({ ...zDocCommon("privacyAudits").shape, ...zOperationFields.shape });
+export const zPrivacyAuditFields = z.discriminatedUnion("kind", [zRequestFields, zVerificationFields]);
+
+const zRequestDoc = z.object({ ...zDocCommon("privacyAudits").shape, ...zRequestFields.shape });
 const zVerificationDoc = z.object({ ...zDocCommon("privacyAudits").shape, ...zVerificationFields.shape });
-export const zPrivacyAuditDoc = z.discriminatedUnion("kind", [zOperationDoc, zVerificationDoc]);
+export const zPrivacyAuditDoc = z.discriminatedUnion("kind", [zRequestDoc, zVerificationDoc]);
 
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-const zOperationEntry = zOperationDoc.omit({ subjectHash: true });
+const zRequestEntry = zRequestDoc.omit({ subjectHash: true });
 const zVerificationEntry = zVerificationDoc.omit({ subjectHash: true });
-export const zPrivacyAuditEntry = z.discriminatedUnion("kind", [zOperationEntry, zVerificationEntry]);
+export const zPrivacyAuditEntry = z.discriminatedUnion("kind", [zRequestEntry, zVerificationEntry]);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-const zOperationCreate = z.object({ ...zOperationFields.omit({ subjectHash: true }).shape, email: z.string() });
+const zRequestCreate = z.object({ ...zRequestFields.omit({ subjectHash: true }).shape, email: z.string() });
 const zVerificationCreate = z.object({ ...zVerificationFields.omit({ subjectHash: true }).shape, email: z.string() });
-export const zPrivacyAuditCreate = z.discriminatedUnion("kind", [zOperationCreate, zVerificationCreate]);
+export const zPrivacyAuditCreate = z.discriminatedUnion("kind", [zRequestCreate, zVerificationCreate]);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type PrivacyAudits = {
@@ -50,6 +53,8 @@ export type PrivacyAudits = {
   Fields: z.infer<typeof zPrivacyAuditFields>;
   Kind: z.infer<typeof zPrivacyAuditKind>;
   Outcome: z.infer<typeof zPrivacyAuditOutcome>;
-  RequestKind: z.infer<typeof zPrivacyRequestKind>;
-  VerificationMethod: z.infer<typeof zPrivacyVerificationMethod>;
+  RequestCreate: z.infer<typeof zRequestCreate>;
+  RequestKind: z.infer<typeof zPrivacyAuditRequestKind>;
+  VerificationCreate: z.infer<typeof zVerificationCreate>;
+  VerificationMethod: z.infer<typeof zPrivacyAuditVerificationMethod>;
 };

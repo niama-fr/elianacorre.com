@@ -48,7 +48,7 @@ Requests made by a representative require a mandate identifying the requester, r
 2. Normalize the claimed email address using the canonical-email rule. Do not search by approximate name or enumerate similar addresses.
 3. Confirm that the requester can receive a fresh single-use verification message at the canonical address.
 4. Review for reasonable doubt: inconsistent addresses, a requested response to another destination, suspected mailbox compromise, a representative, third-party information, contradictory claims, or an unusually sensitive or destructive request.
-5. If there is no reasonable doubt, record the verification method as `canonicalEmailChallenge` and its success or failure. Do not retain the token or message content.
+5. If there is no reasonable doubt, record the verification method as `emailChallenge` and its success or failure. Do not retain the token or message content.
 6. If doubt remains, pause all disclosure and mutation. Ask for the minimum additional evidence needed, explain why it is required, and record only `additionalEvidence` plus the outcome.
 7. If an identity document is exceptionally necessary, tell the requester which visible fields are required and invite them to mask unrelated fields. Keep the document only in the restricted mailbox while verification is pending.
 8. Record the verification result in Convex: authorized administrator, time, request type, verification method category, and outcome. Do not record tokens, document numbers, copies, or unnecessary request content.

@@ -17,7 +17,12 @@ export const listPrivacyAuditsByEmail = async (ctx: QueryCtx, email: string) => 
 };
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createPrivacyAudit = async (ctx: MutationCtx, { email, ...create }: PrivacyAudits["Create"]) => {
+export const createPrivacyAuditRequest = async (ctx: MutationCtx, { email, ...create }: PrivacyAudits["RequestCreate"]) => {
+  const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  return await ctx.db.insert("privacyAudits", { ...create, subjectHash });
+};
+
+export const createPrivacyAuditVerification = async (ctx: MutationCtx, { email, ...create }: PrivacyAudits["VerificationCreate"]) => {
   const subjectHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
   return await ctx.db.insert("privacyAudits", { ...create, subjectHash });
 };

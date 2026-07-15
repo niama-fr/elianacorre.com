@@ -15,7 +15,7 @@ export const Route = createFileRoute("/admin/privacy")({ component: AdminPrivacy
 
 type PrivacySubject = NonNullable<FunctionReturnType<typeof api.privacy.inspectSubject>>;
 type Operation = "access" | "erasure" | "export" | "objection" | "rectification" | "suppressionRemoval" | "unsubscription";
-type VerificationMethod = "additionalEvidence" | "canonicalEmailChallenge";
+type VerificationMethod = "additionalEvidence" | "emailChallenge";
 
 const OPERATION_LABELS: Record<Operation, string> = {
   access: "Traiter la demande d’accès",
@@ -181,8 +181,7 @@ function AuditSection({ subject }: { subject: PrivacySubject }) {
               <span>{formatDate(audit._creationTime)}</span>
               <span>
                 {audit.kind}
-                {audit.requestKind ? ` · ${audit.requestKind}` : ""}
-                {audit.verificationMethod ? ` · ${audit.verificationMethod}` : ""}
+                {audit.kind === "verification" ? ` · ${audit.requestKind} · ${audit.method}` : ""}
               </span>
               <span>{audit.outcome}</span>
               <span className="break-all text-muted-foreground">Admin : {audit.performedBy}</span>
@@ -195,17 +194,17 @@ function AuditSection({ subject }: { subject: PrivacySubject }) {
 }
 
 function VerificationSection({ email }: { email: string }) {
-  const [method, setMethod] = useState<VerificationMethod>("canonicalEmailChallenge");
+  const [method, setMethod] = useState<VerificationMethod>("emailChallenge");
   const [requestKind, setRequestKind] = useState<Operation>("access");
-  const [verified, setVerified] = useState<boolean>();
+  const [outcome, setOutcome] = useState<"completed" | "rejected">();
   const verification = useMutation({ mutationFn: useConvexMutation(api.privacy.recordVerification) });
 
   const confirm = async () => {
-    if (verified === undefined) return;
+    if (outcome === undefined) return;
     try {
-      await verification.mutateAsync({ confirmed: true, email, method, requestKind, verified });
+      await verification.mutateAsync({ email, method, outcome, requestKind });
       toast.success("Résultat de vérification enregistré.");
-      setVerified(undefined);
+      setOutcome(undefined);
     } catch {
       toast.error("Le résultat de vérification n’a pas été enregistré.");
     }
@@ -242,7 +241,7 @@ function VerificationSection({ email }: { email: string }) {
               setMethod(event.target.value as VerificationMethod);
             }}
           >
-            <option value="canonicalEmailChallenge">Défi envoyé à l’adresse canonique</option>
+            <option value="emailChallenge">Défi envoyé à l’adresse canonique</option>
             <option value="additionalEvidence">Preuve supplémentaire proportionnée</option>
           </select>
         </label>
@@ -251,7 +250,7 @@ function VerificationSection({ email }: { email: string }) {
         <Button
           type="button"
           onClick={() => {
-            setVerified(true);
+            setOutcome("completed");
           }}
         >
           Enregistrer comme vérifiée
@@ -260,23 +259,23 @@ function VerificationSection({ email }: { email: string }) {
           type="button"
           variant="outline"
           onClick={() => {
-            setVerified(false);
+            setOutcome("rejected");
           }}
         >
           Enregistrer comme non vérifiée
         </Button>
       </div>
       <Dialog
-        open={verified !== undefined}
+        open={outcome !== undefined}
         onOpenChange={(open) => {
-          if (!open) setVerified(undefined);
+          if (!open) setOutcome(undefined);
         }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmer le résultat de vérification</DialogTitle>
             <DialogDescription>
-              Enregistrer la demande {requestKind} pour {email} comme {verified ? "vérifiée" : "non vérifiée"}.
+              Enregistrer la demande {requestKind} pour {email} comme {outcome === "completed" ? "vérifiée" : "non vérifiée"}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter showCloseButton>
