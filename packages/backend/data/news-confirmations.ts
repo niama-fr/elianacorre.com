@@ -14,7 +14,7 @@ export const listNewsConfirmationsBySubscriptionId = async (ctx: QueryCtx, id: I
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
 export const deleteNewsConfirmation = async (ctx: MutationCtx, id: Id<"newsConfirmations">) => {
-  await ctx.db.delete(id);
+  await ctx.db.delete("newsConfirmations", id);
 };
 
 // REPLACE ---------------------------------------------------------------------------------------------------------------------------------

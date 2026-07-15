@@ -177,6 +177,8 @@ The concrete delivery mechanism must account for the final file size. Convex HTT
 
 Privacy requests arrive at `confidentialite@elianacorre.com`. After identity verification, an administrator can separately inspect or export, rectify the optional first name, unsubscribe, restrict, object, or erase. Each administrative action is confirmed and audited; bulk deletion is excluded.
 
+The manual identity-verification procedure is documented in [`docs/agents/privacy-request-identity-verification.md`](agents/privacy-request-identity-verification.md).
+
 International transfers are not prohibited, but Convex, Loops, Cloudflare, Better Auth dependencies, and relevant subprocessors must be recorded with their contracts and transfer mechanisms in the project's privacy documentation and processing register.
 
 ## Email and domain operations

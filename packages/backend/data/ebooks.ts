@@ -6,6 +6,12 @@ import { zStoragePdfDoc } from "@ec/domain/schemas/storage";
 import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
 
+// TRANSFORMS ------------------------------------------------------------------------------------------------------------------------------
+export const ebookFromDoc = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Entry"]> => {
+  const [file, url] = await Promise.all([ctx.db.system.get("_storage", doc.storageId), ctx.storage.getUrl(doc.storageId)]);
+  return { ...doc, size: file?.size ?? null, url };
+};
+
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => await ctx.db.get("ebooks", id);
 
@@ -27,12 +33,7 @@ export const requireEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => {
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
 export const listEbooks = async (ctx: QueryCtx) => {
   const docs = await ctx.db.query("ebooks").withIndex("by_version").order("desc").collect();
-  return await Promise.all(
-    docs.map(async ({ storageId, ...doc }) => {
-      const [file, url] = await Promise.all([ctx.db.system.get("_storage", storageId), ctx.storage.getUrl(storageId)]);
-      return { ...doc, size: file?.size ?? null, url };
-    })
-  );
+  return await Promise.all(docs.map(async (doc) => await ebookFromDoc(ctx, doc)));
 };
 
 export const listPublishedEbooks = async (ctx: QueryCtx) =>

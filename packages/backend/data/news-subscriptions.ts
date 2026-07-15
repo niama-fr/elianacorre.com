@@ -18,6 +18,14 @@ export const getLatestConfirmedNewsSubscription = async (ctx: QueryCtx, profileI
     .order("desc")
     .first();
 
+// LIST ------------------------------------------------------------------------------------------------------------------------------------
+export const listNewsSubscriptions = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
+  await ctx.db
+    .query("newsSubscriptions")
+    .withIndex("by_profile_id_and_confirmed_at", (q) => q.eq("profileId", profileId))
+    .order("desc")
+    .collect();
+
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createNewsSubscription = async (ctx: MutationCtx, payload: NewsSubscriptions["Create"]) =>
   await ctx.db.insert("newsSubscriptions", { ...payload, confirmedAt: null, unsubscribedAt: null });

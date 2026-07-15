@@ -46,7 +46,10 @@ function AdminLayout() {
   const { logoImg } = Route.useLoaderData();
 
   const data = {
-    navMain: [{ title: "Ebooks", url: "/admin/ebooks" }],
+    navMain: [
+      { title: "Ebooks", url: "/admin/ebooks" },
+      { title: "Confidentialité", url: "/admin/privacy" },
+    ],
   };
 
   return (

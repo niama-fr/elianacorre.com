@@ -4,6 +4,7 @@ import { z } from "zod";
 // EMAILS ----------------------------------------------------------------------------------------------------------------------------------
 export const zCanonicalEmail = z.string().trim().toLowerCase().pipe(z.email());
 export const zCanonicalEmailValue = z.string().trim().toLowerCase().pipe(z.email("Ce champ doit être un courriel valide"));
+export const zConfirmedEmailPayload = z.object({ confirmed: z.literal(true), email: zCanonicalEmail });
 
 // REFS ------------------------------------------------------------------------------------------------------------------------------------
 export const zDocRef = <T extends string>(tableName: T) => z.object({ _id: zid(tableName) });

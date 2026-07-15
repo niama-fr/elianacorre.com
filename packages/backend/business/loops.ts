@@ -20,6 +20,11 @@ import { applyEmailDeliveryRestriction } from "./email-delivery-restrictions";
 const loops = new Loops(components.loops);
 
 // ENQUEUE TASK ----------------------------------------------------------------------------------------------------------------------------
+export async function enqueueDeleteContactForPrivacy(ctx: MutationCtx, { email, privacyAuditId }: DeleteForPrivacyOpts) {
+  return await enqueueTask(ctx, { email, idempotencyKey: `privacy-contact-erasure:${privacyAuditId}`, kind: "deleteContact" });
+}
+type DeleteForPrivacyOpts = { email: string; privacyAuditId: Id<"privacyAudits"> };
+
 export async function enqueueSendConfirmationEmail(ctx: MutationCtx, payload: EnqueueSendConfirmationEmailOpts) {
   return await enqueueTask(ctx, { ...payload, idempotencyKey: payload.newsConfirmationId, kind: "sendConfirmationEmail" });
 }
@@ -28,6 +33,15 @@ type EnqueueSendConfirmationEmailOpts = Omit<LoopsTasks["SendConfirmationEmailCr
 export async function enqueueSendEbookEmail(ctx: MutationCtx, payload: Omit<LoopsTasks["SendEbookEmailCreate"], "kind">) {
   return await enqueueTask(ctx, { ...payload, kind: "sendEbookEmail" });
 }
+
+export async function enqueueSyncContactForPrivacy(ctx: MutationCtx, { privacyAuditId, profileId }: ForPrivacyOpts) {
+  return await enqueueSyncContact(ctx, {
+    idempotencyKey: `privacy-contact-unsubscription:${privacyAuditId}`,
+    profileId,
+    subscribed: false,
+  });
+}
+type ForPrivacyOpts = { privacyAuditId: Id<"privacyAudits">; profileId: Id<"profiles"> };
 
 export async function enqueueSyncContactForReactivation(ctx: MutationCtx, { confirmation, profileId }: ForReactivationOpts) {
   return await enqueueSyncContact(ctx, {
@@ -45,11 +59,15 @@ type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"news
 
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
-  if (task.kind === "syncContact") await syncContact(ctx, { profile, task });
+  if (task.kind === "deleteContact") {
+    if (task.email === null) throw new Error("Delete-contact task email was already redacted");
+    await loops.deleteContact(ctx, task.email);
+  } else if (!profile) throw new Error("Loops task profile is required");
+  else if (task.kind === "syncContact") await syncContact(ctx, { profile, task });
   else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
   else if (task.kind === "sendEbookEmail") await sendEbookEmail(ctx, { profile, task });
 }
-type ExecuteTaskOpts = { profile: Profiles["Doc"]; task: LoopsTasks["Doc"] };
+type ExecuteTaskOpts = { profile: Profiles["Doc"] | null; task: LoopsTasks["Doc"] };
 
 // PROCESS WEBHOOKS ------------------------------------------------------------------------------------------------------------------------
 export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messageId, occurredAt, webhookId }: LoopsWebhooks["Create"]) {

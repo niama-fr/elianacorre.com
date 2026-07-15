@@ -19,15 +19,19 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
   await ctx.db.insert("loopsTasks", { ...create, error: null, finishedAt: null, status: "pending", workflowId: null });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["CommonFields"]>) => {
+export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
   await ctx.db.patch("loopsTasks", id, patch);
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markLoopsTaskFailed = async (ctx: MutationCtx, id: Id<"loopsTasks">, { error, now }: WithNow<{ error: string }>) => {
-  await patchLoopsTask(ctx, id, { error, finishedAt: now, status: "failed" });
+export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { error, now }: WithNow<{ error: string }>) => {
+  await patchLoopsTask(ctx, task._id, { error, finishedAt: now, status: "failed" });
 };
 
-export const markLoopsTaskSucceeded = async (ctx: MutationCtx, id: Id<"loopsTasks">, { now }: WithNow) => {
-  await patchLoopsTask(ctx, id, { error: null, finishedAt: now, status: "succeeded" });
+export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { now }: WithNow) => {
+  const extra = task.kind === "deleteContact" ? { email: null } : {};
+  await patchLoopsTask(ctx, task._id, { error: null, finishedAt: now, status: "succeeded", ...extra });
 };
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+type TaskRef = Pick<LoopsTasks["Doc"], "_id" | "kind">;

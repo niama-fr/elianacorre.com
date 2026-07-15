@@ -11,6 +11,8 @@ import { zNewsRestrictionFields } from "@ec/domain/schemas/news-restrictions";
 import { zNewsSubscriptionFields } from "@ec/domain/schemas/news-subscriptions";
 import { zNewsSuppressionFields } from "@ec/domain/schemas/news-suppressions";
 import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
+import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
+import { zPrivacyGrantFields } from "@ec/domain/schemas/privacy-grants";
 import { zProfileFields } from "@ec/domain/schemas/profiles";
 import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { defineSchema, defineTable } from "convex/server";
@@ -24,8 +26,10 @@ export default defineSchema({
     .index("by_profile_id_and_adapter", ["profileId", "adapter"])
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
-  loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields)).index("by_idempotency_key", ["idempotencyKey"]),
-  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_webhook_id", ["webhookId"]),
+  loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields))
+    .index("by_idempotency_key", ["idempotencyKey"])
+    .index("by_profile_id", ["profileId"]),
+  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_email", ["email"]).index("by_webhook_id", ["webhookId"]),
   newsConfirmations: defineTable(zodOutputToConvex(zNewsConfirmationFields)).index("by_subscription_id", ["subscriptionId"]),
   newsRestrictions: defineTable(zodOutputToConvex(zNewsRestrictionFields))
     .index("by_profile_id_and_resolved_at", ["profileId", "resolvedAt"])
@@ -35,5 +39,10 @@ export default defineSchema({
     .index("by_profile_id_and_confirmed_at", ["profileId", "confirmedAt"]),
   newsSuppressions: defineTable(zodOutputToConvex(zNewsSuppressionFields)).index("by_canonical_email_hash", ["canonicalEmailHash"]),
   newsletterLegalBundles: defineTable(zodOutputToConvex(zNewsletterLegalBundleFields)).index("by_published_at", ["publishedAt"]),
+  privacyAudits: defineTable(zodOutputToConvex(zPrivacyAuditFields)).index("by_subject_hash", ["subjectHash"]),
+  privacyGrants: defineTable(zodOutputToConvex(zPrivacyGrantFields)).index("by_subject_hash_and_request_kind", [
+    "subjectHash",
+    "requestKind",
+  ]),
   profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
 });
