@@ -19,12 +19,18 @@ export const getLatestConfirmedNewsSubscription = async (ctx: QueryCtx, profileI
     .first();
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listNewsSubscriptions = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
+export const listNewsSubscriptionsNewestFirst = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
   await ctx.db
     .query("newsSubscriptions")
     .withIndex("by_profile_id_and_confirmed_at", (q) => q.eq("profileId", profileId))
     .order("desc")
     .collect();
+
+export const takeNewsSubscriptions = async (ctx: QueryCtx, limit: number, profileId: Id<"profiles">) =>
+  await ctx.db
+    .query("newsSubscriptions")
+    .withIndex("by_profile_id_and_confirmed_at", (q) => q.eq("profileId", profileId))
+    .take(limit);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createNewsSubscription = async (ctx: MutationCtx, payload: NewsSubscriptions["Create"]) =>

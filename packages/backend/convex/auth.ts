@@ -4,7 +4,7 @@ import { zCanonicalEmail } from "@ec/domain/schemas/utils";
 import { betterAuth } from "better-auth/minimal";
 import { ConvexError } from "convex/values";
 
-import { createIdentity, getIdentityByAdapterId, getIdentityByProfile } from "../data/identities";
+import { createIdentity, getIdentityByAdapterId, getIdentityByProfileId } from "../data/identities";
 import { ensureContactProfileId } from "../data/profiles";
 import { components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -28,7 +28,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 
         const profileId = await ensureContactProfileId(ctx, { email: emailParsed.data });
 
-        const identityByProfile = await getIdentityByProfile(ctx, profileId);
+        const identityByProfile = await getIdentityByProfileId(ctx, profileId);
         if (identityByProfile) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
 
         await createIdentity(ctx, { adapterId, profileId });

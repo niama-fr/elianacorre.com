@@ -36,12 +36,12 @@ function AdminPrivacyPage() {
   const [exporting, setExporting] = useState<"csv" | "json">();
   const [searchedEmail, setSearchedEmail] = useState<string>();
   const subject = useConvexQuery(api.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
-  const retentionRuns = useConvexQuery(api.privacy.listRetentionRuns, {});
+  const retentionRuns = useConvexQuery(api.retention.listRecentRuns, {});
 
   const downloadPortabilityExport = async (format: "csv" | "json") => {
     setExporting(format);
     try {
-      const result = await convex.query(api.privacy.exportNewsletter, { format });
+      const result = await convex.query(api.newsletter.exportData, { format });
       const url = URL.createObjectURL(new Blob([result.content], { type: result.contentType }));
       const link = document.createElement("a");
       link.download = `newsletter-portability-${new Date().toISOString()}.${format}`;
@@ -98,7 +98,7 @@ function AdminPrivacyPage() {
           <ul className="flex flex-col gap-2 text-sm">
             {retentionRuns.map((run) => (
               <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-4" key={run._id}>
-                <span>{formatDate(run.startedAt)}</span>
+                <span>{formatDate(run._creationTime)}</span>
                 <span>
                   {run.status === "completed" && `Terminée ${formatDate(run.finishedAt)}`}
                   {run.status === "running" && "En cours"}

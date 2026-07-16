@@ -21,13 +21,24 @@ export const getLatestEbookIssuance = async (ctx: QueryCtx, profileId: Id<"profi
     .first();
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listEbookIssuances = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
+export const listEbookIssuancesNewestFirst = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
   await ctx.db
     .query("ebookIssuances")
     .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
     .order("desc")
     .collect();
 
+export const takeEbookIssuances = async (ctx: QueryCtx, limit: number, profileId: Id<"profiles">) =>
+  await ctx.db
+    .query("ebookIssuances")
+    .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
+    .take(limit);
+
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createEbookIssuance = async (ctx: MutationCtx, payload: EbookIssuances["Create"]) =>
   await ctx.db.insert("ebookIssuances", payload);
+
+// DELETE ----------------------------------------------------------------------------------------------------------------------------------
+export const deleteEbookIssuance = async (ctx: MutationCtx, id: Id<"ebookIssuances">) => {
+  await ctx.db.delete("ebookIssuances", id);
+};

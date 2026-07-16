@@ -17,6 +17,7 @@ import type * as loops from "../loops.js";
 import type * as newsletter from "../newsletter.js";
 import type * as newsletterLegalBundles from "../newsletterLegalBundles.js";
 import type * as privacy from "../privacy.js";
+import type * as retention from "../retention.js";
 import type * as seed from "../seed.js";
 import type * as workflow from "../workflow.js";
 import type * as zod from "../zod.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   newsletter: typeof newsletter;
   newsletterLegalBundles: typeof newsletterLegalBundles;
   privacy: typeof privacy;
+  retention: typeof retention;
   seed: typeof seed;
   workflow: typeof workflow;
   zod: typeof zod;

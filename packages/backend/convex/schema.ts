@@ -51,5 +51,5 @@ export default defineSchema({
     "requestKind",
   ]),
   profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
-  retentionRuns: defineTable(zodOutputToConvex(zRetentionRunFields)).index("by_started_at", ["startedAt"]),
+  retentionRuns: defineTable(zodOutputToConvex(zRetentionRunFields)),
 });

@@ -12,6 +12,12 @@ export const listNewsConfirmationsBySubscriptionId = async (ctx: QueryCtx, id: I
     .withIndex("by_subscription_id", (q) => q.eq("subscriptionId", id))
     .collect();
 
+export const takeNewsConfirmationsBySubscriptionId = async (ctx: QueryCtx, limit: number, subscriptionId: Id<"newsSubscriptions">) =>
+  await ctx.db
+    .query("newsConfirmations")
+    .withIndex("by_subscription_id", (q) => q.eq("subscriptionId", subscriptionId))
+    .take(limit);
+
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
 export const deleteNewsConfirmation = async (ctx: MutationCtx, id: Id<"newsConfirmations">) => {
   await ctx.db.delete("newsConfirmations", id);

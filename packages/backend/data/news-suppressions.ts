@@ -10,6 +10,9 @@ export const getNewsSuppressionByEmail = async (ctx: QueryCtx, email: string) =>
     .unique();
 };
 
+// LIST ------------------------------------------------------------------------------------------------------------------------------------
+export const takeNewsSuppressions = async (ctx: QueryCtx, limit: number) => await ctx.db.query("newsSuppressions").take(limit);
+
 // ENSURE ----------------------------------------------------------------------------------------------------------------------------------
 export const ensureNewsSuppression = async (ctx: MutationCtx, email: string) => {
   const existing = await getNewsSuppressionByEmail(ctx, email);

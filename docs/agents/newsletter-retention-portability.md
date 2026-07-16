@@ -13,7 +13,7 @@ The application removes or anonymizes newsletter data at the approved 30-day, 90
 
 ## Automated schedule and expected result
 
-Convex runs `privacy.startRetention` daily at 02:00 UTC. It starts the existing Convex Workflow component, which durably sequences the four phases. Each workflow step calls one transactional mutation; technical phases process at most 100 records, while profile cleanup processes one profile with at most 20 records per child relationship. Convex automatically retries transactional system and optimistic-concurrency failures. Application errors fail the workflow attempt and are retried only through the recovery procedure below. Application-owned `retentionRuns` records the component workflow ID, attempt status, completion time, failed phase, and cumulative business counters; Workflow owns execution history and step sequencing.
+Convex runs `retention.startRun` daily at 02:00 UTC. It starts the existing Convex Workflow component, which durably sequences the four phases. Each workflow step calls one transactional mutation; technical phases process at most 100 records, while profile cleanup processes one profile with at most 20 records per child relationship. Convex automatically retries transactional system and optimistic-concurrency failures. Application errors fail the workflow attempt and are retried only through the recovery procedure below. Application-owned `retentionRuns` records the component workflow ID, attempt status, completion time, failed phase, and cumulative business counters; Workflow owns execution history and step sequencing.
 
 The phases use these inclusive boundaries:
 
@@ -40,7 +40,7 @@ The result contains people, consent periods, delivery eligibility, e-book access
 From the repository root, run:
 
 ```bash
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts convex/privacy.test.ts
+rtk test bun run --cwd packages/backend test -- convex/newsletter-export.test.ts convex/newsletter-retention.test.ts convex/retention.test.ts convex/privacy.test.ts
 rtk proxy bun run typecheck
 rtk proxy bun run check
 rtk proxy bun run build
@@ -51,7 +51,7 @@ In `/admin/privacy`, confirm an export downloads in both formats and **Dernière
 
 ## Recovery and rollback
 
-- A run marked `Interrompue` names the failed application phase. Inspect the linked workflow ID and invocation in **Convex Dashboard → Logs**, correct the cause, then open **Functions**, select `privacy:startRetention`, enter `{}`, and select **Run function**. A retry creates a new `retentionRuns` attempt with counters starting at zero and safely traverses the bounded phases again; already-applied operations are idempotent. If an application record says `En cours` but Workflow reports `failed` or `canceled`, `startRetention` reconciles the old attempt to `Interrompue` before creating the new attempt. An actually in-progress workflow is returned without overlap. The expected result is a new attempt changing from `En cours` to `Terminée` in `/admin/privacy`. Running this against production requires Grégory's explicit approval.
+- A run marked `Interrompue` names the failed application phase. Inspect the linked workflow ID and invocation in **Convex Dashboard → Logs**, correct the cause, then open **Functions**, select `retention:startRun`, enter `{}`, and select **Run function**. A retry creates a new `retentionRuns` attempt with counters starting at zero and safely traverses the bounded phases again; already-applied operations are idempotent. If an application record says `En cours` but Workflow reports `failed` or `canceled`, `startRun` reconciles the old attempt to `Interrompue` before creating the new attempt. An actually in-progress workflow is returned without overlap. The expected result is a new attempt changing from `En cours` to `Terminée` in `/admin/privacy`. Running this against production requires Grégory's explicit approval.
 - If an export fails, keep the source data unchanged, inspect the browser and Convex logs, and retry. Do not fall back to copying Convex tables or Loops contacts manually.
 - Anonymization and deletion are intentionally irreversible, and this repository does not currently document or guarantee a data-restore path. Stop the cron through an approved incident change and contact the Convex project owner if recovery may be possible from an externally configured backup. Do not recreate consent or e-book capabilities from a technical log.
 - Roll back faulty code through the normal pull-request workflow. Disabling the cron requires a dedicated Ready Linear issue unless stopping an active incident is explicitly approved.
@@ -71,11 +71,11 @@ Grégory owns this runbook. Update it whenever policy boundaries, batch size, ru
 The reproducible seeding path is the isolated Convex test harness; it creates synthetic profiles, tasks, webhooks, downloads, e-book access, and suppression rows in memory. Run each named scenario from the repository root:
 
 ```bash
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "30 days"
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "three-year"
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "90-day"
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "portability"
-rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "observable run"
+rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "30 days"
+rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "three-year"
+rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "90-day"
+rtk test bun run --cwd packages/backend test -- convex/newsletter-export.test.ts -t "provider-independent"
+rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "observable completion"
 ```
 
 Each command must report one passing test. The fixtures place one record exactly at the inclusive boundary and another one millisecond before it; the assertions prove the due record changed and the not-yet-due record remained. Do not reproduce these destructive scenarios in staging or production with real subscriber data.
