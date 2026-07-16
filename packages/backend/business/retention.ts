@@ -1,9 +1,25 @@
 import type { AdminQueryCtx } from "@ec/backend/convex/zod";
 import type { MutationCtx } from "@ec/backend/server";
-import type { Id } from "@ec/backend/types";
 
 import { getActiveNewsRestriction } from "../data/news-restrictions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
+import {
+  deleteEbookDownload,
+  deleteLoopsTask,
+  deleteLoopsWebhook,
+  expireFormerProfileData,
+  expirePendingProfileData,
+  getFormerSubscriberActivity,
+  getLoopsTaskByEbookDownload,
+  getProfilePortabilityContext,
+  getProfileSubscriptionContext,
+  listNewsSuppressionsForPortability,
+  listProfilesForPortability,
+  paginateExpiredEbookDownloads,
+  paginateExpiredLoopsTasks,
+  paginateExpiredLoopsWebhooks,
+  paginateRetentionProfiles,
+} from "../data/retention";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RETENTION_BATCH_SIZE = 100;
@@ -36,6 +52,7 @@ const emptyCounts = (): RetentionCounts => ({
   deletedTechnicalLogs: 0,
 });
 
+const anonymousEmailFor = (profileId: string) => `expired-${profileId}${ANONYMIZED_EMAIL_SUFFIX}`;
 const escapeCsv = (value: boolean | number | string | null) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 
 export async function enforceNewsletterRetentionBatch(
@@ -49,58 +66,54 @@ export async function enforceNewsletterRetentionBatch(
 }
 
 async function deleteExpiredTasks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<RetentionBatchResult> {
-  const result = await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_finished_at", (query) => query.lte("finishedAt", now - TECHNICAL_RETENTION_MS))
-    .paginate({ cursor, numItems: RETENTION_BATCH_SIZE });
+  const result = await paginateExpiredLoopsTasks(ctx, {
+    before: now - TECHNICAL_RETENTION_MS,
+    cursor,
+    limit: RETENTION_BATCH_SIZE,
+  });
   let deletedTechnicalLogs = 0;
   for (const task of result.page)
     if (task.finishedAt !== null && task.finishedAt <= now - TECHNICAL_RETENTION_MS) {
-      await ctx.db.delete(task._id);
+      await deleteLoopsTask(ctx, task._id);
       deletedTechnicalLogs += 1;
     }
   return nextBatch("tasks", "webhooks", result, { ...emptyCounts(), deletedTechnicalLogs });
 }
 
 async function deleteExpiredWebhooks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<RetentionBatchResult> {
-  const result = await ctx.db
-    .query("loopsWebhooks")
-    .withIndex("by_occurred_at", (query) => query.lte("occurredAt", now - TECHNICAL_RETENTION_MS))
-    .paginate({ cursor, numItems: RETENTION_BATCH_SIZE });
-  for (const webhook of result.page) await ctx.db.delete(webhook._id);
+  const result = await paginateExpiredLoopsWebhooks(ctx, {
+    before: now - TECHNICAL_RETENTION_MS,
+    cursor,
+    limit: RETENTION_BATCH_SIZE,
+  });
+  for (const webhook of result.page) await deleteLoopsWebhook(ctx, webhook._id);
   return nextBatch("webhooks", "downloads", result, { ...emptyCounts(), deletedTechnicalLogs: result.page.length });
 }
 
 async function deleteExpiredDownloads(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<RetentionBatchResult> {
-  const result = await ctx.db
-    .query("ebookDownloads")
-    .withIndex("by_creation_time", (query) => query.lte("_creationTime", now - TECHNICAL_RETENTION_MS))
-    .paginate({ cursor, numItems: RETENTION_BATCH_SIZE });
+  const result = await paginateExpiredEbookDownloads(ctx, {
+    before: now - TECHNICAL_RETENTION_MS,
+    cursor,
+    limit: RETENTION_BATCH_SIZE,
+  });
   let deletedDownloads = 0;
   for (const download of result.page) {
-    const deliveryTask = await ctx.db
-      .query("loopsTasks")
-      .withIndex("by_ebook_download_id", (query) => query.eq("ebookDownloadId", download._id))
-      .unique();
+    const deliveryTask = await getLoopsTaskByEbookDownload(ctx, download._id);
     if (deliveryTask?.status === "pending") continue;
-    await ctx.db.delete(download._id);
+    await deleteEbookDownload(ctx, download._id);
     deletedDownloads += 1;
   }
   return nextBatch("downloads", "profiles", result, { ...emptyCounts(), deletedDownloads });
 }
 
 async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<RetentionBatchResult> {
-  const result = await ctx.db.query("profiles").paginate({ cursor, numItems: PROFILE_RETENTION_BATCH_SIZE });
+  const result = await paginateRetentionProfiles(ctx, { cursor, limit: PROFILE_RETENTION_BATCH_SIZE });
   const counts = emptyCounts();
   for (const profile of result.page) {
     if (profile.role !== "contact" || profile.email.endsWith(ANONYMIZED_EMAIL_SUFFIX)) continue;
-    const subscriptions = await ctx.db
-      .query("newsSubscriptions")
-      .withIndex("by_profile_id_and_confirmed_at", (query) => query.eq("profileId", profile._id))
-      .take(MAX_RELATIONS_PER_PROFILE + 1);
+    const { hasSeparateRelationship, subscriptions } = await getProfileSubscriptionContext(ctx, profile._id, MAX_RELATIONS_PER_PROFILE + 1);
     requireBoundedRelations(subscriptions);
     if (subscriptions.length === 0) continue;
-    const hasActiveRelationship = await hasSeparateRelationship(ctx, profile._id);
 
     const isExpiredPending = subscriptions.every(
       ({ confirmedAt, requestedAt }) => confirmedAt === null && requestedAt <= now - PENDING_RETENTION_MS
@@ -110,24 +123,14 @@ async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): 
         ctx,
         profile._id,
         subscriptions.map(({ _id }) => _id),
-        !hasActiveRelationship
+        !hasSeparateRelationship
       );
-      if (!hasActiveRelationship) counts.anonymizedPendingProfiles += 1;
+      if (!hasSeparateRelationship) counts.anonymizedPendingProfiles += 1;
       continue;
     }
 
-    if (hasActiveRelationship) continue;
-
-    const [contactRequests, ebookIssuances] = await Promise.all([
-      ctx.db
-        .query("contactRequests")
-        .withIndex("by_profile_id", (query) => query.eq("profileId", profile._id))
-        .take(MAX_RELATIONS_PER_PROFILE + 1),
-      ctx.db
-        .query("ebookIssuances")
-        .withIndex("by_profile_id", (query) => query.eq("profileId", profile._id))
-        .take(MAX_RELATIONS_PER_PROFILE + 1),
-    ]);
+    if (hasSeparateRelationship) continue;
+    const { contactRequests, ebookIssuances } = await getFormerSubscriberActivity(ctx, profile._id, MAX_RELATIONS_PER_PROFILE + 1);
     requireBoundedRelations(contactRequests);
     requireBoundedRelations(ebookIssuances);
     const latestContact = Math.max(
@@ -148,75 +151,25 @@ async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): 
 
 async function expirePendingProfile(
   ctx: MutationCtx,
-  profileId: Id<"profiles">,
-  subscriptionIds: Id<"newsSubscriptions">[],
+  profileId: Parameters<typeof expirePendingProfileData>[1]["profileId"],
+  subscriptionIds: Parameters<typeof expirePendingProfileData>[1]["subscriptionIds"],
   shouldAnonymize: boolean
 ) {
-  const tasks = await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_profile_id", (query) => query.eq("profileId", profileId))
-    .take(MAX_RELATIONS_PER_PROFILE + 1);
-  requireBoundedRelations(tasks);
-  for (const subscriptionId of subscriptionIds) {
-    const confirmations = await ctx.db
-      .query("newsConfirmations")
-      .withIndex("by_subscription_id", (query) => query.eq("subscriptionId", subscriptionId))
-      .take(MAX_RELATIONS_PER_PROFILE + 1);
-    requireBoundedRelations(confirmations);
-    for (const confirmation of confirmations) {
-      for (const task of tasks)
-        if (task.kind === "sendConfirmationEmail" && task.newsConfirmationId === confirmation._id) await ctx.db.delete(task._id);
-      await ctx.db.delete(confirmation._id);
-    }
-  }
-  if (shouldAnonymize) await anonymizeProfile(ctx, profileId);
+  await expirePendingProfileData(ctx, {
+    anonymousEmail: anonymousEmailFor(profileId),
+    maxRelations: MAX_RELATIONS_PER_PROFILE,
+    profileId,
+    shouldAnonymize,
+    subscriptionIds,
+  });
 }
 
-async function expireFormerProfile(ctx: MutationCtx, profileId: Id<"profiles">) {
-  const tasks = await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_profile_id", (query) => query.eq("profileId", profileId))
-    .take(MAX_RELATIONS_PER_PROFILE + 1);
-  requireBoundedRelations(tasks);
-  const issuances = await ctx.db
-    .query("ebookIssuances")
-    .withIndex("by_profile_id", (query) => query.eq("profileId", profileId))
-    .take(MAX_RELATIONS_PER_PROFILE + 1);
-  requireBoundedRelations(issuances);
-  for (const issuance of issuances) {
-    const downloads = await ctx.db
-      .query("ebookDownloads")
-      .withIndex("by_ebook_issuance_id", (query) => query.eq("ebookIssuanceId", issuance._id))
-      .take(MAX_RELATIONS_PER_PROFILE + 1);
-    requireBoundedRelations(downloads);
-    for (const download of downloads) {
-      for (const task of tasks) if (task.kind === "sendEbookEmail" && task.ebookDownloadId === download._id) await ctx.db.delete(task._id);
-      await ctx.db.delete(download._id);
-    }
-    await ctx.db.delete(issuance._id);
-  }
-  await anonymizeProfile(ctx, profileId);
-}
-
-async function anonymizeProfile(ctx: MutationCtx, profileId: Id<"profiles">) {
-  const profile = await ctx.db.get(profileId);
-  if (!profile) return;
-  const anonymousEmail = `expired-${profileId}${ANONYMIZED_EMAIL_SUFFIX}`;
-  const webhooks = await ctx.db
-    .query("loopsWebhooks")
-    .withIndex("by_email", (query) => query.eq("email", profile.email))
-    .take(MAX_RELATIONS_PER_PROFILE + 1);
-  requireBoundedRelations(webhooks);
-  for (const webhook of webhooks) await ctx.db.patch(webhook._id, { email: anonymousEmail });
-  await ctx.db.patch(profileId, { email: anonymousEmail, firstName: undefined, lastName: undefined });
-}
-
-async function hasSeparateRelationship(ctx: MutationCtx, profileId: Id<"profiles">) {
-  const identity = await ctx.db
-    .query("identities")
-    .withIndex("by_profile_id_and_adapter", (query) => query.eq("profileId", profileId))
-    .first();
-  return !!identity;
+async function expireFormerProfile(ctx: MutationCtx, profileId: Parameters<typeof expireFormerProfileData>[1]["profileId"]) {
+  await expireFormerProfileData(ctx, {
+    anonymousEmail: anonymousEmailFor(profileId),
+    maxRelations: MAX_RELATIONS_PER_PROFILE,
+    profileId,
+  });
 }
 
 function calendarYearsBefore(timestamp: number, years: number) {
@@ -252,18 +205,11 @@ type BatchOptions = { cursor: string | null; now: number };
 
 export async function createNewsletterPortabilityExport(ctx: AdminQueryCtx, format: "csv" | "json") {
   const people = [];
-  const profiles = await ctx.db.query("profiles").take(MAX_EXPORT_RECORDS + 1);
+  const profiles = await listProfilesForPortability(ctx, MAX_EXPORT_RECORDS + 1);
   if (profiles.length > MAX_EXPORT_RECORDS) throw new Error("PORTABILITY_EXPORT_LIMIT_EXCEEDED");
   for (const profile of profiles) {
     if (profile.role !== "contact" || profile.email.endsWith(ANONYMIZED_EMAIL_SUFFIX)) continue;
-    const subscriptions = await ctx.db
-      .query("newsSubscriptions")
-      .withIndex("by_profile_id_and_confirmed_at", (query) => query.eq("profileId", profile._id))
-      .take(MAX_RELATIONS_PER_PROFILE + 1);
-    const issuances = await ctx.db
-      .query("ebookIssuances")
-      .withIndex("by_profile_id", (query) => query.eq("profileId", profile._id))
-      .take(MAX_RELATIONS_PER_PROFILE + 1);
+    const { issuances, subscriptions } = await getProfilePortabilityContext(ctx, profile._id, MAX_RELATIONS_PER_PROFILE + 1);
     requireBoundedRelations(subscriptions);
     requireBoundedRelations(issuances);
     const [restriction, suppression] = await Promise.all([
@@ -288,7 +234,7 @@ export async function createNewsletterPortabilityExport(ctx: AdminQueryCtx, form
       },
     });
   }
-  const suppressionDocs = await ctx.db.query("newsSuppressions").take(MAX_EXPORT_RECORDS + 1);
+  const suppressionDocs = await listNewsSuppressionsForPortability(ctx, MAX_EXPORT_RECORDS + 1);
   if (suppressionDocs.length > MAX_EXPORT_RECORDS) throw new Error("PORTABILITY_EXPORT_LIMIT_EXCEEDED");
   const suppressions = suppressionDocs.map(({ canonicalEmailHash }) => ({ canonicalEmailHash }));
   const payload = { exportedAt: Date.now(), people, suppressions, version: 1 };
