@@ -7,7 +7,8 @@ import { getNewsSuppressionByEmail } from "../data/news-suppressions";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RETENTION_BATCH_SIZE = 100;
-const MAX_RELATIONS_PER_PROFILE = 100;
+const PROFILE_RETENTION_BATCH_SIZE = 1;
+const MAX_RELATIONS_PER_PROFILE = 20;
 const MAX_EXPORT_RECORDS = 5000;
 const ANONYMIZED_EMAIL_SUFFIX = "@anonymized.invalid";
 export const PENDING_RETENTION_MS = 30 * DAY_MS;
@@ -89,7 +90,7 @@ async function deleteExpiredDownloads(ctx: MutationCtx, { cursor, now }: BatchOp
 }
 
 async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<RetentionBatchResult> {
-  const result = await ctx.db.query("profiles").paginate({ cursor, numItems: RETENTION_BATCH_SIZE });
+  const result = await ctx.db.query("profiles").paginate({ cursor, numItems: PROFILE_RETENTION_BATCH_SIZE });
   const counts = emptyCounts();
   for (const profile of result.page) {
     if (profile.role !== "contact" || profile.email.endsWith(ANONYMIZED_EMAIL_SUFFIX)) continue;

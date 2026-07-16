@@ -1,3 +1,4 @@
+import { getStatus } from "@convex-dev/workflow";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -7,22 +8,92 @@ import {
   formerSubscriberCutoff,
   PENDING_RETENTION_MS,
   TECHNICAL_RETENTION_MS,
+  type RetentionPhase,
 } from "../business/retention";
 import { internal } from "./_generated/api";
+import { executeRetentionWorkflow } from "./privacy";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
+vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
+  const actual = await importOriginal();
+  const workflowId = "test-workflow-id" as Awaited<ReturnType<typeof actual.start>>;
+  return {
+    ...actual,
+    getStatus: vi.fn<typeof actual.getStatus>().mockResolvedValue({ running: [], type: "inProgress" }),
+    start: vi.fn<typeof actual.start>().mockResolvedValue(workflowId),
+  } satisfies typeof actual;
+});
+
 const NOW = Date.UTC(2026, 6, 15);
 
+const runRetentionTestBatch = async (
+  convex: TestConvex<typeof schema>,
+  options: { cursor: string | null; now: number; phase: RetentionPhase }
+) => await convex.run(async (ctx) => await enforceNewsletterRetentionBatch(ctx, options));
+
 const enforceAllRetention = async (convex: TestConvex<typeof schema>, now: number) => {
-  for (const phase of ["tasks", "webhooks", "downloads", "profiles"] as const)
-    await convex.run(async (ctx) => await enforceNewsletterRetentionBatch(ctx, { cursor: null, now, phase }));
+  let cursor: string | null = null;
+  let phase: RetentionPhase = "tasks";
+  while (true) {
+    const result = await runRetentionTestBatch(convex, { cursor, now, phase });
+    if (result.done) return;
+    const { cursor: nextCursor, phase: nextPhase } = result;
+    cursor = nextCursor;
+    phase = nextPhase;
+  }
 };
 
 describe("newsletter retention and portability", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.useRealTimers();
+  });
+
+  it("sequences Workflow batches and marks successful completion", async () => {
+    const calls: string[] = [];
+    const results = [
+      { cursor: "task-cursor", done: false, phase: "tasks" as const },
+      { cursor: null, done: false, phase: "webhooks" as const },
+      { cursor: null, done: true, phase: "profiles" as const },
+    ].map((result) => ({
+      ...result,
+      anonymizedFormerProfiles: 0,
+      anonymizedPendingProfiles: 0,
+      deletedDownloads: 0,
+      deletedTechnicalLogs: 0,
+    }));
+
+    await executeRetentionWorkflow({
+      markCompleted: async () => await Promise.resolve(calls.push("completed")),
+      markFailed: async (phase) => await Promise.resolve(calls.push(`failed:${phase}`)),
+      runBatch: async ({ cursor, phase, stepNumber }) => {
+        calls.push(`batch:${stepNumber}:${phase}:${cursor ?? "start"}`);
+        const result = results.shift();
+        if (!result) throw new Error("Unexpected Workflow batch");
+        return await Promise.resolve(result);
+      },
+    });
+
+    expect(calls).toStrictEqual(["batch:0:tasks:start", "batch:1:tasks:task-cursor", "batch:2:webhooks:start", "completed"]);
+  });
+
+  it("records the active phase when Workflow orchestration fails", async () => {
+    const failure = new Error("batch failed");
+    const markFailed = vi.fn<(phase: RetentionPhase) => Promise<void>>(async () => {
+      await Promise.resolve();
+    });
+
+    await expect(
+      executeRetentionWorkflow({
+        markCompleted: async () => {
+          await Promise.resolve();
+        },
+        markFailed,
+        runBatch: async () => await Promise.reject(failure),
+      })
+    ).rejects.toBe(failure);
+    expect(markFailed).toHaveBeenCalledWith("tasks");
   });
 
   it("deletes pending identifying data at 30 days but not immediately before the boundary", async () => {
@@ -309,7 +380,7 @@ describe("newsletter retention and portability", () => {
     }
   });
 
-  it("persists observable run completion and safely ignores a repeated continuation", async () => {
+  it("persists observable run completion and deduplicates an active start", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     const convex = convexTest(schema, modules);
@@ -317,13 +388,55 @@ describe("newsletter retention and portability", () => {
     await expect(convex.mutation(internal.privacy.startRetention, {})).resolves.toBe(retentionRunId);
 
     for (const phase of ["tasks", "webhooks", "downloads", "profiles"] as const)
-      await convex.mutation(internal.privacy.continueRetention, { cursor: null, now: NOW, phase, retentionRunId });
+      await convex.mutation(internal.privacy.runRetentionBatch, { cursor: null, now: NOW, phase, retentionRunId });
+    await convex.mutation(internal.privacy.markRetentionCompleted, { retentionRunId });
 
-    await expect(
-      convex.mutation(internal.privacy.continueRetention, { cursor: null, now: NOW, phase: "profiles", retentionRunId })
-    ).resolves.toBeNull();
+    await expect(convex.mutation(internal.privacy.markRetentionCompleted, { retentionRunId })).resolves.toBeNull();
     await convex.run(async (ctx) => {
-      await expect(ctx.db.get(retentionRunId)).resolves.toMatchObject({ finishedAt: NOW, startedAt: NOW, status: "completed" });
+      await expect(ctx.db.get(retentionRunId)).resolves.toMatchObject({
+        finishedAt: NOW,
+        startedAt: NOW,
+        status: "completed",
+        workflowId: "test-workflow-id",
+      });
+    });
+  });
+
+  it("records a failed Workflow attempt and restarts with separate counters", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = convexTest(schema, modules);
+    const failedRunId = await convex.mutation(internal.privacy.startRetention, {});
+    await convex.mutation(internal.privacy.markRetentionFailed, { phase: "profiles", retentionRunId: failedRunId });
+
+    const retryRunId = await convex.mutation(internal.privacy.startRetention, {});
+
+    expect(retryRunId).not.toBe(failedRunId);
+    await convex.run(async (ctx) => {
+      await expect(ctx.db.get(failedRunId)).resolves.toMatchObject({ failurePhase: "profiles", status: "failed" });
+      await expect(ctx.db.get(retryRunId)).resolves.toMatchObject({
+        anonymizedFormerProfiles: 0,
+        anonymizedPendingProfiles: 0,
+        deletedDownloads: 0,
+        deletedTechnicalLogs: 0,
+        status: "running",
+      });
+    });
+  });
+
+  it("reconciles a canceled Workflow before starting a new attempt", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = convexTest(schema, modules);
+    const canceledRunId = await convex.mutation(internal.privacy.startRetention, {});
+    vi.mocked(getStatus).mockResolvedValueOnce({ type: "canceled" });
+
+    const replacementRunId = await convex.mutation(internal.privacy.startRetention, {});
+
+    expect(replacementRunId).not.toBe(canceledRunId);
+    await convex.run(async (ctx) => {
+      await expect(ctx.db.get(canceledRunId)).resolves.toMatchObject({ failedAt: NOW, status: "failed" });
+      await expect(ctx.db.get(replacementRunId)).resolves.toMatchObject({ status: "running" });
     });
   });
 });

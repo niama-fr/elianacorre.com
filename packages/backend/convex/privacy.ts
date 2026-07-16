@@ -1,6 +1,8 @@
+import { getStatus, start, type WorkflowId } from "@convex-dev/workflow";
 import { zPrivacyAuditVerificationCreate } from "@ec/domain/schemas/privacy-audits";
 import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
+import { v } from "convex/values";
 import z from "zod";
 
 import {
@@ -14,10 +16,16 @@ import {
   processPrivacyUnsubscription,
   processPrivacyVerification,
 } from "../business/privacy";
-import { createNewsletterPortabilityExport, enforceNewsletterRetentionBatch } from "../business/retention";
+import {
+  createNewsletterPortabilityExport,
+  enforceNewsletterRetentionBatch,
+  type RetentionBatchResult,
+  type RetentionPhase,
+} from "../business/retention";
 import { deletePrivacyGrant } from "../data/privacy-grants";
-import { internal } from "./_generated/api";
-import { zAdminMutation, zAdminQuery, zInternalAction, zInternalMutation } from "./zod";
+import { components, internal } from "./_generated/api";
+import { workflow } from "./workflow";
+import { zAdminMutation, zAdminQuery, zInternalMutation } from "./zod";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
 export const inspectSubject = zAdminQuery({
@@ -82,6 +90,50 @@ export const recordVerification = zAdminMutation({
   handler: async (ctx, payload) => await processPrivacyVerification(ctx, payload),
 });
 
+// WORKFLOWS -------------------------------------------------------------------------------------------------------------------------------
+type RetentionWorkflowOperations = {
+  markCompleted: () => Promise<unknown>;
+  markFailed: (phase: RetentionPhase) => Promise<unknown>;
+  runBatch: (options: { cursor: string | null; phase: RetentionPhase; stepNumber: number }) => Promise<RetentionBatchResult>;
+};
+
+export const executeRetentionWorkflow = async ({ markCompleted, markFailed, runBatch }: RetentionWorkflowOperations) => {
+  let cursor: string | null = null;
+  let phase: RetentionPhase = "tasks";
+  let stepNumber = 0;
+  try {
+    while (true) {
+      const result = await runBatch({ cursor, phase, stepNumber });
+      if (result.done) break;
+      const { cursor: nextCursor, phase: nextPhase } = result;
+      cursor = nextCursor;
+      phase = nextPhase;
+      stepNumber += 1;
+    }
+    await markCompleted();
+  } catch (unknownError) {
+    await markFailed(phase);
+    throw unknownError;
+  }
+};
+
+export const retentionWorkflow = workflow
+  .define({ args: { now: v.number(), retentionRunId: v.id("retentionRuns") } })
+  .handler(async (step, { now, retentionRunId }) => {
+    await executeRetentionWorkflow({
+      markCompleted: async () =>
+        await step.runMutation(internal.privacy.markRetentionCompleted, { retentionRunId }, { name: "mark retention completed" }),
+      markFailed: async (phase) =>
+        await step.runMutation(internal.privacy.markRetentionFailed, { phase, retentionRunId }, { name: "mark retention failed" }),
+      runBatch: async ({ cursor, phase, stepNumber }) =>
+        await step.runMutation(
+          internal.privacy.runRetentionBatch,
+          { cursor, now, phase, retentionRunId },
+          { name: `retention ${phase} batch ${stepNumber}` }
+        ),
+    });
+  });
+
 // INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
 export const expireGrant = zInternalMutation({
   args: { privacyGrantId: zid("privacyGrants") },
@@ -95,18 +147,16 @@ export const startRetention = zInternalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     const recentRuns = await ctx.db.query("retentionRuns").withIndex("by_started_at").order("desc").take(20);
-    const resumableRun = recentRuns.find(({ status }) => status !== "completed");
-    if (resumableRun) {
-      if (resumableRun.status === "running") return resumableRun._id;
-      await ctx.db.patch(resumableRun._id, { failedAt: null, failurePhase: null, status: "running" });
-      await ctx.scheduler.runAfter(0, internal.privacy.runRetentionStep, {
-        cursor: resumableRun.nextCursor,
-        now: resumableRun.startedAt,
-        phase: resumableRun.nextPhase,
-        retentionRunId: resumableRun._id,
-      });
-      return resumableRun._id;
-    }
+    const runningRun = recentRuns.find(({ status }) => status === "running");
+    if (runningRun?.workflowId) {
+      const workflowStatus = await getStatus(ctx, components.workflow, runningRun.workflowId as WorkflowId);
+      if (workflowStatus.type === "inProgress") return runningRun._id;
+      if (workflowStatus.type === "completed") {
+        await ctx.db.patch(runningRun._id, { finishedAt: now, status: "completed" });
+        return runningRun._id;
+      }
+      await ctx.db.patch(runningRun._id, { failedAt: now, status: "failed" });
+    } else if (runningRun) await ctx.db.patch(runningRun._id, { failedAt: now, status: "failed" });
     const retentionRunId = await ctx.db.insert("retentionRuns", {
       anonymizedFormerProfiles: 0,
       anonymizedPendingProfiles: 0,
@@ -115,22 +165,17 @@ export const startRetention = zInternalMutation({
       failedAt: null,
       failurePhase: null,
       finishedAt: null,
-      nextCursor: null,
-      nextPhase: "tasks",
       startedAt: now,
       status: "running",
+      workflowId: null,
     });
-    await ctx.scheduler.runAfter(0, internal.privacy.runRetentionStep, {
-      cursor: null,
-      now,
-      phase: "tasks",
-      retentionRunId,
-    });
+    const workflowId = await start(ctx, internal.privacy.retentionWorkflow, { now, retentionRunId });
+    await ctx.db.patch(retentionRunId, { workflowId });
     return retentionRunId;
   },
 });
 
-export const continueRetention = zInternalMutation({
+export const runRetentionBatch = zInternalMutation({
   args: {
     cursor: z.string().nullable(),
     now: z.number(),
@@ -139,24 +184,24 @@ export const continueRetention = zInternalMutation({
   },
   handler: async (ctx, { cursor, now, phase, retentionRunId }) => {
     const run = await ctx.db.get(retentionRunId);
-    if (!run || run.status !== "running" || run.nextPhase !== phase || run.nextCursor !== cursor) return;
+    if (!run || run.status !== "running") throw new Error("RETENTION_RUN_NOT_RUNNING");
     const result = await enforceNewsletterRetentionBatch(ctx, { cursor, now, phase });
     await ctx.db.patch(retentionRunId, {
       anonymizedFormerProfiles: run.anonymizedFormerProfiles + result.anonymizedFormerProfiles,
       anonymizedPendingProfiles: run.anonymizedPendingProfiles + result.anonymizedPendingProfiles,
       deletedDownloads: run.deletedDownloads + result.deletedDownloads,
       deletedTechnicalLogs: run.deletedTechnicalLogs + result.deletedTechnicalLogs,
-      nextCursor: result.cursor,
-      nextPhase: result.phase,
-      ...(result.done ? { finishedAt: Date.now(), status: "completed" as const } : {}),
     });
-    if (!result.done)
-      await ctx.scheduler.runAfter(0, internal.privacy.runRetentionStep, {
-        cursor: result.cursor,
-        now,
-        phase: result.phase,
-        retentionRunId,
-      });
+    return result;
+  },
+});
+
+export const markRetentionCompleted = zInternalMutation({
+  args: { retentionRunId: zid("retentionRuns") },
+  handler: async (ctx, { retentionRunId }) => {
+    const run = await ctx.db.get(retentionRunId);
+    if (!run || run.status !== "running") return;
+    await ctx.db.patch(retentionRunId, { finishedAt: Date.now(), status: "completed" });
   },
 });
 
@@ -164,23 +209,7 @@ export const markRetentionFailed = zInternalMutation({
   args: { phase: z.enum(["tasks", "webhooks", "downloads", "profiles"]), retentionRunId: zid("retentionRuns") },
   handler: async (ctx, { phase, retentionRunId }) => {
     const run = await ctx.db.get(retentionRunId);
-    if (!run || run.status !== "running" || run.nextPhase !== phase) return;
+    if (!run || run.status !== "running") return;
     await ctx.db.patch(retentionRunId, { failedAt: Date.now(), failurePhase: phase, status: "failed" });
-  },
-});
-
-export const runRetentionStep = zInternalAction({
-  args: {
-    cursor: z.string().nullable(),
-    now: z.number(),
-    phase: z.enum(["tasks", "webhooks", "downloads", "profiles"]),
-    retentionRunId: zid("retentionRuns"),
-  },
-  handler: async (ctx, args) => {
-    try {
-      await ctx.runMutation(internal.privacy.continueRetention, args);
-    } catch {
-      await ctx.runMutation(internal.privacy.markRetentionFailed, { phase: args.phase, retentionRunId: args.retentionRunId });
-    }
   },
 });

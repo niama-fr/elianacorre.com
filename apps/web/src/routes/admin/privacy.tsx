@@ -97,7 +97,7 @@ function AdminPrivacyPage() {
         {retentionRuns && retentionRuns.length > 0 && (
           <ul className="flex flex-col gap-2 text-sm">
             {retentionRuns.map((run) => (
-              <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-3" key={run._id}>
+              <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-4" key={run._id}>
                 <span>{formatDate(run.startedAt)}</span>
                 <span>
                   {run.status === "completed" && `Terminée ${formatDate(run.finishedAt)}`}
@@ -108,6 +108,7 @@ function AdminPrivacyPage() {
                   Profils en attente : {run.anonymizedPendingProfiles} · anciens abonnés : {run.anonymizedFormerProfiles} · journaux :{" "}
                   {run.deletedTechnicalLogs} · téléchargements : {run.deletedDownloads}
                 </span>
+                <span className="break-all text-muted-foreground">Workflow : {run.workflowId ?? "—"}</span>
               </li>
             ))}
           </ul>
