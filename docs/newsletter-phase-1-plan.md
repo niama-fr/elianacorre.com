@@ -163,6 +163,8 @@ The concrete delivery mechanism must account for the final file size. Convex HTT
 
 ## Privacy and retention
 
+The executable retention, portability-export, verification, recovery, and security procedure is documented in [`docs/agents/newsletter-retention-portability.md`](agents/newsletter-retention-portability.md).
+
 - Newsletter consent is separate from contact requests, authentication, purchases, and delivery eligibility.
 - Contact-form submissions never imply newsletter subscription.
 - Application Loops task outcomes and detailed provider operations are retained for 90 days; Workflow execution history follows the component's configured retention policy.

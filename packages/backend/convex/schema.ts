@@ -14,6 +14,7 @@ import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-lega
 import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
 import { zPrivacyGrantFields } from "@ec/domain/schemas/privacy-grants";
 import { zProfileFields } from "@ec/domain/schemas/profiles";
+import { zRetentionRunFields } from "@ec/domain/schemas/retention-runs";
 import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { defineSchema, defineTable } from "convex/server";
 
@@ -27,9 +28,14 @@ export default defineSchema({
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
   loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields))
+    .index("by_ebook_download_id", ["ebookDownloadId"])
+    .index("by_finished_at", ["finishedAt"])
     .index("by_idempotency_key", ["idempotencyKey"])
     .index("by_profile_id", ["profileId"]),
-  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields)).index("by_email", ["email"]).index("by_webhook_id", ["webhookId"]),
+  loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields))
+    .index("by_email", ["email"])
+    .index("by_occurred_at", ["occurredAt"])
+    .index("by_webhook_id", ["webhookId"]),
   newsConfirmations: defineTable(zodOutputToConvex(zNewsConfirmationFields)).index("by_subscription_id", ["subscriptionId"]),
   newsRestrictions: defineTable(zodOutputToConvex(zNewsRestrictionFields))
     .index("by_profile_id_and_resolved_at", ["profileId", "resolvedAt"])
@@ -45,4 +51,5 @@ export default defineSchema({
     "requestKind",
   ]),
   profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
+  retentionRuns: defineTable(zodOutputToConvex(zRetentionRunFields)),
 });

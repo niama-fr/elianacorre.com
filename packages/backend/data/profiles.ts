@@ -1,6 +1,7 @@
 import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { Profiles } from "@ec/domain/schemas/profiles";
+import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
@@ -23,6 +24,11 @@ export const requireProfile = async (ctx: QueryCtx, id: Id<"profiles">) => {
   if (!doc) throw new ConvexError("UNKNOWN_PROFILE");
   return doc;
 };
+
+// LIST ------------------------------------------------------------------------------------------------------------------------------------
+export const paginateProfiles = async (ctx: QueryCtx, pagination: PaginationOptions) => await ctx.db.query("profiles").paginate(pagination);
+
+export const takeProfiles = async (ctx: QueryCtx, limit: number) => await ctx.db.query("profiles").take(limit);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createContactProfile = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) =>

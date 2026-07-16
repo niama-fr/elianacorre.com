@@ -12,12 +12,12 @@ export const getIdentityByAdapterId = async (ctx: QueryCtx, adapterId: string) =
     .withIndex("by_adapter_and_adapter_id", (q) => q.eq("adapter", AUTH_ADAPTER).eq("adapterId", adapterId))
     .unique();
 
-export const getIdentityByProfile = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
+export const getIdentityByProfileId = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
   await ctx.db
     .query("identities")
     .withIndex("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId).eq("adapter", AUTH_ADAPTER))
     .unique();
 
-// CREATE -------------------------------------------------------------------------------------------------------------------------------------
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createIdentity = async (ctx: MutationCtx, create: Omit<Identities["Fields"], "adapter">) =>
   await ctx.db.insert("identities", { adapter: AUTH_ADAPTER, ...create });

@@ -3,9 +3,9 @@ import type { AdminMutationCtx } from "@ec/backend/convex/zod";
 import type { QueryCtx } from "@ec/backend/server";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 
-import { ebookIssuanceFromDoc, listEbookIssuances } from "../data/ebook-issuances";
+import { ebookIssuanceFromDoc, listEbookIssuancesNewestFirst } from "../data/ebook-issuances";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
-import { getCurrentNewsSubscription, listNewsSubscriptions, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
+import { getCurrentNewsSubscription, listNewsSubscriptionsNewestFirst, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { deleteNewsSuppressionByEmail, ensureNewsSuppression, getNewsSuppressionByEmail } from "../data/news-suppressions";
 import { createPrivacyAuditRequest, createPrivacyAuditVerification, listPrivacyAuditsByEmail } from "../data/privacy-audits";
 import { consumePrivacyGrant, listActivePrivacyGrants, replacePrivacyGrant, revokePrivacyGrant } from "../data/privacy-grants";
@@ -44,9 +44,9 @@ export async function inspectPrivacySubject(ctx: QueryCtx, email: string) {
     };
 
   const [consentPeriods, restriction, ebookIssuances] = await Promise.all([
-    listNewsSubscriptions(ctx, profile._id),
+    listNewsSubscriptionsNewestFirst(ctx, profile._id),
     getActiveNewsRestriction(ctx, profile._id),
-    listEbookIssuances(ctx, profile._id),
+    listEbookIssuancesNewestFirst(ctx, profile._id),
   ]);
 
   const issuances = await Promise.all(ebookIssuances.map(async (doc) => await ebookIssuanceFromDoc(ctx, doc)));
