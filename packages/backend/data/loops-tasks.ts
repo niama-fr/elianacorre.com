@@ -56,9 +56,7 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
     ...create,
     acknowledgedAt: null,
     alertedAt: null,
-    failureCategory: null,
-    failureCode: null,
-    failureStatus: null,
+    failure: null,
     finishedAt: null,
     replayCount: 0,
     status: "pending",
@@ -89,9 +87,7 @@ export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { fai
   await patchLoopsTask(ctx, task._id, {
     acknowledgedAt: null,
     alertedAt: now,
-    failureCategory: failure.category,
-    failureCode: failure.code,
-    failureStatus: failure.status,
+    failure,
     finishedAt: now,
     status: "failed",
   });
@@ -106,9 +102,5 @@ export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { 
 type FailedTask = Extract<LoopsTasks["Doc"], { status: "failed" }>;
 type TaskRef = Pick<Extract<LoopsTasks["Doc"], { status: "pending" }>, "_id" | "kind">;
 type MarkFailedOpts = {
-  failure: {
-    category: NonNullable<LoopsTasks["Fields"]["failureCategory"]>;
-    code: NonNullable<LoopsTasks["Fields"]["failureCode"]>;
-    status: number | null;
-  };
+  failure: NonNullable<LoopsTasks["Fields"]["failure"]>;
 };

@@ -8,24 +8,23 @@ export const zLoopsTaskKind = z.literal(kinds);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
-export const zLoopsTaskFailureCategory = z.literal([
+
+// FAILURE CATEGORY ------------------------------------------------------------------------------------------------------------------------
+export const loopsTaskRetriableFailureCategories = ["network", "rateLimited", "server"] as const;
+export const loopsTaskFailureCategories = [
+  ...loopsTaskRetriableFailureCategories,
   "authentication",
   "missingResource",
-  "network",
-  "rateLimited",
-  "server",
   "unknown",
   "validation",
-]);
-export const zLoopsTaskFailureCode = z.literal(["LOOPS_REQUEST_FAILED", "UNSTRUCTURED_LOOPS_FAILURE"]);
+] as const;
+export const zLoopsTaskFailureCategory = z.literal(loopsTaskFailureCategories);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({
   acknowledgedAt: z.number().nullable(),
   alertedAt: z.number().nullable(),
-  failureCategory: zLoopsTaskFailureCategory.nullable(),
-  failureCode: zLoopsTaskFailureCode.nullable(),
-  failureStatus: z.number().nullable(),
+  failure: zLoopsTaskFailureCategory.nullable(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
   replayCount: z.number(),
@@ -57,19 +56,13 @@ const zLoopsTaskFieldsByKind = z.discriminatedUnion("kind", [
   zSyncContactFields,
 ]);
 const hasValidTaskState = (task: z.infer<typeof zLoopsTaskFieldsByKind>) => {
-  const hasNoFailure =
-    task.acknowledgedAt === null &&
-    task.alertedAt === null &&
-    task.failureCategory === null &&
-    task.failureCode === null &&
-    task.failureStatus === null;
+  const hasNoFailure = task.acknowledgedAt === null && task.alertedAt === null && task.failure === null;
   const hasExecutableDeletionAddress = task.kind !== "deleteContact" || task.email !== null;
   if (task.status === "pending") return hasNoFailure && task.finishedAt === null && hasExecutableDeletionAddress;
   if (task.status === "failed")
     return (
       task.alertedAt !== null &&
-      task.failureCategory !== null &&
-      task.failureCode !== null &&
+      task.failure !== null &&
       task.finishedAt !== null &&
       task.workflowId !== null &&
       hasExecutableDeletionAddress
@@ -110,9 +103,7 @@ export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
 type PendingTaskState = {
   acknowledgedAt: null;
   alertedAt: null;
-  failureCategory: null;
-  failureCode: null;
-  failureStatus: null;
+  failure: null;
   finishedAt: null;
   status: "pending";
   workflowId: string | null;
@@ -120,9 +111,7 @@ type PendingTaskState = {
 type FailedTaskState = {
   acknowledgedAt: number | null;
   alertedAt: number;
-  failureCategory: z.infer<typeof zLoopsTaskFailureCategory>;
-  failureCode: z.infer<typeof zLoopsTaskFailureCode>;
-  failureStatus: number | null;
+  failure: z.infer<typeof zLoopsTaskFailureCategory>;
   finishedAt: number;
   status: "failed";
   workflowId: string;
@@ -130,9 +119,7 @@ type FailedTaskState = {
 type SucceededTaskState = {
   acknowledgedAt: null;
   alertedAt: null;
-  failureCategory: null;
-  failureCode: null;
-  failureStatus: null;
+  failure: null;
   finishedAt: number;
   status: "succeeded";
   workflowId: string;

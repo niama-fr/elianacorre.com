@@ -5,9 +5,7 @@ import { zLoopsTaskFields } from "./loops-tasks";
 const common = {
   acknowledgedAt: null,
   alertedAt: null,
-  failureCategory: null,
-  failureCode: null,
-  failureStatus: null,
+  failure: null,
   finishedAt: null,
   idempotencyKey: "confirmation-1",
   replayCount: 0,
@@ -26,7 +24,7 @@ describe("Loops task state", () => {
     };
 
     expect({
-      invalid: zLoopsTaskFields.safeParse({ ...pendingTask, failureCategory: "server" }).success,
+      invalid: zLoopsTaskFields.safeParse({ ...pendingTask, failure: "server" }).success,
       valid: zLoopsTaskFields.safeParse(pendingTask).success,
     }).toStrictEqual({ invalid: false, valid: true });
   });
@@ -35,9 +33,7 @@ describe("Loops task state", () => {
     const failedTask = {
       ...common,
       alertedAt: 10,
-      failureCategory: "server",
-      failureCode: "LOOPS_REQUEST_FAILED",
-      failureStatus: 503,
+      failure: "server",
       finishedAt: 10,
       kind: "syncContact",
       profileId: "000000000000000000000000profiles",
@@ -46,7 +42,7 @@ describe("Loops task state", () => {
     };
 
     expect({
-      invalid: zLoopsTaskFields.safeParse({ ...failedTask, failureCode: null }).success,
+      invalid: zLoopsTaskFields.safeParse({ ...failedTask, failure: null }).success,
       valid: zLoopsTaskFields.safeParse(failedTask).success,
     }).toStrictEqual({ invalid: false, valid: true });
   });
@@ -72,8 +68,7 @@ describe("Loops task state", () => {
       failed: zLoopsTaskFields.safeParse({
         ...deletionTask,
         alertedAt: 10,
-        failureCategory: "server",
-        failureCode: "LOOPS_REQUEST_FAILED",
+        failure: "server",
         finishedAt: 10,
         status: "failed",
       }).success,

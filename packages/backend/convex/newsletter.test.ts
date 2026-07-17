@@ -701,7 +701,7 @@ describe("newsletter subscription", () => {
     if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
 
     await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).resolves.toStrictEqual({
-      failure: { category: "validation", code: "LOOPS_REQUEST_FAILED", retryable: false, status: 400 },
+      failure: { failure: "validation", retryable: false },
       status: "failed",
     });
     expect(send).toHaveBeenCalledOnce();
@@ -723,10 +723,8 @@ describe("newsletter subscription", () => {
 
     const firstFailure = await convex.action(internal.loops.execute, { loopsTaskId: task._id }).catch((error: unknown) => error);
     expect(getLoopsTaskFailure(firstFailure)).toStrictEqual({
-      category: "server",
-      code: "LOOPS_REQUEST_FAILED",
+      failure: "server",
       retryable: true,
-      status: 503,
     });
     await convex.action(internal.loops.execute, { loopsTaskId: task._id });
     await convex.mutation(internal.loops.markTaskSucceeded, { loopsTaskId: task._id });

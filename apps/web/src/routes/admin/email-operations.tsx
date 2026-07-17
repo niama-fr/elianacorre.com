@@ -65,10 +65,8 @@ function AdminEmailOperationsPage() {
             <li className="grid gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-red-950 sm:grid-cols-[1fr_auto]" key={task._id}>
               <div className="grid gap-1 text-sm">
                 <strong>{TASK_LABELS[task.kind]}</strong>
-                <span>{FAILURE_LABELS[task.failureCategory]}</span>
-                <span>
-                  Statut fournisseur : {task.failureStatus ?? "—"} · échec terminal : {formatDate(task.finishedAt)}
-                </span>
+                <span>{FAILURE_LABELS[task.failure]}</span>
+                <span>Échec terminal : {formatDate(task.finishedAt)}</span>
                 <span>
                   Alerte : {task.acknowledgedAt === null ? "à traiter" : `prise en compte le ${formatDate(task.acknowledgedAt)}`} · relances
                   : {task.replayCount}

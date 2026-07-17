@@ -32,21 +32,19 @@ describe("Loops task failure classification", () => {
       failure("missingResource", 404),
       failure("validation", 400),
     ]).toStrictEqual([
-      { category: "network", code: "LOOPS_REQUEST_FAILED", retryable: true, status: null },
-      { category: "rateLimited", code: "LOOPS_REQUEST_FAILED", retryable: true, status: 429 },
-      { category: "server", code: "LOOPS_REQUEST_FAILED", retryable: true, status: 503 },
-      { category: "authentication", code: "LOOPS_REQUEST_FAILED", retryable: false, status: 401 },
-      { category: "missingResource", code: "LOOPS_REQUEST_FAILED", retryable: false, status: 404 },
-      { category: "validation", code: "LOOPS_REQUEST_FAILED", retryable: false, status: 400 },
+      { failure: "network", retryable: true },
+      { failure: "rateLimited", retryable: true },
+      { failure: "server", retryable: true },
+      { failure: "authentication", retryable: false },
+      { failure: "missingResource", retryable: false },
+      { failure: "validation", retryable: false },
     ]);
   });
 
   it("does not infer retryability from message text", () => {
     expect(getLoopsTaskFailure(new Error("Loops service error. Please try again later."))).toStrictEqual({
-      category: "unknown",
-      code: "UNSTRUCTURED_LOOPS_FAILURE",
+      failure: "unknown",
       retryable: false,
-      status: null,
     });
   });
 });

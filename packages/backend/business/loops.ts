@@ -71,9 +71,7 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
   await patchLoopsTask(ctx, task._id, {
     acknowledgedAt: null,
     alertedAt: null,
-    failureCategory: null,
-    failureCode: null,
-    failureStatus: null,
+    failure: null,
     finishedAt: null,
     replayCount: task.replayCount + 1,
     status: "pending",

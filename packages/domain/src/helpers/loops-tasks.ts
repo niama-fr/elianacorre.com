@@ -37,16 +37,13 @@ const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureDa
 };
 
 export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
-  if (!(error instanceof ConvexError)) return { category: "unknown", code: "UNSTRUCTURED_LOOPS_FAILURE", retryable: false, status: null };
+  if (!(error instanceof ConvexError)) return { failure: "unknown", retryable: false };
 
-  if (!isLoopsRequestFailureData(error.data))
-    return { category: "unknown", code: "UNSTRUCTURED_LOOPS_FAILURE", retryable: false, status: null };
+  if (!isLoopsRequestFailureData(error.data)) return { failure: "unknown", retryable: false };
 
   return {
-    category: error.data.category,
-    code: error.data.code,
+    failure: error.data.category,
     retryable: RETRYABLE_FAILURE_CATEGORIES.has(error.data.category),
-    status: error.data.status,
   };
 };
 
@@ -59,10 +56,8 @@ export type LoopsTaskFailureCategory =
   | "unknown"
   | "validation";
 export type LoopsTaskFailure = {
-  category: LoopsTaskFailureCategory;
-  code: "LOOPS_REQUEST_FAILED" | "UNSTRUCTURED_LOOPS_FAILURE";
+  failure: LoopsTaskFailureCategory;
   retryable: boolean;
-  status: number | null;
 };
 type LoopsRequestFailureData = {
   category: LoopsTaskFailureCategory;
