@@ -70,23 +70,17 @@ Si la nouvelle valeur échoue, restaurer l’ancienne valeur encore valide, inte
 
 ## 2. Isolation des environnements
 
-### Variables
+### Principe
 
-Chaque déploiement Convex définit :
-
-- `EMAIL_DELIVERY_MODE=isolated` en développement, prévisualisation et staging ;
-- `EMAIL_DELIVERY_ALLOWLIST=gregory.bouteiller@niama.fr` hors production ;
-- `EMAIL_DELIVERY_MODE=production` uniquement sur le déploiement de production approuvé ;
-- `EMAIL_DELIVERY_ALLOWLIST` vide ou explicitement documentée en production.
+L’isolation repose sur les environnements distincts de Convex et de Loops. Le développement et le staging utilisent exclusivement les clés, contacts, modèles et webhooks de l’espace Loops de staging. La production utilise exclusivement ceux de l’espace Loops de production. L’application n’applique ni mode de livraison ni liste d’adresses autorisées ; l’opérateur utilise uniquement ses adresses personnelles pour les essais.
 
 ### Procédure
 
 1. Ouvrir le déploiement Convex ciblé et confirmer son nom.
 2. Vérifier que ses clés Loops et identifiants transactionnels appartiennent à un espace Loops isolé de la production.
-3. Définir le mode et l’allowlist ci-dessus.
-4. Vérifier que le déploiement ne contient aucun contact, export, identifiant Loops ou secret provenant de production.
-5. Avec une adresse synthétique non autorisée, lancer le chemin de confirmation : il doit créer l’intention Convex mais afficher une alerte terminale sans appel Loops.
-6. Avec `gregory.bouteiller@niama.fr`, répéter le test dans l’espace Loops non productif : un seul envoi doit être journalisé.
+3. Vérifier que le déploiement ne contient aucun contact, export, identifiant Loops ou secret provenant de production.
+4. Avec `gregory.bouteiller@niama.fr`, tester la confirmation dans l’espace Loops non productif : un seul envoi doit être journalisé.
+5. Vérifier que le contact, le message et les événements associés apparaissent uniquement dans Loops staging.
 
 ### Récupération
 

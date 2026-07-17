@@ -49,13 +49,4 @@ describe("Loops task failure classification", () => {
       status: null,
     });
   });
-
-  it("classifies blocked contact operations as permanent environment-isolation failures", () => {
-    expect(getLoopsTaskFailure(new ConvexError({ code: "EMAIL_CONTACT_OPERATION_NOT_ALLOWED" }))).toStrictEqual({
-      category: "environmentIsolation",
-      code: "EMAIL_CONTACT_OPERATION_NOT_ALLOWED",
-      retryable: false,
-      status: null,
-    });
-  });
 });

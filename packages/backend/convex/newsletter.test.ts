@@ -30,8 +30,6 @@ const createEbookRecoveryRequest = (email = "reader@example.com") => ({ email, r
 
 const createBackend = async () => {
   vi.stubEnv("CAPABILITY_SIGNING_SECRET", CAPABILITY_SECRET);
-  vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "reader@example.com");
-  vi.stubEnv("EMAIL_DELIVERY_MODE", "isolated");
   vi.stubEnv("SITE_URL", "https://www.elianacorre.com");
   vi.stubEnv("SUPPRESSION_HASH_SECRET", SUPPRESSION_SECRET);
   const convex = convexTest(schema, modules);
@@ -690,29 +688,6 @@ describe("newsletter subscription", () => {
       .parse(JSON.parse(request.body)).dataVariables;
     const token = new URL(confirmationUrl).searchParams.get("token");
     await expect(verifyCapabilityToken({ secret: CAPABILITY_SECRET, token: token ?? "" })).resolves.toBe(task.newsConfirmationId);
-  });
-
-  it("blocks non-production delivery outside the explicit allowlist before contacting Loops", async () => {
-    vi.stubEnv("LOOPS_API_KEY", "test-key");
-    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
-    vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "gregory.bouteiller@niama.fr");
-    const send = vi.fn<typeof fetch>();
-    vi.stubGlobal("fetch", send);
-    const convex = await createBackend();
-    vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "gregory.bouteiller@niama.fr");
-    await convex.mutation(api.newsletter.subscribe, createRequest());
-    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
-    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
-
-    const result = await convex.action(internal.loops.execute, { loopsTaskId: task._id });
-
-    expect({ providerCalls: send.mock.calls.length, result }).toStrictEqual({
-      providerCalls: 0,
-      result: {
-        failure: { category: "environmentIsolation", code: "EMAIL_RECIPIENT_NOT_ALLOWED", retryable: false, status: null },
-        status: "failed",
-      },
-    });
   });
 
   it("returns a terminal result for a permanent provider failure instead of retrying it", async () => {

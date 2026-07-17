@@ -20,7 +20,6 @@ const TASK_LABELS = {
 
 const FAILURE_LABELS = {
   authentication: "Authentification Loops refusée",
-  environmentIsolation: "Envoi bloqué par l’isolation d’environnement",
   missingResource: "Modèle ou ressource Loops introuvable",
   network: "Connexion réseau indisponible",
   rateLimited: "Limite de débit Loops atteinte",

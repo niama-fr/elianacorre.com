@@ -27,8 +27,6 @@ import type { DataModel } from "./dataModel.js";
 type Env = {
   readonly BETTER_AUTH_SECRET: string;
   readonly CAPABILITY_SIGNING_SECRET: string;
-  readonly EMAIL_DELIVERY_ALLOWLIST: string;
-  readonly EMAIL_DELIVERY_MODE: string;
   readonly GOOGLE_CLIENT_ID: string;
   readonly GOOGLE_CLIENT_SECRET: string;
   readonly LOOPS_API_KEY: string;

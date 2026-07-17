@@ -10,7 +10,6 @@ export const zLoopsTaskKind = z.literal(kinds);
 export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
 export const zLoopsTaskFailureCategory = z.literal([
   "authentication",
-  "environmentIsolation",
   "missingResource",
   "network",
   "rateLimited",
@@ -18,13 +17,7 @@ export const zLoopsTaskFailureCategory = z.literal([
   "unknown",
   "validation",
 ]);
-export const zLoopsTaskFailureCode = z.literal([
-  "EMAIL_DELIVERY_NOT_CONFIGURED",
-  "EMAIL_CONTACT_OPERATION_NOT_ALLOWED",
-  "EMAIL_RECIPIENT_NOT_ALLOWED",
-  "LOOPS_REQUEST_FAILED",
-  "UNSTRUCTURED_LOOPS_FAILURE",
-]);
+export const zLoopsTaskFailureCode = z.literal(["LOOPS_REQUEST_FAILED", "UNSTRUCTURED_LOOPS_FAILURE"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({

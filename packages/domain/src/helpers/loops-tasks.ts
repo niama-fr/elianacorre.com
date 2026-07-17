@@ -5,7 +5,6 @@ import type { LoopsTasks } from "../schemas/loops-tasks";
 const RETRYABLE_FAILURE_CATEGORIES = new Set<LoopsTaskFailureCategory>(["network", "rateLimited", "server"]);
 const FAILURE_CATEGORIES = new Set<LoopsTaskFailureCategory>([
   "authentication",
-  "environmentIsolation",
   "missingResource",
   "network",
   "rateLimited",
@@ -26,14 +25,6 @@ export const getLoopsTaskRetryPolicy = (kind: LoopsTasks["Kind"]) => {
 };
 
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
-const isEmailDeliveryFailureData = (data: unknown): data is EmailDeliveryFailureData => {
-  if (typeof data !== "object" || data === null) return false;
-  const { code } = data as Record<string, unknown>;
-  return (
-    code === "EMAIL_CONTACT_OPERATION_NOT_ALLOWED" || code === "EMAIL_DELIVERY_NOT_CONFIGURED" || code === "EMAIL_RECIPIENT_NOT_ALLOWED"
-  );
-};
-
 const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureData => {
   if (typeof data !== "object" || data === null) return false;
   const { category, code, status } = data as Record<string, unknown>;
@@ -48,9 +39,6 @@ const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureDa
 export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
   if (!(error instanceof ConvexError)) return { category: "unknown", code: "UNSTRUCTURED_LOOPS_FAILURE", retryable: false, status: null };
 
-  if (isEmailDeliveryFailureData(error.data))
-    return { category: "environmentIsolation", code: error.data.code, retryable: false, status: null };
-
   if (!isLoopsRequestFailureData(error.data))
     return { category: "unknown", code: "UNSTRUCTURED_LOOPS_FAILURE", retryable: false, status: null };
 
@@ -64,7 +52,6 @@ export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
 
 export type LoopsTaskFailureCategory =
   | "authentication"
-  | "environmentIsolation"
   | "missingResource"
   | "network"
   | "rateLimited"
@@ -73,17 +60,9 @@ export type LoopsTaskFailureCategory =
   | "validation";
 export type LoopsTaskFailure = {
   category: LoopsTaskFailureCategory;
-  code:
-    | "EMAIL_CONTACT_OPERATION_NOT_ALLOWED"
-    | "EMAIL_DELIVERY_NOT_CONFIGURED"
-    | "EMAIL_RECIPIENT_NOT_ALLOWED"
-    | "LOOPS_REQUEST_FAILED"
-    | "UNSTRUCTURED_LOOPS_FAILURE";
+  code: "LOOPS_REQUEST_FAILED" | "UNSTRUCTURED_LOOPS_FAILURE";
   retryable: boolean;
   status: number | null;
-};
-type EmailDeliveryFailureData = {
-  code: "EMAIL_CONTACT_OPERATION_NOT_ALLOWED" | "EMAIL_DELIVERY_NOT_CONFIGURED" | "EMAIL_RECIPIENT_NOT_ALLOWED";
 };
 type LoopsRequestFailureData = {
   category: LoopsTaskFailureCategory;

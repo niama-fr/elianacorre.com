@@ -22,14 +22,14 @@ Each deployment declares:
 
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
 - `CAPABILITY_SIGNING_SECRET`: unique secret generated from at least 32 random bytes; signs short-lived newsletter confirmation and e-book download URLs.
-- `EMAIL_DELIVERY_MODE`: `isolated` for dev and staging; `production` only for the approved production deployment.
-- `EMAIL_DELIVERY_ALLOWLIST`: comma-separated canonical addresses allowed to receive email when the mode is `isolated`; currently `gregory.bouteiller@niama.fr`.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
 - `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
 - `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
 - `SITE_URL`: exact application origin with no trailing path.
 - `SUPPRESSION_HASH_SECRET`: unique secret generated from at least 32 random bytes; creates the irreversible suppression lookup value.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
+
+Development and staging use only the separate Loops staging environment. Production uses only the Loops production environment. There is no application-level recipient allowlist; the sole operator uses personal addresses for non-production tests.
 
 The Google OAuth clients authorize these callbacks:
 

@@ -81,14 +81,11 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
   if (task.kind === "deleteContact") {
-    assertContactOperationAllowed();
     if (task.email === null) throw new Error("Delete-contact task email was already redacted");
     await loops.deleteContact(ctx, task.email);
   } else if (!profile) throw new Error("Loops task profile is required");
-  else if (task.kind === "syncContact") {
-    assertContactOperationAllowed();
-    await syncContact(ctx, { profile, task });
-  } else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
+  else if (task.kind === "syncContact") await syncContact(ctx, { profile, task });
+  else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
   else if (task.kind === "sendEbookEmail") await sendEbookEmail(ctx, { profile, task });
 }
 type ExecuteTaskOpts = { profile: Profiles["Doc"] | null; task: LoopsTasks["Doc"] };
@@ -136,7 +133,6 @@ async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
 }
 
 async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) {
-  assertEmailDeliveryAllowed(profile.email);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       confirmationUrl: getLink({
@@ -154,7 +150,6 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
 type SendConfirmationEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendConfirmationEmailDoc"] };
 
 async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailOpts) {
-  assertEmailDeliveryAllowed(profile.email);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       downloadUrl: getLink({
@@ -170,24 +165,6 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
   });
 }
 type SendEbookEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendEbookEmailDoc"] };
-
-function assertEmailDeliveryAllowed(email: string) {
-  if (env.EMAIL_DELIVERY_MODE === "production") return;
-  if (env.EMAIL_DELIVERY_MODE !== "isolated") throw new ConvexError({ code: "EMAIL_DELIVERY_NOT_CONFIGURED" });
-
-  const allowlist = new Set(
-    env.EMAIL_DELIVERY_ALLOWLIST.split(",")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean)
-  );
-  if (!allowlist.has(email.toLowerCase())) throw new ConvexError({ code: "EMAIL_RECIPIENT_NOT_ALLOWED" });
-}
-
-function assertContactOperationAllowed() {
-  if (env.EMAIL_DELIVERY_MODE === "production") return;
-  if (env.EMAIL_DELIVERY_MODE !== "isolated") throw new ConvexError({ code: "EMAIL_DELIVERY_NOT_CONFIGURED" });
-  throw new ConvexError({ code: "EMAIL_CONTACT_OPERATION_NOT_ALLOWED" });
-}
 
 async function syncContact(ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) {
   return task.subscribed
