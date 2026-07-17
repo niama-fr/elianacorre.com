@@ -49,7 +49,6 @@ describe("Loops delivery administration", () => {
       const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
       return await ctx.db.insert("loopsTasks", {
         acknowledgedAt: null,
-        alertedAt: null,
         failure: null,
         finishedAt: null,
         idempotencyKey: "stable-key",
@@ -93,7 +92,6 @@ describe("Loops delivery administration", () => {
     const replayed = await convex.run(async (ctx) => await ctx.db.get(taskId));
     expect(replayed).toMatchObject({
       acknowledgedAt: null,
-      alertedAt: null,
       failure: null,
       finishedAt: null,
       idempotencyKey: "stable-key",

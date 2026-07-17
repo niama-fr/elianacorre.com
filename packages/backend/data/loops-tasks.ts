@@ -55,7 +55,6 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
   await ctx.db.insert("loopsTasks", {
     ...create,
     acknowledgedAt: null,
-    alertedAt: null,
     failure: null,
     finishedAt: null,
     replayCount: 0,
@@ -86,7 +85,6 @@ export const deleteLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">) =>
 export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { failure, now }: WithNow<MarkFailedOpts>) => {
   await patchLoopsTask(ctx, task._id, {
     acknowledgedAt: null,
-    alertedAt: now,
     failure,
     finishedAt: now,
     status: "failed",

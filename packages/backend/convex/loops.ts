@@ -19,20 +19,17 @@ export const listFailedTasks = zAdminQuery({
   args: {},
   handler: async (ctx) => {
     const tasks = await takeFailedLoopsTasks(ctx, FAILED_TASK_LIMIT);
-    return tasks.map(
-      ({ _creationTime, _id, acknowledgedAt, alertedAt, failure, finishedAt, kind, replayCount, workflowId, workflowIds }) => ({
-        _creationTime,
-        _id,
-        acknowledgedAt,
-        alertedAt,
-        failure,
-        finishedAt,
-        kind,
-        replayCount,
-        workflowId,
-        workflowIds,
-      })
-    );
+    return tasks.map(({ _creationTime, _id, acknowledgedAt, failure, finishedAt, kind, replayCount, workflowId, workflowIds }) => ({
+      _creationTime,
+      _id,
+      acknowledgedAt,
+      failure,
+      finishedAt,
+      kind,
+      replayCount,
+      workflowId,
+      workflowIds,
+    }));
   },
 });
 

@@ -23,7 +23,6 @@ export const zLoopsTaskFailureCategory = z.literal(loopsTaskFailureCategories);
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({
   acknowledgedAt: z.number().nullable(),
-  alertedAt: z.number().nullable(),
   failure: zLoopsTaskFailureCategory.nullable(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
@@ -56,17 +55,11 @@ const zLoopsTaskFieldsByKind = z.discriminatedUnion("kind", [
   zSyncContactFields,
 ]);
 const hasValidTaskState = (task: z.infer<typeof zLoopsTaskFieldsByKind>) => {
-  const hasNoFailure = task.acknowledgedAt === null && task.alertedAt === null && task.failure === null;
+  const hasNoFailure = task.acknowledgedAt === null && task.failure === null;
   const hasExecutableDeletionAddress = task.kind !== "deleteContact" || task.email !== null;
   if (task.status === "pending") return hasNoFailure && task.finishedAt === null && hasExecutableDeletionAddress;
   if (task.status === "failed")
-    return (
-      task.alertedAt !== null &&
-      task.failure !== null &&
-      task.finishedAt !== null &&
-      task.workflowId !== null &&
-      hasExecutableDeletionAddress
-    );
+    return task.failure !== null && task.finishedAt !== null && task.workflowId !== null && hasExecutableDeletionAddress;
   return hasNoFailure && task.finishedAt !== null && task.workflowId !== null && (task.kind !== "deleteContact" || task.email === null);
 };
 export const zLoopsTaskFields = zLoopsTaskFieldsByKind.refine(hasValidTaskState, { message: "Invalid Loops task state" });
@@ -102,7 +95,6 @@ export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type PendingTaskState = {
   acknowledgedAt: null;
-  alertedAt: null;
   failure: null;
   finishedAt: null;
   status: "pending";
@@ -110,7 +102,6 @@ type PendingTaskState = {
 };
 type FailedTaskState = {
   acknowledgedAt: number | null;
-  alertedAt: number;
   failure: z.infer<typeof zLoopsTaskFailureCategory>;
   finishedAt: number;
   status: "failed";
@@ -118,7 +109,6 @@ type FailedTaskState = {
 };
 type SucceededTaskState = {
   acknowledgedAt: null;
-  alertedAt: null;
   failure: null;
   finishedAt: number;
   status: "succeeded";

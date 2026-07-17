@@ -4,7 +4,6 @@ import { zLoopsTaskFields } from "./loops-tasks";
 
 const common = {
   acknowledgedAt: null,
-  alertedAt: null,
   failure: null,
   finishedAt: null,
   idempotencyKey: "confirmation-1",
@@ -32,7 +31,6 @@ describe("Loops task state", () => {
   it("requires structured failure metadata for a failed task", () => {
     const failedTask = {
       ...common,
-      alertedAt: 10,
       failure: "server",
       finishedAt: 10,
       kind: "syncContact",
@@ -67,7 +65,6 @@ describe("Loops task state", () => {
     expect({
       failed: zLoopsTaskFields.safeParse({
         ...deletionTask,
-        alertedAt: 10,
         failure: "server",
         finishedAt: 10,
         status: "failed",

@@ -82,7 +82,6 @@ describe("newsletter portability export", () => {
       await ctx.db.insert("newsSuppressions", { canonicalEmailHash: "minimum-objection-hash" });
       await ctx.db.insert("loopsTasks", {
         acknowledgedAt: null,
-        alertedAt: 1,
         email: "technical@example.com",
         failure: "unknown",
         finishedAt: 1,

@@ -70,7 +70,6 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
   const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
   await patchLoopsTask(ctx, task._id, {
     acknowledgedAt: null,
-    alertedAt: null,
     failure: null,
     finishedAt: null,
     replayCount: task.replayCount + 1,
