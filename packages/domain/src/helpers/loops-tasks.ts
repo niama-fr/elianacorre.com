@@ -18,8 +18,8 @@ export const getLoopsTaskRetryPolicy = (kind: LoopsTasks["Kind"]) => {
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
 const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureData => {
   if (typeof data !== "object" || data === null) return false;
-  const { category, code } = data as Record<string, unknown>;
-  return code === "LOOPS_REQUEST_FAILED" && zLoopsTaskFailure.safeParse(category).success;
+  const { code, failure } = data as Record<string, unknown>;
+  return code === "LOOPS_REQUEST_FAILED" && zLoopsTaskFailure.safeParse(failure).success;
 };
 
 export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
@@ -28,8 +28,8 @@ export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
   if (!isLoopsRequestFailureData(error.data)) return { failure: "unknown", retryable: false };
 
   return {
-    failure: error.data.category,
-    retryable: RETRYABLE_FAILURES.has(error.data.category),
+    failure: error.data.failure,
+    retryable: RETRYABLE_FAILURES.has(error.data.failure),
   };
 };
 
@@ -38,7 +38,7 @@ export type LoopsTaskFailure = {
   retryable: boolean;
 };
 type LoopsRequestFailureData = {
-  category: LoopsTasks["Failure"];
+  failure: LoopsTasks["Failure"];
 };
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
