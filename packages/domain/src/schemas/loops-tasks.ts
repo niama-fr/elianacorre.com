@@ -7,11 +7,12 @@ const kinds = ["deleteContact", "sendConfirmationEmail", "sendEbookEmail", "sync
 export const zLoopsTaskKind = z.literal(kinds);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
+const statuses = ["failed", "pending", "succeeded"] as const;
+export const zLoopsTaskStatus = z.literal(statuses);
 
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
-export const loopsTaskRetriableFailures = ["network", "rateLimited", "server"] as const;
-export const loopsTaskFailures = [...loopsTaskRetriableFailures, "authentication", "missingResource", "unknown", "validation"] as const;
+export const loopsTaskRetryableFailures = ["network", "rateLimited", "server"] as const;
+export const loopsTaskFailures = [...loopsTaskRetryableFailures, "authentication", "missingResource", "unknown", "validation"] as const;
 export const zLoopsTaskFailure = z.literal(loopsTaskFailures);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
