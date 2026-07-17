@@ -50,7 +50,6 @@ describe("Loops delivery administration", () => {
       return await ctx.db.insert("loopsTasks", {
         acknowledgedAt: null,
         alertedAt: null,
-        error: null,
         failureCategory: null,
         failureCode: null,
         failureStatus: null,
@@ -66,7 +65,7 @@ describe("Loops delivery administration", () => {
       });
     });
     await convex.mutation(internal.loops.markTaskFailed, {
-      failure: { category: "server", code: "LOOPS_REQUEST_FAILED", retryable: true, status: 503 },
+      failure: { category: "server", code: "LOOPS_REQUEST_FAILED", status: 503 },
       loopsTaskId: taskId,
     });
     const asAdmin = await createIdentity(convex, "admin");
@@ -98,7 +97,6 @@ describe("Loops delivery administration", () => {
     expect(replayed).toMatchObject({
       acknowledgedAt: null,
       alertedAt: null,
-      error: null,
       failureCategory: null,
       failureCode: null,
       failureStatus: null,

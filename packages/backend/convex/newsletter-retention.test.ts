@@ -89,14 +89,20 @@ describe("newsletter retention policy", () => {
         subscriptionId: accountSubscriptionId,
       });
       const accountTaskId = await ctx.db.insert("loopsTasks", {
-        error: null,
+        acknowledgedAt: null,
+        alertedAt: null,
+        failureCategory: null,
+        failureCode: null,
+        failureStatus: null,
         finishedAt: null,
         idempotencyKey: "account-confirmation",
         kind: "sendConfirmationEmail",
         newsConfirmationId: accountConfirmationId,
         profileId: accountProfileId,
+        replayCount: 0,
         status: "pending",
         workflowId: "account-workflow",
+        workflowIds: ["account-workflow"],
       });
       await ctx.db.insert("identities", { adapter: "better-auth", adapterId: "account-user", profileId: accountProfileId });
       return { accountConfirmationId, accountProfileId, accountTaskId, expiredProfileId, retainedProfileId };
@@ -210,32 +216,50 @@ describe("newsletter retention policy", () => {
       const expiredDownloadId = await ctx.db.insert("ebookDownloads", { ebookIssuanceId: issuanceId });
       const retryDownloadId = await ctx.db.insert("ebookDownloads", { ebookIssuanceId: issuanceId });
       await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
+        alertedAt: null,
         ebookDownloadId: retryDownloadId,
-        error: null,
+        failureCategory: null,
+        failureCode: null,
+        failureStatus: null,
         finishedAt: null,
         idempotencyKey: "retry-download",
         kind: "sendEbookEmail",
         profileId,
+        replayCount: 0,
         status: "pending",
         workflowId: "retry-workflow",
+        workflowIds: ["retry-workflow"],
       });
       const expiredTaskId = await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
+        alertedAt: null,
         email: "expired@example.com",
-        error: null,
+        failureCategory: null,
+        failureCode: null,
+        failureStatus: null,
         finishedAt: NOW - TECHNICAL_RETENTION_MS,
         idempotencyKey: "expired-task",
         kind: "deleteContact",
+        replayCount: 0,
         status: "succeeded",
         workflowId: "expired-workflow",
+        workflowIds: ["expired-workflow"],
       });
       const retainedTaskId = await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
+        alertedAt: null,
         email: "retained@example.com",
-        error: null,
+        failureCategory: null,
+        failureCode: null,
+        failureStatus: null,
         finishedAt: NOW - TECHNICAL_RETENTION_MS + 1,
         idempotencyKey: "retained-task",
         kind: "deleteContact",
+        replayCount: 0,
         status: "succeeded",
         workflowId: "retained-workflow",
+        workflowIds: ["retained-workflow"],
       });
       const expiredWebhookId = await ctx.db.insert("loopsWebhooks", {
         email: "expired@example.com",

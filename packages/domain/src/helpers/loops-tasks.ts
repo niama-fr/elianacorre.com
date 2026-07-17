@@ -71,4 +71,5 @@ type LoopsRequestFailureData = {
 };
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const isLoopsTaskPending = (task: LoopsTasks["Doc"] | null) => task?.status === "pending";
+export const isLoopsTaskPending = (task: LoopsTasks["Doc"] | null): task is Extract<LoopsTasks["Doc"], { status: "pending" }> =>
+  task?.status === "pending";

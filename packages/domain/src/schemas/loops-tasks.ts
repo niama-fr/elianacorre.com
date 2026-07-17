@@ -21,26 +21,20 @@ export const zLoopsTaskFailureCode = z.literal(["LOOPS_REQUEST_FAILED", "UNSTRUC
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({
-  acknowledgedAt: z.number().nullable().optional(),
-  alertedAt: z.number().nullable().optional(),
-  error: z.string().nullable(),
-  failureCategory: zLoopsTaskFailureCategory.nullable().optional(),
-  failureCode: zLoopsTaskFailureCode.nullable().optional(),
-  failureStatus: z.number().nullable().optional(),
+  acknowledgedAt: z.number().nullable(),
+  alertedAt: z.number().nullable(),
+  failureCategory: zLoopsTaskFailureCategory.nullable(),
+  failureCode: zLoopsTaskFailureCode.nullable(),
+  failureStatus: z.number().nullable(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
-  replayCount: z.number().optional(),
+  replayCount: z.number(),
   status: zLoopsTaskStatus,
   workflowId: z.string().nullable(),
-  workflowIds: z.array(z.string()).optional(),
+  workflowIds: z.array(z.string()),
 });
 const zProfileTaskFields = z.object({ ...zCommonFields.shape, profileId: zid("profiles") });
-
-const zDeleteContactFields = z.object({
-  ...zCommonFields.shape,
-  email: zCanonicalEmail.nullable(),
-  kind: z.literal(kinds[0]),
-});
+const zDeleteContactFields = z.object({ ...zCommonFields.shape, email: zCanonicalEmail.nullable(), kind: z.literal(kinds[0]) });
 const zSendConfirmationEmailFields = z.object({
   ...zProfileTaskFields.shape,
   kind: z.literal(kinds[1]),
@@ -56,23 +50,42 @@ const zSyncContactFields = z.object({
   kind: z.literal(kinds[3]),
   subscribed: z.boolean(),
 });
-export const zLoopsTaskFields = z.discriminatedUnion("kind", [
+const zLoopsTaskFieldsByKind = z.discriminatedUnion("kind", [
   zDeleteContactFields,
   zSendConfirmationEmailFields,
   zSendEbookEmailFields,
   zSyncContactFields,
 ]);
+const hasValidTaskState = (task: z.infer<typeof zLoopsTaskFieldsByKind>) => {
+  const hasNoFailure =
+    task.acknowledgedAt === null &&
+    task.alertedAt === null &&
+    task.failureCategory === null &&
+    task.failureCode === null &&
+    task.failureStatus === null;
+  if (task.status === "pending") return hasNoFailure && task.finishedAt === null;
+  if (task.status === "failed")
+    return (
+      task.alertedAt !== null &&
+      task.failureCategory !== null &&
+      task.failureCode !== null &&
+      task.finishedAt !== null &&
+      task.workflowId !== null
+    );
+  return hasNoFailure && task.finishedAt !== null && task.workflowId !== null && (task.kind !== "deleteContact" || task.email === null);
+};
+export const zLoopsTaskFields = zLoopsTaskFieldsByKind.refine(hasValidTaskState, { message: "Invalid Loops task state" });
 
-const zDeleteContactDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zDeleteContactFields.shape });
-const zSendConfirmationEmailDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSendConfirmationEmailFields.shape });
-const zSendEbookEmailDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSendEbookEmailFields.shape });
-const zSyncContactDoc = z.object({ ...zDocCommon("loopsTasks").shape, ...zSyncContactFields.shape });
-export const zLoopsTaskDoc = z.discriminatedUnion("kind", [
-  zDeleteContactDoc,
-  zSendConfirmationEmailDoc,
-  zSendEbookEmailDoc,
-  zSyncContactDoc,
-]);
+const zDocFields = zDocCommon("loopsTasks").shape;
+export const zLoopsTaskDoc = z
+  .discriminatedUnion("kind", [
+    z.object({ ...zDocFields, ...zDeleteContactFields.shape }),
+    z.object({ ...zDocFields, ...zSendConfirmationEmailFields.shape }),
+    z.object({ ...zDocFields, ...zSendEbookEmailFields.shape }),
+    z.object({ ...zDocFields, ...zSyncContactFields.shape }),
+  ])
+  .refine(hasValidTaskState, { message: "Invalid Loops task state" })
+  .transform((task): WithTaskState<typeof task> => task as WithTaskState<typeof task>);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonCreate = zProfileTaskFields.pick({ idempotencyKey: true, profileId: true });
@@ -92,19 +105,57 @@ export const zLoopsTaskCreate = z.discriminatedUnion("kind", [
 ]);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
+type PendingTaskState = {
+  acknowledgedAt: null;
+  alertedAt: null;
+  failureCategory: null;
+  failureCode: null;
+  failureStatus: null;
+  finishedAt: null;
+  status: "pending";
+  workflowId: string | null;
+};
+type FailedTaskState = {
+  acknowledgedAt: number | null;
+  alertedAt: number;
+  failureCategory: z.infer<typeof zLoopsTaskFailureCategory>;
+  failureCode: z.infer<typeof zLoopsTaskFailureCode>;
+  failureStatus: number | null;
+  finishedAt: number;
+  status: "failed";
+  workflowId: string;
+};
+type SucceededTaskState = {
+  acknowledgedAt: null;
+  alertedAt: null;
+  failureCategory: null;
+  failureCode: null;
+  failureStatus: null;
+  finishedAt: number;
+  status: "succeeded";
+  workflowId: string;
+};
+type StateField = keyof PendingTaskState;
+type WithTaskState<T> = T extends { kind: "deleteContact" }
+  ? Omit<T, StateField | "email"> &
+      ((PendingTaskState & { email: string }) | (FailedTaskState & { email: string }) | (SucceededTaskState & { email: null }))
+  : T extends object
+    ? Omit<T, StateField> & (FailedTaskState | PendingTaskState | SucceededTaskState)
+    : never;
+type LoopsTaskDoc = z.infer<typeof zLoopsTaskDoc>;
+type LoopsTaskFields = WithTaskState<z.infer<typeof zLoopsTaskFields>>;
 export type LoopsTasks = {
   DeleteContactCreate: z.infer<typeof zDeleteContactCreate>;
-  DeleteContactDoc: z.infer<typeof zDeleteContactDoc>;
+  DeleteContactDoc: Extract<LoopsTaskDoc, { kind: "deleteContact" }>;
   SyncContactCreate: z.infer<typeof zSyncContactCreate>;
-  SyncContactDoc: z.infer<typeof zSyncContactDoc>;
-  CommonFields: z.infer<typeof zCommonFields>;
+  SyncContactDoc: Extract<LoopsTaskDoc, { kind: "syncContact" }>;
   Create: z.infer<typeof zLoopsTaskCreate>;
-  Doc: z.infer<typeof zLoopsTaskDoc>;
-  Fields: z.infer<typeof zLoopsTaskFields>;
+  Doc: LoopsTaskDoc;
+  Fields: LoopsTaskFields;
   Kind: z.infer<typeof zLoopsTaskKind>;
   SendConfirmationEmailCreate: z.infer<typeof zSendConfirmationEmailCreate>;
-  SendConfirmationEmailDoc: z.infer<typeof zSendConfirmationEmailDoc>;
+  SendConfirmationEmailDoc: Extract<LoopsTaskDoc, { kind: "sendConfirmationEmail" }>;
   SendEbookEmailCreate: z.infer<typeof zSendEbookEmailCreate>;
-  SendEbookEmailDoc: z.infer<typeof zSendEbookEmailDoc>;
+  SendEbookEmailDoc: Extract<LoopsTaskDoc, { kind: "sendEbookEmail" }>;
   Status: z.infer<typeof zLoopsTaskStatus>;
 };

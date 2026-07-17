@@ -11,7 +11,7 @@ import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
-import { createLoopsTask, patchLoopsTask } from "../data/loops-tasks";
+import { assignLoopsTaskWorkflow, createLoopsTask, replayLoopsTask } from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
 import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { getProfileIdByEmail } from "../data/profiles";
@@ -61,20 +61,7 @@ type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"news
 export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["Doc"]): Promise<string> {
   if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
   const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
-  const previousWorkflowIds = task.workflowIds ?? (task.workflowId === null ? [] : [task.workflowId]);
-  await patchLoopsTask(ctx, task._id, {
-    acknowledgedAt: null,
-    alertedAt: null,
-    error: null,
-    failureCategory: null,
-    failureCode: null,
-    failureStatus: null,
-    finishedAt: null,
-    replayCount: (task.replayCount ?? 0) + 1,
-    status: "pending",
-    workflowId,
-    workflowIds: [...previousWorkflowIds, workflowId],
-  });
+  await replayLoopsTask(ctx, task, workflowId);
   return workflowId;
 }
 
@@ -128,7 +115,7 @@ type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWe
 async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
   const loopsTaskId = await createLoopsTask(ctx, payload);
   const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
-  await patchLoopsTask(ctx, loopsTaskId, { workflowId, workflowIds: [workflowId] });
+  await assignLoopsTaskWorkflow(ctx, loopsTaskId, workflowId);
   return workflowId;
 }
 

@@ -1,12 +1,15 @@
 import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
-import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
+import { type LoopsTasks, zLoopsTaskDoc } from "@ec/domain/schemas/loops-tasks";
 import type { WithNow } from "@ec/domain/schemas/utils";
 import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">) => await ctx.db.get("loopsTasks", id);
+export const getLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">): Promise<LoopsTasks["Doc"] | null> => {
+  const task = await ctx.db.get("loopsTasks", id);
+  return task === null ? null : zLoopsTaskDoc.parse(task);
+};
 
 export const getLoopsTaskByEbookDownload = async (ctx: QueryCtx, downloadId: Id<"ebookDownloads">) =>
   await ctx.db
@@ -34,12 +37,18 @@ export const takeProfileLoopsTasks = async (ctx: QueryCtx, limit: number, profil
     .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
     .take(limit);
 
-export const takeFailedLoopsTasks = async (ctx: QueryCtx, limit: number) =>
-  await ctx.db
+export const takeFailedLoopsTasks = async (ctx: QueryCtx, limit: number) => {
+  const tasks = await ctx.db
     .query("loopsTasks")
     .withIndex("by_status_and_finished_at", (q) => q.eq("status", "failed"))
     .order("desc")
     .take(limit);
+  return tasks.map((task): FailedTask => {
+    const parsed = zLoopsTaskDoc.parse(task);
+    if (parsed.status !== "failed") throw new ConvexError("LOOPS_TASK_INVALID_FAILED_STATE");
+    return parsed;
+  });
+};
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
@@ -47,7 +56,6 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
     ...create,
     acknowledgedAt: null,
     alertedAt: null,
-    error: null,
     failureCategory: null,
     failureCode: null,
     failureStatus: null,
@@ -59,8 +67,34 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
   });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
+const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
   await ctx.db.patch("loopsTasks", id, patch);
+};
+
+export const assignLoopsTaskWorkflow = async (ctx: MutationCtx, id: Id<"loopsTasks">, workflowId: string) => {
+  await patchLoopsTask(ctx, id, { workflowId, workflowIds: [workflowId] });
+};
+
+export const acknowledgeFailedLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, now: number) => {
+  const task = await getLoopsTask(ctx, id);
+  if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+  await ctx.db.patch(id, { acknowledgedAt: now });
+};
+
+export const replayLoopsTask = async (ctx: MutationCtx, task: FailedTask, workflowId: string) => {
+  await patchLoopsTask(ctx, task._id, {
+    acknowledgedAt: null,
+    alertedAt: null,
+    failureCategory: null,
+    failureCode: null,
+    failureStatus: null,
+    finishedAt: null,
+    replayCount: task.replayCount + 1,
+    status: "pending",
+    workflowId,
+    workflowIds: [...task.workflowIds, workflowId],
+  });
 };
 
 // DELETE -----------------------------------------------------------------------------------------------------------------------------------
@@ -73,7 +107,6 @@ export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { fai
   await patchLoopsTask(ctx, task._id, {
     acknowledgedAt: null,
     alertedAt: now,
-    error: failure.category,
     failureCategory: failure.category,
     failureCode: failure.code,
     failureStatus: failure.status,
@@ -84,15 +117,16 @@ export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { fai
 
 export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { now }: WithNow) => {
   const extra = task.kind === "deleteContact" ? { email: null } : {};
-  await patchLoopsTask(ctx, task._id, { error: null, finishedAt: now, status: "succeeded", ...extra });
+  await patchLoopsTask(ctx, task._id, { finishedAt: now, status: "succeeded", ...extra });
 };
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-type TaskRef = Pick<LoopsTasks["Doc"], "_id" | "kind">;
+type FailedTask = Extract<LoopsTasks["Doc"], { status: "failed" }>;
+type TaskRef = Pick<Extract<LoopsTasks["Doc"], { status: "pending" }>, "_id" | "kind">;
 type MarkFailedOpts = {
   failure: {
-    category: NonNullable<LoopsTasks["CommonFields"]["failureCategory"]>;
-    code: NonNullable<LoopsTasks["CommonFields"]["failureCode"]>;
+    category: NonNullable<LoopsTasks["Fields"]["failureCategory"]>;
+    code: NonNullable<LoopsTasks["Fields"]["failureCode"]>;
     status: number | null;
   };
 };

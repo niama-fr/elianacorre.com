@@ -7,7 +7,13 @@ import { ConvexError, v } from "convex/values";
 import z from "zod";
 
 import { executeLoopsTask, processLoopsWebhook, replayFailedLoopsTask } from "../business/loops";
-import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded, takeFailedLoopsTasks } from "../data/loops-tasks";
+import {
+  acknowledgeFailedLoopsTask,
+  getLoopsTask,
+  markLoopsTaskFailed,
+  markLoopsTaskSucceeded,
+  takeFailedLoopsTasks,
+} from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
@@ -37,16 +43,16 @@ export const listFailedTasks = zAdminQuery({
       }) => ({
         _creationTime,
         _id,
-        acknowledgedAt: acknowledgedAt ?? null,
-        alertedAt: alertedAt ?? null,
-        failureCategory: failureCategory ?? "unknown",
-        failureCode: failureCode ?? "UNSTRUCTURED_LOOPS_FAILURE",
-        failureStatus: failureStatus ?? null,
+        acknowledgedAt,
+        alertedAt,
+        failureCategory,
+        failureCode,
+        failureStatus,
         finishedAt,
         kind,
-        replayCount: replayCount ?? 0,
+        replayCount,
         workflowId,
-        workflowIds: workflowIds ?? (workflowId === null ? [] : [workflowId]),
+        workflowIds,
       })
     );
   },
@@ -55,10 +61,7 @@ export const listFailedTasks = zAdminQuery({
 export const acknowledgeFailedTask = zAdminMutation({
   args: { loopsTaskId: zid("loopsTasks") },
   handler: async (ctx, { loopsTaskId }) => {
-    const task = await getLoopsTask(ctx, loopsTaskId);
-    if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
-    if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
-    await ctx.db.patch(loopsTaskId, { acknowledgedAt: Date.now() });
+    await acknowledgeFailedLoopsTask(ctx, loopsTaskId, Date.now());
   },
 });
 
@@ -81,11 +84,19 @@ export const run = workflow.define({ args: { loopsTaskId: v.id("loopsTasks") } }
       { name: "execute Loops task", retry: getLoopsTaskRetryPolicy(kind) }
     );
     await (result.status === "failed"
-      ? step.runMutation(internal.loops.markTaskFailed, { failure: result.failure, loopsTaskId }, { name: "alert Loops task failure" })
+      ? step.runMutation(
+          internal.loops.markTaskFailed,
+          { failure: { category: result.failure.category, code: result.failure.code, status: result.failure.status }, loopsTaskId },
+          { name: "alert Loops task failure" }
+        )
       : step.runMutation(internal.loops.markTaskSucceeded, { loopsTaskId }, { name: "mark Loops task as succeeded" }));
   } catch (unknownError) {
     const failure = getLoopsTaskFailure(unknownError);
-    await step.runMutation(internal.loops.markTaskFailed, { failure, loopsTaskId }, { name: "alert Loops task failure" });
+    await step.runMutation(
+      internal.loops.markTaskFailed,
+      { failure: { category: failure.category, code: failure.code, status: failure.status }, loopsTaskId },
+      { name: "alert Loops task failure" }
+    );
   }
 });
 
@@ -122,7 +133,6 @@ export const markTaskFailed = zInternalMutation({
     failure: z.object({
       category: zLoopsTaskFailureCategory,
       code: zLoopsTaskFailureCode,
-      retryable: z.boolean(),
       status: z.number().nullable(),
     }),
     loopsTaskId: zid("loopsTasks"),
