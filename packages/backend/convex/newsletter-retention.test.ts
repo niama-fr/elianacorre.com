@@ -225,7 +225,7 @@ describe("newsletter retention policy", () => {
       });
       const expiredTaskId = await ctx.db.insert("loopsTasks", {
         acknowledgedAt: null,
-        email: "expired@example.com",
+        email: null,
         failure: null,
         finishedAt: NOW - TECHNICAL_RETENTION_MS,
         idempotencyKey: "expired-task",
@@ -236,7 +236,7 @@ describe("newsletter retention policy", () => {
       });
       const retainedTaskId = await ctx.db.insert("loopsTasks", {
         acknowledgedAt: null,
-        email: "retained@example.com",
+        email: null,
         failure: null,
         finishedAt: NOW - TECHNICAL_RETENTION_MS + 1,
         idempotencyKey: "retained-task",

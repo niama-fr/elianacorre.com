@@ -64,9 +64,7 @@ const taskStates = <TDoc extends z.ZodRawShape>(doc: TDoc) =>
   ]);
 
 export const zLoopsTaskFields = taskStates({});
-
-const zDocFields = zDocCommon("loopsTasks").shape;
-export const zLoopsTaskDoc = taskStates(zDocFields);
+export const zLoopsTaskDoc = taskStates(zDocCommon("loopsTasks").shape);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonCreate = z.object({ idempotencyKey: z.string(), profileId: zid("profiles") });
@@ -94,6 +92,7 @@ export type LoopsTasks = {
   SyncContactDoc: Extract<LoopsTaskDoc, { kind: "syncContact" }>;
   Create: z.infer<typeof zLoopsTaskCreate>;
   Doc: LoopsTaskDoc;
+  Failure: z.infer<typeof zLoopsTaskFailure>;
   Fields: z.infer<typeof zLoopsTaskFields>;
   Kind: z.infer<typeof zLoopsTaskKind>;
   SendConfirmationEmailCreate: z.infer<typeof zSendConfirmationEmailCreate>;

@@ -1,17 +1,8 @@
 import { ConvexError } from "convex/values";
 
-import type { LoopsTasks } from "../schemas/loops-tasks";
+import { loopsTaskRetryableFailures, type LoopsTasks, zLoopsTaskFailure } from "../schemas/loops-tasks";
 
-const RETRYABLE_FAILURE_CATEGORIES = new Set<LoopsTaskFailureCategory>(["network", "rateLimited", "server"]);
-const FAILURE_CATEGORIES = new Set<LoopsTaskFailureCategory>([
-  "authentication",
-  "missingResource",
-  "network",
-  "rateLimited",
-  "server",
-  "unknown",
-  "validation",
-]);
+const RETRYABLE_FAILURES = new Set<LoopsTasks["Failure"]>(loopsTaskRetryableFailures);
 
 // RETRY POLICY ----------------------------------------------------------------------------------------------------------------------------
 const CONTACT_RETRY_POLICY = { base: 2, initialBackoffMs: 60_000, maxAttempts: 10 } as const;
@@ -27,13 +18,8 @@ export const getLoopsTaskRetryPolicy = (kind: LoopsTasks["Kind"]) => {
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
 const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureData => {
   if (typeof data !== "object" || data === null) return false;
-  const { category, code, status } = data as Record<string, unknown>;
-  return (
-    code === "LOOPS_REQUEST_FAILED" &&
-    typeof category === "string" &&
-    FAILURE_CATEGORIES.has(category as LoopsTaskFailureCategory) &&
-    (typeof status === "number" || status === null)
-  );
+  const { category, code } = data as Record<string, unknown>;
+  return code === "LOOPS_REQUEST_FAILED" && zLoopsTaskFailure.safeParse(category).success;
 };
 
 export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
@@ -43,28 +29,17 @@ export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
 
   return {
     failure: error.data.category,
-    retryable: RETRYABLE_FAILURE_CATEGORIES.has(error.data.category),
+    retryable: RETRYABLE_FAILURES.has(error.data.category),
   };
 };
 
-export type LoopsTaskFailureCategory =
-  | "authentication"
-  | "missingResource"
-  | "network"
-  | "rateLimited"
-  | "server"
-  | "unknown"
-  | "validation";
 export type LoopsTaskFailure = {
-  failure: LoopsTaskFailureCategory;
+  failure: LoopsTasks["Failure"];
   retryable: boolean;
 };
 type LoopsRequestFailureData = {
-  category: LoopsTaskFailureCategory;
-  code: "LOOPS_REQUEST_FAILED";
-  status: number | null;
+  category: LoopsTasks["Failure"];
 };
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const isLoopsTaskPending = (task: LoopsTasks["Doc"] | null): task is Extract<LoopsTasks["Doc"], { status: "pending" }> =>
-  task?.status === "pending";
+export const isLoopsTaskPending = (task: LoopsTasks["Doc"] | null) => task?.status === "pending";
