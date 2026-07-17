@@ -20,3 +20,4 @@ DNS work must authorize Loops without disrupting Cloudflare Email Routing or cre
 
 - [Newsletter phase 1 plan](../newsletter-phase-1-plan.md)
 - [NIA-20](https://linear.app/niama/issue/NIA-20/publish-the-newsletter-phase-1-domain-model-and-architecture-plan)
+- [NIA-28](https://linear.app/niama/issue/NIA-28/make-newsletter-email-operations-production-ready)

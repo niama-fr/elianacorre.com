@@ -45,6 +45,7 @@ export const takeFailedLoopsTasks = async (ctx: QueryCtx, limit: number) =>
 export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
   await ctx.db.insert("loopsTasks", {
     ...create,
+    acknowledgedAt: null,
     alertedAt: null,
     error: null,
     failureCategory: null,
@@ -70,6 +71,7 @@ export const deleteLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">) =>
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
 export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { failure, now }: WithNow<MarkFailedOpts>) => {
   await patchLoopsTask(ctx, task._id, {
+    acknowledgedAt: null,
     alertedAt: now,
     error: failure.category,
     failureCategory: failure.category,

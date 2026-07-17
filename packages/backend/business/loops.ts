@@ -63,6 +63,7 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
   const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
   const previousWorkflowIds = task.workflowIds ?? (task.workflowId === null ? [] : [task.workflowId]);
   await patchLoopsTask(ctx, task._id, {
+    acknowledgedAt: null,
     alertedAt: null,
     error: null,
     failureCategory: null,
@@ -80,11 +81,14 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
   if (task.kind === "deleteContact") {
+    assertContactOperationAllowed();
     if (task.email === null) throw new Error("Delete-contact task email was already redacted");
     await loops.deleteContact(ctx, task.email);
   } else if (!profile) throw new Error("Loops task profile is required");
-  else if (task.kind === "syncContact") await syncContact(ctx, { profile, task });
-  else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
+  else if (task.kind === "syncContact") {
+    assertContactOperationAllowed();
+    await syncContact(ctx, { profile, task });
+  } else if (task.kind === "sendConfirmationEmail") await sendConfirmationEmail(ctx, { profile, task });
   else if (task.kind === "sendEbookEmail") await sendEbookEmail(ctx, { profile, task });
 }
 type ExecuteTaskOpts = { profile: Profiles["Doc"] | null; task: LoopsTasks["Doc"] };
@@ -177,6 +181,12 @@ function assertEmailDeliveryAllowed(email: string) {
       .filter(Boolean)
   );
   if (!allowlist.has(email.toLowerCase())) throw new ConvexError({ code: "EMAIL_RECIPIENT_NOT_ALLOWED" });
+}
+
+function assertContactOperationAllowed() {
+  if (env.EMAIL_DELIVERY_MODE === "production") return;
+  if (env.EMAIL_DELIVERY_MODE !== "isolated") throw new ConvexError({ code: "EMAIL_DELIVERY_NOT_CONFIGURED" });
+  throw new ConvexError({ code: "EMAIL_CONTACT_OPERATION_NOT_ALLOWED" });
 }
 
 async function syncContact(ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) {

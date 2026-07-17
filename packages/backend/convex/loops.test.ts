@@ -48,6 +48,7 @@ describe("Loops delivery administration", () => {
     const taskId = await convex.run(async (ctx) => {
       const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
       return await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
         alertedAt: null,
         error: null,
         failureCategory: null,
@@ -74,13 +75,28 @@ describe("Loops delivery administration", () => {
     await expect(convex.query(api.loops.listFailedTasks, {})).rejects.toThrow("Unauthenticated");
     await expect(asMember.query(api.loops.listFailedTasks, {})).rejects.toThrow("Unauthorized");
     await expect(asAdmin.query(api.loops.listFailedTasks, {})).resolves.toMatchObject([
-      { _id: taskId, failureCategory: "server", failureStatus: 503, workflowIds: ["workflow-original"] },
+      {
+        _id: taskId,
+        acknowledgedAt: null,
+        failureCategory: "server",
+        failureStatus: 503,
+        replayCount: 0,
+        workflowIds: ["workflow-original"],
+      },
     ]);
+
+    await asAdmin.mutation(api.loops.acknowledgeFailedTask, { loopsTaskId: taskId });
+    const [acknowledgedTask] = await asAdmin.query(api.loops.listFailedTasks, {});
+    expect({ acknowledged: Number.isFinite(acknowledgedTask?.acknowledgedAt), taskId: acknowledgedTask?._id }).toStrictEqual({
+      acknowledged: true,
+      taskId,
+    });
 
     await asAdmin.mutation(api.loops.replayFailedTask, { loopsTaskId: taskId });
 
     const replayed = await convex.run(async (ctx) => await ctx.db.get(taskId));
     expect(replayed).toMatchObject({
+      acknowledgedAt: null,
       alertedAt: null,
       error: null,
       failureCategory: null,

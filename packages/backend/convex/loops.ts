@@ -21,19 +21,44 @@ export const listFailedTasks = zAdminQuery({
   handler: async (ctx) => {
     const tasks = await takeFailedLoopsTasks(ctx, FAILED_TASK_LIMIT);
     return tasks.map(
-      ({ _creationTime, _id, alertedAt, failureCategory, failureCode, failureStatus, finishedAt, kind, workflowId, workflowIds }) => ({
+      ({
         _creationTime,
         _id,
+        acknowledgedAt,
+        alertedAt,
+        failureCategory,
+        failureCode,
+        failureStatus,
+        finishedAt,
+        kind,
+        replayCount,
+        workflowId,
+        workflowIds,
+      }) => ({
+        _creationTime,
+        _id,
+        acknowledgedAt: acknowledgedAt ?? null,
         alertedAt: alertedAt ?? null,
         failureCategory: failureCategory ?? "unknown",
         failureCode: failureCode ?? "UNSTRUCTURED_LOOPS_FAILURE",
         failureStatus: failureStatus ?? null,
         finishedAt,
         kind,
+        replayCount: replayCount ?? 0,
         workflowId,
         workflowIds: workflowIds ?? (workflowId === null ? [] : [workflowId]),
       })
     );
+  },
+});
+
+export const acknowledgeFailedTask = zAdminMutation({
+  args: { loopsTaskId: zid("loopsTasks") },
+  handler: async (ctx, { loopsTaskId }) => {
+    const task = await getLoopsTask(ctx, loopsTaskId);
+    if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+    if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+    await ctx.db.patch(loopsTaskId, { acknowledgedAt: Date.now() });
   },
 });
 

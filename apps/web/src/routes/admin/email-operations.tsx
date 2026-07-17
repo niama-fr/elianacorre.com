@@ -35,6 +35,7 @@ const formatDate = (timestamp: number | null) =>
 function AdminEmailOperationsPage() {
   const failedTasks = useConvexQuery(api.loops.listFailedTasks, {});
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"loopsTasks">>();
+  const acknowledge = useMutation({ mutationFn: useConvexMutation(api.loops.acknowledgeFailedTask) });
   const replay = useMutation({ mutationFn: useConvexMutation(api.loops.replayFailedTask) });
 
   const replaySelectedTask = async () => {
@@ -69,17 +70,50 @@ function AdminEmailOperationsPage() {
                 <span>
                   Statut fournisseur : {task.failureStatus ?? "—"} · échec terminal : {formatDate(task.finishedAt)}
                 </span>
-                <span className="break-all text-red-800">Workflow : {task.workflowId ?? "—"}</span>
+                <span>
+                  Alerte : {task.acknowledgedAt === null ? "à traiter" : `prise en compte le ${formatDate(task.acknowledgedAt)}`} · relances
+                  : {task.replayCount}
+                </span>
+                <details>
+                  <summary className="cursor-pointer">Historique Workflow ({task.workflowIds.length})</summary>
+                  <ul className="mt-1 grid gap-1 pl-4">
+                    {task.workflowIds.map((workflowId) => (
+                      <li className="break-all text-red-800" key={workflowId}>
+                        {workflowId}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setSelectedTaskId(task._id);
-                }}
-              >
-                Relancer
-              </Button>
+              <div className="flex items-start gap-2">
+                {task.acknowledgedAt === null && (
+                  <Button
+                    disabled={acknowledge.isPending}
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      acknowledge.mutate(
+                        { loopsTaskId: task._id },
+                        {
+                          onError: () => toast.error("L’alerte n’a pas pu être prise en compte."),
+                          onSuccess: () => toast.success("Alerte prise en compte."),
+                        }
+                      );
+                    }}
+                  >
+                    Prendre en compte
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedTaskId(task._id);
+                  }}
+                >
+                  Relancer
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
