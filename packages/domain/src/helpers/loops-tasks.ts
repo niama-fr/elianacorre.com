@@ -1,8 +1,7 @@
 import { ConvexError } from "convex/values";
+import z from "zod";
 
 import { loopsTaskRetryableFailures, type LoopsTasks, zLoopsTaskFailure } from "../schemas/loops-tasks";
-
-const RETRYABLE_FAILURES = new Set<LoopsTasks["Failure"]>(loopsTaskRetryableFailures);
 
 // RETRY POLICY ----------------------------------------------------------------------------------------------------------------------------
 const CONTACT_RETRY_POLICY = { base: 2, initialBackoffMs: 60_000, maxAttempts: 10 } as const;
@@ -15,30 +14,13 @@ export const getLoopsTaskRetryPolicy = (kind: LoopsTasks["Kind"]) => {
   return CONTACT_RETRY_POLICY;
 };
 
+export const isLoopsTaskRetryable = (failure: LoopsTasks["Failure"]): boolean => loopsTaskRetryableFailures.some((f) => f === failure);
+
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
-const isLoopsRequestFailureData = (data: unknown): data is LoopsRequestFailureData => {
-  if (typeof data !== "object" || data === null) return false;
-  const { code, failure } = data as Record<string, unknown>;
-  return code === "LOOPS_REQUEST_FAILED" && zLoopsTaskFailure.safeParse(failure).success;
-};
-
-export const getLoopsTaskFailure = (error: unknown): LoopsTaskFailure => {
-  if (!(error instanceof ConvexError)) return { failure: "unknown", retryable: false };
-
-  if (!isLoopsRequestFailureData(error.data)) return { failure: "unknown", retryable: false };
-
-  return {
-    failure: error.data.failure,
-    retryable: RETRYABLE_FAILURES.has(error.data.failure),
-  };
-};
-
-export type LoopsTaskFailure = {
-  failure: LoopsTasks["Failure"];
-  retryable: boolean;
-};
-type LoopsRequestFailureData = {
-  failure: LoopsTasks["Failure"];
+export const classifyLoopsTaskFailure = (error: unknown): LoopsTasks["Failure"] => {
+  if (!(error instanceof ConvexError)) return "unknown";
+  const r = z.object({ code: z.literal("LOOPS_REQUEST_FAILED"), failure: zLoopsTaskFailure }).safeParse(error.data);
+  return r.success ? r.data.failure : "unknown";
 };
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------

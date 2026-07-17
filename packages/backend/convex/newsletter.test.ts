@@ -3,7 +3,7 @@ import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
 import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
 import { createCapabilityToken, verifyCapabilityToken } from "@ec/domain/helpers/capabilities";
-import { getLoopsTaskFailure } from "@ec/domain/helpers/loops-tasks";
+import { classifyLoopsTaskFailure } from "@ec/domain/helpers/loops-tasks";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -701,7 +701,7 @@ describe("newsletter subscription", () => {
     if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
 
     await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).resolves.toStrictEqual({
-      failure: { failure: "validation", retryable: false },
+      failure: "validation",
       status: "failed",
     });
     expect(send).toHaveBeenCalledOnce();
@@ -722,10 +722,7 @@ describe("newsletter subscription", () => {
     if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
 
     const firstFailure = await convex.action(internal.loops.execute, { loopsTaskId: task._id }).catch((error: unknown) => error);
-    expect(getLoopsTaskFailure(firstFailure)).toStrictEqual({
-      failure: "server",
-      retryable: true,
-    });
+    expect(classifyLoopsTaskFailure(firstFailure)).toBe("server");
     await convex.action(internal.loops.execute, { loopsTaskId: task._id });
     await convex.mutation(internal.loops.markTaskSucceeded, { loopsTaskId: task._id });
 

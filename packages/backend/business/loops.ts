@@ -11,7 +11,13 @@ import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
-import { assignLoopsTaskWorkflow, createLoopsTask, getLoopsTask, patchLoopsTask, setLoopsTaskAcknowledgedAt } from "../data/loops-tasks";
+import {
+  replaceLoopsTaskWorkflows,
+  createLoopsTask,
+  getLoopsTask,
+  resetLoopsTaskForReplay,
+  setLoopsTaskAcknowledgedAt,
+} from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
 import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { getProfileIdByEmail } from "../data/profiles";
@@ -67,15 +73,8 @@ export async function acknowledgeFailedLoopsTask(ctx: MutationCtx, loopsTaskId: 
 
 export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["Doc"]): Promise<string> {
   if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
-  const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
-  await patchLoopsTask(ctx, task._id, {
-    acknowledgedAt: null,
-    failure: null,
-    finishedAt: null,
-    replayCount: task.replayCount + 1,
-    status: "pending",
-    workflowIds: [workflowId, ...task.workflowIds],
-  });
+  const workflowId = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
+  await resetLoopsTaskForReplay(ctx, task, { replayCount: task.replayCount + 1, workflowIds: [workflowId, ...task.workflowIds] });
   return workflowId;
 }
 
@@ -129,7 +128,7 @@ type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWe
 async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
   const loopsTaskId = await createLoopsTask(ctx, payload);
   const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
-  await assignLoopsTaskWorkflow(ctx, loopsTaskId, workflowId);
+  await replaceLoopsTaskWorkflows(ctx, loopsTaskId, workflowId);
   return workflowId;
 }
 

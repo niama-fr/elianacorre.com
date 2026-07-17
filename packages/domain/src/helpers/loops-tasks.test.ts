@@ -1,9 +1,9 @@
 import { ConvexError } from "convex/values";
 import { describe, expect, it } from "vitest";
 
-import { getLoopsTaskFailure, getLoopsTaskRetryPolicy } from "./loops-tasks";
+import { classifyLoopsTaskFailure, getLoopsTaskRetryPolicy, isLoopsTaskRetryable } from "./loops-tasks";
 
-const classifyFailure = (failure: string) => getLoopsTaskFailure(new ConvexError({ code: "LOOPS_REQUEST_FAILED", failure }));
+const classifyFailure = (failure: string) => classifyLoopsTaskFailure(new ConvexError({ code: "LOOPS_REQUEST_FAILED", failure }));
 
 describe("Loops task retry policy", () => {
   it("uses the production attempt windows agreed for each delivery task", () => {
@@ -30,20 +30,30 @@ describe("Loops task failure classification", () => {
       classifyFailure("authentication"),
       classifyFailure("missingResource"),
       classifyFailure("validation"),
-    ]).toStrictEqual([
-      { failure: "network", retryable: true },
-      { failure: "rateLimited", retryable: true },
-      { failure: "server", retryable: true },
-      { failure: "authentication", retryable: false },
-      { failure: "missingResource", retryable: false },
-      { failure: "validation", retryable: false },
-    ]);
+    ]).toStrictEqual(["network", "rateLimited", "server", "authentication", "missingResource", "validation"]);
   });
 
   it("does not infer retryability from message text", () => {
-    expect(getLoopsTaskFailure(new Error("Loops service error. Please try again later."))).toStrictEqual({
-      failure: "unknown",
-      retryable: false,
+    expect(classifyLoopsTaskFailure(new Error("Loops service error. Please try again later."))).toBe("unknown");
+  });
+
+  it("retries only transient Loops failures", () => {
+    expect({
+      authentication: isLoopsTaskRetryable("authentication"),
+      missingResource: isLoopsTaskRetryable("missingResource"),
+      network: isLoopsTaskRetryable("network"),
+      rateLimited: isLoopsTaskRetryable("rateLimited"),
+      server: isLoopsTaskRetryable("server"),
+      unknown: isLoopsTaskRetryable("unknown"),
+      validation: isLoopsTaskRetryable("validation"),
+    }).toStrictEqual({
+      authentication: false,
+      missingResource: false,
+      network: true,
+      rateLimited: true,
+      server: true,
+      unknown: false,
+      validation: false,
     });
   });
 });
