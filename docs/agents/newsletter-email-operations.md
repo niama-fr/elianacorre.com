@@ -183,7 +183,7 @@ Ouvrir `/admin/email-operations`. Une alerte terminale affiche le type de tâche
 4. Corriger la cause : réseau, quota, modèle, clé, validation, isolation ou configuration.
 5. Pour une erreur d’authentification, de modèle, de validation ou d’isolation, ne pas relancer avant correction.
 6. Après autorisation, sélectionner **Relancer**, lire la confirmation puis confirmer.
-7. Vérifier qu’un nouveau Workflow est ajouté à l’historique de la même tâche et que la clé d’idempotence reste inchangée.
+7. Vérifier qu’un nouveau Workflow est ajouté à l’historique de la même tâche, que la clé métier reste inchangée et que la clé de livraison ajoute le compteur `:replay:N`.
 8. Confirmer un seul envoi dans Loops et le passage de la tâche à `succeeded`.
 
 ### Politique de reprise
@@ -195,7 +195,7 @@ Ouvrir `/admin/email-operations`. Une alerte terminale affiche le type de tâche
 
 ### Récupération
 
-Si la relance reste en attente, consulter le nouveau Workflow. Si Loops indique déjà un succès, ne pas créer une nouvelle tâche : conserver la même tâche et la même clé. Toute divergence exige une réconciliation avant une autre action.
+Si la relance reste en attente, consulter le nouveau Workflow. Si Loops indique déjà un succès, ne pas créer une nouvelle tâche : conserver la même tâche et sa clé métier. Toute divergence exige une réconciliation avant une autre action.
 
 ## 8. Demandes de confidentialité
 
@@ -216,7 +216,7 @@ Suivre `docs/agents/newsletter-retention-portability.md`. L’export JSON ou CSV
 3. Ajouter ou mettre à jour via les tâches de synchronisation de l’application, jamais par import faisant de Loops l’autorité.
 4. Désinscrire dans Loops les anciens abonnés, restrictions et suppressions présents à tort.
 5. Ne pas réactiver automatiquement une plainte pour spam.
-6. Relancer les échecs depuis `/admin/email-operations` avec leur clé originale.
+6. Relancer les échecs depuis `/admin/email-operations` avec leur clé métier originale et une clé de livraison dérivée du compteur de relance.
 7. Refaire l’export et confirmer que les écarts sont nuls ou explicitement expliqués.
 
 ### Récupération

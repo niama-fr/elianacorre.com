@@ -743,4 +743,41 @@ describe("newsletter subscription", () => {
       status: "succeeded",
     });
   });
+
+  it("uses a new delivery idempotency key when an administrator replays a permanent failure", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    vi.stubEnv("SITE_URL", "https://staging.elianacorre.com");
+    const send = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("Invalid transactional ID", { status: 400 }))
+      .mockResolvedValueOnce(Response.json({ success: true }));
+    vi.stubGlobal("fetch", send);
+    const convex = await createBackend();
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
+    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
+
+    const firstResult = await convex.action(internal.loops.execute, { loopsTaskId: task._id });
+    if (firstResult.status !== "failed") throw new Error("Confirmation task did not fail permanently");
+    await convex.mutation(internal.loops.markTaskFailed, { failure: firstResult.failure, loopsTaskId: task._id });
+    const asAdmin = await authenticateAdmin(convex);
+    await asAdmin.mutation(api.loops.replayFailedTask, { loopsTaskId: task._id });
+    await convex.action(internal.loops.execute, { loopsTaskId: task._id });
+
+    const replayedTask = await convex.run(async (ctx) => await ctx.db.get("loopsTasks", task._id));
+    const firstIdempotencyKey = new Headers(send.mock.calls[0]?.[1]?.headers).get("Idempotency-Key");
+    const replayIdempotencyKey = new Headers(send.mock.calls[1]?.[1]?.headers).get("Idempotency-Key");
+    expect({
+      businessIdempotencyKey: replayedTask?.idempotencyKey,
+      firstIdempotencyKey,
+      replayCount: replayedTask?.replayCount,
+      replayIdempotencyKey,
+    }).toStrictEqual({
+      businessIdempotencyKey: task.idempotencyKey,
+      firstIdempotencyKey: task.idempotencyKey,
+      replayCount: 1,
+      replayIdempotencyKey: `${task.idempotencyKey}:replay:1`,
+    });
+  });
 });

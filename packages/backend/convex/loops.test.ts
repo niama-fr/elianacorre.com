@@ -43,7 +43,7 @@ const createBackend = () => {
 describe("Loops delivery administration", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("lets only an administrator inspect and replay a terminal failure without changing its idempotency key", async () => {
+  it("lets only an administrator inspect and replay a terminal failure without changing its business idempotency key", async () => {
     const convex = createBackend();
     const taskId = await convex.run(async (ctx) => {
       const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });

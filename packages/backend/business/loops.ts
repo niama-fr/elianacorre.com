@@ -5,6 +5,7 @@ import { env, type ActionCtx, type MutationCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { getLink } from "@ec/domain/helpers/links";
+import { getLoopsTaskDeliveryIdempotencyKey } from "@ec/domain/helpers/loops-tasks";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { LoopsWebhooks } from "@ec/domain/schemas/loops-webhooks";
 import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
@@ -143,7 +144,7 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
       firstName: profile.firstName,
     },
     email: profile.email,
-    idempotencyKey: task.idempotencyKey,
+    idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_CONFIRMATION_TRANSACTIONAL_ID,
   });
 }
@@ -160,7 +161,7 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
       firstName: profile.firstName,
     },
     email: profile.email,
-    idempotencyKey: task.idempotencyKey,
+    idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_EBOOK_TRANSACTIONAL_ID,
   });
 }

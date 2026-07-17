@@ -3,6 +3,11 @@ import z from "zod";
 
 import { loopsTaskRetryableFailures, type LoopsTasks, zLoopsTaskFailure } from "../schemas/loops-tasks";
 
+// IDEMPOTENCY -----------------------------------------------------------------------------------------------------------------------------
+export const getLoopsTaskDeliveryIdempotencyKey = ({ idempotencyKey, replayCount }: DeliveryIdempotencyOpts): string =>
+  replayCount === 0 ? idempotencyKey : `${idempotencyKey}:replay:${replayCount}`;
+type DeliveryIdempotencyOpts = Pick<LoopsTasks["Fields"], "idempotencyKey" | "replayCount">;
+
 // RETRY POLICY ----------------------------------------------------------------------------------------------------------------------------
 const CONTACT_RETRY_POLICY = { base: 2, initialBackoffMs: 60_000, maxAttempts: 10 } as const;
 const CONFIRMATION_RETRY_POLICY = { base: 2, initialBackoffMs: 30_000, maxAttempts: 12 } as const;

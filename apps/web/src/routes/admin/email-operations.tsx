@@ -42,7 +42,7 @@ function AdminEmailOperationsPage() {
     try {
       await replay.mutateAsync({ loopsTaskId: selectedTaskId });
       setSelectedTaskId(undefined);
-      toast.success("La tâche a été relancée avec sa clé d’idempotence d’origine.");
+      toast.success("La tâche a été relancée avec une nouvelle clé de livraison.");
     } catch {
       toast.error("La tâche n’a pas pu être relancée.");
     }
@@ -126,8 +126,8 @@ function AdminEmailOperationsPage() {
           <DialogHeader>
             <DialogTitle>Relancer cette tâche ?</DialogTitle>
             <DialogDescription>
-              Vérifiez d’abord la cause dans Loops et dans l’historique Workflow. La relance conserve la clé d’idempotence d’origine afin
-              d’éviter un envoi en double.
+              Vérifiez d’abord la cause dans Loops et dans l’historique Workflow. La relance conserve la clé métier d’origine et utilise une
+              nouvelle clé de livraison afin que Loops puisse traiter la nouvelle tentative.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

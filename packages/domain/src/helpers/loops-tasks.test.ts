@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
 import { describe, expect, it } from "vitest";
 
-import { classifyLoopsTaskFailure, getLoopsTaskRetryPolicy, isLoopsTaskRetryable } from "./loops-tasks";
+import { classifyLoopsTaskFailure, getLoopsTaskDeliveryIdempotencyKey, getLoopsTaskRetryPolicy, isLoopsTaskRetryable } from "./loops-tasks";
 
 const classifyFailure = (failure: string) => classifyLoopsTaskFailure(new ConvexError({ code: "LOOPS_REQUEST_FAILED", failure }));
 
@@ -18,6 +18,16 @@ describe("Loops task retry policy", () => {
       contactSync: { base: 2, initialBackoffMs: 60_000, maxAttempts: 10 },
       ebook: { base: 2, initialBackoffMs: 30_000, maxAttempts: 14 },
     });
+  });
+});
+
+describe("Loops task delivery idempotency", () => {
+  it("keeps automatic retries stable and gives every operator replay a new delivery key", () => {
+    expect([
+      getLoopsTaskDeliveryIdempotencyKey({ idempotencyKey: "confirmation-123", replayCount: 0 }),
+      getLoopsTaskDeliveryIdempotencyKey({ idempotencyKey: "confirmation-123", replayCount: 1 }),
+      getLoopsTaskDeliveryIdempotencyKey({ idempotencyKey: "confirmation-123", replayCount: 2 }),
+    ]).toStrictEqual(["confirmation-123", "confirmation-123:replay:1", "confirmation-123:replay:2"]);
   });
 });
 

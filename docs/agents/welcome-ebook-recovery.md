@@ -61,7 +61,7 @@ The dashboard command opens the deployment selected by the package's local Conve
 ## Recovery and rollback
 
 - If a request does not result in an email, inspect the matching Convex `loopsTasks` record and its Workflow execution using steps 5–9. Save only task and Workflow identifiers in the incident record.
-- NIA-25 does not expose an operator replay command. NIA-28 owns replay with the original idempotency key. Until that work ships, an eligible person may submit the neutral recovery dialog again after the rate-limit window; do not mutate a failed task, invoke internal functions from a production shell, create consent, or manually issue an unsigned link.
+- NIA-25 does not expose an operator replay command. NIA-28 owns replay that retains the original business idempotency key and derives a replay-specific delivery key. Until that work ships, an eligible person may submit the neutral recovery dialog again after the rate-limit window; do not mutate a failed task, invoke internal functions from a production shell, create consent, or manually issue an unsigned link.
 - If inspection was interrupted, reopen the same deployment and resume from the saved task or Workflow ID. Read-only inspection is safe to repeat.
 - If a wrong e-book version was published, republish the intended archived version. New recovery requests use it; existing issuance history remains unchanged.
 - To roll back this feature, revert its pull request. Do not delete issuance history or capabilities as part of a code rollback.

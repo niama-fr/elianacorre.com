@@ -127,7 +127,7 @@ Repeated requests are limited to three per email and three per IP address within
 5. A subscriber may request a replacement link indefinitely while their identifying record and e-book right remain.
 6. Each delivery records the e-book version supplied.
 
-Loops failure does not roll back confirmation or access. Convex Workflow retries delivery asynchronously, and the success-page download remains available. The initial implementation makes three attempts with exponential backoff beginning at one second; NIA-28 must replace this baseline with the agreed production policy: confirmation email makes up to 12 attempts from a 30-second initial backoff over about 17 hours; e-book email makes up to 14 attempts from 30 seconds over about 68 hours; and contact synchronization makes up to 10 attempts from 60 seconds over about 8.5 hours. All use exponential base 2. Only network failures, HTTP 429, and HTTP 5xx retry. Permanent failures stop immediately, each task retains its Workflow ID, terminal failures alert an administrator, and replay reuses the original idempotency key.
+Loops failure does not roll back confirmation or access. Convex Workflow retries delivery asynchronously, and the success-page download remains available. The initial implementation makes three attempts with exponential backoff beginning at one second; NIA-28 must replace this baseline with the agreed production policy: confirmation email makes up to 12 attempts from a 30-second initial backoff over about 17 hours; e-book email makes up to 14 attempts from 30 seconds over about 68 hours; and contact synchronization makes up to 10 attempts from 60 seconds over about 8.5 hours. All use exponential base 2. Only network failures, HTTP 429, and HTTP 5xx retry. Permanent failures stop immediately, each task retains its Workflow ID, and terminal failures alert an administrator. Automatic retries reuse the current delivery idempotency key. Operator replay retains the original business key and derives a new delivery key from its replay count because Loops reserves used keys for 24 hours, including rejected requests.
 
 ### Repeated subscription
 
@@ -209,7 +209,7 @@ Before implementation is considered operationally complete, runbooks must docume
 2. configuring the sending subdomain, SPF, DKIM, DMARC, reply address, and webhooks;
 3. uploading, previewing, publishing, replacing, and rolling back an e-book version;
 4. drafting, testing, scheduling, and cancelling a Loops campaign;
-5. diagnosing failed Loops tasks and their Workflow runs, then replaying them with the original idempotency key;
+5. diagnosing failed Loops tasks and their Workflow runs, then replaying them with the original business key and a new replay-specific delivery key;
 6. handling access, rectification, export, objection, unsubscription, suppression removal, and erasure requests;
 7. exporting data before provider migration and reconciling Loops with Convex;
 8. verifying environment isolation and recovering from accidental credential exposure;
