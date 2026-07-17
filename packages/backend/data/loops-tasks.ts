@@ -67,7 +67,7 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
   });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
+export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
   await ctx.db.patch("loopsTasks", id, patch);
 };
 
@@ -75,26 +75,8 @@ export const assignLoopsTaskWorkflow = async (ctx: MutationCtx, id: Id<"loopsTas
   await patchLoopsTask(ctx, id, { workflowId, workflowIds: [workflowId] });
 };
 
-export const acknowledgeFailedLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, now: number) => {
-  const task = await getLoopsTask(ctx, id);
-  if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
-  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+export const setLoopsTaskAcknowledgedAt = async (ctx: MutationCtx, id: Id<"loopsTasks">, now: number) => {
   await ctx.db.patch(id, { acknowledgedAt: now });
-};
-
-export const replayLoopsTask = async (ctx: MutationCtx, task: FailedTask, workflowId: string) => {
-  await patchLoopsTask(ctx, task._id, {
-    acknowledgedAt: null,
-    alertedAt: null,
-    failureCategory: null,
-    failureCode: null,
-    failureStatus: null,
-    finishedAt: null,
-    replayCount: task.replayCount + 1,
-    status: "pending",
-    workflowId,
-    workflowIds: [...task.workflowIds, workflowId],
-  });
 };
 
 // DELETE -----------------------------------------------------------------------------------------------------------------------------------

@@ -63,14 +63,16 @@ const hasValidTaskState = (task: z.infer<typeof zLoopsTaskFieldsByKind>) => {
     task.failureCategory === null &&
     task.failureCode === null &&
     task.failureStatus === null;
-  if (task.status === "pending") return hasNoFailure && task.finishedAt === null;
+  const hasExecutableDeletionAddress = task.kind !== "deleteContact" || task.email !== null;
+  if (task.status === "pending") return hasNoFailure && task.finishedAt === null && hasExecutableDeletionAddress;
   if (task.status === "failed")
     return (
       task.alertedAt !== null &&
       task.failureCategory !== null &&
       task.failureCode !== null &&
       task.finishedAt !== null &&
-      task.workflowId !== null
+      task.workflowId !== null &&
+      hasExecutableDeletionAddress
     );
   return hasNoFailure && task.finishedAt !== null && task.workflowId !== null && (task.kind !== "deleteContact" || task.email === null);
 };

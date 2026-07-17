@@ -11,7 +11,7 @@ import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
-import { assignLoopsTaskWorkflow, createLoopsTask, replayLoopsTask } from "../data/loops-tasks";
+import { assignLoopsTaskWorkflow, createLoopsTask, getLoopsTask, patchLoopsTask, setLoopsTaskAcknowledgedAt } from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
 import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { getProfileIdByEmail } from "../data/profiles";
@@ -58,10 +58,28 @@ export async function enqueueSyncContactForSubscription(ctx: MutationCtx, { prof
 }
 type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"newsSubscriptions"> };
 
+export async function acknowledgeFailedLoopsTask(ctx: MutationCtx, loopsTaskId: Id<"loopsTasks">, now: number) {
+  const task = await getLoopsTask(ctx, loopsTaskId);
+  if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+  await setLoopsTaskAcknowledgedAt(ctx, loopsTaskId, now);
+}
+
 export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["Doc"]): Promise<string> {
   if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
   const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
-  await replayLoopsTask(ctx, task, workflowId);
+  await patchLoopsTask(ctx, task._id, {
+    acknowledgedAt: null,
+    alertedAt: null,
+    failureCategory: null,
+    failureCode: null,
+    failureStatus: null,
+    finishedAt: null,
+    replayCount: task.replayCount + 1,
+    status: "pending",
+    workflowId,
+    workflowIds: [...task.workflowIds, workflowId],
+  });
   return workflowId;
 }
 

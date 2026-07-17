@@ -64,4 +64,20 @@ describe("Loops task state", () => {
       valid: zLoopsTaskFields.safeParse({ ...succeededTask, email: null }).success,
     }).toStrictEqual({ invalid: false, valid: true });
   });
+
+  it("requires pending and failed contact-deletion tasks to retain their executable email", () => {
+    const deletionTask = { ...common, email: null, kind: "deleteContact" };
+
+    expect({
+      failed: zLoopsTaskFields.safeParse({
+        ...deletionTask,
+        alertedAt: 10,
+        failureCategory: "server",
+        failureCode: "LOOPS_REQUEST_FAILED",
+        finishedAt: 10,
+        status: "failed",
+      }).success,
+      pending: zLoopsTaskFields.safeParse({ ...deletionTask, status: "pending" }).success,
+    }).toStrictEqual({ failed: false, pending: false });
+  });
 });
