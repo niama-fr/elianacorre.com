@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { z } from "zod";
 
+import type { zLoopsTaskFailure } from "./loops-tasks";
 import { zLoopsTaskFields } from "./loops-tasks";
 
 const common = {
@@ -12,6 +14,23 @@ const common = {
 } as const;
 
 describe("Loops task state", () => {
+  it("narrows state-dependent fields from the status discriminator", () => {
+    const task = zLoopsTaskFields.parse({
+      ...common,
+      failure: "server",
+      finishedAt: 10,
+      kind: "syncContact",
+      profileId: "000000000000000000000000profiles",
+      status: "failed",
+      subscribed: true,
+    });
+
+    if (task.status === "failed") {
+      expectTypeOf(task.failure).toEqualTypeOf<z.output<typeof zLoopsTaskFailure>>();
+      expectTypeOf(task.finishedAt).toEqualTypeOf<number>();
+    }
+  });
+
   it("accepts only empty failure and completion fields while a task is pending", () => {
     const pendingTask = {
       ...common,
