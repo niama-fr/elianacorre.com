@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for newsletter phase 1.
+Accepted for newsletter phase 1. Amended by NIA-28 on 2026-07-17.
 
 ## Context
 
@@ -10,11 +10,11 @@ Newsletter and lifecycle email need authenticated sending without risking the re
 
 ## Decision
 
-Send newsletter and lifecycle email through Loops from the dedicated `news.elianacorre.com` subdomain. Direct human replies to a Google Workspace mailbox on `elianacorre.com`.
+Send newsletter and lifecycle email through Loops from the dedicated `news.elianacorre.com` subdomain. Direct human replies to `contact@elianacorre.com`, which Cloudflare Email Routing forwards to the approved destination `eliana.m.corre@gmail.com`.
 
 ## Consequences
 
-DNS work must authorize both Google Workspace and Loops without conflicting SPF, DKIM, or DMARC records. Operational runbooks must verify the sending subdomain, reply address, and webhook configuration before production use.
+DNS work must authorize Loops without disrupting Cloudflare Email Routing or creating conflicting SPF, DKIM, or DMARC records. Operational runbooks must verify the sending subdomain, Reply-To address, destination mailbox, and webhook configuration before production use.
 
 ## Links
 

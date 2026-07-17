@@ -22,6 +22,8 @@ Each deployment declares:
 
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
 - `CAPABILITY_SIGNING_SECRET`: unique secret generated from at least 32 random bytes; signs short-lived newsletter confirmation and e-book download URLs.
+- `EMAIL_DELIVERY_MODE`: `isolated` for dev and staging; `production` only for the approved production deployment.
+- `EMAIL_DELIVERY_ALLOWLIST`: comma-separated canonical addresses allowed to receive email when the mode is `isolated`; currently `gregory.bouteiller@niama.fr`.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
 - `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
 - `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
@@ -126,6 +128,8 @@ For every campaign and workflow, preview Loops' automatic footer and verify that
 Convex stores `Webhook-Id` for idempotency. A permanent bounce or complaint suppresses campaign delivery without changing historical consent; unsubscribe ends the current consent period without deleting e-book grants. The application then queues Loops contact unsubscription so Convex remains authoritative. To recover from a wrong secret, replace only the affected deployment's `LOOPS_WEBHOOK_SECRET` and resend the event from Loops' webhook history. If the endpoint URL is wrong, correct it in Loops and use the same history view to retry. Loops retains webhook history for 30 days.
 
 Update this section whenever enabled events, the endpoint path, signature contract, or recovery procedure changes.
+
+The complete manual email-operations procedure, including credentials, DNS, campaigns, alerts, replay, reconciliation, incidents, and legal-text publication, is [`docs/agents/newsletter-email-operations.md`](newsletter-email-operations.md).
 
 ## Pull-request verification
 

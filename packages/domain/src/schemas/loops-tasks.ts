@@ -8,14 +8,36 @@ export const zLoopsTaskKind = z.literal(kinds);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
+export const zLoopsTaskFailureCategory = z.literal([
+  "authentication",
+  "environmentIsolation",
+  "missingResource",
+  "network",
+  "rateLimited",
+  "server",
+  "unknown",
+  "validation",
+]);
+export const zLoopsTaskFailureCode = z.literal([
+  "EMAIL_DELIVERY_NOT_CONFIGURED",
+  "EMAIL_RECIPIENT_NOT_ALLOWED",
+  "LOOPS_REQUEST_FAILED",
+  "UNSTRUCTURED_LOOPS_FAILURE",
+]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({
+  alertedAt: z.number().nullable().optional(),
   error: z.string().nullable(),
+  failureCategory: zLoopsTaskFailureCategory.nullable().optional(),
+  failureCode: zLoopsTaskFailureCode.nullable().optional(),
+  failureStatus: z.number().nullable().optional(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
+  replayCount: z.number().optional(),
   status: zLoopsTaskStatus,
   workflowId: z.string().nullable(),
+  workflowIds: z.array(z.string()).optional(),
 });
 const zProfileTaskFields = z.object({ ...zCommonFields.shape, profileId: zid("profiles") });
 

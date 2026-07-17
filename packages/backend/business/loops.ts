@@ -9,6 +9,7 @@ import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { LoopsWebhooks } from "@ec/domain/schemas/loops-webhooks";
 import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
+import { ConvexError } from "convex/values";
 
 import { createLoopsTask, patchLoopsTask } from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
@@ -56,6 +57,25 @@ export async function enqueueSyncContactForSubscription(ctx: MutationCtx, { prof
   return await enqueueSyncContact(ctx, { idempotencyKey: `news-contact-subscription:${subscriptionId}`, profileId, subscribed: true });
 }
 type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"newsSubscriptions"> };
+
+export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["Doc"]): Promise<string> {
+  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+  const workflowId: string = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
+  const previousWorkflowIds = task.workflowIds ?? (task.workflowId === null ? [] : [task.workflowId]);
+  await patchLoopsTask(ctx, task._id, {
+    alertedAt: null,
+    error: null,
+    failureCategory: null,
+    failureCode: null,
+    failureStatus: null,
+    finishedAt: null,
+    replayCount: (task.replayCount ?? 0) + 1,
+    status: "pending",
+    workflowId,
+    workflowIds: [...previousWorkflowIds, workflowId],
+  });
+  return workflowId;
+}
 
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
@@ -107,11 +127,12 @@ type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWe
 async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
   const loopsTaskId = await createLoopsTask(ctx, payload);
   const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
-  await patchLoopsTask(ctx, loopsTaskId, { workflowId });
+  await patchLoopsTask(ctx, loopsTaskId, { workflowId, workflowIds: [workflowId] });
   return workflowId;
 }
 
 async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) {
+  assertEmailDeliveryAllowed(profile.email);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       confirmationUrl: getLink({
@@ -129,6 +150,7 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
 type SendConfirmationEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendConfirmationEmailDoc"] };
 
 async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailOpts) {
+  assertEmailDeliveryAllowed(profile.email);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       downloadUrl: getLink({
@@ -144,6 +166,18 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
   });
 }
 type SendEbookEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendEbookEmailDoc"] };
+
+function assertEmailDeliveryAllowed(email: string) {
+  if (env.EMAIL_DELIVERY_MODE === "production") return;
+  if (env.EMAIL_DELIVERY_MODE !== "isolated") throw new ConvexError({ code: "EMAIL_DELIVERY_NOT_CONFIGURED" });
+
+  const allowlist = new Set(
+    env.EMAIL_DELIVERY_ALLOWLIST.split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  if (!allowlist.has(email.toLowerCase())) throw new ConvexError({ code: "EMAIL_RECIPIENT_NOT_ALLOWED" });
+}
 
 async function syncContact(ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) {
   return task.subscribed

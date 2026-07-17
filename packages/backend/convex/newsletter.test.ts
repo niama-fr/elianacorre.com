@@ -3,6 +3,7 @@ import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
 import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
 import { createCapabilityToken, verifyCapabilityToken } from "@ec/domain/helpers/capabilities";
+import { getLoopsTaskFailure } from "@ec/domain/helpers/loops-tasks";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -29,6 +30,8 @@ const createEbookRecoveryRequest = (email = "reader@example.com") => ({ email, r
 
 const createBackend = async () => {
   vi.stubEnv("CAPABILITY_SIGNING_SECRET", CAPABILITY_SECRET);
+  vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "reader@example.com");
+  vi.stubEnv("EMAIL_DELIVERY_MODE", "isolated");
   vi.stubEnv("SITE_URL", "https://www.elianacorre.com");
   vi.stubEnv("SUPPRESSION_HASH_SECRET", SUPPRESSION_SECRET);
   const convex = convexTest(schema, modules);
@@ -689,6 +692,46 @@ describe("newsletter subscription", () => {
     await expect(verifyCapabilityToken({ secret: CAPABILITY_SECRET, token: token ?? "" })).resolves.toBe(task.newsConfirmationId);
   });
 
+  it("blocks non-production delivery outside the explicit allowlist before contacting Loops", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "gregory.bouteiller@niama.fr");
+    const send = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", send);
+    const convex = await createBackend();
+    vi.stubEnv("EMAIL_DELIVERY_ALLOWLIST", "gregory.bouteiller@niama.fr");
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
+    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
+
+    const result = await convex.action(internal.loops.execute, { loopsTaskId: task._id });
+
+    expect({ providerCalls: send.mock.calls.length, result }).toStrictEqual({
+      providerCalls: 0,
+      result: {
+        failure: { category: "environmentIsolation", code: "EMAIL_RECIPIENT_NOT_ALLOWED", retryable: false, status: null },
+        status: "failed",
+      },
+    });
+  });
+
+  it("returns a terminal result for a permanent provider failure instead of retrying it", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    const send = vi.fn<typeof fetch>().mockResolvedValue(new Response("Invalid transactional ID", { status: 400 }));
+    vi.stubGlobal("fetch", send);
+    const convex = await createBackend();
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
+    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
+
+    await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).resolves.toStrictEqual({
+      failure: { category: "validation", code: "LOOPS_REQUEST_FAILED", retryable: false, status: 400 },
+      status: "failed",
+    });
+    expect(send).toHaveBeenCalledOnce();
+  });
+
   it("retries a Loops confirmation task with one idempotency key and records its terminal time", async () => {
     vi.stubEnv("LOOPS_API_KEY", "test-key");
     vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
@@ -703,9 +746,13 @@ describe("newsletter subscription", () => {
     const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
     if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
 
-    await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).rejects.toThrow(
-      "Loops service error. Please try again later."
-    );
+    const firstFailure = await convex.action(internal.loops.execute, { loopsTaskId: task._id }).catch((error: unknown) => error);
+    expect(getLoopsTaskFailure(firstFailure)).toStrictEqual({
+      category: "server",
+      code: "LOOPS_REQUEST_FAILED",
+      retryable: true,
+      status: 503,
+    });
     await convex.action(internal.loops.execute, { loopsTaskId: task._id });
     await convex.mutation(internal.loops.markTaskSucceeded, { loopsTaskId: task._id });
 

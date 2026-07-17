@@ -48,6 +48,7 @@ function AdminLayout() {
   const data = {
     navMain: [
       { title: "Ebooks", url: "/admin/ebooks" },
+      { title: "Opérations e-mail", url: "/admin/email-operations" },
       { title: "Confidentialité", url: "/admin/privacy" },
     ],
   };

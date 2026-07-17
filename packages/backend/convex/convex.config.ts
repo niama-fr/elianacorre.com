@@ -10,6 +10,8 @@ const app = defineApp({
   env: {
     BETTER_AUTH_SECRET: v.string(),
     CAPABILITY_SIGNING_SECRET: v.string(),
+    EMAIL_DELIVERY_ALLOWLIST: v.string(),
+    EMAIL_DELIVERY_MODE: v.string(),
     GOOGLE_CLIENT_ID: v.string(),
     GOOGLE_CLIENT_SECRET: v.string(),
     LOOPS_API_KEY: v.string(),

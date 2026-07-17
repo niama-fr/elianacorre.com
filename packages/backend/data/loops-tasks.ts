@@ -34,9 +34,28 @@ export const takeProfileLoopsTasks = async (ctx: QueryCtx, limit: number, profil
     .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
     .take(limit);
 
+export const takeFailedLoopsTasks = async (ctx: QueryCtx, limit: number) =>
+  await ctx.db
+    .query("loopsTasks")
+    .withIndex("by_status_and_finished_at", (q) => q.eq("status", "failed"))
+    .order("desc")
+    .take(limit);
+
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
-  await ctx.db.insert("loopsTasks", { ...create, error: null, finishedAt: null, status: "pending", workflowId: null });
+  await ctx.db.insert("loopsTasks", {
+    ...create,
+    alertedAt: null,
+    error: null,
+    failureCategory: null,
+    failureCode: null,
+    failureStatus: null,
+    finishedAt: null,
+    replayCount: 0,
+    status: "pending",
+    workflowId: null,
+    workflowIds: [],
+  });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
 export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
@@ -49,8 +68,16 @@ export const deleteLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">) =>
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { error, now }: WithNow<{ error: string }>) => {
-  await patchLoopsTask(ctx, task._id, { error, finishedAt: now, status: "failed" });
+export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { failure, now }: WithNow<MarkFailedOpts>) => {
+  await patchLoopsTask(ctx, task._id, {
+    alertedAt: now,
+    error: failure.category,
+    failureCategory: failure.category,
+    failureCode: failure.code,
+    failureStatus: failure.status,
+    finishedAt: now,
+    status: "failed",
+  });
 };
 
 export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { now }: WithNow) => {
@@ -60,3 +87,10 @@ export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { 
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type TaskRef = Pick<LoopsTasks["Doc"], "_id" | "kind">;
+type MarkFailedOpts = {
+  failure: {
+    category: NonNullable<LoopsTasks["CommonFields"]["failureCategory"]>;
+    code: NonNullable<LoopsTasks["CommonFields"]["failureCode"]>;
+    status: number | null;
+  };
+};

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for newsletter phase 1.
+Accepted for newsletter phase 1. Amended by NIA-28 on 2026-07-17.
 
 ## Context
 
@@ -10,11 +10,11 @@ Newsletter analytics must support operations and compliance without collecting b
 
 ## Decision
 
-Disable newsletter open tracking. Permit only limited click tracking when Loops can configure it transparently and the processing is disclosed in the privacy policy. Keep delivery, bounce, complaint, and unsubscribe events for operational and compliance purposes.
+Disable newsletter open tracking and click tracking. Keep delivery, bounce, complaint, and unsubscribe events for operational and compliance purposes.
 
 ## Consequences
 
-Delivery issues must not treat opens as success or engagement evidence. Product reporting is limited to consent, delivery, bounce, complaint, unsubscribe, and explicitly disclosed click events.
+Delivery issues must not treat opens or clicks as success or engagement evidence. Product reporting is limited to consent, delivery, bounce, complaint, and unsubscribe events.
 
 ## Links
 

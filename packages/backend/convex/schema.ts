@@ -31,7 +31,8 @@ export default defineSchema({
     .index("by_ebook_download_id", ["ebookDownloadId"])
     .index("by_finished_at", ["finishedAt"])
     .index("by_idempotency_key", ["idempotencyKey"])
-    .index("by_profile_id", ["profileId"]),
+    .index("by_profile_id", ["profileId"])
+    .index("by_status_and_finished_at", ["status", "finishedAt"]),
   loopsWebhooks: defineTable(zodOutputToConvex(zLoopsWebhookFields))
     .index("by_email", ["email"])
     .index("by_occurred_at", ["occurredAt"])

@@ -90,14 +90,13 @@ Better Auth with Convex authenticates administrators in phase 1:
 
 The same identity foundation may later support verified customer accounts, magic links, and social providers.
 
-### Google Workspace
+### Google and reply routing
 
-Google Workspace provides:
+The approved Google configuration provides:
 
-- human reply mailboxes;
-- `confidentialite@elianacorre.com` for privacy requests;
+- Google identities for authorized administrators;
+- the destination mailbox `eliana.m.corre@gmail.com` for replies and privacy requests routed from `contact@elianacorre.com` by Cloudflare Email Routing;
 - collaborative newsletter and e-book source drafting in Google Docs or Drive;
-- authorized Google identities for administrators.
 
 Editable e-book sources remain in Drive. Publicly distributable versions are uploaded to Convex and never served through Drive links.
 
@@ -174,10 +173,10 @@ The executable retention, portability-export, verification, recovery, and securi
 - Suppression records retain only the minimum value required to honor objections.
 - Every consent references immutable versions of the wording and privacy notice shown.
 - Open tracking is disabled.
-- Limited click tracking is allowed only when transparently configured and disclosed.
+- Click tracking is disabled.
 - Operational delivery, bounce, complaint, and unsubscribe events remain available.
 
-Privacy requests arrive at `confidentialite@elianacorre.com`. After identity verification, an administrator can separately inspect or export, rectify the optional first name, unsubscribe, restrict, object, or erase. Each administrative action is confirmed and audited; bulk deletion is excluded.
+Privacy requests arrive at `contact@elianacorre.com`. After identity verification, an administrator can separately inspect or export, rectify the optional first name, unsubscribe, restrict, object, or erase. Each administrative action is confirmed and audited; bulk deletion is excluded.
 
 The manual identity-verification procedure is documented in [`docs/agents/privacy-request-identity-verification.md`](agents/privacy-request-identity-verification.md).
 
@@ -186,8 +185,8 @@ International transfers are not prohibited, but Convex, Loops, Cloudflare, Bette
 ## Email and domain operations
 
 - Loops sends through `news.elianacorre.com`.
-- Human replies go to a Google Workspace mailbox on `elianacorre.com`.
-- SPF, DKIM, and DMARC must authorize both Workspace correspondence and Loops sending without creating conflicting DNS records.
+- Human replies to `contact@elianacorre.com` are forwarded by Cloudflare Email Routing to `eliana.m.corre@gmail.com`.
+- SPF, DKIM, and DMARC must authorize Loops sending without disrupting Cloudflare Email Routing or creating conflicting DNS records.
 - Every campaign identifies the sender, provides required legal identity or postal information, links to the privacy notice, offers visible one-click unsubscription, and provides a contact address.
 - Campaigns are drafted and scheduled freely in Loops rather than promised for a fixed calendar date.
 - Preview and test delivery are mandatory before a campaign is sent.
