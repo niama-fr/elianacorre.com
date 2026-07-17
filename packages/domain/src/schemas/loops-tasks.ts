@@ -13,28 +13,29 @@ export const zLoopsTaskStatus = z.literal(statuses);
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
 export const loopsTaskRetryableFailures = ["network", "rateLimited", "server"] as const;
 export const loopsTaskFailures = [...loopsTaskRetryableFailures, "authentication", "missingResource", "unknown", "validation"] as const;
+export const zLoopsTaskRetryableFailure = z.literal(loopsTaskRetryableFailures);
 export const zLoopsTaskFailure = z.literal(loopsTaskFailures);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-const zCommonTaskFields = z.object({
+const zCommonFields = z.object({
   idempotencyKey: z.string(),
   replayCount: z.number(),
 });
-const zPendingTaskFields = z.object({
+const zPendingFields = z.object({
   acknowledgedAt: z.null(),
   failure: z.null(),
   finishedAt: z.null(),
   status: z.literal("pending"),
   workflowIds: z.array(z.string()),
 });
-const zFailedTaskFields = z.object({
+const zFailedFields = z.object({
   acknowledgedAt: z.number().nullable(),
   failure: zLoopsTaskFailure,
   finishedAt: z.number(),
   status: z.literal("failed"),
   workflowIds: z.array(z.string()).min(1),
 });
-const zSucceededTaskFields = z.object({
+const zSucceededFields = z.object({
   acknowledgedAt: z.null(),
   failure: z.null(),
   finishedAt: z.number(),
@@ -46,7 +47,7 @@ const taskKindsForState = <TState extends z.ZodRawShape, TEmail extends z.ZodTyp
   email: TEmail,
   doc: TDoc
 ) => {
-  const common = { ...doc, ...zCommonTaskFields.shape, ...state };
+  const common = { ...doc, ...zCommonFields.shape, ...state };
   const profile = { ...common, profileId: zid("profiles") };
   return z.discriminatedUnion("kind", [
     z.object({ ...common, email, kind: z.literal(kinds[0]) }),
@@ -56,12 +57,12 @@ const taskKindsForState = <TState extends z.ZodRawShape, TEmail extends z.ZodTyp
   ]);
 };
 
-const taskStates = <TDoc extends z.ZodRawShape>(doc: TDoc) =>
-  z.discriminatedUnion("status", [
-    taskKindsForState(zPendingTaskFields.shape, zCanonicalEmail, doc),
-    taskKindsForState(zFailedTaskFields.shape, zCanonicalEmail, doc),
-    taskKindsForState(zSucceededTaskFields.shape, z.null(), doc),
-  ]);
+const taskStates = <TDoc extends z.ZodRawShape>(doc: TDoc) => {
+  const pending = taskKindsForState(zPendingFields.shape, zCanonicalEmail, doc);
+  const failed = taskKindsForState(zFailedFields.shape, zCanonicalEmail, doc);
+  const succeeded = taskKindsForState(zSucceededFields.shape, z.null(), doc);
+  return z.union([...pending.options, ...failed.options, ...succeeded.options]);
+};
 
 export const zLoopsTaskFields = taskStates({});
 export const zLoopsTaskDoc = taskStates(zDocCommon("loopsTasks").shape);
@@ -92,12 +93,16 @@ export type LoopsTasks = {
   SyncContactDoc: Extract<LoopsTaskDoc, { kind: "syncContact" }>;
   Create: z.infer<typeof zLoopsTaskCreate>;
   Doc: LoopsTaskDoc;
+  FailedDoc: Extract<LoopsTaskDoc, { status: "failed" }>;
+  FailedFields: z.infer<typeof zFailedFields>;
   Failure: z.infer<typeof zLoopsTaskFailure>;
   Fields: z.infer<typeof zLoopsTaskFields>;
   Kind: z.infer<typeof zLoopsTaskKind>;
+  PendingDoc: Extract<LoopsTaskDoc, { status: "pending" }>;
   SendConfirmationEmailCreate: z.infer<typeof zSendConfirmationEmailCreate>;
   SendConfirmationEmailDoc: Extract<LoopsTaskDoc, { kind: "sendConfirmationEmail" }>;
   SendEbookEmailCreate: z.infer<typeof zSendEbookEmailCreate>;
   SendEbookEmailDoc: Extract<LoopsTaskDoc, { kind: "sendEbookEmail" }>;
   Status: z.infer<typeof zLoopsTaskStatus>;
+  SucceededFields: z.infer<typeof zSucceededFields>;
 };

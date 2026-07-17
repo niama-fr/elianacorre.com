@@ -1,5 +1,6 @@
+import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { describe, expect, expectTypeOf, it } from "vitest";
-import type { z } from "zod";
+import { z } from "zod";
 
 import type { zLoopsTaskFailure } from "./loops-tasks";
 import { zLoopsTaskFields } from "./loops-tasks";
@@ -14,6 +15,14 @@ const common = {
 } as const;
 
 describe("Loops task state", () => {
+  it("converts to a flat Convex table union", () => {
+    const validator = z
+      .object({ type: z.literal("union"), value: z.array(z.looseObject({ type: z.string() })) })
+      .parse(Reflect.get(zodOutputToConvex(zLoopsTaskFields), "json"));
+
+    expect(validator.value.every((member) => member.type === "object")).toBeTruthy();
+  });
+
   it("narrows state-dependent fields from the status discriminator", () => {
     const task = zLoopsTaskFields.parse({
       ...common,
