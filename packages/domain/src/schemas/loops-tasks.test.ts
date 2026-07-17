@@ -8,7 +8,6 @@ const common = {
   finishedAt: null,
   idempotencyKey: "confirmation-1",
   replayCount: 0,
-  workflowId: "workflow-1",
   workflowIds: ["workflow-1"],
 } as const;
 
@@ -71,5 +70,20 @@ describe("Loops task state", () => {
       }).success,
       pending: zLoopsTaskFields.safeParse({ ...deletionTask, status: "pending" }).success,
     }).toStrictEqual({ failed: false, pending: false });
+  });
+
+  it("requires a terminal task to retain at least one Workflow identifier", () => {
+    expect(
+      zLoopsTaskFields.safeParse({
+        ...common,
+        failure: "server",
+        finishedAt: 10,
+        kind: "syncContact",
+        profileId: "000000000000000000000000profiles",
+        status: "failed",
+        subscribed: true,
+        workflowIds: [],
+      }).success
+    ).toBeFalsy();
   });
 });

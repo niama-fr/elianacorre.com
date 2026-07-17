@@ -98,7 +98,6 @@ describe("newsletter retention policy", () => {
         profileId: accountProfileId,
         replayCount: 0,
         status: "pending",
-        workflowId: "account-workflow",
         workflowIds: ["account-workflow"],
       });
       await ctx.db.insert("identities", { adapter: "better-auth", adapterId: "account-user", profileId: accountProfileId });
@@ -222,7 +221,6 @@ describe("newsletter retention policy", () => {
         profileId,
         replayCount: 0,
         status: "pending",
-        workflowId: "retry-workflow",
         workflowIds: ["retry-workflow"],
       });
       const expiredTaskId = await ctx.db.insert("loopsTasks", {
@@ -234,7 +232,6 @@ describe("newsletter retention policy", () => {
         kind: "deleteContact",
         replayCount: 0,
         status: "succeeded",
-        workflowId: "expired-workflow",
         workflowIds: ["expired-workflow"],
       });
       const retainedTaskId = await ctx.db.insert("loopsTasks", {
@@ -246,7 +243,6 @@ describe("newsletter retention policy", () => {
         kind: "deleteContact",
         replayCount: 0,
         status: "succeeded",
-        workflowId: "retained-workflow",
         workflowIds: ["retained-workflow"],
       });
       const expiredWebhookId = await ctx.db.insert("loopsWebhooks", {

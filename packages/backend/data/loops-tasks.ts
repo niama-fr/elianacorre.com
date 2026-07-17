@@ -59,7 +59,6 @@ export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Crea
     finishedAt: null,
     replayCount: 0,
     status: "pending",
-    workflowId: null,
     workflowIds: [],
   });
 
@@ -69,7 +68,7 @@ export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, pat
 };
 
 export const assignLoopsTaskWorkflow = async (ctx: MutationCtx, id: Id<"loopsTasks">, workflowId: string) => {
-  await patchLoopsTask(ctx, id, { workflowId, workflowIds: [workflowId] });
+  await patchLoopsTask(ctx, id, { workflowIds: [workflowId] });
 };
 
 export const setLoopsTaskAcknowledgedAt = async (ctx: MutationCtx, id: Id<"loopsTasks">, now: number) => {

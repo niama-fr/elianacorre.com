@@ -9,26 +9,19 @@ export const zLoopsTaskKind = z.literal(kinds);
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zLoopsTaskStatus = z.literal(["failed", "pending", "succeeded"]);
 
-// FAILURE CATEGORY ------------------------------------------------------------------------------------------------------------------------
-export const loopsTaskRetriableFailureCategories = ["network", "rateLimited", "server"] as const;
-export const loopsTaskFailureCategories = [
-  ...loopsTaskRetriableFailureCategories,
-  "authentication",
-  "missingResource",
-  "unknown",
-  "validation",
-] as const;
-export const zLoopsTaskFailureCategory = z.literal(loopsTaskFailureCategories);
+// FAILURE ---------------------------------------------------------------------------------------------------------------------------------
+export const loopsTaskRetriableFailures = ["network", "rateLimited", "server"] as const;
+export const loopsTaskFailures = [...loopsTaskRetriableFailures, "authentication", "missingResource", "unknown", "validation"] as const;
+export const zLoopsTaskFailure = z.literal(loopsTaskFailures);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const zCommonFields = z.object({
   acknowledgedAt: z.number().nullable(),
-  failure: zLoopsTaskFailureCategory.nullable(),
+  failure: zLoopsTaskFailure.nullable(),
   finishedAt: z.number().nullable(),
   idempotencyKey: z.string(),
   replayCount: z.number(),
   status: zLoopsTaskStatus,
-  workflowId: z.string().nullable(),
   workflowIds: z.array(z.string()),
 });
 const zProfileTaskFields = z.object({ ...zCommonFields.shape, profileId: zid("profiles") });
@@ -59,8 +52,8 @@ const hasValidTaskState = (task: z.infer<typeof zLoopsTaskFieldsByKind>) => {
   const hasExecutableDeletionAddress = task.kind !== "deleteContact" || task.email !== null;
   if (task.status === "pending") return hasNoFailure && task.finishedAt === null && hasExecutableDeletionAddress;
   if (task.status === "failed")
-    return task.failure !== null && task.finishedAt !== null && task.workflowId !== null && hasExecutableDeletionAddress;
-  return hasNoFailure && task.finishedAt !== null && task.workflowId !== null && (task.kind !== "deleteContact" || task.email === null);
+    return task.failure !== null && task.finishedAt !== null && task.workflowIds.length > 0 && hasExecutableDeletionAddress;
+  return hasNoFailure && task.finishedAt !== null && task.workflowIds.length > 0 && (task.kind !== "deleteContact" || task.email === null);
 };
 export const zLoopsTaskFields = zLoopsTaskFieldsByKind.refine(hasValidTaskState, { message: "Invalid Loops task state" });
 
@@ -98,21 +91,18 @@ type PendingTaskState = {
   failure: null;
   finishedAt: null;
   status: "pending";
-  workflowId: string | null;
 };
 type FailedTaskState = {
   acknowledgedAt: number | null;
-  failure: z.infer<typeof zLoopsTaskFailureCategory>;
+  failure: z.infer<typeof zLoopsTaskFailure>;
   finishedAt: number;
   status: "failed";
-  workflowId: string;
 };
 type SucceededTaskState = {
   acknowledgedAt: null;
   failure: null;
   finishedAt: number;
   status: "succeeded";
-  workflowId: string;
 };
 type StateField = keyof PendingTaskState;
 type WithTaskState<T> = T extends { kind: "deleteContact" }

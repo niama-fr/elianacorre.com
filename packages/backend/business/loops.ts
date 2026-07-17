@@ -74,8 +74,7 @@ export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["
     finishedAt: null,
     replayCount: task.replayCount + 1,
     status: "pending",
-    workflowId,
-    workflowIds: [...task.workflowIds, workflowId],
+    workflowIds: [workflowId, ...task.workflowIds],
   });
   return workflowId;
 }

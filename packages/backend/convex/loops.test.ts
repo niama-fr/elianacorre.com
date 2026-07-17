@@ -57,7 +57,6 @@ describe("Loops delivery administration", () => {
         replayCount: 0,
         status: "pending",
         subscribed: true,
-        workflowId: "workflow-original",
         workflowIds: ["workflow-original"],
       });
     });
@@ -97,8 +96,7 @@ describe("Loops delivery administration", () => {
       idempotencyKey: "stable-key",
       replayCount: 1,
       status: "pending",
-      workflowId: "test-workflow-1",
-      workflowIds: ["workflow-original", "test-workflow-1"],
+      workflowIds: ["test-workflow-1", "workflow-original"],
     });
   });
 });

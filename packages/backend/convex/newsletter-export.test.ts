@@ -89,7 +89,6 @@ describe("newsletter portability export", () => {
         kind: "deleteContact",
         replayCount: 0,
         status: "failed",
-        workflowId: "secret-workflow-id",
         workflowIds: ["secret-workflow-id"],
       });
       await ctx.db.insert("loopsWebhooks", {

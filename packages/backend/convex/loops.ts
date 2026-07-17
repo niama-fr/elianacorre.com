@@ -1,5 +1,5 @@
 import { getLoopsTaskFailure, getLoopsTaskRetryPolicy, isLoopsTaskPending, type LoopsTaskFailure } from "@ec/domain/helpers/loops-tasks";
-import { zLoopsTaskFailureCategory, type LoopsTasks } from "@ec/domain/schemas/loops-tasks";
+import { zLoopsTaskFailure, type LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import { zLoopsWebhookCreate } from "@ec/domain/schemas/loops-webhooks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { zid } from "convex-helpers/server/zod4";
@@ -19,7 +19,7 @@ export const listFailedTasks = zAdminQuery({
   args: {},
   handler: async (ctx) => {
     const tasks = await takeFailedLoopsTasks(ctx, FAILED_TASK_LIMIT);
-    return tasks.map(({ _creationTime, _id, acknowledgedAt, failure, finishedAt, kind, replayCount, workflowId, workflowIds }) => ({
+    return tasks.map(({ _creationTime, _id, acknowledgedAt, failure, finishedAt, kind, replayCount, workflowIds }) => ({
       _creationTime,
       _id,
       acknowledgedAt,
@@ -27,7 +27,6 @@ export const listFailedTasks = zAdminQuery({
       finishedAt,
       kind,
       replayCount,
-      workflowId,
       workflowIds,
     }));
   },
@@ -101,7 +100,7 @@ export const getTaskKind = zInternalQuery({
 // INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
 export const markTaskFailed = zInternalMutation({
   args: {
-    failure: zLoopsTaskFailureCategory,
+    failure: zLoopsTaskFailure,
     loopsTaskId: zid("loopsTasks"),
   },
   handler: async (ctx, { failure, loopsTaskId }) => {

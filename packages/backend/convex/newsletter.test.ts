@@ -152,7 +152,7 @@ describe("newsletter subscription", () => {
       hasRawLinkToken: false,
       profiles: [{ email: "admin@example.com" }, { email: "reader+carnet@example.com", role: "contact" }],
       subscriptions: [{ confirmedAt: null, unsubscribedAt: null }],
-      task: { kind: "sendConfirmationEmail", workflowId: "test-workflow-id" },
+      task: { kind: "sendConfirmationEmail", workflowIds: ["test-workflow-id"] },
     });
   });
 
