@@ -51,6 +51,7 @@ describe("newsletter portability export", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20,
+        confirmedFrom: "email",
         legalBundleId,
         profileId,
         requestedAt: 10,

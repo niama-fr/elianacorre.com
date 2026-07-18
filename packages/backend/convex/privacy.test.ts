@@ -42,6 +42,7 @@ const createSubscriber = async (convex: TestConvex<typeof schema>, email = "read
     });
     const subscriptionId = await ctx.db.insert("newsSubscriptions", {
       confirmedAt: 20,
+      confirmedFrom: "email",
       legalBundleId,
       profileId,
       requestedAt: 10,
@@ -116,6 +117,7 @@ describe("privacy administration", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20,
+        confirmedFrom: "email",
         legalBundleId,
         profileId,
         requestedAt: 10,

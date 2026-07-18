@@ -63,6 +63,7 @@ describe("newsletter retention policy", () => {
       const accountProfileId = await ctx.db.insert("profiles", { email: "account@example.com", role: "member" });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
+        confirmedFrom: null,
         legalBundleId,
         profileId: retainedProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS + 1,
@@ -70,6 +71,7 @@ describe("newsletter retention policy", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
+        confirmedFrom: null,
         legalBundleId,
         profileId: expiredProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS,
@@ -77,6 +79,7 @@ describe("newsletter retention policy", () => {
       });
       const accountSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
+        confirmedFrom: null,
         legalBundleId,
         profileId: accountProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS,
@@ -148,6 +151,7 @@ describe("newsletter retention policy", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 1,
+        confirmedFrom: "email",
         legalBundleId,
         profileId: formerProfileId,
         requestedAt: 1,
@@ -155,6 +159,7 @@ describe("newsletter retention policy", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 1,
+        confirmedFrom: "email",
         legalBundleId,
         profileId: retainedProfileId,
         requestedAt: 1,

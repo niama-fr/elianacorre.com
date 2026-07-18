@@ -35,7 +35,7 @@ export const takeNewsSubscriptions = async (ctx: QueryCtx, limit: number, profil
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createNewsSubscription = async (ctx: MutationCtx, payload: NewsSubscriptions["Create"]) =>
-  await ctx.db.insert("newsSubscriptions", { ...payload, confirmedAt: null, unsubscribedAt: null });
+  await ctx.db.insert("newsSubscriptions", { ...payload, confirmedAt: null, confirmedFrom: null, unsubscribedAt: null });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
 export const patchNewsSubscription = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, patch: Partial<NewsSubscriptions["Fields"]>) => {

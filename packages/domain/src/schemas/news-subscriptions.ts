@@ -9,7 +9,7 @@ export const zNewsSubscriptionConfirmedFrom = z.literal(confirmedFrom);
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsSubscriptionFields = z.object({
   confirmedAt: z.number().nullable(),
-  confirmedFrom: zNewsSubscriptionConfirmedFrom.optional(),
+  confirmedFrom: zNewsSubscriptionConfirmedFrom.nullable(),
   legalBundleId: zid("newsletterLegalBundles"),
   profileId: zid("profiles"),
   requestedAt: z.number(),
