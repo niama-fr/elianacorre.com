@@ -324,6 +324,12 @@ describe("Loops webhooks", () => {
         publishedAt: 5000,
         publishedBy: adminId,
       });
+      await ctx.db.insert("newsletterLegalBundles", {
+        newsletterConsentId,
+        privacyNoticeId,
+        publishedAt: 15_000,
+        publishedBy: adminId,
+      });
       const insertedHistoricalSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2000,
         legalBundleId: previousLegalBundleId,
@@ -383,68 +389,71 @@ describe("Loops webhooks", () => {
     );
   });
 
-  it("preserves delivery restrictions and reconciles a resubscribed contact as unsubscribed", async () => {
-    const convex = createBackend();
-    const { profileId, restrictionId } = await convex.run(async (ctx) => {
-      const insertedProfileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
-      const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
-      const privacyNoticeId = await ctx.db.insert("legalTexts", {
-        content: "privacy",
-        kind: "privacyNotice",
-        publishedAt: 1,
-        publishedBy: adminId,
+  it.each(["permanentBounce", "spamComplaint"] as const)(
+    "preserves a %s restriction and reconciles a resubscribed contact as unsubscribed",
+    async (reason) => {
+      const convex = createBackend();
+      const { profileId, restrictionId } = await convex.run(async (ctx) => {
+        const insertedProfileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
+        const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
+        const privacyNoticeId = await ctx.db.insert("legalTexts", {
+          content: "privacy",
+          kind: "privacyNotice",
+          publishedAt: 1,
+          publishedBy: adminId,
+        });
+        const newsletterConsentId = await ctx.db.insert("legalTexts", {
+          content: "consent",
+          kind: "newsletterConsent",
+          publishedAt: 1,
+          publishedBy: adminId,
+        });
+        const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
+          newsletterConsentId,
+          privacyNoticeId,
+          publishedAt: 1,
+          publishedBy: adminId,
+        });
+        await ctx.db.insert("newsSubscriptions", {
+          confirmedAt: 1000,
+          legalBundleId,
+          profileId: insertedProfileId,
+          requestedAt: 1000,
+          unsubscribedAt: 2000,
+        });
+        const insertedRestrictionId = await ctx.db.insert("newsRestrictions", {
+          lastOccurredAt: 3000,
+          profileId: insertedProfileId,
+          reason,
+          resolvedAt: null,
+          resolvedBy: null,
+          restrictedAt: 3000,
+          restrictedBy: "provider",
+          version: 1,
+        });
+        return { profileId: insertedProfileId, restrictionId: insertedRestrictionId };
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      await ctx.db.insert("newsSubscriptions", {
-        confirmedAt: 1000,
-        legalBundleId,
-        profileId: insertedProfileId,
-        requestedAt: 1000,
-        unsubscribedAt: 2000,
-      });
-      const insertedRestrictionId = await ctx.db.insert("newsRestrictions", {
-        lastOccurredAt: 3000,
-        profileId: insertedProfileId,
-        reason: "spamComplaint",
-        resolvedAt: null,
-        resolvedBy: null,
-        restrictedAt: 3000,
-        restrictedBy: "provider",
-        version: 1,
-      });
-      return { profileId: insertedProfileId, restrictionId: insertedRestrictionId };
-    });
 
-    await convex.mutation(internal.loops.processWebhook, {
-      email: "reader@example.com",
-      kind: "email.resubscribed",
-      messageId: "message-resubscribed-restricted",
-      occurredAt: 10_000,
-      webhookId: "webhook-resubscribed-restricted",
-    });
+      await convex.mutation(internal.loops.processWebhook, {
+        email: "reader@example.com",
+        kind: "email.resubscribed",
+        messageId: "message-resubscribed-restricted",
+        occurredAt: 10_000,
+        webhookId: "webhook-resubscribed-restricted",
+      });
 
-    const state = await convex.run(async (ctx) => ({
-      restriction: await ctx.db.get(restrictionId),
-      subscriptions: await ctx.db.query("newsSubscriptions").collect(),
-      tasks: await ctx.db.query("loopsTasks").collect(),
-    }));
-    expect(state.restriction).toMatchObject({ reason: "spamComplaint", resolvedAt: null, version: 1 });
-    expect(state.subscriptions).toContainEqual(
-      expect.objectContaining({ confirmedAt: 10_000, profileId, requestedAt: 10_000, unsubscribedAt: null })
-    );
-    expect(state.tasks).toMatchObject([{ profileId, subscribed: false }]);
-  });
+      const state = await convex.run(async (ctx) => ({
+        restriction: await ctx.db.get(restrictionId),
+        subscriptions: await ctx.db.query("newsSubscriptions").collect(),
+        tasks: await ctx.db.query("loopsTasks").collect(),
+      }));
+      expect(state.restriction).toMatchObject({ reason, resolvedAt: null, version: 1 });
+      expect(state.subscriptions).toContainEqual(
+        expect.objectContaining({ confirmedAt: 10_000, profileId, requestedAt: 10_000, unsubscribedAt: null })
+      );
+      expect(state.tasks).toMatchObject([{ profileId, subscribed: false }]);
+    }
+  );
 
   it("retains stale resubscriptions without superseding newer consent or restriction events", async () => {
     const convex = createBackend();

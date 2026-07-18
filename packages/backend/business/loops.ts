@@ -28,7 +28,7 @@ import {
   markNewsSubscriptionConfirmed,
   markNewsSubscriptionUnsubscribed,
 } from "../data/news-subscriptions";
-import { requireActiveNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
+import { requireNewsletterLegalBundleAt } from "../data/newsletter-legal-bundles";
 import { getProfileIdByEmail } from "../data/profiles";
 import { applyEmailDeliveryRestriction } from "./email-delivery-restrictions";
 
@@ -124,7 +124,7 @@ export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messa
       latestConsentEventAt = Math.max(latestConsentEventAt, period.requestedAt, period.confirmedAt ?? 0, period.unsubscribedAt ?? 0);
     const latestRestrictionEventAt = latestRestriction ? Math.max(latestRestriction.lastOccurredAt, latestRestriction.resolvedAt ?? 0) : 0;
     if (occurredAt <= Math.max(latestConsentEventAt, latestRestrictionEventAt)) return;
-    const { _id: legalBundleId } = await requireActiveNewsletterLegalBundle(ctx);
+    const { _id: legalBundleId } = await requireNewsletterLegalBundleAt(ctx, occurredAt);
     const subscriptionId = await createNewsSubscription(ctx, { legalBundleId, profileId, requestedAt: occurredAt });
     await markNewsSubscriptionConfirmed(ctx, subscriptionId, occurredAt, "loopsPreferenceCenter");
     const restriction = await getActiveNewsRestriction(ctx, profileId);
