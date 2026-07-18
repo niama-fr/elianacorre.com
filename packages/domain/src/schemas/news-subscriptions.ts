@@ -4,8 +4,8 @@ import z from "zod";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsSubscriptionFields = z.object({
-  confirmationSource: z.literal(["emailLink", "loopsPreferenceCenter"]).optional(),
   confirmedAt: z.number().nullable(),
+  confirmedFrom: z.literal(["email", "loops"]).optional(),
   legalBundleId: zid("newsletterLegalBundles"),
   profileId: zid("profiles"),
   requestedAt: z.number(),

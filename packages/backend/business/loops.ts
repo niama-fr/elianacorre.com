@@ -126,7 +126,7 @@ export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messa
     if (occurredAt <= Math.max(latestConsentEventAt, latestRestrictionEventAt)) return;
     const { _id: legalBundleId } = await requireNewsletterLegalBundleAt(ctx, occurredAt);
     const subscriptionId = await createNewsSubscription(ctx, { legalBundleId, profileId, requestedAt: occurredAt });
-    await markNewsSubscriptionConfirmed(ctx, subscriptionId, occurredAt, "loopsPreferenceCenter");
+    await markNewsSubscriptionConfirmed(ctx, subscriptionId, { confirmedFrom: "loops", now: occurredAt });
     const restriction = await getActiveNewsRestriction(ctx, profileId);
     await enqueueSyncContactForResubscription(ctx, { profileId, subscribed: restriction === null, webhookId: id });
     return;

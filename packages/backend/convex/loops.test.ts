@@ -367,8 +367,8 @@ describe("Loops webhooks", () => {
     expect(state.historical).toMatchObject({ confirmedAt: 2000, requestedAt: 1000, unsubscribedAt: 4000 });
     expect(state.subscriptions).toContainEqual(
       expect.objectContaining({
-        confirmationSource: "loopsPreferenceCenter",
         confirmedAt: 10_000,
+        confirmedFrom: "loops",
         legalBundleId: activeLegalBundleId,
         profileId,
         requestedAt: 10_000,
@@ -385,7 +385,7 @@ describe("Loops webhooks", () => {
     const asAdmin = await createIdentity(convex, "admin");
     const privacySubject = await asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" });
     expect(privacySubject?.newsletterConsent.periods).toContainEqual(
-      expect.objectContaining({ confirmationSource: "loopsPreferenceCenter", confirmedAt: 10_000 })
+      expect.objectContaining({ confirmedAt: 10_000, confirmedFrom: "loops" })
     );
   });
 

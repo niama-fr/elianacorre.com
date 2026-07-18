@@ -110,7 +110,7 @@ type ConfirmReactivationOpts = ConfirmOpts & { confirmation: NewsConfirmations["
 async function confirmSubscription(ctx: MutationCtx, { confirmation, now, profileId, subscription }: ConfirmSubscriptionOpts) {
   if (subscription.confirmedAt !== null) return { confirmed: false, downloadToken: null };
 
-  await markNewsSubscriptionConfirmed(ctx, subscription._id, now, "emailLink");
+  await markNewsSubscriptionConfirmed(ctx, subscription._id, { confirmedFrom: "email", now });
   const activeRestriction = await getActiveNewsRestriction(ctx, profileId);
 
   let isEmailDeliveryAllowed = activeRestriction === null;
