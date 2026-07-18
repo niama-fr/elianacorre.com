@@ -29,6 +29,8 @@ Each deployment declares:
 - `SUPPRESSION_HASH_SECRET`: unique secret generated from at least 32 random bytes; creates the irreversible suppression lookup value.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
 
+Development and staging use only the separate Loops staging environment. Production uses only the Loops production environment. There is no application-level recipient allowlist; the sole operator uses personal addresses for non-production tests.
+
 The Google OAuth clients authorize these callbacks:
 
 ```text
@@ -126,6 +128,8 @@ For every campaign and workflow, preview Loops' automatic footer and verify that
 Convex stores `Webhook-Id` for idempotency. A permanent bounce or complaint suppresses campaign delivery without changing historical consent; unsubscribe ends the current consent period without deleting e-book grants. The application then queues Loops contact unsubscription so Convex remains authoritative. To recover from a wrong secret, replace only the affected deployment's `LOOPS_WEBHOOK_SECRET` and resend the event from Loops' webhook history. If the endpoint URL is wrong, correct it in Loops and use the same history view to retry. Loops retains webhook history for 30 days.
 
 Update this section whenever enabled events, the endpoint path, signature contract, or recovery procedure changes.
+
+The complete manual email-operations procedure, including credentials, DNS, campaigns, alerts, replay, reconciliation, incidents, and legal-text publication, is [`docs/agents/newsletter-email-operations.md`](newsletter-email-operations.md).
 
 ## Pull-request verification
 

@@ -22,7 +22,7 @@ The phase-one baseline makes three attempts with exponential backoff beginning a
 - e-book email: up to 14 attempts, 30-second initial backoff, base 2, covering about 68 hours;
 - contact synchronization: up to 10 attempts, 60-second initial backoff, base 2, covering about 8.5 hours.
 
-Only network failures, HTTP 429, and HTTP 5xx responses retry. Authentication, missing-template, validation, and other permanent failures stop immediately. The Loops boundary must expose structured status information rather than requiring application code to classify sanitized messages. Each task retains its Workflow identifier for diagnosis and restart; terminal failure creates an administrative alert; operator replay uses the original idempotency key.
+Only network failures, HTTP 429, and HTTP 5xx responses retry. Authentication, missing-template, validation, and other permanent failures stop immediately. The Loops boundary must expose structured status information rather than requiring application code to classify sanitized messages. Each task retains its Workflow identifier for diagnosis and restart; terminal failure creates an administrative alert. Automatic retries reuse the current delivery idempotency key. Operator replay retains the original business idempotency key and derives a new delivery key from the replay count so Loops can process a corrected request whose previous key remains reserved.
 
 Workflow integration tests are temporarily limited by an open `convex-test` compatibility issue. Existing tests cover task creation, provider execution, stable idempotency keys, failure preservation, and successful retry by driving the application steps directly. Replace that seam with the real Workflow test component when the upstream issue is resolved.
 

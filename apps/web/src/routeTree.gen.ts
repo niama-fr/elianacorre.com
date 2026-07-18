@@ -15,6 +15,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AdminPrivacyRouteImport } from './routes/admin/privacy'
+import { Route as AdminEmailOperationsRouteImport } from './routes/admin/email-operations'
 import { Route as AdminEbooksRouteImport } from './routes/admin/ebooks'
 import { Route as PublicOeuvresRouteImport } from './routes/_public/oeuvres'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
@@ -56,6 +57,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
 const AdminPrivacyRoute = AdminPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmailOperationsRoute = AdminEmailOperationsRouteImport.update({
+  id: '/email-operations',
+  path: '/email-operations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEbooksRoute = AdminEbooksRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof PublicSplatRoute
   '/oeuvres': typeof PublicOeuvresRouteWithChildren
   '/admin/ebooks': typeof AdminEbooksRoute
+  '/admin/email-operations': typeof AdminEmailOperationsRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/': typeof AdminIndexRoute
   '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/connexion': typeof ConnexionRoute
   '/$': typeof PublicSplatRoute
   '/admin/ebooks': typeof AdminEbooksRoute
+  '/admin/email-operations': typeof AdminEmailOperationsRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/': typeof PublicIndexRoute
   '/admin': typeof AdminIndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_public/$': typeof PublicSplatRoute
   '/_public/oeuvres': typeof PublicOeuvresRouteWithChildren
   '/admin/ebooks': typeof AdminEbooksRoute
+  '/admin/email-operations': typeof AdminEmailOperationsRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/_public/': typeof PublicIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/oeuvres'
     | '/admin/ebooks'
+    | '/admin/email-operations'
     | '/admin/privacy'
     | '/admin/'
     | '/newsletter/confirmation'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/$'
     | '/admin/ebooks'
+    | '/admin/email-operations'
     | '/admin/privacy'
     | '/'
     | '/admin'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/_public/$'
     | '/_public/oeuvres'
     | '/admin/ebooks'
+    | '/admin/email-operations'
     | '/admin/privacy'
     | '/_public/'
     | '/admin/'
@@ -299,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/admin/privacy'
       preLoaderRoute: typeof AdminPrivacyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/email-operations': {
+      id: '/admin/email-operations'
+      path: '/email-operations'
+      fullPath: '/admin/email-operations'
+      preLoaderRoute: typeof AdminEmailOperationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/ebooks': {
@@ -440,12 +459,14 @@ const PublicRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminEbooksRoute: typeof AdminEbooksRoute
+  AdminEmailOperationsRoute: typeof AdminEmailOperationsRoute
   AdminPrivacyRoute: typeof AdminPrivacyRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminEbooksRoute: AdminEbooksRoute,
+  AdminEmailOperationsRoute: AdminEmailOperationsRoute,
   AdminPrivacyRoute: AdminPrivacyRoute,
   AdminIndexRoute: AdminIndexRoute,
 }

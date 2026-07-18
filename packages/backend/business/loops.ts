@@ -5,12 +5,20 @@ import { env, type ActionCtx, type MutationCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { getLink } from "@ec/domain/helpers/links";
+import { getLoopsTaskDeliveryIdempotencyKey } from "@ec/domain/helpers/loops-tasks";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { LoopsWebhooks } from "@ec/domain/schemas/loops-webhooks";
 import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
+import { ConvexError } from "convex/values";
 
-import { createLoopsTask, patchLoopsTask } from "../data/loops-tasks";
+import {
+  replaceLoopsTaskWorkflows,
+  createLoopsTask,
+  getLoopsTask,
+  resetLoopsTaskForReplay,
+  setLoopsTaskAcknowledgedAt,
+} from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
 import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { getProfileIdByEmail } from "../data/profiles";
@@ -56,6 +64,20 @@ export async function enqueueSyncContactForSubscription(ctx: MutationCtx, { prof
   return await enqueueSyncContact(ctx, { idempotencyKey: `news-contact-subscription:${subscriptionId}`, profileId, subscribed: true });
 }
 type ForSubscriptionOpts = { profileId: Id<"profiles">; subscriptionId: Id<"newsSubscriptions"> };
+
+export async function acknowledgeFailedLoopsTask(ctx: MutationCtx, loopsTaskId: Id<"loopsTasks">, now: number) {
+  const task = await getLoopsTask(ctx, loopsTaskId);
+  if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+  await setLoopsTaskAcknowledgedAt(ctx, loopsTaskId, now);
+}
+
+export async function replayFailedLoopsTask(ctx: MutationCtx, task: LoopsTasks["Doc"]): Promise<string> {
+  if (task.status !== "failed") throw new ConvexError("LOOPS_TASK_NOT_FAILED");
+  const workflowId = await start(ctx, internal.loops.run, { loopsTaskId: task._id });
+  await resetLoopsTaskForReplay(ctx, task, { replayCount: task.replayCount + 1, workflowIds: [workflowId, ...task.workflowIds] });
+  return workflowId;
+}
 
 // EXECUTE TASK ----------------------------------------------------------------------------------------------------------------------------
 export async function executeLoopsTask(ctx: ActionCtx, { profile, task }: ExecuteTaskOpts) {
@@ -107,7 +129,7 @@ type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWe
 async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
   const loopsTaskId = await createLoopsTask(ctx, payload);
   const workflowId = await start(ctx, internal.loops.run, { loopsTaskId });
-  await patchLoopsTask(ctx, loopsTaskId, { workflowId });
+  await replaceLoopsTaskWorkflows(ctx, loopsTaskId, workflowId);
   return workflowId;
 }
 
@@ -122,7 +144,7 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
       firstName: profile.firstName,
     },
     email: profile.email,
-    idempotencyKey: task.idempotencyKey,
+    idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_CONFIRMATION_TRANSACTIONAL_ID,
   });
 }
@@ -139,7 +161,7 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
       firstName: profile.firstName,
     },
     email: profile.email,
-    idempotencyKey: task.idempotencyKey,
+    idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_EBOOK_TRANSACTIONAL_ID,
   });
 }

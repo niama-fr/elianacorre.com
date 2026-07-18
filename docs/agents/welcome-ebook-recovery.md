@@ -40,8 +40,8 @@ The dashboard command opens the deployment selected by the package's local Conve
 4. For an eligible active or ordinary Former Newsletter Subscriber, open the delivered email and use its personal link within 72 hours.
 5. In the Convex dashboard, select the matching project and deployment, open **Data**, and find the Profile by its canonical email. Copy its `_id` only inside the dashboard.
 6. Filter `ebookIssuances` by that `profileId`. The newest row must have `kind: "replacement"` and reference the currently published `ebookId`.
-7. Open `loopsTasks`, filter by the same `profileId`, and find the newest `sendEbookEmail` row. Record its `_id`, `workflowId`, `idempotencyKey`, and status without copying recipient data into Linear or Git.
-8. Open the Convex Workflow component view and locate the run by `workflowId`. A healthy run succeeds and changes the task from `pending` to `succeeded`.
+7. Open `loopsTasks`, filter by the same `profileId`, and find the newest `sendEbookEmail` row. Record its `_id`, current Workflow identifier (`workflowIds[0]`), `idempotencyKey`, and status without copying recipient data into Linear or Git.
+8. Open the Convex Workflow component view and locate the run by `workflowIds[0]`. A healthy run succeeds and changes the task from `pending` to `succeeded`.
 9. In Loops, open **Transactional → Logs**, find the allowlisted recipient and matching time, and verify one successful send. The Loops log does not replace the Convex task record as evidence.
 10. Return to Convex and verify that the current `newsSubscriptions` row was neither created nor changed by recovery.
 11. To test a publication rollback, publish another version, request a link, then republish the earlier version and request another link. Each new issuance must reference the version that was current at its request time.
@@ -61,7 +61,7 @@ The dashboard command opens the deployment selected by the package's local Conve
 ## Recovery and rollback
 
 - If a request does not result in an email, inspect the matching Convex `loopsTasks` record and its Workflow execution using steps 5–9. Save only task and Workflow identifiers in the incident record.
-- NIA-25 does not expose an operator replay command. NIA-28 owns replay with the original idempotency key. Until that work ships, an eligible person may submit the neutral recovery dialog again after the rate-limit window; do not mutate a failed task, invoke internal functions from a production shell, create consent, or manually issue an unsigned link.
+- NIA-25 does not expose an operator replay command. NIA-28 owns replay that retains the original business idempotency key and derives a replay-specific delivery key. Until that work ships, an eligible person may submit the neutral recovery dialog again after the rate-limit window; do not mutate a failed task, invoke internal functions from a production shell, create consent, or manually issue an unsigned link.
 - If inspection was interrupted, reopen the same deployment and resume from the saved task or Workflow ID. Read-only inspection is safe to repeat.
 - If a wrong e-book version was published, republish the intended archived version. New recovery requests use it; existing issuance history remains unchanged.
 - To roll back this feature, revert its pull request. Do not delete issuance history or capabilities as part of a code rollback.

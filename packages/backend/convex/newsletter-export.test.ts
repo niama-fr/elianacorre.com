@@ -81,13 +81,15 @@ describe("newsletter portability export", () => {
       });
       await ctx.db.insert("newsSuppressions", { canonicalEmailHash: "minimum-objection-hash" });
       await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
         email: "technical@example.com",
-        error: "secret-provider-error",
+        failure: "unknown",
         finishedAt: 1,
         idempotencyKey: "secret-idempotency-key",
         kind: "deleteContact",
+        replayCount: 0,
         status: "failed",
-        workflowId: "secret-workflow-id",
+        workflowIds: ["secret-workflow-id"],
       });
       await ctx.db.insert("loopsWebhooks", {
         email: "technical@example.com",

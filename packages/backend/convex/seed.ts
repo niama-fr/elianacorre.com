@@ -30,13 +30,19 @@ export const init = zInternalMutation({
 
     const newsletterConsent = await getActiveNewsletterConsent(ctx);
     const newsletterConsentId =
-      newsletterConsent?._id ?? (await ctx.db.insert("legalTexts", { ...NEWSLETTER_CONSENT, publishedAt, publishedBy }));
+      newsletterConsent?.content === NEWSLETTER_CONSENT.content
+        ? newsletterConsent._id
+        : await ctx.db.insert("legalTexts", { ...NEWSLETTER_CONSENT, publishedAt, publishedBy });
 
     const privacyNotice = await getActivePrivacyNotice(ctx);
-    const privacyNoticeId = privacyNotice?._id ?? (await ctx.db.insert("legalTexts", { ...PRIVACY_NOTICE, publishedAt, publishedBy }));
+    const privacyNoticeId =
+      privacyNotice?.content === PRIVACY_NOTICE.content
+        ? privacyNotice._id
+        : await ctx.db.insert("legalTexts", { ...PRIVACY_NOTICE, publishedAt, publishedBy });
 
     const newsletterLegalBundle = await getActiveNewsletterLegalBundle(ctx);
-    if (!newsletterLegalBundle)
-      await ctx.db.insert("newsletterLegalBundles", { newsletterConsentId, privacyNoticeId, publishedAt, publishedBy });
+    const legalTextChanged =
+      newsletterLegalBundle?.newsletterConsentId !== newsletterConsentId || newsletterLegalBundle.privacyNoticeId !== privacyNoticeId;
+    if (legalTextChanged) await ctx.db.insert("newsletterLegalBundles", { newsletterConsentId, privacyNoticeId, publishedAt, publishedBy });
   },
 });

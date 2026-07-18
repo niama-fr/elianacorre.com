@@ -11,9 +11,9 @@ export const PRIVACY_NOTICE: LegalTexts["Create"] = {
   content: `Responsable du traitement
 
 Eliana Corré
-1A rue Gérard de Nerval
-97430 Trois Mares — La Réunion
-confidentialite@elianacorre.com
+107 chemin de ligne, Les Canots
+97427 Étang-Salé — La Réunion, France
+contact@elianacorre.com
 
 Données traitées
 
@@ -25,7 +25,7 @@ Ces données sont utilisées pour vérifier votre adresse, gérer votre inscript
 
 Destinataires
 
-Les données sont accessibles uniquement à Eliana Corré, aux personnes habilitées et aux prestataires nécessaires au fonctionnement du service, notamment Convex pour l’hébergement des données, Loops pour l’envoi des e-mails et Cloudflare pour l’hébergement et la protection du site. Elles ne sont ni vendues ni transmises à des partenaires publicitaires.
+Les données sont accessibles uniquement à Eliana Corré, aux personnes habilitées et aux prestataires nécessaires au fonctionnement du service : Convex pour l’hébergement des données et les traitements applicatifs, Loops pour la gestion des contacts et l’envoi des e-mails, Cloudflare pour l’hébergement, la protection du site, le DNS et le routage de contact@elianacorre.com, et Google pour la réception des messages adressés à cette boîte. Elles ne sont ni vendues ni transmises à des partenaires publicitaires.
 
 Durées de conservation
 
@@ -37,12 +37,12 @@ L’ouverture des e-mails n’est pas suivie. Les clics ne sont pas suivis dans 
 
 Vos droits
 
-Vous pouvez retirer votre consentement à tout moment grâce au lien de désinscription présent dans chaque lettre. Vous pouvez également demander l’accès, la rectification, l’effacement ou la limitation de vos données, ou vous opposer à certains traitements, en écrivant à confidentialite@elianacorre.com.
+Vous pouvez retirer votre consentement à tout moment grâce au lien de désinscription présent dans chaque lettre. Vous pouvez également demander l’accès, la rectification, l’effacement, la limitation ou la portabilité de vos données, ou vous opposer à certains traitements, en écrivant à contact@elianacorre.com.
 
 Vous pouvez introduire une réclamation auprès de la CNIL.
 
 Transferts internationaux
 
-Certains prestataires peuvent traiter des données hors de l’Espace économique européen. Lorsque cela se produit, ces transferts doivent être encadrés par un mécanisme reconnu par le RGPD.`,
+Certains prestataires et leurs sous-traitants peuvent traiter des données hors de l’Espace économique européen. Selon le prestataire et le pays concernés, ces transferts sont encadrés par une décision d’adéquation, des clauses contractuelles types approuvées par la Commission européenne ou une autre garantie reconnue par le RGPD. Les mécanismes effectivement applicables sont vérifiés et tenus à jour dans le registre interne des activités de traitement. Vous pouvez demander des informations complémentaires à contact@elianacorre.com.`,
   kind: "privacyNotice",
 };

@@ -3,6 +3,7 @@ import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
 import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
 import { createCapabilityToken, verifyCapabilityToken } from "@ec/domain/helpers/capabilities";
+import { classifyLoopsTaskFailure } from "@ec/domain/helpers/loops-tasks";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -151,7 +152,7 @@ describe("newsletter subscription", () => {
       hasRawLinkToken: false,
       profiles: [{ email: "admin@example.com" }, { email: "reader+carnet@example.com", role: "contact" }],
       subscriptions: [{ confirmedAt: null, unsubscribedAt: null }],
-      task: { kind: "sendConfirmationEmail", workflowId: "test-workflow-id" },
+      task: { kind: "sendConfirmationEmail", workflowIds: ["test-workflow-id"] },
     });
   });
 
@@ -689,6 +690,23 @@ describe("newsletter subscription", () => {
     await expect(verifyCapabilityToken({ secret: CAPABILITY_SECRET, token: token ?? "" })).resolves.toBe(task.newsConfirmationId);
   });
 
+  it("returns a terminal result for a permanent provider failure instead of retrying it", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    const send = vi.fn<typeof fetch>().mockResolvedValue(new Response("Invalid transactional ID", { status: 400 }));
+    vi.stubGlobal("fetch", send);
+    const convex = await createBackend();
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
+    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
+
+    await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).resolves.toStrictEqual({
+      failure: "validation",
+      status: "failed",
+    });
+    expect(send).toHaveBeenCalledOnce();
+  });
+
   it("retries a Loops confirmation task with one idempotency key and records its terminal time", async () => {
     vi.stubEnv("LOOPS_API_KEY", "test-key");
     vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
@@ -703,9 +721,8 @@ describe("newsletter subscription", () => {
     const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
     if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
 
-    await expect(convex.action(internal.loops.execute, { loopsTaskId: task._id })).rejects.toThrow(
-      "Loops service error. Please try again later."
-    );
+    const firstFailure = await convex.action(internal.loops.execute, { loopsTaskId: task._id }).catch((error: unknown) => error);
+    expect(classifyLoopsTaskFailure(firstFailure)).toBe("server");
     await convex.action(internal.loops.execute, { loopsTaskId: task._id });
     await convex.mutation(internal.loops.markTaskSucceeded, { loopsTaskId: task._id });
 
@@ -724,6 +741,43 @@ describe("newsletter subscription", () => {
       firstIdempotencyKeyType: "string",
       sameIdempotencyKey: true,
       status: "succeeded",
+    });
+  });
+
+  it("uses a new delivery idempotency key when an administrator replays a permanent failure", async () => {
+    vi.stubEnv("LOOPS_API_KEY", "test-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    vi.stubEnv("SITE_URL", "https://staging.elianacorre.com");
+    const send = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("Invalid transactional ID", { status: 400 }))
+      .mockResolvedValueOnce(Response.json({ success: true }));
+    vi.stubGlobal("fetch", send);
+    const convex = await createBackend();
+    await convex.mutation(api.newsletter.subscribe, createRequest());
+    const task = await convex.run(async (ctx) => await ctx.db.query("loopsTasks").unique());
+    if (!task || task.kind !== "sendConfirmationEmail") throw new Error("Confirmation task was not found");
+
+    const firstResult = await convex.action(internal.loops.execute, { loopsTaskId: task._id });
+    if (firstResult.status !== "failed") throw new Error("Confirmation task did not fail permanently");
+    await convex.mutation(internal.loops.markTaskFailed, { failure: firstResult.failure, loopsTaskId: task._id });
+    const asAdmin = await authenticateAdmin(convex);
+    await asAdmin.mutation(api.loops.replayFailedTask, { loopsTaskId: task._id });
+    await convex.action(internal.loops.execute, { loopsTaskId: task._id });
+
+    const replayedTask = await convex.run(async (ctx) => await ctx.db.get("loopsTasks", task._id));
+    const firstIdempotencyKey = new Headers(send.mock.calls[0]?.[1]?.headers).get("Idempotency-Key");
+    const replayIdempotencyKey = new Headers(send.mock.calls[1]?.[1]?.headers).get("Idempotency-Key");
+    expect({
+      businessIdempotencyKey: replayedTask?.idempotencyKey,
+      firstIdempotencyKey,
+      replayCount: replayedTask?.replayCount,
+      replayIdempotencyKey,
+    }).toStrictEqual({
+      businessIdempotencyKey: task.idempotencyKey,
+      firstIdempotencyKey: task.idempotencyKey,
+      replayCount: 1,
+      replayIdempotencyKey: `${task.idempotencyKey}:replay:1`,
     });
   });
 });

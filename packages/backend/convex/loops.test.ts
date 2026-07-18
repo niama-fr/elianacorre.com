@@ -1,17 +1,24 @@
 import { register as registerAggregate } from "@convex-dev/aggregate/test";
+import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
 import { register as registerLoops } from "@devwithbobby/loops/test";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { createIdentity } from "./test.auth";
 import { modules } from "./test.setup";
 
 vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
   const actual = await importOriginal();
-  const workflowId = "test-workflow-id" as Awaited<ReturnType<typeof actual.start>>;
-  return { ...actual, start: vi.fn<typeof actual.start>().mockResolvedValue(workflowId) } satisfies typeof actual;
+  let workflowNumber = 0;
+  // oxlint-disable-next-line eslint/require-await -- The mock preserves Workflow's asynchronous interface.
+  const start = vi.fn<typeof actual.start>().mockImplementation(async () => {
+    workflowNumber += 1;
+    return `test-workflow-${workflowNumber}` as Awaited<ReturnType<typeof actual.start>>;
+  });
+  return { ...actual, start } satisfies typeof actual;
 });
 
 const loopsModules = import.meta.glob("../node_modules/@devwithbobby/loops/src/component/**/*.ts");
@@ -27,10 +34,72 @@ const signWebhook = async (id: string, timestamp: string, body: string) => {
 
 const createBackend = () => {
   const convex = convexTest(schema, modules);
+  registerBetterAuth(convex);
   registerLoops(convex, "loops", loopsModules);
   registerAggregate(convex, "loops/contactAggregate");
   return convex;
 };
+
+describe("Loops delivery administration", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lets only an administrator inspect and replay a terminal failure without changing its business idempotency key", async () => {
+    const convex = createBackend();
+    const taskId = await convex.run(async (ctx) => {
+      const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
+      return await ctx.db.insert("loopsTasks", {
+        acknowledgedAt: null,
+        failure: null,
+        finishedAt: null,
+        idempotencyKey: "stable-key",
+        kind: "syncContact",
+        profileId,
+        replayCount: 0,
+        status: "pending",
+        subscribed: true,
+        workflowIds: ["workflow-original"],
+      });
+    });
+    await convex.mutation(internal.loops.markTaskFailed, {
+      failure: "server",
+      loopsTaskId: taskId,
+    });
+    const asAdmin = await createIdentity(convex, "admin");
+    const asMember = await createIdentity(convex, "member");
+
+    await expect(convex.query(api.loops.listFailedTasks, {})).rejects.toThrow("Unauthenticated");
+    await expect(asMember.query(api.loops.listFailedTasks, {})).rejects.toThrow("Unauthorized");
+    await expect(asAdmin.query(api.loops.listFailedTasks, {})).resolves.toMatchObject([
+      {
+        _id: taskId,
+        acknowledgedAt: null,
+        failure: "server",
+        replayCount: 0,
+        workflowIds: ["workflow-original"],
+      },
+    ]);
+
+    await asAdmin.mutation(api.loops.acknowledgeFailedTask, { loopsTaskId: taskId });
+    const [acknowledgedTask] = await asAdmin.query(api.loops.listFailedTasks, {});
+    expect({ acknowledged: Number.isFinite(acknowledgedTask?.acknowledgedAt), taskId: acknowledgedTask?._id }).toStrictEqual({
+      acknowledged: true,
+      taskId,
+    });
+
+    await asAdmin.mutation(api.loops.replayFailedTask, { loopsTaskId: taskId });
+
+    const replayed = await convex.run(async (ctx) => await ctx.db.get(taskId));
+    expect(replayed).toMatchObject({
+      acknowledgedAt: null,
+      failure: null,
+      finishedAt: null,
+      idempotencyKey: "stable-key",
+      replayCount: 1,
+      status: "pending",
+      workflowIds: ["test-workflow-1", "workflow-original"],
+    });
+  });
+});
 
 describe("Loops webhooks", () => {
   afterEach(() => vi.unstubAllEnvs());

@@ -1,26 +1,75 @@
-import { isLoopsTaskPending } from "@ec/domain/helpers/loops-tasks";
-import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
+import {
+  classifyLoopsTaskFailure,
+  getLoopsTaskRetryPolicy,
+  isLoopsTaskPending,
+  isLoopsTaskRetryable,
+} from "@ec/domain/helpers/loops-tasks";
+import { zLoopsTaskFailure, type LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import { zLoopsWebhookCreate } from "@ec/domain/schemas/loops-webhooks";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { zid } from "convex-helpers/server/zod4";
 import { ConvexError, v } from "convex/values";
-import z from "zod";
 
-import { executeLoopsTask, processLoopsWebhook } from "../business/loops";
-import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded } from "../data/loops-tasks";
+import { acknowledgeFailedLoopsTask, executeLoopsTask, processLoopsWebhook, replayFailedLoopsTask } from "../business/loops";
+import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded, takeFailedLoopsTasks } from "../data/loops-tasks";
 import { getProfile } from "../data/profiles";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
-import { zInternalAction, zInternalMutation, zInternalQuery } from "./zod";
+import { zAdminMutation, zAdminQuery, zInternalAction, zInternalMutation, zInternalQuery } from "./zod";
+
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
+const FAILED_TASK_LIMIT = 50;
+
+// ADMIN QUERIES ---------------------------------------------------------------------------------------------------------------------------
+export const listFailedTasks = zAdminQuery({
+  args: {},
+  handler: async (ctx) => {
+    const tasks = await takeFailedLoopsTasks(ctx, FAILED_TASK_LIMIT);
+    return tasks.map(({ _creationTime, _id, acknowledgedAt, failure, finishedAt, kind, replayCount, workflowIds }) => ({
+      _creationTime,
+      _id,
+      acknowledgedAt,
+      failure,
+      finishedAt,
+      kind,
+      replayCount,
+      workflowIds,
+    }));
+  },
+});
+
+// ADMIN MUTATIONS -------------------------------------------------------------------------------------------------------------------------
+export const acknowledgeFailedTask = zAdminMutation({
+  args: { loopsTaskId: zid("loopsTasks") },
+  handler: async (ctx, { loopsTaskId }) => {
+    await acknowledgeFailedLoopsTask(ctx, loopsTaskId, Date.now());
+  },
+});
+
+export const replayFailedTask = zAdminMutation({
+  args: { loopsTaskId: zid("loopsTasks") },
+  handler: async (ctx, { loopsTaskId }): Promise<string> => {
+    const task = await getLoopsTask(ctx, loopsTaskId);
+    if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+    return await replayFailedLoopsTask(ctx, task);
+  },
+});
 
 // WORKFLOWS -------------------------------------------------------------------------------------------------------------------------------
 export const run = workflow.define({ args: { loopsTaskId: v.id("loopsTasks") } }).handler(async (step, { loopsTaskId }) => {
   try {
-    await step.runAction(internal.loops.execute, { loopsTaskId }, { name: "execute Loops task", retry: true });
-    await step.runMutation(internal.loops.markTaskSucceeded, { loopsTaskId }, { name: "mark Loops task as succeeded" });
+    const kind = await step.runQuery(internal.loops.getTaskKind, { loopsTaskId }, { name: "get Loops task retry policy" });
+    const { failure, status } = await step.runAction(
+      internal.loops.execute,
+      { loopsTaskId },
+      { name: "execute Loops task", retry: getLoopsTaskRetryPolicy(kind) }
+    );
+    await (status === "failed"
+      ? step.runMutation(internal.loops.markTaskFailed, { failure, loopsTaskId }, { name: "alert Loops task failure" })
+      : step.runMutation(internal.loops.markTaskSucceeded, { loopsTaskId }, { name: "mark Loops task as succeeded" }));
   } catch (unknownError) {
-    const error = unknownError instanceof Error ? unknownError.message : "Unknown Loops workflow error";
-    await step.runMutation(internal.loops.markTaskFailed, { error, loopsTaskId }, { name: "mark Loops task as failed" });
+    const failure = classifyLoopsTaskFailure(unknownError);
+    await step.runMutation(internal.loops.markTaskFailed, { failure, loopsTaskId }, { name: "alert Loops task failure" });
   }
 });
 
@@ -42,13 +91,22 @@ export const getExecutionPayload = zInternalQuery({
   },
 });
 
+export const getTaskKind = zInternalQuery({
+  args: { loopsTaskId: zid("loopsTasks") },
+  handler: async (ctx, { loopsTaskId }): Promise<LoopsTasks["Kind"]> => {
+    const task = await getLoopsTask(ctx, loopsTaskId);
+    if (!task) throw new ConvexError("UNKNOWN_LOOPS_TASK");
+    return task.kind;
+  },
+});
+
 // INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
 export const markTaskFailed = zInternalMutation({
-  args: { error: z.string(), loopsTaskId: zid("loopsTasks") },
-  handler: async (ctx, { error, loopsTaskId }) => {
+  args: { failure: zLoopsTaskFailure, loopsTaskId: zid("loopsTasks") },
+  handler: async (ctx, { failure, loopsTaskId }) => {
     const task = await getLoopsTask(ctx, loopsTaskId);
     if (!task || !isLoopsTaskPending(task)) return;
-    await markLoopsTaskFailed(ctx, task, { error, now: Date.now() });
+    await markLoopsTaskFailed(ctx, task, { failure, now: Date.now() });
   },
 });
 
@@ -71,8 +129,18 @@ export const processWebhook = zInternalMutation({
 // INTERNAL ACTIONS ------------------------------------------------------------------------------------------------------------------------
 export const execute = zInternalAction({
   args: { loopsTaskId: zid("loopsTasks") },
-  handler: async (ctx, { loopsTaskId }): Promise<void> => {
+  handler: async (ctx, { loopsTaskId }): Promise<ExecuteResult> => {
     const payload = await ctx.runQuery(internal.loops.getExecutionPayload, { loopsTaskId });
-    if (payload) await executeLoopsTask(ctx, payload);
+    if (!payload) return { failure: null, status: "succeeded" };
+
+    try {
+      await executeLoopsTask(ctx, payload);
+      return { failure: null, status: "succeeded" };
+    } catch (error) {
+      const failure = classifyLoopsTaskFailure(error);
+      if (isLoopsTaskRetryable(failure)) throw error;
+      return { failure, status: "failed" };
+    }
   },
 });
+type ExecuteResult = Pick<LoopsTasks["FailedFields"], "failure" | "status"> | Pick<LoopsTasks["SucceededFields"], "failure" | "status">;

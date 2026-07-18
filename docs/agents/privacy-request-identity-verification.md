@@ -6,7 +6,7 @@ This procedure lets an authorized Content Administrator verify that a person mak
 
 ## Prerequisites
 
-- The request was received at `confidentialite@elianacorre.com`.
+- The request was received at `contact@elianacorre.com`, routed to the approved destination mailbox.
 - The operator is signed in with a Google Workspace Account explicitly authorized as a Content Administrator in Convex.
 - The request identifies one canonical email address: trimmed and lowercase, without provider-specific rewriting of dots or `+tags`.
 - The production administration area and its privacy-operation audit history are available.
@@ -15,13 +15,13 @@ Only authorized Content Administrators may perform this procedure. Access to the
 
 ## Canonical systems
 
-| Information                                                                    | Canonical system                          |
-| ------------------------------------------------------------------------------ | ----------------------------------------- |
-| Request correspondence and temporary verification material                     | `confidentialite@elianacorre.com` mailbox |
-| Request type, verification outcome, administrator, time, and operation outcome | Convex privacy-operation audit history    |
-| Subscriber, consent, delivery, e-book, and suppression state                   | Convex                                    |
-| Delivery-provider projection                                                   | Loops, reconciled from Convex             |
-| Actionable follow-up work                                                      | Linear                                    |
+| Information | Canonical system |
+| --- | --- |
+| Request correspondence and temporary verification material | `contact@elianacorre.com` routed to `eliana.m.corre@gmail.com` |
+| Request type, verification outcome, administrator, time, and operation outcome | Convex privacy-operation audit history |
+| Subscriber, consent, delivery, e-book, and suppression state | Convex |
+| Delivery-provider projection | Loops, reconciled from Convex |
+| Actionable follow-up work | Linear |
 
 Do not copy identity documents, mailbox contents, or exported subscriber data into Linear, GitHub, repository files, Obsidian, application logs, or general chat systems.
 
