@@ -118,10 +118,11 @@ La procédure de configuration détaillée et de bascule temporaire se trouve da
 ### Vérification minimale
 
 1. Confirmer l’URL `https://<deployment>.convex.site/loops/webhook`.
-2. Activer uniquement `email.hardBounced`, `email.spamReported` et `email.unsubscribed`.
+2. Activer uniquement `email.hardBounced`, `email.resubscribed`, `email.spamReported` et `email.unsubscribed`.
 3. Vérifier qu’une signature absente ou invalide produit HTTP 401, un événement non pris en charge HTTP 400 et un événement valide HTTP 204.
 4. Rejouer deux fois le même `Webhook-Id` et confirmer une seule modification métier.
-5. Vérifier que rebond et plainte restreignent la livraison sans réécrire le consentement historique et qu’une désinscription préserve le droit à l’e-book.
+5. Vérifier que rebond et plainte restreignent la livraison sans réécrire le consentement historique, qu’une désinscription préserve le droit à l’e-book et qu’une réinscription depuis le centre de préférences crée une nouvelle période sans modifier la précédente.
+6. Pour une adresse restreinte, vérifier que la réinscription conserve la restriction et rétablit `subscribed: false` dans Loops ; pour une adresse ordinaire, vérifier une seule synchronisation avec `subscribed: true`.
 
 ### Récupération
 

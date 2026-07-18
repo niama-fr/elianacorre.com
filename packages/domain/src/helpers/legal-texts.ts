@@ -21,7 +21,7 @@ Nous traitons votre adresse e-mail, votre prénom lorsque vous choisissez de le 
 
 Finalités et base légale
 
-Ces données sont utilisées pour vérifier votre adresse, gérer votre inscription, vous envoyer la lettre d’Eliana Corré, délivrer l’e-book de bienvenue et conserver la preuve de votre consentement. L’envoi de la lettre repose sur votre consentement.
+Ces données sont utilisées pour vérifier votre adresse, gérer votre inscription, vous envoyer la lettre d’Eliana Corré, délivrer l’e-book de bienvenue et conserver la preuve de votre consentement. Une réinscription explicite depuis le centre de préférences d’un e-mail est enregistrée comme une nouvelle période de consentement. L’envoi de la lettre repose sur votre consentement.
 
 Destinataires
 

@@ -20,7 +20,15 @@ import {
   setLoopsTaskAcknowledgedAt,
 } from "../data/loops-tasks";
 import { createLoopsWebhook, getLoopsWebhookById } from "../data/loops-webhooks";
-import { getCurrentNewsSubscription, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
+import { getActiveNewsRestriction, getLatestNewsRestriction } from "../data/news-restrictions";
+import {
+  createNewsSubscription,
+  getCurrentNewsSubscription,
+  listNewsSubscriptionsNewestFirst,
+  markNewsSubscriptionConfirmed,
+  markNewsSubscriptionUnsubscribed,
+} from "../data/news-subscriptions";
+import { requireNewsletterLegalBundleAt } from "../data/newsletter-legal-bundles";
 import { getProfileIdByEmail } from "../data/profiles";
 import { applyEmailDeliveryRestriction } from "./email-delivery-restrictions";
 
@@ -104,6 +112,24 @@ export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messa
     const subscription = await getCurrentNewsSubscription(ctx, profileId);
     if (!subscription || occurredAt < subscription.requestedAt) return;
     await markNewsSubscriptionUnsubscribed(ctx, subscription._id, occurredAt);
+  } else if (kind === "email.resubscribed") {
+    const subscription = await getCurrentNewsSubscription(ctx, profileId);
+    if (subscription) return;
+    const [periods, latestRestriction] = await Promise.all([
+      listNewsSubscriptionsNewestFirst(ctx, profileId),
+      getLatestNewsRestriction(ctx, profileId),
+    ]);
+    let latestConsentEventAt = 0;
+    for (const period of periods)
+      latestConsentEventAt = Math.max(latestConsentEventAt, period.requestedAt, period.confirmedAt ?? 0, period.unsubscribedAt ?? 0);
+    const latestRestrictionEventAt = latestRestriction ? Math.max(latestRestriction.lastOccurredAt, latestRestriction.resolvedAt ?? 0) : 0;
+    if (occurredAt <= Math.max(latestConsentEventAt, latestRestrictionEventAt)) return;
+    const { _id: legalBundleId } = await requireNewsletterLegalBundleAt(ctx, occurredAt);
+    const subscriptionId = await createNewsSubscription(ctx, { legalBundleId, profileId, requestedAt: occurredAt });
+    await markNewsSubscriptionConfirmed(ctx, subscriptionId, { confirmedFrom: "loops", now: occurredAt });
+    const restriction = await getActiveNewsRestriction(ctx, profileId);
+    await enqueueSyncContactForResubscription(ctx, { profileId, subscribed: restriction === null, webhookId: id });
+    return;
   } else {
     const reason = kind === "email.hardBounced" ? "permanentBounce" : "spamComplaint";
     await applyEmailDeliveryRestriction(ctx, { occurredAt, profileId, reason });
@@ -125,6 +151,16 @@ async function enqueueSyncContactForUnsubscription(ctx: MutationCtx, { profileId
   });
 }
 type ForUnsubscriptionOpts = { profileId: Id<"profiles">; webhookId: Id<"loopsWebhooks"> };
+
+async function enqueueSyncContactForResubscription(ctx: MutationCtx, payload: ForResubscriptionOpts) {
+  const { profileId, subscribed, webhookId } = payload;
+  return await enqueueSyncContact(ctx, {
+    idempotencyKey: `loops-webhook-contact-resubscription:${webhookId}`,
+    profileId,
+    subscribed,
+  });
+}
+type ForResubscriptionOpts = ForUnsubscriptionOpts & { subscribed: boolean };
 
 async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
   const loopsTaskId = await createLoopsTask(ctx, payload);

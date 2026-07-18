@@ -1,6 +1,7 @@
 import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
+import type { WithNow } from "@ec/domain/schemas/utils";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getNewsSubscription = async (ctx: QueryCtx, id: Id<"newsSubscriptions">) => await ctx.db.get("newsSubscriptions", id);
@@ -42,9 +43,10 @@ export const patchNewsSubscription = async (ctx: MutationCtx, id: Id<"newsSubscr
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markNewsSubscriptionConfirmed = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, now: number) => {
-  await patchNewsSubscription(ctx, id, { confirmedAt: now });
+export const markNewsSubscriptionConfirmed = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, { confirmedFrom, now }: Opts) => {
+  await patchNewsSubscription(ctx, id, { confirmedAt: now, confirmedFrom });
 };
+type Opts = WithNow<{ confirmedFrom: NewsSubscriptions["ConfirmedFrom"] }>;
 
 export const markNewsSubscriptionUnsubscribed = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, now: number) => {
   await patchNewsSubscription(ctx, id, { unsubscribedAt: now });

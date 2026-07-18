@@ -2,9 +2,14 @@ import { zCanonicalEmail, zCanonicalEmailValue, zDocCommon } from "@ec/domain/sc
 import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
+// CONFIRMED FROM --------------------------------------------------------------------------------------------------------------------------
+const confirmedFrom = ["email", "loops"] as const;
+export const zNewsSubscriptionConfirmedFrom = z.literal(confirmedFrom);
+
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zNewsSubscriptionFields = z.object({
   confirmedAt: z.number().nullable(),
+  confirmedFrom: zNewsSubscriptionConfirmedFrom.optional(),
   legalBundleId: zid("newsletterLegalBundles"),
   profileId: zid("profiles"),
   requestedAt: z.number(),
@@ -36,6 +41,7 @@ export const zNewsSubscriptionUpsert = z.object({
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsSubscriptions = {
+  ConfirmedFrom: z.infer<typeof zNewsSubscriptionConfirmedFrom>;
   Create: z.infer<typeof zNewsSubscriptionCreate>;
   Doc: z.infer<typeof zNewsSubscriptionDoc>;
   Fields: z.infer<typeof zNewsSubscriptionFields>;
