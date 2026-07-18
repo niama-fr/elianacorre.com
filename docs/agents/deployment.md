@@ -109,7 +109,7 @@ Configure the selected Loops account under **Settings → Webhooks** with its ma
 https://<deployment>.convex.site/loops/webhook
 ```
 
-Enable `email.hardBounced`, `email.spamReported`, and `email.unsubscribed`. Copy the generated signing secret directly into that deployment's `LOOPS_WEBHOOK_SECRET` environment variable; never paste it into source control, task comments, or command arguments. Replay signed non-production fixtures for the enabled events. Loops' `testing.testEvent` is intentionally unsupported and returns HTTP 400; authentic enabled events return HTTP 204, missing or invalid signatures return 401, and malformed or unsupported payloads return 400.
+Enable `email.hardBounced`, `email.resubscribed`, `email.spamReported`, and `email.unsubscribed`. Copy the generated signing secret directly into that deployment's `LOOPS_WEBHOOK_SECRET` environment variable; never paste it into source control, task comments, or command arguments. Replay signed non-production fixtures for the enabled events. Loops' `testing.testEvent` is intentionally unsupported and returns HTTP 400; authentic enabled events return HTTP 204, missing or invalid signatures return 401, and malformed or unsupported payloads return 400.
 
 ### Temporary non-production endpoint switch
 
@@ -117,7 +117,7 @@ Use this only when a non-production deployment must receive a real Loops event. 
 
 1. In Loops **Settings → Webhooks**, record the current production URL without copying the signing secret anywhere new.
 2. Confirm the target non-production Convex deployment already has the matching `LOOPS_WEBHOOK_SECRET` set through the Convex dashboard.
-3. Replace the endpoint URL with `https://<non-production-deployment>.convex.site/loops/webhook`, enable only the three events above, and wait for Loops to apply the change.
+3. Replace the endpoint URL with `https://<non-production-deployment>.convex.site/loops/webhook`, enable only the four events above, and wait for Loops to apply the change.
 4. Send an event to an allowlisted non-production address and confirm its webhook receipt, newsletter state, and Loops reconciliation in that deployment.
 5. Restore the recorded production URL immediately. Confirm that Loops shows the production URL and the endpoint is enabled again.
 
@@ -125,7 +125,7 @@ If the test fails or is interrupted, restore the production URL first. Loops ret
 
 For every campaign and workflow, preview Loops' automatic footer and verify that its visible unsubscribe link reads **« Se désabonner »** and completes without an Account or a second confirmation. This wording is provider configuration, not application source code.
 
-Convex stores `Webhook-Id` for idempotency. A permanent bounce or complaint suppresses campaign delivery without changing historical consent; unsubscribe ends the current consent period without deleting e-book grants. The application then queues Loops contact unsubscription so Convex remains authoritative. To recover from a wrong secret, replace only the affected deployment's `LOOPS_WEBHOOK_SECRET` and resend the event from Loops' webhook history. If the endpoint URL is wrong, correct it in Loops and use the same history view to retry. Loops retains webhook history for 30 days.
+Convex stores `Webhook-Id` for idempotency. A permanent bounce or complaint suppresses campaign delivery without changing historical consent; unsubscribe ends the current consent period without deleting e-book grants. An authenticated preference-center resubscription creates a new consent period using the active legal bundle and records `loopsPreferenceCenter` as durable confirmation evidence. An active bounce or complaint restriction remains in force and causes Convex to project the contact back to unsubscribed. The application queues the corresponding Loops contact reconciliation so Convex remains authoritative. To recover from a wrong secret, replace only the affected deployment's `LOOPS_WEBHOOK_SECRET` and resend the event from Loops' webhook history. If the endpoint URL is wrong, correct it in Loops and use the same history view to retry. Loops retains webhook history for 30 days.
 
 Update this section whenever enabled events, the endpoint path, signature contract, or recovery procedure changes.
 

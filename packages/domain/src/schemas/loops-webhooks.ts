@@ -2,7 +2,7 @@ import { zCanonicalEmail, zDocCommon } from "@ec/domain/schemas/utils";
 import z from "zod";
 
 // NAME ------------------------------------------------------------------------------------------------------------------------------------
-const kinds = ["email.hardBounced", "email.spamReported", "email.unsubscribed"] as const;
+const kinds = ["email.hardBounced", "email.resubscribed", "email.spamReported", "email.unsubscribed"] as const;
 export const zLoopsWebhookKind = z.literal(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
