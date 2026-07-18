@@ -43,13 +43,10 @@ export const patchNewsSubscription = async (ctx: MutationCtx, id: Id<"newsSubscr
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markNewsSubscriptionConfirmed = async (
-  ctx: MutationCtx,
-  id: Id<"newsSubscriptions">,
-  { confirmedFrom, now }: WithNow<{ confirmedFrom: NonNullable<NewsSubscriptions["Fields"]["confirmedFrom"]> }>
-) => {
+export const markNewsSubscriptionConfirmed = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, { confirmedFrom, now }: Opts) => {
   await patchNewsSubscription(ctx, id, { confirmedAt: now, confirmedFrom });
 };
+type Opts = WithNow<{ confirmedFrom: NewsSubscriptions["ConfirmedFrom"] }>;
 
 export const markNewsSubscriptionUnsubscribed = async (ctx: MutationCtx, id: Id<"newsSubscriptions">, now: number) => {
   await patchNewsSubscription(ctx, id, { unsubscribedAt: now });
