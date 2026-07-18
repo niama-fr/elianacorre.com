@@ -227,6 +227,7 @@ describe("Loops webhooks", () => {
       });
       const insertedSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2,
+        confirmedFrom: "email",
         legalBundleId,
         profileId: insertedProfileId,
         requestedAt: 1,
@@ -276,6 +277,7 @@ describe("Loops webhooks", () => {
       if (previous === null) throw new Error("Previous subscription was not found");
       return await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20_000,
+        confirmedFrom: "email",
         legalBundleId: previous.legalBundleId,
         profileId,
         requestedAt: 20_000,
@@ -332,6 +334,7 @@ describe("Loops webhooks", () => {
       });
       const insertedHistoricalSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2000,
+        confirmedFrom: "email",
         legalBundleId: previousLegalBundleId,
         profileId: insertedProfileId,
         requestedAt: 1000,
@@ -416,6 +419,7 @@ describe("Loops webhooks", () => {
         });
         await ctx.db.insert("newsSubscriptions", {
           confirmedAt: 1000,
+          confirmedFrom: "email",
           legalBundleId,
           profileId: insertedProfileId,
           requestedAt: 1000,
@@ -480,6 +484,7 @@ describe("Loops webhooks", () => {
       });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20_000,
+        confirmedFrom: "email",
         legalBundleId,
         profileId,
         requestedAt: 15_000,
