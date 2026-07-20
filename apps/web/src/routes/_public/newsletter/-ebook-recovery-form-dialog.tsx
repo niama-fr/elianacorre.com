@@ -80,7 +80,7 @@ export function EbookRecoveryFormDialog() {
               )}
             </form.AppField>
             <DialogFooter>
-              <form.Submit label="Recevoir un nouveau lien" icon="icon-[tabler--book-download]" className={{ base: "max-w-xs" }} />
+              <form.Submit label="Recevoir un nouveau lien" icon="icon-[tabler--book-download]" className="max-w-xs" />
             </DialogFooter>
             <Alert className={EBOOK_RECOVERY_FORM_DIALOG.alert()}>
               <AlertDescription className={EBOOK_RECOVERY_FORM_DIALOG.alertDescription()}>

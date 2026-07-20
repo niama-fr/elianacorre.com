@@ -9,30 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ConnexionRouteImport } from './routes/connexion'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PublicRouteImport } from './routes/_public'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
-import { Route as AdminPrivacyRouteImport } from './routes/admin/privacy'
-import { Route as AdminEmailOperationsRouteImport } from './routes/admin/email-operations'
-import { Route as AdminEbooksRouteImport } from './routes/admin/ebooks'
-import { Route as PublicOeuvresRouteImport } from './routes/_public/oeuvres'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
-import { Route as PublicQuiSuisJeIndexRouteImport } from './routes/_public/qui-suis-je/index'
-import { Route as PublicOeuvresIndexRouteImport } from './routes/_public/oeuvres/index'
-import { Route as PublicMentionsLegalesIndexRouteImport } from './routes/_public/mentions-legales/index'
-import { Route as PublicContactIndexRouteImport } from './routes/_public/contact/index'
-import { Route as PublicConfidentialiteIndexRouteImport } from './routes/_public/confidentialite/index'
+import { Route as PublicOeuvresRouteImport } from './routes/_public/oeuvres'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminEbooksRouteImport } from './routes/admin/ebooks'
+import { Route as AdminEmailOperationsRouteImport } from './routes/admin/email-operations'
+import { Route as AdminPrivacyRouteImport } from './routes/admin/privacy'
 import { Route as PublicCarnetsDeVoyageIndexRouteImport } from './routes/_public/carnets-de-voyage/index'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as PublicOeuvresSlugRouteImport } from './routes/_public/oeuvres/$slug'
-import { Route as PublicNewsletterEbookRouteImport } from './routes/_public/newsletter/ebook'
+import { Route as PublicConfidentialiteIndexRouteImport } from './routes/_public/confidentialite/index'
+import { Route as PublicContactIndexRouteImport } from './routes/_public/contact/index'
+import { Route as PublicMentionsLegalesIndexRouteImport } from './routes/_public/mentions-legales/index'
 import { Route as PublicNewsletterConfirmationRouteImport } from './routes/_public/newsletter/confirmation'
+import { Route as PublicNewsletterEbookRouteImport } from './routes/_public/newsletter/ebook'
+import { Route as PublicOeuvresIndexRouteImport } from './routes/_public/oeuvres/index'
+import { Route as PublicOeuvresSlugRouteImport } from './routes/_public/oeuvres/$slug'
+import { Route as PublicQuiSuisJeIndexRouteImport } from './routes/_public/qui-suis-je/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
-const ConnexionRoute = ConnexionRouteImport.update({
-  id: '/connexion',
-  path: '/connexion',
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -40,38 +39,14 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicRoute = PublicRouteImport.update({
-  id: '/_public',
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
 } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => PublicRoute,
-} as any)
-const AdminPrivacyRoute = AdminPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEmailOperationsRoute = AdminEmailOperationsRouteImport.update({
-  id: '/email-operations',
-  path: '/email-operations',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEbooksRoute = AdminEbooksRouteImport.update({
-  id: '/ebooks',
-  path: '/ebooks',
-  getParentRoute: () => AdminRoute,
-} as any)
-const PublicOeuvresRoute = PublicOeuvresRouteImport.update({
-  id: '/oeuvres',
-  path: '/oeuvres',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicSplatRoute = PublicSplatRouteImport.update({
@@ -79,20 +54,41 @@ const PublicSplatRoute = PublicSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicQuiSuisJeIndexRoute = PublicQuiSuisJeIndexRouteImport.update({
-  id: '/qui-suis-je/',
-  path: '/qui-suis-je/',
+const PublicOeuvresRoute = PublicOeuvresRouteImport.update({
+  id: '/oeuvres',
+  path: '/oeuvres',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicOeuvresIndexRoute = PublicOeuvresIndexRouteImport.update({
+const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => PublicOeuvresRoute,
+  getParentRoute: () => AdminRoute,
 } as any)
-const PublicMentionsLegalesIndexRoute =
-  PublicMentionsLegalesIndexRouteImport.update({
-    id: '/mentions-legales/',
-    path: '/mentions-legales/',
+const AdminEbooksRoute = AdminEbooksRouteImport.update({
+  id: '/ebooks',
+  path: '/ebooks',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmailOperationsRoute = AdminEmailOperationsRouteImport.update({
+  id: '/email-operations',
+  path: '/email-operations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPrivacyRoute = AdminPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => AdminRoute,
+} as any)
+const PublicCarnetsDeVoyageIndexRoute =
+  PublicCarnetsDeVoyageIndexRouteImport.update({
+    id: '/carnets-de-voyage/',
+    path: '/carnets-de-voyage/',
+    getParentRoute: () => PublicRoute,
+  } as any)
+const PublicConfidentialiteIndexRoute =
+  PublicConfidentialiteIndexRouteImport.update({
+    id: '/confidentialite/',
+    path: '/confidentialite/',
     getParentRoute: () => PublicRoute,
   } as any)
 const PublicContactIndexRoute = PublicContactIndexRouteImport.update({
@@ -100,39 +96,43 @@ const PublicContactIndexRoute = PublicContactIndexRouteImport.update({
   path: '/contact/',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicConfidentialiteIndexRoute =
-  PublicConfidentialiteIndexRouteImport.update({
-    id: '/confidentialite/',
-    path: '/confidentialite/',
+const PublicMentionsLegalesIndexRoute =
+  PublicMentionsLegalesIndexRouteImport.update({
+    id: '/mentions-legales/',
+    path: '/mentions-legales/',
     getParentRoute: () => PublicRoute,
   } as any)
-const PublicCarnetsDeVoyageIndexRoute =
-  PublicCarnetsDeVoyageIndexRouteImport.update({
-    id: '/carnets-de-voyage/',
-    path: '/carnets-de-voyage/',
-    getParentRoute: () => PublicRoute,
-  } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PublicOeuvresSlugRoute = PublicOeuvresSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => PublicOeuvresRoute,
-} as any)
-const PublicNewsletterEbookRoute = PublicNewsletterEbookRouteImport.update({
-  id: '/newsletter/ebook',
-  path: '/newsletter/ebook',
-  getParentRoute: () => PublicRoute,
-} as any)
 const PublicNewsletterConfirmationRoute =
   PublicNewsletterConfirmationRouteImport.update({
     id: '/newsletter/confirmation',
     path: '/newsletter/confirmation',
     getParentRoute: () => PublicRoute,
   } as any)
+const PublicNewsletterEbookRoute = PublicNewsletterEbookRouteImport.update({
+  id: '/newsletter/ebook',
+  path: '/newsletter/ebook',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicOeuvresIndexRoute = PublicOeuvresIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PublicOeuvresRoute,
+} as any)
+const PublicOeuvresSlugRoute = PublicOeuvresSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PublicOeuvresRoute,
+} as any)
+const PublicQuiSuisJeIndexRoute = PublicQuiSuisJeIndexRouteImport.update({
+  id: '/qui-suis-je/',
+  path: '/qui-suis-je/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -271,11 +271,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/connexion': {
-      id: '/connexion'
-      path: '/connexion'
-      fullPath: '/connexion'
-      preLoaderRoute: typeof ConnexionRouteImport
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -285,53 +285,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_public': {
-      id: '/_public'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PublicRouteImport
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
     }
     '/_public/': {
       id: '/_public/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
-      parentRoute: typeof PublicRoute
-    }
-    '/admin/privacy': {
-      id: '/admin/privacy'
-      path: '/privacy'
-      fullPath: '/admin/privacy'
-      preLoaderRoute: typeof AdminPrivacyRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/email-operations': {
-      id: '/admin/email-operations'
-      path: '/email-operations'
-      fullPath: '/admin/email-operations'
-      preLoaderRoute: typeof AdminEmailOperationsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/ebooks': {
-      id: '/admin/ebooks'
-      path: '/ebooks'
-      fullPath: '/admin/ebooks'
-      preLoaderRoute: typeof AdminEbooksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_public/oeuvres': {
-      id: '/_public/oeuvres'
-      path: '/oeuvres'
-      fullPath: '/oeuvres'
-      preLoaderRoute: typeof PublicOeuvresRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/$': {
@@ -341,32 +306,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicSplatRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/qui-suis-je/': {
-      id: '/_public/qui-suis-je/'
-      path: '/qui-suis-je'
-      fullPath: '/qui-suis-je/'
-      preLoaderRoute: typeof PublicQuiSuisJeIndexRouteImport
+    '/_public/oeuvres': {
+      id: '/_public/oeuvres'
+      path: '/oeuvres'
+      fullPath: '/oeuvres'
+      preLoaderRoute: typeof PublicOeuvresRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/oeuvres/': {
-      id: '/_public/oeuvres/'
+    '/admin/': {
+      id: '/admin/'
       path: '/'
-      fullPath: '/oeuvres/'
-      preLoaderRoute: typeof PublicOeuvresIndexRouteImport
-      parentRoute: typeof PublicOeuvresRoute
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/_public/mentions-legales/': {
-      id: '/_public/mentions-legales/'
-      path: '/mentions-legales'
-      fullPath: '/mentions-legales/'
-      preLoaderRoute: typeof PublicMentionsLegalesIndexRouteImport
-      parentRoute: typeof PublicRoute
+    '/admin/ebooks': {
+      id: '/admin/ebooks'
+      path: '/ebooks'
+      fullPath: '/admin/ebooks'
+      preLoaderRoute: typeof AdminEbooksRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/_public/contact/': {
-      id: '/_public/contact/'
-      path: '/contact'
-      fullPath: '/contact/'
-      preLoaderRoute: typeof PublicContactIndexRouteImport
+    '/admin/email-operations': {
+      id: '/admin/email-operations'
+      path: '/email-operations'
+      fullPath: '/admin/email-operations'
+      preLoaderRoute: typeof AdminEmailOperationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/privacy': {
+      id: '/admin/privacy'
+      path: '/privacy'
+      fullPath: '/admin/privacy'
+      preLoaderRoute: typeof AdminPrivacyRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_public/carnets-de-voyage/': {
+      id: '/_public/carnets-de-voyage/'
+      path: '/carnets-de-voyage'
+      fullPath: '/carnets-de-voyage/'
+      preLoaderRoute: typeof PublicCarnetsDeVoyageIndexRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/confidentialite/': {
@@ -376,32 +355,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicConfidentialiteIndexRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/carnets-de-voyage/': {
-      id: '/_public/carnets-de-voyage/'
-      path: '/carnets-de-voyage'
-      fullPath: '/carnets-de-voyage/'
-      preLoaderRoute: typeof PublicCarnetsDeVoyageIndexRouteImport
+    '/_public/contact/': {
+      id: '/_public/contact/'
+      path: '/contact'
+      fullPath: '/contact/'
+      preLoaderRoute: typeof PublicContactIndexRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_public/oeuvres/$slug': {
-      id: '/_public/oeuvres/$slug'
-      path: '/$slug'
-      fullPath: '/oeuvres/$slug'
-      preLoaderRoute: typeof PublicOeuvresSlugRouteImport
-      parentRoute: typeof PublicOeuvresRoute
-    }
-    '/_public/newsletter/ebook': {
-      id: '/_public/newsletter/ebook'
-      path: '/newsletter/ebook'
-      fullPath: '/newsletter/ebook'
-      preLoaderRoute: typeof PublicNewsletterEbookRouteImport
+    '/_public/mentions-legales/': {
+      id: '/_public/mentions-legales/'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales/'
+      preLoaderRoute: typeof PublicMentionsLegalesIndexRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/newsletter/confirmation': {
@@ -410,6 +375,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/newsletter/confirmation'
       preLoaderRoute: typeof PublicNewsletterConfirmationRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_public/newsletter/ebook': {
+      id: '/_public/newsletter/ebook'
+      path: '/newsletter/ebook'
+      fullPath: '/newsletter/ebook'
+      preLoaderRoute: typeof PublicNewsletterEbookRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/oeuvres/': {
+      id: '/_public/oeuvres/'
+      path: '/'
+      fullPath: '/oeuvres/'
+      preLoaderRoute: typeof PublicOeuvresIndexRouteImport
+      parentRoute: typeof PublicOeuvresRoute
+    }
+    '/_public/oeuvres/$slug': {
+      id: '/_public/oeuvres/$slug'
+      path: '/$slug'
+      fullPath: '/oeuvres/$slug'
+      preLoaderRoute: typeof PublicOeuvresSlugRouteImport
+      parentRoute: typeof PublicOeuvresRoute
+    }
+    '/_public/qui-suis-je/': {
+      id: '/_public/qui-suis-je/'
+      path: '/qui-suis-je'
+      fullPath: '/qui-suis-je/'
+      preLoaderRoute: typeof PublicQuiSuisJeIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

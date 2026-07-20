@@ -115,7 +115,7 @@ export function WorksLayoutSets(props: WorksLayoutSetsProps) {
       </aside>
       <SectionMain className={WORKS.main()}>
         <div className={WORKS.description()}>
-          <SectionTitle className={{ titleRow: WORKS.title() }} title={["Collection", activeSet.title]} />
+          <SectionTitle className={{ titleRow: WORKS.title() }} title={["Collection", activeSet.title]} intent="secondary" />
           <SectionContent>{activeSet.content}</SectionContent>
         </div>
         <div className={WORKS.nav()}>
