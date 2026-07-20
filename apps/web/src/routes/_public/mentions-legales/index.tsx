@@ -1,165 +1,95 @@
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@ec/backend/api";
-import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
-import { createFileRoute } from "@tanstack/react-router";
+import { Hero, HeroContent } from "@ec/ui/components/hero";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/mentions-legales/")({
-  component: RouteComponent,
-  loader: async ({ context }) => {
-    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
-    return { bundle };
-  },
+  component: LegalNoticesPage,
+  head: readLegalNoticesHead,
 });
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
-function RouteComponent() {
-  const { bundle } = Route.useLoaderData();
+export function readLegalNoticesHead() {
+  return {
+    links: [{ href: "https://elianacorre.com/mentions-legales", rel: "canonical" }],
+    meta: [
+      { title: "Mentions légales — Eliana Corré" },
+      { content: "Mentions légales, édition et hébergement du site elianacorre.com.", name: "description" },
+    ],
+  };
+}
 
+export function LegalNoticesPage() {
   return (
-    <>
-      <Section>
-        <SectionMain className="lg:items-center">
-          <SectionTitle className={{ title: "flex-row gap-2" }} title={["Mentions", "légales"]} />
-          <SectionContent className="z-10 mt-8 -mb-12 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
-            <p>
-              Le site internet{" "}
-              <a className="font-bold text-primary" href="http://elianacorre.com">
-                elianacorre.com
-              </a>{" "}
-              est édité par :
-            </p>
-            <ul>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Nom :</strong>
-                </div>
-                Eliana Corré
-              </li>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Courriel :</strong>
-                </div>
-                <a className="underline hover:text-primary" href="mailto:me@elianacorre.com">
-                  me@elianacorre.com
-                </a>
-              </li>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Adresse :</strong>
-                </div>
-                <div className="flex flex-col items-start">
-                  <p>1A rue Gérard de Nerval</p>
-                  <p>97430 Trois Mares - REUNION</p>
-                </div>
-              </li>
-            </ul>
-            <p>
-              Le directeur de la publication est : <strong>Eliana Corré</strong>.
-            </p>
-            <p>
-              Le site internet{" "}
-              <a className="font-bold text-primary" href="http://elianacorre.com">
-                elianacorre.com
-              </a>{" "}
-              est hébergé par :
-            </p>
-            <ul>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Nom :</strong>
-                </div>
-                Cloudflare, Inc.
-              </li>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Courriel :</strong>
-                </div>
-                <a className="underline hover:text-primary" href="https://www.cloudflare.com">
-                  cloudflare.com
-                </a>
-              </li>
-              <li className="flex items-baseline gap-2">
-                <div className="flex w-28 flex-none items-center gap-2">
-                  <span className="icon-[tabler--circle-filled] size-3 text-primary" />
-                  <strong>Adresse :</strong>
-                </div>
-                <div className="flex flex-col items-start">
-                  <p>101 Townsend St</p>
-                  <p>San Francisco, CA 94107 - ETATS-UNIS</p>
-                </div>
-              </li>
-            </ul>
-            <p>
-              Le site internet{" "}
-              <a className="font-bold text-primary" href="http://elianacorre.com">
-                elianacorre.com
-              </a>{" "}
-              est soumis à la loi française.
-            </p>
-          </SectionContent>
-        </SectionMain>
-      </Section>
-      <Section className={{ base: "pt-8" }} intent="secondary">
-        <SectionMain>
-          <SectionTitle
-            className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }}
-            intent="secondary"
-            title={["Propriété", "intellectuelle"]}
-          />
-          <SectionContent className="text-pretty text-start">
-            <p>
-              Tous les éléments du site internet{" "}
-              <a className="underline hover:text-secondary" href="http://elianacorre.com">
-                elianacorre.com
-              </a>
-              , qu&apos;ils soient visuels ou sonores, y compris la technologie sous-jacente, sont protégés par le droit d&apos;auteur, des
-              marques ou des brevets.
-            </p>
-          </SectionContent>
-        </SectionMain>
-      </Section>
-      <Section intent="primary">
-        <SectionMain>
-          <SectionTitle className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }} title={["Liens", "hypertextes"]} />
-          <SectionContent className="gap-2 text-pretty text-start">
-            <p>
-              Le site internet{" "}
-              <a className="underline hover:text-primary" href="http://elianacorre.com">
-                elianacorre.com
-              </a>{" "}
-              peut contenir des liens hypertextes pointant vers d&apos;autres sites internet.{" "}
-            </p>
-            <p>
-              Eliana Corré ne peut être tenue responsable du contenu de ces sites et décline toute responsabilité quant aux informations qui
-              y sont présentées.
-            </p>
-          </SectionContent>
-        </SectionMain>
-      </Section>
-      <Section intent="secondary">
-        <SectionMain>
-          <SectionTitle
-            className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }}
-            intent="secondary"
-            title={["Données", "personnelles"]}
-          />
-          <SectionContent className="gap-2 text-pretty text-start">
-            <p>
-              Eliana Corré traite les données personnelles uniquement pour les finalités présentées au moment de leur collecte. Les
-              informations nécessaires au formulaire de contact servent à répondre à la demande envoyée. Une inscription à la lettre repose
-              séparément sur le consentement explicite de la personne.
-            </p>
-            <h3 className="mt-6 text-2xl font-bold">Lettre et e-book de bienvenue</h3>
-            <p className="whitespace-pre-line">{bundle.privacyNotice.content}</p>
-          </SectionContent>
-        </SectionMain>
-      </Section>
-    </>
+    <Hero title={["Mentions", "légales"]}>
+      <HeroContent className="z-10 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
+        <section>
+          <h2 className="mb-3 text-2xl font-bold">Édition du site</h2>
+          <p>
+            Le site <SiteLink /> est édité par <strong>Eliana Corré</strong>, qui en assure également la direction de la publication.
+          </p>
+          <address className="mt-3 not-italic">
+            107 chemin de ligne, Les Canots
+            <br />
+            97427 Étang-Salé — La Réunion, France
+            <br />
+            <a className="underline hover:text-primary" href="mailto:contact@elianacorre.com">
+              contact@elianacorre.com
+            </a>
+          </address>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-2xl font-bold">Hébergement</h2>
+          <p>Le site est hébergé par :</p>
+          <address className="mt-3 not-italic">
+            <strong>Cloudflare, Inc.</strong>
+            <br />
+            101 Townsend St
+            <br />
+            San Francisco, CA 94107 — États-Unis
+            <br />
+            <a className="underline hover:text-primary" href="https://www.cloudflare.com">
+              www.cloudflare.com
+            </a>
+          </address>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-2xl font-bold">Propriété intellectuelle</h2>
+          <p>
+            Tous les éléments du site <SiteLink />, qu&apos;ils soient visuels ou sonores, y compris la technologie sous-jacente, sont
+            protégés par le droit d&apos;auteur, des marques ou des brevets.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-2xl font-bold">Liens hypertextes</h2>
+          <p>
+            Le site <SiteLink /> peut contenir des liens hypertextes pointant vers d&apos;autres sites internet. Eliana Corré ne peut être
+            tenue responsable du contenu de ces sites et décline toute responsabilité quant aux informations qui y sont présentées.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-3 text-2xl font-bold">Données personnelles</h2>
+          <p>
+            Les informations relatives aux données traitées, aux finalités, aux durées de conservation et à l’exercice de vos droits sont
+            présentées dans la{" "}
+            <Link className="underline hover:text-primary" to="/confidentialite">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
+        </section>
+
+        <p>Le site et les présentes mentions légales sont soumis au droit français.</p>
+      </HeroContent>
+    </Hero>
+  );
+}
+
+function SiteLink() {
+  return (
+    <a className="font-bold text-primary" href="https://elianacorre.com">
+      elianacorre.com
+    </a>
   );
 }
