@@ -107,7 +107,11 @@ function RouteComponent() {
       </Section>
       <Section className={{ base: "pt-8" }} intent="secondary">
         <SectionMain>
-          <SectionTitle className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }} title={["Propriété", "intellectuelle"]} />
+          <SectionTitle
+            className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }}
+            intent="secondary"
+            title={["Propriété", "intellectuelle"]}
+          />
           <SectionContent className="text-pretty text-start">
             <p>
               Tous les éléments du site internet{" "}
@@ -140,7 +144,11 @@ function RouteComponent() {
       </Section>
       <Section intent="secondary">
         <SectionMain>
-          <SectionTitle className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }} title={["Données", "personnelles"]} />
+          <SectionTitle
+            className={{ title: "flex-row gap-2 sm:text-4xl 2xl:text-4xl" }}
+            intent="secondary"
+            title={["Données", "personnelles"]}
+          />
           <SectionContent className="gap-2 text-pretty text-start">
             <p>
               Eliana Corré traite les données personnelles uniquement pour les finalités présentées au moment de leur collecte. Les

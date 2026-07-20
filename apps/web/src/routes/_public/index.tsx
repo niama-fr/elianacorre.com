@@ -4,7 +4,7 @@ import { readIndexPage } from "@ec/domain/helpers/pages";
 import { Btn } from "@ec/ui/components/btn";
 import { GridBackground } from "@ec/ui/components/grid-background";
 import { Hero, HeroContent } from "@ec/ui/components/hero";
-import { Section, SectionMain, SectionTitle } from "@ec/ui/components/section";
+import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { WorksGrid } from "@ec/ui/components/works-grid";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
@@ -44,30 +44,32 @@ function IndexPage() {
     <>
       <Hero className={{ aside: "flex" }} image={hero.image} title={hero.title}>
         <HeroContent>{hero.content}</HeroContent>
-        <Btn kind="link" hash="contact" to="/">
+        <Btn kind="link" to="/contact" className={{ base: "text-base sm:text-lg xl:text-xl" }}>
           {hero.button}
         </Btn>
       </Hero>
       <Section className={{ base: "lg:-mt-20" }} intent="secondary">
         <SectionMain>
-          <SectionTitle title={["Le carnet", "de voyage"]} />
-          <p>
-            L&apos;art du carnet de voyage, ce n&apos;est pas juste représenter ce qu&apos;on a sous les yeux. C&apos;est une pratique dans
-            laquelle tu couches sur papier ce qui attire ton regard, ce que tu ressens, ce que tu ne veux pas oublier. Moi, c&apos;est ce
-            qui me fait revenir au carnet encore et encore, cette façon de ralentir, de vraiment voir ce qui m&apos;entoure, de garder une
-            trace vivante du monde tel que je le traverse.
-          </p>
-          <p>
-            Et la bonne nouvelle, c&apos;est que tu n&apos;as pas besoin de savoir dessiner, ni de voyager pour en créer un. Le carnet de
-            voyage s&apos;invite dans le quotidien, dans les petits moments autant que dans les grands départs.
-          </p>
-          <p>
-            Si l&apos;idée te tente mais que tu ne sais pas par où commencer, j&apos;ai créé un guide gratuit pour t&apos;accompagner dans
-            tes premiers pas.
-          </p>
-          <Btn kind="link" intent="secondary" to="/carnets-de-voyage">
-            En savoir plus
-          </Btn>
+          <SectionTitle title={["Le carnet", "de voyage"]} intent="secondary" />
+          <SectionContent>
+            <p className="text-justify text-pretty">
+              L&apos;art du carnet de voyage, ce n&apos;est pas juste représenter ce qu&apos;on a sous les yeux. C&apos;est une pratique
+              dans laquelle tu couches sur papier ce qui attire ton regard, ce que tu ressens, ce que tu ne veux pas oublier. Moi,
+              c&apos;est ce qui me fait revenir au carnet encore et encore, cette façon de ralentir, de vraiment voir ce qui m&apos;entoure,
+              de garder une trace vivante du monde tel que je le traverse.
+            </p>
+            <p className="text-justify text-pretty">
+              Et la bonne nouvelle, c&apos;est que tu n&apos;as pas besoin de savoir dessiner, ni de voyager pour en créer un. Le carnet de
+              voyage s&apos;invite dans le quotidien, dans les petits moments autant que dans les grands départs.
+            </p>
+            <p className="text-justify text-pretty">
+              Si l&apos;idée te tente mais que tu ne sais pas par où commencer, j&apos;ai créé un guide gratuit pour t&apos;accompagner dans
+              tes premiers pas.
+            </p>
+            <Btn kind="link" intent="secondary" to="/carnets-de-voyage" className={{ base: "self-center lg:self-end" }}>
+              En savoir plus
+            </Btn>
+          </SectionContent>
         </SectionMain>
       </Section>
       <Section intent="primary">

@@ -7,7 +7,7 @@ import { cva } from "class-variance-authority";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {
   error: cva(
-    `flex origin-top items-center gap-2 overflow-hidden rounded-xl bg-destructive px-2 py-1 text-destructive-foreground 
+    `flex origin-top items-center gap-2 overflow-hidden rounded-xl bg-destructive px-2 py-1 text-destructive-foreground
     before:icon-[lucide--circle-alert] before:size-4 before:shrink-0 before:content-['']`
   ),
   field: cva("gap-2 data-[invalid=true]:text-destructive"),

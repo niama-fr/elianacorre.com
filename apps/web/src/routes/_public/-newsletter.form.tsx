@@ -1,6 +1,7 @@
 import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
 import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { useAppForm } from "@ec/ui/hooks/public-form";
+import { cn } from "@ec/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
@@ -12,26 +13,28 @@ import { subscribeToNewsletter } from "@/lib/newsletter/functions";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FORM = {
   base: cva("group/form flex w-full flex-col items-end gap-4"),
+  submit: cva("self-center md:self-auto"),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Entity"] }) {
+export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
   const submitRef = useRef<HTMLButtonElement>(null);
   const subscribeToNewsletterMutation = useMutation({ mutationFn: subscribeToNewsletter });
 
   const form = useAppForm({
     defaultValues: { consent: false, email: "", firstName: "", website: "" },
     onSubmit: async ({ value: data }) => {
-      if (!submitRef.current) return;
-      const rect = submitRef.current.getBoundingClientRect();
       try {
         await subscribeToNewsletterMutation.mutateAsync({ data });
 
-        void confetti({
-          origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
-          particleCount: 100,
-          spread: 70,
-        });
+        if (submitRef.current) {
+          const rect = submitRef.current.getBoundingClientRect();
+          void confetti({
+            origin: { x: (rect.left + rect.width / 2) / window.innerWidth, y: (rect.top + rect.height / 2) / window.innerHeight },
+            particleCount: 100,
+            spread: 70,
+          });
+        }
 
         form.reset();
         toast.success("Vérifiez votre messagerie", {
@@ -46,7 +49,7 @@ export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Ent
 
   return (
     <form
-      className={FORM.base()}
+      className={cn(FORM.base(), className)}
       data-intent="secondary"
       onSubmit={(event) => {
         event.preventDefault();
@@ -72,8 +75,9 @@ export function NewsletterForm({ bundle }: { bundle: NewsletterLegalBundles["Ent
           {(f) => <f.CheckboxField label={bundle.newsletterConsent.content} />}
         </form.AppField>
 
-        <form.Submit ref={submitRef} intent="secondary" label="M’inscrire et recevoir l’e-book" className={{ base: "max-w-xs" }} />
+        <form.Submit ref={submitRef} icon="icon-[line-md--email-plus]" intent="secondary" label="M’inscrire" className={FORM.submit()} />
       </form.AppForm>
     </form>
   );
 }
+type NewsletterFormProps = { bundle: NewsletterLegalBundles["Entity"]; className?: string };

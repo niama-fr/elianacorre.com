@@ -33,9 +33,9 @@ export type ReadRootLayoutProps = ReturnType<typeof readRootLayout>;
 export const readWorksLayout = () => ({
   hero: {
     content:
-      "Vous retrouverez ici toutes les œuvres que j’ai réalisées. Si l’une d’entre elles résonne avec vous, n’hésitez pas à me contacter.",
+      "Tu retrouveras ici toutes les œuvres que j’ai réalisées. Si l’une d’entre elles résonne avec toi, n’hésite pas à me contacter.",
     image: readImageBySlug("mes-oeuvres"),
-    title: ["Découvrez", "mes œuvres"],
+    title: ["Explore", "mon univers"],
   },
   sets: readAllSets(),
 });

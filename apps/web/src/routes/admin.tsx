@@ -14,6 +14,9 @@ import {
   SidebarGroup,
   SidebarContent,
 } from "@ec/ui/components/sidebar";
+import { Toaster } from "@ec/ui/components/sonner";
+import { ThemeProvider } from "@ec/ui/components/theme-provider";
+import { TooltipProvider } from "@ec/ui/components/tooltip";
 import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
@@ -54,63 +57,68 @@ function AdminLayout() {
   };
 
   return (
-    <SidebarProvider>
-      <Sidebar variant="floating">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <div className="aspect-square size-16">
-                  <Image
-                    alt={logoImg.alt}
-                    background="transparent"
-                    breakpoints={[80, 96, 160, 192, 320]}
-                    height={logoImg.height}
-                    sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
-                    src={logoImg.src}
-                    width={logoImg.width}
-                  />
-                </div>
-                <span>Tableau de bord</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu>
-              {data.navMain.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton render={<Link to={item.url} />}>{item.title}</SidebarMenuButton>
+    <ThemeProvider defaultTheme="system" storageKey="theme">
+      <TooltipProvider>
+        <SidebarProvider>
+          <Sidebar variant="floating">
+            <SidebarHeader>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    <div className="aspect-square size-16">
+                      <Image
+                        alt={logoImg.alt}
+                        background="transparent"
+                        breakpoints={[80, 96, 160, 192, 320]}
+                        height={logoImg.height}
+                        sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
+                        src={logoImg.src}
+                        width={logoImg.width}
+                      />
+                    </div>
+                    <span>Tableau de bord</span>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset className={ADMIN.inset()}>
-        <header className={ADMIN.header()}>
-          <SidebarTrigger />
-          <div className={ADMIN.actions()}>
-            <Button
-              size="icon"
-              onClick={() =>
-                void authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      location.reload();
-                    },
-                  },
-                })
-              }
-            >
-              <span className={ADMIN.signout()} />
-            </Button>
-            <ModeToggle />
-          </div>
-        </header>
-        <Outlet />
-      </SidebarInset>
-    </SidebarProvider>
+              </SidebarMenu>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarMenu>
+                  {data.navMain.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton render={<Link to={item.url} />}>{item.title}</SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+          <SidebarInset className={ADMIN.inset()}>
+            <header className={ADMIN.header()}>
+              <SidebarTrigger />
+              <div className={ADMIN.actions()}>
+                <Button
+                  size="icon"
+                  onClick={() =>
+                    void authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          location.reload();
+                        },
+                      },
+                    })
+                  }
+                >
+                  <span className={ADMIN.signout()} />
+                </Button>
+                <ModeToggle />
+              </div>
+            </header>
+            <Outlet />
+          </SidebarInset>
+        </SidebarProvider>
+        <Toaster />
+      </TooltipProvider>
+    </ThemeProvider>
   );
 }

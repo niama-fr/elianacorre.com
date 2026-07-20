@@ -10,7 +10,7 @@ export const allSets = [
   },
   {
     content:
-      "Dans cette collection, vous trouverez les animaux qui m'inspirent le plus, ceux qui résonnent avec mon âme. On retrouve ici un style plus graphique.",
+      "Dans cette collection, tu trouveras les animaux qui m'inspirent le plus, ceux qui résonnent avec mon âme. On retrouve ici un style plus graphique.",
     imageSlug: "bumblebee",
     slug: "bestiaire",
     title: "Bestiaire",
@@ -24,7 +24,7 @@ export const allSets = [
   },
   {
     content:
-      "Le concept d'animal totem nous vient des peuples amérindiens et africains. Pour eux, chaque personne est reliée à l'esprit d'un animal qui nous guide, nous accompagne et nous protège. Son énergie vibre avec la nôtre et il est votre esprit gardien. Cette collection a vu le jour à la suite du contact thérapeutique des animaux sur mon être.",
+      "Le concept d'animal totem nous vient des peuples amérindiens et africains. Pour eux, chaque personne est reliée à l'esprit d'un animal qui nous guide, nous accompagne et nous protège. Son énergie vibre avec la nôtre et il est notre esprit gardien. Cette collection a vu le jour à la suite du contact thérapeutique des animaux sur mon être.",
     imageSlug: "je-te-vois",
     slug: "animal-totem",
     title: "Animal totem",
