@@ -5,7 +5,7 @@ import { anonymizedEmailFor, isAnonymizedEmail } from "@ec/domain/helpers/newsle
 import type { RetentionRuns } from "@ec/domain/schemas/retention-runs";
 import type { WithNow } from "@ec/domain/schemas/utils";
 
-import { takeProfileContactRequests } from "../data/contact-requests";
+import { deleteContactRequest, takeProfileContactRequests } from "../data/contact-requests";
 import { deleteEbookDownload, paginateExpiredEbookDownloads, takeEbookIssuanceDownloads } from "../data/ebook-downloads";
 import { deleteEbookIssuance, takeEbookIssuances } from "../data/ebook-issuances";
 import { getIdentityByProfileId } from "../data/identities";
@@ -23,6 +23,7 @@ const MAX_RETENTION_RELATIONS_PER_PROFILE = 20;
 
 export const PENDING_RETENTION_MS = 30 * DAY_MS;
 export const TECHNICAL_RETENTION_MS = 90 * DAY_MS;
+export const getContactRequestCutoff = (now: number) => calendarYearsBefore(now, 1);
 export const getFormerSubscriberCutoff = (now: number) => calendarYearsBefore(now, 3);
 
 const emptyCounts = (): RetentionRuns["Counts"] => ({
@@ -33,10 +34,10 @@ const emptyCounts = (): RetentionRuns["Counts"] => ({
 });
 
 // ENFORCE BATCH ---------------------------------------------------------------------------------------------------------------------------
-export async function enforceNewsletterRetentionBatch(
+export async function enforcePrivacyRetentionBatch(
   ctx: MutationCtx,
   { cursor, now, phase }: WithNow<{ cursor: string | null; phase: RetentionRuns["FailurePhase"] }>
-): Promise<NewsletterRetentionBatchResult> {
+): Promise<PrivacyRetentionBatchResult> {
   if (phase === "downloads") return await deleteExpiredDownloads(ctx, { cursor, now });
   if (phase === "tasks") return await deleteExpiredTasks(ctx, { cursor, now });
   if (phase === "webhooks") return await deleteExpiredWebhooks(ctx, { cursor, now });
@@ -53,10 +54,10 @@ async function anonymizeNewsletterProfile(
   const webhooks = await takeLoopsWebhooksByEmail(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile.email);
   requireBoundedRelations(webhooks, MAX_RETENTION_RELATIONS_PER_PROFILE);
   for (const webhook of webhooks) await patchLoopsWebhook(ctx, webhook._id, { email: anonymousEmail });
-  await patchProfile(ctx, profileId, { email: anonymousEmail, firstName: undefined, lastName: undefined });
+  await patchProfile(ctx, profileId, { email: anonymousEmail, firstName: undefined });
 }
 
-async function deleteExpiredDownloads(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<NewsletterRetentionBatchResult> {
+async function deleteExpiredDownloads(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<PrivacyRetentionBatchResult> {
   const result = await paginateExpiredEbookDownloads(ctx, { cursor, numItems: RETENTION_BATCH_SIZE }, now - TECHNICAL_RETENTION_MS);
   let deletedDownloads = 0;
   for (const download of result.page) {
@@ -68,7 +69,7 @@ async function deleteExpiredDownloads(ctx: MutationCtx, { cursor, now }: BatchOp
   return nextBatch("downloads", "profiles", result, { ...emptyCounts(), deletedDownloads });
 }
 
-async function deleteExpiredTasks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<NewsletterRetentionBatchResult> {
+async function deleteExpiredTasks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<PrivacyRetentionBatchResult> {
   const result = await paginateExpiredLoopsTasks(ctx, { cursor, numItems: RETENTION_BATCH_SIZE }, now - TECHNICAL_RETENTION_MS);
   let deletedTechnicalLogs = 0;
   for (const task of result.page)
@@ -79,7 +80,7 @@ async function deleteExpiredTasks(ctx: MutationCtx, { cursor, now }: BatchOption
   return nextBatch("tasks", "webhooks", result, { ...emptyCounts(), deletedTechnicalLogs });
 }
 
-async function deleteExpiredWebhooks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<NewsletterRetentionBatchResult> {
+async function deleteExpiredWebhooks(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<PrivacyRetentionBatchResult> {
   const result = await paginateExpiredLoopsWebhooks(ctx, { cursor, numItems: RETENTION_BATCH_SIZE }, now - TECHNICAL_RETENTION_MS);
   for (const webhook of result.page) await deleteLoopsWebhook(ctx, webhook._id);
   return nextBatch("webhooks", "downloads", result, { ...emptyCounts(), deletedTechnicalLogs: result.page.length });
@@ -139,20 +140,32 @@ async function expirePendingNewsletterProfile(
   if (shouldAnonymize) await anonymizeNewsletterProfile(ctx, { anonymousEmail, profileId });
 }
 
-async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<NewsletterRetentionBatchResult> {
+async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): Promise<PrivacyRetentionBatchResult> {
   const result = await paginateProfiles(ctx, { cursor, numItems: PROFILE_RETENTION_BATCH_SIZE });
   const counts = emptyCounts();
   for (const profile of result.page) {
     if (isAnonymizedEmail(profile.email)) continue;
 
-    const [identity, subscriptions] = await Promise.all([
+    const [contactRequests, identity, subscriptions] = await Promise.all([
+      takeProfileContactRequests(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id),
       getIdentityByProfileId(ctx, profile._id),
       takeNewsSubscriptions(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id),
     ]);
+    requireBoundedRelations(contactRequests);
+    for (const contactRequest of contactRequests)
+      if (contactRequest._creationTime <= getContactRequestCutoff(now)) await deleteContactRequest(ctx, contactRequest._id);
     const hasSeparateRelationship = !!identity;
 
     requireBoundedRelations(subscriptions);
-    if (subscriptions.length === 0) continue;
+    if (subscriptions.length === 0) {
+      const hasCurrentContactRequest = contactRequests.some(({ _creationTime }) => _creationTime > getContactRequestCutoff(now));
+      if (hasSeparateRelationship || hasCurrentContactRequest) continue;
+      const ebookIssuances = await takeEbookIssuances(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id);
+      requireBoundedRelations(ebookIssuances);
+      if (ebookIssuances.length > 0) continue;
+      await anonymizeNewsletterProfile(ctx, { anonymousEmail: anonymizedEmailFor(profile._id), profileId: profile._id });
+      continue;
+    }
 
     const isExpiredPending = subscriptions.every(
       ({ confirmedAt, requestedAt }) => confirmedAt === null && requestedAt <= now - PENDING_RETENTION_MS
@@ -169,15 +182,13 @@ async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): 
     }
 
     if (hasSeparateRelationship) continue;
-    const [contactRequests, ebookIssuances] = await Promise.all([
-      takeProfileContactRequests(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id),
-      takeEbookIssuances(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id),
-    ]);
-    requireBoundedRelations(contactRequests);
+    const ebookIssuances = await takeEbookIssuances(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id);
     requireBoundedRelations(ebookIssuances);
     const latestActivityAt = Math.max(
       ...subscriptions.map(({ requestedAt, unsubscribedAt }) => unsubscribedAt ?? requestedAt),
-      ...contactRequests.map(({ _creationTime }) => _creationTime),
+      ...contactRequests
+        .filter(({ _creationTime }) => _creationTime > getContactRequestCutoff(now))
+        .map(({ _creationTime }) => _creationTime),
       ...ebookIssuances.map(({ _creationTime }) => _creationTime)
     );
     const isFormerSubscriber =
@@ -196,7 +207,7 @@ function nextBatch(
   nextPhase: RetentionRuns["FailurePhase"],
   page: { continueCursor: string; isDone: boolean },
   counts: RetentionRuns["Counts"]
-): NewsletterRetentionBatchResult {
+): PrivacyRetentionBatchResult {
   return page.isDone
     ? { ...counts, cursor: null, done: false, phase: nextPhase }
     : { ...counts, cursor: page.continueCursor, done: false, phase: currentPhase };
@@ -207,7 +218,7 @@ function requireBoundedRelations(records: readonly unknown[], maxRelations = MAX
 }
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type NewsletterRetentionBatchResult = RetentionRuns["Counts"] & {
+export type PrivacyRetentionBatchResult = RetentionRuns["Counts"] & {
   cursor: string | null;
   done: boolean;
   phase: RetentionRuns["FailurePhase"];

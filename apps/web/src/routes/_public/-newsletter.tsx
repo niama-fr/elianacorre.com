@@ -1,5 +1,5 @@
 import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
-import { Alert } from "@ec/ui/components/alert";
+import { Alert, AlertDescription } from "@ec/ui/components/alert";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
@@ -9,8 +9,9 @@ import { NewsletterForm } from "@/routes/_public/-newsletter.form";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const NEWSLETTER = {
-  alert: cva("bg-secondary/30 border-none text-xs px-3 py-2 text-pretty"),
-  alertLink: cva("contents hover:text-amber-800"),
+  alert: cva("bg-secondary/30 border-none px-3 py-2"),
+  alertDescription: cva("text-xs text-pretty text-foreground"),
+  alertLink: cva("underline"),
   badge: cva("text-white px-2 font-medium bg-secondary rounded-2xl"),
   content: cva(`text-center
   sm:text-justify
@@ -40,11 +41,14 @@ export function Newsletter({ bundle }: NewsletterProps) {
               pour t&apos;inspirer, nourrir ta pratique et te rappeler que la beauté du quotidien mérite d&apos;être capturée.
             </p>
             <Alert className={NEWSLETTER.alert()}>
-              Tes données sont utilisées pour confirmer ton adresse, t&apos;envoyer la gazette et te délivrer l&apos;e-book de bienvenue.
-              <Link className={NEWSLETTER.alertLink()} to="/confidentialite">
-                {" "}
-                Tu peux en savoir plus ici
-              </Link>
+              <AlertDescription className={NEWSLETTER.alertDescription()}>
+                Tes données sont utilisées pour confirmer ton adresse, t&apos;envoyer la gazette et te délivrer l&apos;e-book de bienvenue.
+                <Link className={NEWSLETTER.alertLink()} to="/confidentialite">
+                  {" "}
+                  Tu peux en savoir plus ici
+                </Link>
+                .
+              </AlertDescription>
             </Alert>
           </div>
           <NewsletterForm bundle={bundle} className={NEWSLETTER.form()} />

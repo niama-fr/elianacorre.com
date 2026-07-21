@@ -33,6 +33,10 @@ export function LegalNoticesPage() {
             <a className="underline hover:text-primary" href="mailto:contact@elianacorre.com">
               contact@elianacorre.com
             </a>
+            <br />
+            <a className="underline hover:text-primary" href="tel:+262692904762">
+              +262 (0)692 90 47 62
+            </a>
           </address>
         </section>
 

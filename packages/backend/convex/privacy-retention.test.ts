@@ -2,12 +2,13 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  enforceNewsletterRetentionBatch,
+  enforcePrivacyRetentionBatch,
+  getContactRequestCutoff,
   getFormerSubscriberCutoff,
   PENDING_RETENTION_MS,
   TECHNICAL_RETENTION_MS,
-  type NewsletterRetentionBatchResult,
-} from "../business/newsletter-retention";
+  type PrivacyRetentionBatchResult,
+} from "../business/privacy-retention";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
@@ -15,12 +16,12 @@ const NOW = Date.UTC(2026, 6, 15);
 
 const runRetentionTestBatch = async (
   convex: TestConvex<typeof schema>,
-  options: { cursor: string | null; now: number; phase: NewsletterRetentionBatchResult["phase"] }
-) => await convex.run(async (ctx) => await enforceNewsletterRetentionBatch(ctx, options));
+  options: { cursor: string | null; now: number; phase: PrivacyRetentionBatchResult["phase"] }
+) => await convex.run(async (ctx) => await enforcePrivacyRetentionBatch(ctx, options));
 
 const enforceAllRetention = async (convex: TestConvex<typeof schema>, now: number) => {
   let cursor: string | null = null;
-  let phase: NewsletterRetentionBatchResult["phase"] = "tasks";
+  let phase: PrivacyRetentionBatchResult["phase"] = "tasks";
   while (true) {
     const result = await runRetentionTestBatch(convex, { cursor, now, phase });
     if (result.done) return;
@@ -30,7 +31,7 @@ const enforceAllRetention = async (convex: TestConvex<typeof schema>, now: numbe
   }
 };
 
-describe("newsletter retention policy", () => {
+describe("privacy retention policy", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.useRealTimers();
@@ -116,6 +117,40 @@ describe("newsletter retention policy", () => {
       await expect(ctx.db.get(ids.accountProfileId)).resolves.toMatchObject({ email: "account@example.com" });
       await expect(ctx.db.get(ids.accountConfirmationId)).resolves.toBeNull();
       await expect(ctx.db.get(ids.accountTaskId)).resolves.toBeNull();
+    });
+  });
+
+  it("deletes contact requests and anonymizes contact-only profiles after twelve months", async () => {
+    vi.useFakeTimers();
+    const convex = convexTest(schema, modules);
+
+    vi.setSystemTime(getContactRequestCutoff(NOW) - 1000);
+    const expiredProfileId = await convex.run(async (ctx) => {
+      const profileId = await ctx.db.insert("profiles", {
+        email: "expired-contact@example.com",
+        firstName: "Expired",
+        role: "contact",
+      });
+      await ctx.db.insert("contactRequests", { message: "Old request", profileId });
+      return profileId;
+    });
+
+    vi.setSystemTime(getContactRequestCutoff(NOW) + 1);
+    const retainedProfileId = await convex.run(async (ctx) => {
+      const profileId = await ctx.db.insert("profiles", { email: "recent-contact@example.com", role: "contact" });
+      await ctx.db.insert("contactRequests", { message: "Recent request", profileId });
+      return profileId;
+    });
+
+    vi.setSystemTime(NOW);
+    await enforceAllRetention(convex, NOW);
+
+    await convex.run(async (ctx) => {
+      const expiredProfile = await ctx.db.get(expiredProfileId);
+      expect(expiredProfile?.email.endsWith("@anonymized.invalid")).toBeTruthy();
+      expect(expiredProfile).not.toHaveProperty("firstName");
+      await expect(ctx.db.get(retainedProfileId)).resolves.toMatchObject({ email: "recent-contact@example.com" });
+      await expect(ctx.db.query("contactRequests").collect()).resolves.toHaveLength(1);
     });
   });
 

@@ -11,7 +11,6 @@ describe("contact requests", () => {
     const request = {
       email: "reader@example.com",
       firstName: "Ada",
-      lastName: "Lovelace",
       message: "Please contact me.",
     } as const;
 
@@ -30,7 +29,6 @@ describe("contact requests", () => {
       {
         email: "reader@example.com",
         firstName: "Ada",
-        lastName: "Lovelace",
         role: "contact",
       },
     ]);

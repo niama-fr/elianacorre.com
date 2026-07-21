@@ -1,5 +1,5 @@
 import { getStatus } from "@convex-dev/workflow";
-import type { NewsletterRetentionBatchResult } from "@ec/backend/business/newsletter-retention";
+import type { PrivacyRetentionBatchResult } from "@ec/backend/business/privacy-retention";
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -68,7 +68,7 @@ describe("retention Workflow", () => {
 
   it("records the active phase when orchestration fails", async () => {
     const failure = new Error("batch failed");
-    const markFailed = vi.fn<(phase: NewsletterRetentionBatchResult["phase"]) => Promise<void>>(async () => {
+    const markFailed = vi.fn<(phase: PrivacyRetentionBatchResult["phase"]) => Promise<void>>(async () => {
       await Promise.resolve();
     });
 

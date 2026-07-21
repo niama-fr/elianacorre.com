@@ -9,7 +9,6 @@ export const zProfileRole = z.literal(["admin", "contact", "member"]);
 export const zProfileFields = z.object({
   email: zCanonicalEmail,
   firstName: z.optional(z.string()),
-  lastName: z.optional(z.string()),
   role: zProfileRole,
 });
 export const zProfileDoc = z.object({ ...zDocCommon("profiles").shape, ...zProfileFields.shape });

@@ -7,7 +7,7 @@ import { zid } from "convex-helpers/server/zod4";
 import { v } from "convex/values";
 import z from "zod";
 
-import { enforceNewsletterRetentionBatch, type NewsletterRetentionBatchResult } from "../business/newsletter-retention";
+import { enforcePrivacyRetentionBatch, type PrivacyRetentionBatchResult } from "../business/privacy-retention";
 import {
   createRetentionRun,
   getRetentionRun,
@@ -63,7 +63,7 @@ type ExecuteWorkflowOpts = {
     cursor: string | null;
     phase: RetentionRuns["FailurePhase"];
     stepNumber: number;
-  }) => Promise<NewsletterRetentionBatchResult>;
+  }) => Promise<PrivacyRetentionBatchResult>;
 };
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
@@ -101,7 +101,7 @@ export const runBatch = zInternalMutation({
   handler: async (ctx, { cursor, now, phase, retentionRunId }) => {
     const run = await getRetentionRun(ctx, retentionRunId);
     if (!run || run.status !== "running") throw new Error("RETENTION_RUN_NOT_RUNNING");
-    const result = await enforceNewsletterRetentionBatch(ctx, { cursor, now, phase });
+    const result = await enforcePrivacyRetentionBatch(ctx, { cursor, now, phase });
     await patchRetentionRun(ctx, retentionRunId, {
       anonymizedFormerProfiles: run.anonymizedFormerProfiles + result.anonymizedFormerProfiles,
       anonymizedPendingProfiles: run.anonymizedPendingProfiles + result.anonymizedPendingProfiles,

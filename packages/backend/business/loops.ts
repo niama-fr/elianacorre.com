@@ -203,12 +203,11 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
 }
 type SendEbookEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendEbookEmailDoc"] };
 
-async function syncContact(ctx: ActionCtx, { profile: { email, firstName, lastName, _id: userId }, task }: SyncContactOpts) {
+async function syncContact(ctx: ActionCtx, { profile: { email, firstName, _id: userId }, task }: SyncContactOpts) {
   return task.subscribed
     ? await loops.addContact(ctx, {
         email,
         firstName,
-        lastName,
         source: "elianacorre.com",
         subscribed: true,
         userGroup: "newsletter",
