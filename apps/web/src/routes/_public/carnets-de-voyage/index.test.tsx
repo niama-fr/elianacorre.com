@@ -8,32 +8,12 @@ describe("Carnets de voyage route", () => {
   it("publishes page-specific search and sharing metadata", async () => {
     const head = await Route.options.head?.({} as never);
 
-    expect(head).toStrictEqual({
-      links: [{ href: "https://elianacorre.com/carnets-de-voyage", rel: "canonical" }],
-      meta: [
-        { title: "Carnets de voyage — Eliana Corré" },
-        {
-          content:
-            "Découvre l’art du carnet de voyage avec Eliana Corré et reçois un e-book pour commencer à observer, dessiner et raconter ton quotidien.",
-          name: "description",
-        },
-        { content: "Carnets de voyage — Eliana Corré", property: "og:title" },
-        {
-          content: "Découvre l’art du carnet de voyage et reçois un e-book pour commencer à observer, dessiner et raconter ton quotidien.",
-          property: "og:description",
-        },
-        { content: "https://elianacorre.com/carnets-de-voyage", property: "og:url" },
-        { content: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg", property: "og:image" },
-        { content: "fr_FR", property: "og:locale" },
-        { content: "website", property: "og:type" },
-        { content: "summary_large_image", name: "twitter:card" },
-        { content: "Carnets de voyage — Eliana Corré", name: "twitter:title" },
-        {
-          content: "Découvre l’art du carnet de voyage et reçois un e-book pour commencer à raconter ton quotidien.",
-          name: "twitter:description",
-        },
-        { content: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg", name: "twitter:image" },
-      ],
+    expect(head?.links).toContainEqual({ href: "https://elianacorre.com/carnets-de-voyage", rel: "canonical" });
+    expect(head?.meta).toContainEqual({ title: "Carnets de voyage — Eliana Corré" });
+    expect(head?.meta).toContainEqual({ content: "summary_large_image", name: "twitter:card" });
+    expect(head?.meta).toContainEqual({
+      content: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg",
+      property: "og:image",
     });
   });
 

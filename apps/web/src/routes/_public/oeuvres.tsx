@@ -17,10 +17,12 @@ export const Route = createFileRoute("/_public/oeuvres")({
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function WorksLayout() {
   const { hero, sets } = Route.useLoaderData();
+  const { slug } = useParams({ strict: false });
+  const activeSet = sets.find((set) => set.slug === slug);
 
   return (
     <>
-      <Hero {...hero}>
+      <Hero {...hero} title={activeSet ? ["Collection", activeSet.title] : hero.title}>
         <HeroContent>{hero.content}</HeroContent>
       </Hero>
       <WorksLayoutSets sets={sets} />

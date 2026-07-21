@@ -6,7 +6,13 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [devtools(), cloudflare({ viteEnvironment: { name: "ssr" } }), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    devtools(),
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    tailwindcss(),
+    tanstackStart({ server: { entry: "./server.ts" } }),
+    viteReact(),
+  ],
   resolve: { tsconfigPaths: true },
   ssr: {
     noExternal: ["@convex-dev/better-auth"],

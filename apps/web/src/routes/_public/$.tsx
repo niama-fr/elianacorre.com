@@ -1,21 +1,16 @@
-import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
+
+import { createNoindexHead } from "@/lib/seo";
+import { NotFoundPage } from "@/routes/-not-found";
+
+export const loadNotFound = () => {
+  notFound({ throw: true });
+  throw new Error("Unreachable after notFound");
+};
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/$")({
-  component: NotFoundPage,
+  head: () => createNoindexHead("Page introuvable — Eliana Corré"),
+  loader: loadNotFound,
+  notFoundComponent: NotFoundPage,
 });
-
-// PAGE ------------------------------------------------------------------------------------------------------------------------------------
-function NotFoundPage() {
-  const info: HeroInfoProps = {
-    btn: { children: "Retourner à l'accueil", icon: "icon-[lucide--home]", kind: "link", to: "/" },
-    content: [
-      "Cette page semble encore sur l’établi. Un croquis oublié, une trace de pastel, peut-être une idée partie sécher ailleurs…",
-      "En attendant qu’elle prenne forme, vous pouvez revenir à l’accueil.",
-    ],
-    title: ["Page en cours", " d’esquisse"],
-  };
-
-  return <HeroInfo {...info} />;
-}

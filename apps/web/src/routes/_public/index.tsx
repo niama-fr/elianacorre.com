@@ -1,5 +1,3 @@
-import { convexQuery } from "@convex-dev/react-query";
-import { api } from "@ec/backend/api";
 import { readIndexPage } from "@ec/domain/helpers/pages";
 import { Btn } from "@ec/ui/components/btn";
 import { GridBackground } from "@ec/ui/components/grid-background";
@@ -9,14 +7,18 @@ import { WorksGrid } from "@ec/ui/components/works-grid";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
+import { createSeoHead } from "@/lib/seo";
+
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/")({
   component: IndexPage,
-  loader: async ({ context }) => {
-    const page = readIndexPage();
-    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
-    return { ...page, bundle };
-  },
+  head: () =>
+    createSeoHead({
+      description: "Découvre les œuvres et carnets de voyage d’Eliana Corré, artiste peintre à La Réunion.",
+      path: "/",
+      title: "Eliana Corré — Artiste peintre à La Réunion",
+    }),
+  loader: () => readIndexPage(),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

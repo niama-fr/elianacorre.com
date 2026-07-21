@@ -12,9 +12,18 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
+import { createSeoHead } from "@/lib/seo";
+
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/qui-suis-je/")({
   component: RouteComponent,
+  head: () =>
+    createSeoHead({
+      description: "Découvre le parcours, les inspirations et la démarche artistique d’Eliana Corré, artiste peintre réunionnaise.",
+      image: "https://ik.imagekit.io/elianacorre/decouvrez-mon-parcours.jpg",
+      path: "/qui-suis-je",
+      title: "À propos d’Eliana Corré — Parcours et inspirations",
+    }),
   loader: () => readAboutPage(),
 });
 

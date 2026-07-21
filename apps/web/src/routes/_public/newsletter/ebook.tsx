@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import z from "zod";
 
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
+import { createNoindexHead } from "@/lib/seo";
 
 import { EbookRecoveryFormDialog } from "./-ebook-recovery-form-dialog";
 
@@ -15,7 +16,7 @@ const zSearch = z.object({ token: z.string().optional() });
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/newsletter/ebook")({
   component: NewsletterEbookPage,
-  head: () => ({ meta: [{ content: "no-referrer", name: "referrer" }, { title: "Votre e-book — Eliana Corré" }] }),
+  head: () => createNoindexHead("Votre e-book — Eliana Corré"),
   validateSearch: zSearch,
 });
 
