@@ -40,7 +40,7 @@ The result contains people, consent periods, delivery eligibility, e-book access
 From the repository root, run:
 
 ```bash
-rtk test bun run --cwd packages/backend test -- convex/newsletter-export.test.ts convex/newsletter-retention.test.ts convex/retention.test.ts convex/privacy.test.ts
+rtk test bun run --cwd packages/backend test -- convex/newsletter-export.test.ts convex/privacy-retention.test.ts convex/retention.test.ts convex/privacy.test.ts
 rtk proxy bun run typecheck
 rtk proxy bun run check
 rtk proxy bun run build
@@ -71,9 +71,9 @@ Grégory owns this runbook. Update it whenever policy boundaries, batch size, ru
 The reproducible seeding path is the isolated Convex test harness; it creates synthetic profiles, tasks, webhooks, downloads, e-book access, and suppression rows in memory. Run each named scenario from the repository root:
 
 ```bash
-rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "30 days"
-rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "three-year"
-rtk test bun run --cwd packages/backend test -- convex/newsletter-retention.test.ts -t "90-day"
+rtk test bun run --cwd packages/backend test -- convex/privacy-retention.test.ts -t "30 days"
+rtk test bun run --cwd packages/backend test -- convex/privacy-retention.test.ts -t "three-year"
+rtk test bun run --cwd packages/backend test -- convex/privacy-retention.test.ts -t "90-day"
 rtk test bun run --cwd packages/backend test -- convex/newsletter-export.test.ts -t "provider-independent"
 rtk test bun run --cwd packages/backend test -- convex/retention.test.ts -t "observable completion"
 ```

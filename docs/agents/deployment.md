@@ -59,7 +59,7 @@ Configure that deployment's environment variables in Convex, set the generated `
 rtk proxy bun run dev
 ```
 
-The backend workspace runs `convex dev --run profiles:seed`. The idempotent internal mutation inserts missing administrators once when the dev process starts and does not remove existing profiles.
+The backend workspace runs `convex dev --run seed:init`. The idempotent internal mutation inserts missing administrators and publishes changed canonical legal-text versions when the dev process starts. It does not remove existing profiles or legal-text versions.
 
 ## GitHub environments
 
@@ -149,7 +149,7 @@ The `Protect main` ruleset requires those jobs and an up-to-date pull request. G
 1. Check out the exact merge commit.
 2. Deploy functions and schema to the staging Convex project.
 3. Build `apps/web` against the staging Convex URL.
-4. Run the idempotent internal `profiles:seed` mutation.
+4. Run the idempotent internal `seed:init` mutation.
 5. Deploy `elianacorre-com-staging` with the merge SHA in Cloudflare metadata.
 
 Attach `staging.elianacorre.com` to the staging Worker under **Workers & Pages → Settings → Domains & Routes**. Protect the hostname with Cloudflare Access and allow only Grégory's email. Then set the fixed origins:

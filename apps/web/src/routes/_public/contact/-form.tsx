@@ -20,7 +20,7 @@ export function ContactForm() {
   const createContactMutation = useMutation({ mutationFn: createContact });
 
   const form = useAppForm({
-    defaultValues: { email: "", firstName: "", lastName: "", message: "" },
+    defaultValues: { email: "", firstName: "", message: "" },
     onSubmit: async ({ value: data }) => {
       try {
         await createContactMutation.mutateAsync({ data });
@@ -54,9 +54,6 @@ export function ContactForm() {
       <form.AppForm>
         <form.AppField name="firstName" validators={{ onChange: zContactRequestCreateValues.shape.firstName }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
-        </form.AppField>
-        <form.AppField name="lastName" validators={{ onChange: zContactRequestCreateValues.shape.lastName }}>
-          {(f) => <f.InputField label="Nom" type="text" />}
         </form.AppField>
         <form.AppField name="email" validators={{ onChange: zContactRequestCreateValues.shape.email }}>
           {(f) => <f.InputField label="Courriel" type="email" />}

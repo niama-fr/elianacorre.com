@@ -12,7 +12,6 @@ export const zContactRequestFields = z.object({
 export const zContactRequestCreateValues = z.object({
   email: zCanonicalEmailValue,
   firstName: z.string().trim().min(1, "Ce champ est requis"),
-  lastName: z.string().trim().min(1, "Ce champ est requis"),
   message: z.string().trim().min(1, "Ce champ est requis"),
 });
 
