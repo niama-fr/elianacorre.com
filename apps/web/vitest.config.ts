@@ -8,4 +8,9 @@ export default defineConfig({
       "@": fileURLToPath(new URL("src", import.meta.url)),
     },
   },
+  test: {
+    env: {
+      VITE_CONVEX_URL: "https://newsletter-test.convex.cloud",
+    },
+  },
 });

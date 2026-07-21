@@ -7,6 +7,14 @@ import { useOnInView } from "react-intersection-observer";
 
 import { NewsletterForm } from "@/routes/_public/-newsletter.form";
 
+export const getNewsletterHashNavigation = (inView: boolean) => ({
+  hash: inView ? "la-gazette-itinerante" : "",
+  hashScrollIntoView: false,
+  replace: true,
+  resetScroll: false,
+  search: true as const,
+});
+
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const NEWSLETTER = {
   alert: cva("bg-secondary/30 border-none px-3 py-2"),
@@ -25,9 +33,7 @@ const NEWSLETTER = {
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Newsletter({ bundle }: NewsletterProps) {
   const navigate = useNavigate();
-  const ref = useOnInView(
-    (inView) => void navigate({ hash: inView ? "la-gazette-itinerante" : "", hashScrollIntoView: false, replace: true, resetScroll: false })
-  );
+  const ref = useOnInView((inView) => void navigate(getNewsletterHashNavigation(inView)));
 
   return (
     <Section id="la-gazette-itinerante" ref={ref} intent="secondary">
