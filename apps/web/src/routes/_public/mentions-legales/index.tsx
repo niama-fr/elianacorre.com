@@ -1,19 +1,19 @@
 import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
+import { createSeoHead } from "@/lib/seo";
+
 export const Route = createFileRoute("/_public/mentions-legales/")({
   component: LegalNoticesPage,
   head: readLegalNoticesHead,
 });
 
 export function readLegalNoticesHead() {
-  return {
-    links: [{ href: "https://elianacorre.com/mentions-legales", rel: "canonical" }],
-    meta: [
-      { title: "Mentions légales — Eliana Corré" },
-      { content: "Mentions légales, édition et hébergement du site elianacorre.com.", name: "description" },
-    ],
-  };
+  return createSeoHead({
+    description: "Mentions légales, édition et hébergement du site elianacorre.com.",
+    path: "/mentions-legales",
+    title: "Mentions légales — Eliana Corré",
+  });
 }
 
 export function LegalNoticesPage() {

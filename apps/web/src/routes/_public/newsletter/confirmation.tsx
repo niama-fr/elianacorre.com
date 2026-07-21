@@ -4,6 +4,7 @@ import z from "zod";
 
 import { confirmNewsletter } from "@/lib/newsletter/functions";
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
+import { createNoindexHead } from "@/lib/seo";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
 const zSearch = z.object({ token: z.string().optional() });
@@ -12,7 +13,7 @@ const zSearch = z.object({ token: z.string().optional() });
 // oxlint-disable-next-line sort-keys
 export const Route = createFileRoute("/_public/newsletter/confirmation")({
   component: NewsletterConfirmationPage,
-  head: () => ({ meta: [{ content: "no-referrer", name: "referrer" }, { title: "Confirmation — Eliana Corré" }] }),
+  head: () => createNoindexHead("Confirmation — Eliana Corré"),
   loaderDeps: ({ search: { token } }) => ({ token }),
   loader: async ({ deps: { token } }) => {
     if (!token) return { confirmed: false, downloadToken: null } as const;

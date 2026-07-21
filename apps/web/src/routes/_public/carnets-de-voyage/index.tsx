@@ -7,36 +7,19 @@ import { cn } from "@ec/ui/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
+import { createSeoHead } from "@/lib/seo";
+
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/carnets-de-voyage/")({
   component: TravelDiariesPage,
-  head: () => ({
-    links: [{ href: "https://elianacorre.com/carnets-de-voyage", rel: "canonical" }],
-    meta: [
-      { title: "Carnets de voyage — Eliana Corré" },
-      {
-        content:
-          "Découvre l’art du carnet de voyage avec Eliana Corré et reçois un e-book pour commencer à observer, dessiner et raconter ton quotidien.",
-        name: "description",
-      },
-      { content: "Carnets de voyage — Eliana Corré", property: "og:title" },
-      {
-        content: "Découvre l’art du carnet de voyage et reçois un e-book pour commencer à observer, dessiner et raconter ton quotidien.",
-        property: "og:description",
-      },
-      { content: "https://elianacorre.com/carnets-de-voyage", property: "og:url" },
-      { content: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg", property: "og:image" },
-      { content: "fr_FR", property: "og:locale" },
-      { content: "website", property: "og:type" },
-      { content: "summary_large_image", name: "twitter:card" },
-      { content: "Carnets de voyage — Eliana Corré", name: "twitter:title" },
-      {
-        content: "Découvre l’art du carnet de voyage et reçois un e-book pour commencer à raconter ton quotidien.",
-        name: "twitter:description",
-      },
-      { content: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg", name: "twitter:image" },
-    ],
-  }),
+  head: () =>
+    createSeoHead({
+      description:
+        "Découvre l’art du carnet de voyage avec Eliana Corré et reçois un e-book pour observer, dessiner et raconter ton quotidien.",
+      image: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg",
+      path: "/carnets-de-voyage",
+      title: "Carnets de voyage — Eliana Corré",
+    }),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

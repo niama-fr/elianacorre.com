@@ -4,16 +4,10 @@ import { loadPrivacyPolicy, readPrivacyPolicyHead } from "./index";
 
 describe("Confidentialité route", () => {
   it("publishes privacy-policy metadata", () => {
-    expect(readPrivacyPolicyHead()).toStrictEqual({
-      links: [{ href: "https://elianacorre.com/confidentialite", rel: "canonical" }],
-      meta: [
-        { title: "Politique de confidentialité — Eliana Corré" },
-        {
-          content: "Politique de confidentialité du site elianacorre.com et de la lettre d’Eliana Corré.",
-          name: "description",
-        },
-      ],
-    });
+    const head = readPrivacyPolicyHead();
+    expect(head.links).toContainEqual({ href: "https://elianacorre.com/confidentialite", rel: "canonical" });
+    expect(head.meta).toContainEqual({ title: "Politique de confidentialité — Eliana Corré" });
+    expect(head.meta).toContainEqual({ content: "summary_large_image", name: "twitter:card" });
   });
 
   it("returns the exact active bundle selected by Convex", async () => {

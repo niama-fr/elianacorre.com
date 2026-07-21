@@ -5,31 +5,22 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 import { useEffect, useState } from "react";
 
 import { authClient } from "@/lib/auth/client";
-import { fetchToken } from "@/lib/auth/functions";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient; convexQueryClient: ConvexQueryClient }>()({
-  beforeLoad: async (ctx) => {
-    const token = await fetchToken();
-    if (token !== undefined) ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
-    return { token };
-  },
   head: () => ({
+    links: [
+      { href: "/favicon.ico", rel: "icon" },
+      { href: "/favicon-32x32.png", rel: "icon", sizes: "32x32", type: "image/png" },
+      { href: "/favicon-16x16.png", rel: "icon", sizes: "16x16", type: "image/png" },
+      { href: "/apple-touch-icon.png", rel: "apple-touch-icon", sizes: "180x180" },
+      { href: "/manifest.json", rel: "manifest" },
+    ],
     meta: [
       { charSet: "utf-8" },
       { content: "width=device-width, initial-scale=1", name: "viewport" },
-      { title: "Eliana Corré" },
-      {
-        content: "Artiste peintre à l'île de la Réunion vous présente l'ensemble de ses collections.",
-        name: "description",
-      },
-      {
-        content:
-          "artiste peintre, Eliana Corré, tableaux personnalisés, animaux totems, art contemporain, peinture nature, œuvres sur mesure, art réconfortant, peinture animale, portfolio artiste",
-        name: "keywords",
-      },
       { content: "Eliana Corré", name: "author" },
-      { content: "index, follow", name: "robots" },
+      { content: "#f4b8a8", name: "theme-color" },
     ],
   }),
   shellComponent: RootDocument,
@@ -38,7 +29,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient; conv
 // DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
 function RootDocument({ children }: { children: React.ReactNode }) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const { convexQueryClient, token } = Route.useRouteContext();
+  const { convexQueryClient } = Route.useRouteContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,7 +44,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
   return (
     // @ts-expect-error -- The documented client construction is incompatible with the package's AuthClient type under TypeScript 6.
-    <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient} initialToken={token}>
+    <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient}>
       <html lang="fr" suppressHydrationWarning>
         <head>
           <HeadContent />

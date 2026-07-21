@@ -2,6 +2,7 @@ import { Button } from "@ec/ui/components/button";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth/client";
+import { createNoindexHead } from "@/lib/seo";
 
 import styleCss from "@/styles/admin.css?url";
 
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/connexion")({
   component: SignInPage,
   head: () => ({
     links: [{ href: styleCss, rel: "stylesheet" }],
+    ...createNoindexHead("Connexion — Eliana Corré"),
   }),
   validateSearch: (search) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : "/admin",

@@ -21,17 +21,22 @@ import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import { cva } from "class-variance-authority";
 
 import { authClient } from "@/lib/auth/client";
+import { fetchToken } from "@/lib/auth/functions";
+import { createNoindexHead } from "@/lib/seo";
 
 import styleCss from "@/styles/admin.css?url";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/admin")({
-  beforeLoad: (ctx) => {
-    if (ctx.context.token === undefined) redirect({ search: { redirect: ctx.location.href }, throw: true, to: "/connexion" });
+  beforeLoad: async (ctx) => {
+    const token = await fetchToken();
+    if (token === undefined) redirect({ search: { redirect: ctx.location.href }, throw: true, to: "/connexion" });
+    else ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
   },
   component: AdminLayout,
   head: () => ({
     links: [{ href: styleCss, rel: "stylesheet" }],
+    ...createNoindexHead("Administration — Eliana Corré"),
   }),
   loader: () => readRootLayout(),
 });

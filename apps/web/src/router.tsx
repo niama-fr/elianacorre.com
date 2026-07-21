@@ -4,6 +4,8 @@ import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
 import { clientEnv } from "./config/env";
+import { NotFoundPage } from "./routes/-not-found";
+import { SafeErrorPage } from "./routes/-safe-error";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -20,8 +22,10 @@ export function getRouter() {
 
   const router = createRouter({
     context: { convexQueryClient, queryClient },
-    defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
+    defaultErrorComponent: SafeErrorPage,
+    defaultNotFoundComponent: NotFoundPage,
     defaultPreload: "intent",
+    defaultPreloadStaleTime: 0,
     routeTree,
     scrollRestoration: true,
   });

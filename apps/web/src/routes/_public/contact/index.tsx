@@ -5,11 +5,19 @@ import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
+import { createSeoHead } from "@/lib/seo";
 import { ContactForm } from "@/routes/_public/contact/-form";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/contact/")({
   component: ContactPage,
+  head: () =>
+    createSeoHead({
+      description: "Contacte Eliana Corré pour une œuvre, un projet artistique ou toute demande d’information.",
+      image: "https://ik.imagekit.io/elianacorre/contact.jpeg",
+      path: "/contact",
+      title: "Contact — Eliana Corré",
+    }),
   loader: () => readIndexPage(),
 });
 

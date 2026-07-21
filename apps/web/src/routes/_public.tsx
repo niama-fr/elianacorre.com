@@ -12,6 +12,8 @@ import { Newsletter } from "@/routes/_public/-newsletter";
 
 import styleCss from "@/styles/public.css?url";
 
+const NEWSLETTER_BUNDLE_STALE_TIME = 5 * 60 * 1000;
+
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public")({
   component: PublicLayout,
@@ -20,7 +22,9 @@ export const Route = createFileRoute("/_public")({
   }),
   loader: async ({ context }) => {
     const layout = readRootLayout();
-    const bundle = await context.queryClient.ensureQueryData(convexQuery(api.newsletterLegalBundles.requireActive));
+    const bundle = await context.queryClient
+      .ensureQueryData({ ...convexQuery(api.newsletterLegalBundles.requireActive), retry: 2, staleTime: NEWSLETTER_BUNDLE_STALE_TIME })
+      .catch(() => null);
     return { bundle, layout };
   },
 });
@@ -36,7 +40,7 @@ function PublicLayout() {
       <main className="relative mt-20 flex-1 sm:mt-28 md:mt-40">
         <Outlet />
       </main>
-      <Newsletter bundle={bundle} />
+      {bundle ? <Newsletter bundle={bundle} /> : null}
       <Footer />
       <Toaster />
     </TooltipProvider>

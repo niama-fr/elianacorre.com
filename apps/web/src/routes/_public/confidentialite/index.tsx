@@ -3,6 +3,8 @@ import { api } from "@ec/backend/api";
 import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { createSeoHead } from "@/lib/seo";
+
 import { PrivacyNoticeMarkdown } from "./-privacy-notice-markdown";
 
 export const Route = createFileRoute("/_public/confidentialite/")({
@@ -13,16 +15,11 @@ export const Route = createFileRoute("/_public/confidentialite/")({
 });
 
 export function readPrivacyPolicyHead() {
-  return {
-    links: [{ href: "https://elianacorre.com/confidentialite", rel: "canonical" }],
-    meta: [
-      { title: "Politique de confidentialité — Eliana Corré" },
-      {
-        content: "Politique de confidentialité du site elianacorre.com et de la lettre d’Eliana Corré.",
-        name: "description",
-      },
-    ],
-  };
+  return createSeoHead({
+    description: "Politique de confidentialité du site elianacorre.com et de la lettre d’Eliana Corré.",
+    path: "/confidentialite",
+    title: "Politique de confidentialité — Eliana Corré",
+  });
 }
 
 export async function loadPrivacyPolicy<Bundle>(loadActiveBundle: () => Promise<Bundle>) {

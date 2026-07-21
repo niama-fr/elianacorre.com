@@ -6,13 +6,10 @@ import { LegalNoticesPage, readLegalNoticesHead } from "./index";
 
 describe("Mentions légales route", () => {
   it("publishes legal-notice metadata", () => {
-    expect(readLegalNoticesHead()).toStrictEqual({
-      links: [{ href: "https://elianacorre.com/mentions-legales", rel: "canonical" }],
-      meta: [
-        { title: "Mentions légales — Eliana Corré" },
-        { content: "Mentions légales, édition et hébergement du site elianacorre.com.", name: "description" },
-      ],
-    });
+    const head = readLegalNoticesHead();
+    expect(head.links).toContainEqual({ href: "https://elianacorre.com/mentions-legales", rel: "canonical" });
+    expect(head.meta).toContainEqual({ title: "Mentions légales — Eliana Corré" });
+    expect(head.meta).toContainEqual({ content: "summary_large_image", name: "twitter:card" });
   });
 
   it("renders the current publisher information without duplicating the privacy notice", async () => {
