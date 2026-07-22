@@ -19,6 +19,7 @@ describe("newsletter subscription", () => {
         consent: true,
         email: "eliana@example.com",
         firstName: "",
+        legalBundleId: "k170e5dj9c8heby7eah6c4mr6h7a7tw3",
         requestIp: "127.0.0.1",
         website: "",
       })
@@ -35,6 +36,7 @@ describe("newsletter subscription", () => {
         consent: true,
         email: "eliana@example.com",
         firstName: "Eliana",
+        legalBundleId: "k170e5dj9c8heby7eah6c4mr6h7a7tw3",
         requestIp: "127.0.0.1",
         website: "  trap  ",
       })
