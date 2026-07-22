@@ -10,6 +10,14 @@ Use this runbook for the normal `elianacorre.com` delivery loop. It favors the t
 
 GitHub Desktop creates a normal open pull request, not a draft. That is acceptable after the branch is committed and pushed. Do not treat an open PR as merge-ready until acceptance criteria are reconciled, checks pass, and final review is recorded.
 
+## Authorization and consumption preview
+
+Each numbered workflow row is a separate authorization boundary. Asking Codex to perform one row does not authorize later rows, including verification, commit, publish, pull-request creation, checks, merge, deployment, or Linear completion. Before a delegated row, Codex provides a best-effort **low**, **medium**, or **high** consumption estimate with the material cost drivers. If one request spans several rows, Codex lists the rows and estimates first; Grégory may delegate the complete named sequence or keep selected rows manual.
+
+Read-only inspection and low-cost focused checks inherently required by an authorized implementation or diagnosis remain part of that operation. Emergencies and an explicit request to finish a named delivery sequence autonomously retain the authority described in `agent-efficiency.md`, but Codex still previews the sequence, effects, approval gates, and estimated consumption.
+
+Whenever commit is pending, Codex automatically supplies a proper proposed commit title. Whenever pull-request creation is pending, Codex automatically supplies a proposed title and a complete description using the template below. Supplying this copy does not authorize Codex to commit, publish, or open the pull request.
+
 ## Workflow
 
 | Step | Preferred way | Ask Codex | VS Code task | Terminal fallback |
@@ -19,9 +27,9 @@ GitHub Desktop creates a normal open pull request, not a draft. That is acceptab
 | 3. Create the issue branch | GitHub Desktop | `Create the NIA-123 issue branch from origin/main with no upstream.` | `Workflow: Start issue branch` | `rtk git fetch origin main && rtk git switch --no-track -c NIA-123/short-description origin/main` |
 | 4. Implement | VS Code and Codex | `Implement NIA-123 within scope.` | None | `rtk git status -sb`, `rtk git diff --stat`, `rtk git diff` |
 | 5. Verify locally | VS Code task | `Run the focused verification needed for NIA-123.` | `Workflow: Verify all` | See [Verification](verification.md) |
-| 6. Commit | GitHub Desktop | `Review the staged files and suggest the commit message for NIA-123.` | None | `rtk git add FILES && rtk git diff --cached --check && rtk git commit -m "NIA-123: Meaningful outcome"` |
+| 6. Commit | GitHub Desktop | `Review the staged files for NIA-123.` Codex automatically supplies the proposed commit title. | None | `rtk git add FILES && rtk git diff --cached --check && rtk git commit -m "NIA-123: Meaningful outcome"` |
 | 7. Publish/push | GitHub Desktop | `Check whether this branch is safe to publish.` | None | `rtk git push -u origin NIA-123/short-description` |
-| 8. Open the PR | GitHub Desktop | `Fill the pull-request template for NIA-123.` | `Workflow: Open current PR` after creation | `rtk gh pr create --base main --head NIA-123/short-description --title "NIA-123: Meaningful outcome"` |
+| 8. Open the PR | GitHub Desktop | `Prepare the NIA-123 pull request.` Codex automatically supplies its title and complete description. | `Workflow: Open current PR` after creation | `rtk gh pr create --base main --head NIA-123/short-description --title "NIA-123: Meaningful outcome"` |
 | 9. Link PR and reconcile criteria | Linear App, with Codex evidence | `Link PR #N to NIA-123 and reconcile objective acceptance criteria.` | `Workflow: Open current Linear issue` | None for Linear updates |
 | 10. Move to In Review | Linear App | `Move NIA-123 to In Review if implementation is complete.` | None | None; use Linear |
 | 11. Watch checks | GitHub Web | `Summarize the current PR checks for PR #N.` | `Workflow: Watch current PR checks` | `rtk gh pr checks PR_NUMBER --watch --interval 10` |
