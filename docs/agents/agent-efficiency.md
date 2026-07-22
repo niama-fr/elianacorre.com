@@ -6,9 +6,21 @@ Use this contract to minimize agent consumption without weakening the delivery w
 
 Codex asks Grégory before performing an operation that Grégory can reasonably complete himself. It does not proactively execute routine commands, verification, delivery steps, external-system changes, or adjacent cleanup merely because it can automate them.
 
-A direct request authorizes only the stated outcome and the technical substeps inherently required to produce it. It does not authorize related checks, publishing, workflow-state changes, deployment, merge, cleanup, or follow-up work unless Grégory explicitly includes them. When the scope of authorization is uncertain, Codex asks before acting.
+A direct request authorizes only the named operation and the low-cost technical substeps inherently required to perform that operation. It does not authorize the next operation in a workflow, even when that operation normally follows. For example, authorization to implement does not authorize complete verification, commit, push, pull-request creation, workflow-state transitions, deployment, merge, cleanup, or follow-up work. Codex exposes these later boundaries before reaching them and asks Grégory to perform or explicitly delegate each operation. When scope is uncertain, Codex asks before acting.
 
 Read-only inspection and low-cost focused checks required to implement or diagnose an explicitly delegated change are part of that delegated work. Before any costly or routine operation, Codex describes the operation and asks Grégory to perform it or explicitly delegate it. Once Grégory delegates an operation, Codex may complete that operation and its necessary substeps without repeatedly asking for the same permission.
+
+An explicit request such as “finish delivery autonomously” may authorize the named sequence of routine operations for one issue. Codex still identifies the sequence, its external effects, approval gates, and estimated consumption before starting. Authorization for one issue, phase, operation, or turn does not carry into another.
+
+## Consumption preview
+
+Before asking Grégory to perform or delegate an operation, Codex gives a best-effort qualitative estimate:
+
+- **Low:** focused inspection, a small documentation or code edit, one targeted check, or preparing delivery copy.
+- **Medium:** several files or systems, a focused test/debug loop, issue or workflow reconciliation, or multiple independent checks.
+- **High:** broad codebase exploration, complete verification or builds, browser or production validation, repeated failure analysis, large document reads, or sub-agent work.
+
+The estimate names material cost drivers and separates a multi-step request into phases when their costs differ. It is explicitly an estimate, not an exact token or monetary claim. If investigation changes the estimate materially, Codex reports the change before beginning the more expensive phase and asks again when that phase is a new authorization boundary.
 
 ## Default operating mode
 
@@ -28,8 +40,6 @@ Grégory handles routine, observable operations by default:
 - squash merge;
 - staging workflow and HTTP verification;
 - Linear delivery-complete comment and status transition.
-
-An explicit request such as “finish delivery autonomously” authorizes Codex to perform those routine operations for that issue. Authorization for one issue or operation does not carry into later issues, turns, or adjacent work.
 
 For routine delivery, Codex should use the simplified manual loop in `docs/agents/manual-delivery.md`: Linear App for issue state, GitHub Desktop for branch/commit/push/PR creation, Codex for implementation help and review, and GitHub Web for checks and merge. Do not prefer VS Code or terminal tasks for approval, merge, or production release unless Grégory explicitly asks for a fallback.
 
@@ -75,13 +85,17 @@ Report each command as pass or fail and include only relevant warnings or failin
 When implementation and review are complete, Codex supplies:
 
 - the exact branch and commit SHA;
+- a proper proposed commit title whenever a commit remains to be created;
 - commands still required;
+- a proposed pull-request title and complete description, filled from the repository template, whenever opening a pull request is the next or remaining step;
 - the PR URL and expected checks;
 - staging scenarios, if any;
 - exact approval, merge, staging, and Linear closure steps;
 - conditions that require returning to Codex, such as a failed check, changed commit, merge conflict, or unexpected staging behavior.
 
 Evidence supplied by Grégory is accepted when it names the exact commit and command or workflow result, or when it directly confirms an exact checklist Codex just supplied. Codex does not independently reverify accepted evidence. It asks for clarification instead of rerunning when evidence is ambiguous. A relevant code change or new commit invalidates affected verification; an explicit diagnosis request also authorizes the smallest necessary rerun.
+
+Commit and pull-request copy is automatic handoff information, not authorization to commit, push, or open a pull request. Codex provides it without waiting for a separate reminder, then leaves the operation with Grégory unless he explicitly delegates it.
 
 ## Thread Closeout
 
