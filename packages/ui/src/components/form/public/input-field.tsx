@@ -21,7 +21,7 @@ export default function InputField({ label, ...rest }: InputFieldProps) {
     <Field>
       {(isInvalid) => (
         <>
-          <FieldLabel label={label} hideLabel />
+          {label && <FieldLabel label={label} hideLabel />}
           <Input
             {...rest}
             aria-invalid={isInvalid}
@@ -40,4 +40,4 @@ export default function InputField({ label, ...rest }: InputFieldProps) {
     </Field>
   );
 }
-export type InputFieldProps = InputProps & { label: string };
+export type InputFieldProps = InputProps & { label?: string };

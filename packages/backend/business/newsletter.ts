@@ -17,7 +17,7 @@ import {
   patchNewsSubscription,
 } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
-import { requireActiveNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
+import { requirePublishedNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
 import { createContactProfile, getProfile, getProfileIdByEmail } from "../data/profiles";
 import { issueInitialEbookDownload, issueReplacementEbookDownload } from "./ebooks";
 import { resolveEmailDeliveryRestrictionByConfirmation } from "./email-delivery-restrictions";
@@ -50,8 +50,11 @@ export async function confirmNewsletter(ctx: MutationCtx, { now, token }: WithNo
 }
 
 // SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
-export async function subscribeToNewsletter(ctx: MutationCtx, { email, firstName, now, requestIp, website }: SubscribeToNewsletterOpts) {
+export async function subscribeToNewsletter(ctx: MutationCtx, opts: SubscribeToNewsletterOpts) {
+  const { email, firstName, legalBundleId, now, requestIp, website } = opts;
   if (website !== "" || (await getNewsSuppressionByEmail(ctx, email))) return;
+
+  await requirePublishedNewsletterLegalBundle(ctx, { id: legalBundleId, requestedAt: now });
 
   let profileId = await getProfileIdByEmail(ctx, email);
   const subscription = profileId ? await getCurrentNewsSubscription(ctx, profileId) : null;
@@ -79,7 +82,6 @@ export async function subscribeToNewsletter(ctx: MutationCtx, { email, firstName
   if (!(await tryConsumeConfirmationRateLimit(ctx, { email, requestIp }))) return;
 
   profileId ??= await createContactProfile(ctx, { email, firstName });
-  const { _id: legalBundleId } = await requireActiveNewsletterLegalBundle(ctx);
   const subscriptionId = subscription?._id ?? (await createNewsSubscription(ctx, { legalBundleId, profileId, requestedAt: now }));
   if (subscription) await patchNewsSubscription(ctx, subscriptionId, { legalBundleId, requestedAt: now });
 
@@ -91,7 +93,13 @@ export async function subscribeToNewsletter(ctx: MutationCtx, { email, firstName
   });
   await enqueueSendConfirmationEmail(ctx, { newsConfirmationId, profileId });
 }
-type SubscribeToNewsletterOpts = WithNow<{ email: string; firstName?: string; requestIp: string; website: string }>;
+type SubscribeToNewsletterOpts = WithNow<{
+  email: string;
+  firstName?: string;
+  legalBundleId: Id<"newsletterLegalBundles">;
+  requestIp: string;
+  website: string;
+}>;
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
 async function confirmReactivation(ctx: MutationCtx, { confirmation, now, profileId, subscription }: ConfirmReactivationOpts) {

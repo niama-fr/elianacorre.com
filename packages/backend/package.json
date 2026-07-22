@@ -22,7 +22,7 @@
     "@convex-dev/workflow": "^0.4.4",
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
     "@ec/domain": "workspace:*",
-    "better-auth": "~1.6.23",
+    "better-auth": "~1.6.24",
     "convex": "^1.42.3",
     "convex-helpers": "^0.1.120",
     "standardwebhooks": "^1.0.0",

@@ -22,6 +22,7 @@ export const zNewsSubscriptionUpsertValues = z.object({
   consent: z.boolean().refine((value) => value, "Vous devez accepter de recevoir la lettre"),
   email: zCanonicalEmailValue,
   firstName: z.string().trim(),
+  legalBundleId: zid("newsletterLegalBundles"),
   website: z.string().trim(),
 });
 
@@ -35,6 +36,7 @@ export const zNewsSubscriptionUpsert = z.object({
     .string()
     .trim()
     .transform((value) => (value === "" ? undefined : value)),
+  legalBundleId: zid("newsletterLegalBundles"),
   requestIp: z.string().trim().min(1),
   website: z.string().trim().default(""),
 });

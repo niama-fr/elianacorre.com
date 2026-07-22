@@ -22,7 +22,7 @@ export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
   const subscribeToNewsletterMutation = useMutation({ mutationFn: subscribeToNewsletter });
 
   const form = useAppForm({
-    defaultValues: { consent: false, email: "", firstName: "", website: "" },
+    defaultValues: { consent: false, email: "", firstName: "", legalBundleId: bundle._id, website: "" },
     onSubmit: async ({ value: data }) => {
       try {
         await subscribeToNewsletterMutation.mutateAsync({ data });
@@ -58,6 +58,13 @@ export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
       }}
     >
       <form.AppForm>
+        <form.AppField name="legalBundleId">
+          {(f) => (
+            <div aria-hidden="true" className="sr-only">
+              <f.InputField readOnly type="hidden" />
+            </div>
+          )}
+        </form.AppField>
         <form.AppField name="email" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.email }}>
           {(f) => <f.InputField label="Adresse e-mail" type="email" />}
         </form.AppField>
