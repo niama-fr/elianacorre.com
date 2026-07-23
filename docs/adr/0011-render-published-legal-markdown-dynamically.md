@@ -10,7 +10,7 @@ The privacy-policy route must render the active published Convex privacy notice 
 
 ## Decision
 
-Store legal-text content as CommonMark Markdown and render the active privacy notice dynamically during the TanStack Start route loader and server-rendering pipeline. Raw HTML is outside the supported contract. The web renderer permits only HTTP, HTTPS, mail, telephone, root-relative, and fragment links, and shifts Markdown headings below the route’s page heading.
+Store legal-text content as CommonMark Markdown and fetch the active Newsletter Legal Bundle once, through a TanStack Start server function, in the public layout loader. The server function owns the Convex HTTP client and environment access; public routes receive the result as ordinary loader data and do not import Convex React Query. The privacy route reuses its parent layout's bundle rather than issuing another query. Raw HTML is outside the supported contract. The web renderer permits only HTTP, HTTPS, mail, telephone, root-relative, and fragment links, and shifts Markdown headings below the route’s page heading.
 
 The existing plain-text records require no schema backfill because plain text is valid CommonMark. Running the existing Convex seed after deployment creates and publishes a new version when the canonical Markdown content differs, then atomically activates a bundle that references it.
 
@@ -18,7 +18,7 @@ Route loading fails through the application error path when Convex is unavailabl
 
 ## Consequences
 
-Published changes can become visible without rebuilding the web application, and crawlers receive rendered HTML. Page availability depends on Convex and the active legal bundle. Markdown features remain intentionally constrained; adding raw HTML or broader URL handling requires a new security review.
+Published changes can become visible without rebuilding the web application, and crawlers receive rendered HTML. The bundle crosses a server-only application boundary and is not added to the browser's reactive Convex dependency graph. Page availability depends on Convex and the active legal bundle. Markdown features remain intentionally constrained; adding raw HTML or broader URL handling requires a new security review.
 
 ## Publication runbook
 

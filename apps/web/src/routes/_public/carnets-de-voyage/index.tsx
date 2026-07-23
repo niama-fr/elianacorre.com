@@ -34,7 +34,7 @@ const PAGE = {
 };
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------
-export function TravelDiariesPage() {
+function TravelDiariesPage() {
   const ebookItems = [
     "T’équiper avec ton premier matériel",
     "Créer des outils qui faciliteront ta pratique",
