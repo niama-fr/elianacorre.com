@@ -3,20 +3,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { createSeoHead } from "@/lib/seo";
 
+// ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_public/mentions-legales/")({
   component: LegalNoticesPage,
-  head: readLegalNoticesHead,
+  head: () =>
+    createSeoHead({
+      description: "Mentions légales, édition et hébergement du site elianacorre.com.",
+      path: "/mentions-legales",
+      title: "Mentions légales — Eliana Corré",
+    }),
 });
 
-export function readLegalNoticesHead() {
-  return createSeoHead({
-    description: "Mentions légales, édition et hébergement du site elianacorre.com.",
-    path: "/mentions-legales",
-    title: "Mentions légales — Eliana Corré",
-  });
-}
-
-export function LegalNoticesPage() {
+// PAGE ------------------------------------------------------------------------------------------------------------------------------------
+function LegalNoticesPage() {
   return (
     <Hero title={["Mentions", "légales"]}>
       <HeroContent className="z-10 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
