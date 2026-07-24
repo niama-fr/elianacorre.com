@@ -1,9 +1,11 @@
 import { readRootLayout } from "@ec/domain/helpers/layouts";
 import { GridBackground } from "@ec/ui/components/grid-background";
-import { Toaster } from "@ec/ui/components/sonner";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { Hydrate } from "@tanstack/react-start";
+import { visible } from "@tanstack/react-start/hydration";
 
+import { getServerFormState } from "@/lib/form/form.functions";
 import { requireActiveNewsletterLegalBundle } from "@/lib/newsletter-legal-bundles/functions";
 import { Footer } from "@/routes/_public/-footer";
 import { Header } from "@/routes/_public/-header";
@@ -19,14 +21,14 @@ export const Route = createFileRoute("/_public")({
   }),
   loader: async () => {
     const layout = readRootLayout();
-    const bundle = await requireActiveNewsletterLegalBundle();
-    return { bundle, layout };
+    const [bundle, formState] = await Promise.all([requireActiveNewsletterLegalBundle(), getServerFormState()]);
+    return { bundle, formState, layout };
   },
 });
 
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function PublicLayout() {
-  const { bundle, layout } = Route.useLoaderData();
+  const { bundle, formState, layout } = Route.useLoaderData();
 
   return (
     <TooltipProvider>
@@ -35,9 +37,10 @@ function PublicLayout() {
       <main className="relative mt-20 flex-1 sm:mt-28 md:mt-40">
         <Outlet />
       </main>
-      <Newsletter bundle={bundle} />
+      <Hydrate when={visible({ rootMargin: "800px" })} prefetch={visible({ rootMargin: "1600px" })}>
+        <Newsletter bundle={bundle} formState={formState} />
+      </Hydrate>
       <Footer />
-      <Toaster />
     </TooltipProvider>
   );
 }

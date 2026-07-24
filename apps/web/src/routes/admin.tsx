@@ -14,7 +14,6 @@ import {
   SidebarGroup,
   SidebarContent,
 } from "@ec/ui/components/sidebar";
-import { Toaster } from "@ec/ui/components/sonner";
 import { ThemeProvider } from "@ec/ui/components/theme-provider";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
 import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
@@ -122,7 +121,6 @@ function AdminLayout() {
             <Outlet />
           </SidebarInset>
         </SidebarProvider>
-        <Toaster />
       </TooltipProvider>
     </ThemeProvider>
   );

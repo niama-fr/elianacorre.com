@@ -1,12 +1,11 @@
 import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import { useAppForm } from "@ec/ui/hooks/public-form";
-import { useMutation } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
-import { createContact } from "@/lib/contact-form/functions";
+import { createContactRequest } from "@/lib/contact-requests/contact-requests.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const FORM = {
@@ -17,13 +16,12 @@ export const FORM = {
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export function ContactForm() {
   const submitRef = useRef<HTMLButtonElement>(null);
-  const createContactMutation = useMutation({ mutationFn: createContact });
 
   const form = useAppForm({
     defaultValues: { email: "", firstName: "", message: "" },
     onSubmit: async ({ value: data }) => {
       try {
-        await createContactMutation.mutateAsync({ data });
+        await createContactRequest({ data });
 
         if (submitRef.current) {
           const rect = submitRef.current.getBoundingClientRect();

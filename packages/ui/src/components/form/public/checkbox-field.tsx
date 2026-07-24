@@ -22,6 +22,7 @@ export default function CheckboxField({ label }: CheckboxFieldProps) {
           <Checkbox
             aria-invalid={isInvalid}
             id={name}
+            name={name}
             checked={state.value}
             className={CHECKBOX_FIELD.checkbox()}
             onCheckedChange={(checked) => {

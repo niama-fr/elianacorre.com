@@ -15,6 +15,7 @@ export default function TextareaField({ label }: TextareaFieldProps) {
             aria-invalid={isInvalid}
             className="bg-white"
             id={name}
+            name={name}
             onBlur={handleBlur}
             onChange={(e) => {
               handleChange(e.currentTarget.value);

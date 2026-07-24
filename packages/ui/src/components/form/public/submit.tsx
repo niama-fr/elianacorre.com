@@ -14,9 +14,9 @@ export default function Submit({ className, label = "Envoyer", ...rest }: Submit
   const form = useFormContext();
 
   return (
-    <form.Subscribe selector={(state) => state.isSubmitting}>
-      {(isSubmitting) => (
-        <Btn kind="button" className={{ base: cn(SUBMIT.base(), className) }} {...rest}>
+    <form.Subscribe selector={({ canSubmit, isSubmitting }) => [canSubmit, isSubmitting]}>
+      {([canSubmit, isSubmitting]) => (
+        <Btn kind="button" className={{ base: cn(SUBMIT.base(), className) }} disabled={!canSubmit} type="submit" {...rest}>
           <LoadingSwap isLoading={isSubmitting}>{label}</LoadingSwap>
         </Btn>
       )}
