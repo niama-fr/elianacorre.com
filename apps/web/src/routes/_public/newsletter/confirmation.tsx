@@ -2,7 +2,7 @@ import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 
-import { confirmNewsletter } from "@/lib/newsletter/functions";
+import { confirmNewsletter } from "@/lib/newsletter/newsletter.functions";
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
 import { createNoindexHead } from "@/lib/seo";
 

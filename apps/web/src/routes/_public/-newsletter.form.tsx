@@ -2,13 +2,15 @@ import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscript
 import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { useAppForm } from "@ec/ui/hooks/public-form";
 import { cn } from "@ec/ui/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { mergeForm, useTransform } from "@tanstack/react-form-start";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
-import { subscribeToNewsletter } from "@/lib/newsletter/functions";
+import type { ServerFormState } from "@/lib/form/form.functions";
+import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
+import { submitNewsletterSubscribeForm, subscribeToNewsletter } from "@/lib/newsletter/newsletter.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FORM = {
@@ -17,15 +19,15 @@ const FORM = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
+export function NewsletterForm({ bundle, className, formState }: NewsletterFormProps) {
   const submitRef = useRef<HTMLButtonElement>(null);
-  const subscribeToNewsletterMutation = useMutation({ mutationFn: subscribeToNewsletter });
 
   const form = useAppForm({
+    ...newsletterFormOptions,
     defaultValues: { consent: false, email: "", firstName: "", legalBundleId: bundle._id, website: "" },
     onSubmit: async ({ value: data }) => {
       try {
-        await subscribeToNewsletterMutation.mutateAsync({ data });
+        await subscribeToNewsletter({ data });
 
         if (submitRef.current) {
           const rect = submitRef.current.getBoundingClientRect();
@@ -45,12 +47,17 @@ export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
         toast.error("La demande n’a pas pu être envoyée. Veuillez réessayer dans quelques instants.");
       }
     },
+    transform: useTransform((baseForm) => mergeForm(baseForm, formState), [formState]),
   });
 
   return (
     <form
+      action={submitNewsletterSubscribeForm.url}
       className={cn(FORM.base(), className)}
       data-intent="secondary"
+      encType="multipart/form-data"
+      method="post"
+      noValidate
       onSubmit={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -87,4 +94,4 @@ export function NewsletterForm({ bundle, className }: NewsletterFormProps) {
     </form>
   );
 }
-type NewsletterFormProps = { bundle: NewsletterLegalBundles["Entity"]; className?: string };
+type NewsletterFormProps = { bundle: NewsletterLegalBundles["Entity"]; className?: string; formState: ServerFormState };

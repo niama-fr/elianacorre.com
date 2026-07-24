@@ -5,6 +5,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 import { useOnInView } from "react-intersection-observer";
 
+import type { ServerFormState } from "@/lib/form/form.functions";
 import { NewsletterForm } from "@/routes/_public/-newsletter.form";
 
 export const getNewsletterHashNavigation = (inView: boolean) => ({
@@ -31,7 +32,7 @@ const NEWSLETTER = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function Newsletter({ bundle }: NewsletterProps) {
+export function Newsletter({ bundle, formState }: NewsletterProps) {
   const navigate = useNavigate();
   const ref = useOnInView((inView) => void navigate(getNewsletterHashNavigation(inView)));
 
@@ -57,10 +58,10 @@ export function Newsletter({ bundle }: NewsletterProps) {
               </AlertDescription>
             </Alert>
           </div>
-          <NewsletterForm bundle={bundle} className={NEWSLETTER.form()} />
+          <NewsletterForm bundle={bundle} formState={formState} className={NEWSLETTER.form()} />
         </SectionContent>
       </SectionMain>
     </Section>
   );
 }
-type NewsletterProps = { bundle: NewsletterLegalBundles["Entity"] };
+type NewsletterProps = { bundle: NewsletterLegalBundles["Entity"]; formState: ServerFormState };

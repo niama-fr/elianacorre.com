@@ -3,12 +3,11 @@ import { Alert, AlertDescription } from "@ec/ui/components/alert";
 import { Btn } from "@ec/ui/components/btn";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ec/ui/components/dialog";
 import { useAppForm } from "@ec/ui/hooks/public-form";
-import { useMutation } from "@tanstack/react-query";
 import { cva } from "class-variance-authority";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { requestEbookRecovery } from "@/lib/newsletter/functions";
+import { requestEbookRecovery } from "@/lib/ebooks/ebooks.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const EBOOK_RECOVERY_FORM_DIALOG = {
@@ -23,12 +22,11 @@ const EBOOK_RECOVERY_FORM_DIALOG = {
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function EbookRecoveryFormDialog() {
   const [open, setOpen] = useState(false);
-  const requestEbookRecoveryMutation = useMutation({ mutationFn: requestEbookRecovery });
   const form = useAppForm({
     defaultValues: { email: "", website: "" },
     onSubmit: async ({ value: data }) => {
       try {
-        await requestEbookRecoveryMutation.mutateAsync({ data });
+        await requestEbookRecovery({ data });
         setOpen(false);
         form.reset();
         toast.success("Vérifiez votre messagerie", {

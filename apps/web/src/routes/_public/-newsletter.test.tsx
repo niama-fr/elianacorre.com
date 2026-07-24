@@ -1,5 +1,5 @@
 import { zNewsletterLegalBundle } from "@ec/domain/schemas/newsletter-legal-bundles";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { initialFormState } from "@tanstack/react-form-start";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -32,12 +32,11 @@ const ACTIVE_LEGAL_BUNDLE = zNewsletterLegalBundle.parse({
 
 describe("newsletter consent presentation", () => {
   it("embeds the displayed legal bundle identity in the subscription form", () => {
-    const html = renderToStaticMarkup(
-      <QueryClientProvider client={new QueryClient()}>
-        <NewsletterForm bundle={ACTIVE_LEGAL_BUNDLE} />
-      </QueryClientProvider>
-    );
+    const html = renderToStaticMarkup(<NewsletterForm bundle={ACTIVE_LEGAL_BUNDLE} formState={initialFormState} />);
 
+    expect(html).toContain(`method="post"`);
+    expect(html).toContain(`name="consent"`);
+    expect(html).toContain(`name="email"`);
     expect(html).toContain(`id="legalBundleId"`);
     expect(html).toContain(`value="${ACTIVE_LEGAL_BUNDLE._id}"`);
   });

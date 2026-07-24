@@ -1,5 +1,6 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
+import { Toaster } from "@ec/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -51,6 +52,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </head>
         <body className="group/body" data-scrolled={isScrolled ? "" : undefined}>
           {children}
+          <Toaster />
           <Scripts />
         </body>
       </html>

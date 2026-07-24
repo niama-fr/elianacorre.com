@@ -27,6 +27,7 @@ export default function InputField({ label, ...rest }: InputFieldProps) {
             aria-invalid={isInvalid}
             className={INPUT_FIELD.input()}
             id={name}
+            name={name}
             onBlur={handleBlur}
             onChange={(e) => {
               handleChange(e.target.value);

@@ -17,7 +17,10 @@ const FIELD = {
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Field({ children, className, ...rest }: FieldProps) {
   const { form, state } = useFieldContext<string>();
-  const isInvalid = (form.state.submissionAttempts > 0 || state.meta.isBlurred) && !state.meta.isValid;
+
+  const hasServerError = !!state.meta.errorMap.onServer;
+  const shouldShowClientError = form.state.submissionAttempts > 0 || state.meta.isBlurred;
+  const isInvalid = hasServerError || (shouldShowClientError && !state.meta.isValid);
 
   return (
     <FieldNative {...rest} className={cn(FIELD.field(), className)} data-invalid={isInvalid}>

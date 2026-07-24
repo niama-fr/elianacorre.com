@@ -6,7 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { clientEnv } from "@/config/env";
 
 // CONTACT ---------------------------------------------------------------------------------------------------------------------------------
-export const createContact = createServerFn({ method: "POST" })
+export const createContactRequest = createServerFn({ method: "POST" })
   .validator(zContactRequestCreateValues)
   .handler(async ({ data }) => {
     const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
