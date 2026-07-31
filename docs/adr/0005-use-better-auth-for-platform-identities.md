@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for newsletter phase 1. The Solid-specific framework decision is superseded by [ADR 0008](0008-replace-solid-with-react.md).
+Accepted for newsletter phase 1. The Solid-specific framework decision is superseded by [ADR 0008](0008-replace-solid-with-react.md), and [ADR 0012](0012-separate-public-and-authenticated-applications.md) owns the authenticated application's deployment location.
 
 ## Context
 
@@ -22,3 +22,4 @@ Workspace domain membership alone grants no role. Account creation, authenticati
 
 - [Newsletter phase 1 plan](../newsletter-phase-1-plan.md)
 - [NIA-20](https://linear.app/niama/issue/NIA-20/publish-the-newsletter-phase-1-domain-model-and-architecture-plan)
+- [NIA-44](https://linear.app/niama/issue/NIA-44/split-public-and-authenticated-tanstack-applications)

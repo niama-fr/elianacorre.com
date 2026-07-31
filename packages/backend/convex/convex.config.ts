@@ -8,6 +8,7 @@ import { v } from "convex/values";
 // APP -------------------------------------------------------------------------------------------------------------------------------------
 const app = defineApp({
   env: {
+    APP_SITE_URL: v.string(),
     BETTER_AUTH_SECRET: v.string(),
     CAPABILITY_SIGNING_SECRET: v.string(),
     GOOGLE_CLIENT_ID: v.string(),

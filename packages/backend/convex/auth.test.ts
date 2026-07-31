@@ -1,11 +1,35 @@
 import { convexTest } from "convex-test";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { internal } from "./_generated/api";
+import { getAuthBaseUrl, getTrustedAuthOrigins, parseAuthBaseUrl } from "./auth";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
 describe("authentication identity synchronization", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("uses the authenticated application origin for Better Auth", () => {
+    vi.stubEnv("APP_SITE_URL", "https://app.example.com");
+    vi.stubEnv("SITE_URL", "https://www.example.com");
+
+    expect(getAuthBaseUrl()).toBe("https://app.example.com");
+    expect(getTrustedAuthOrigins()).toStrictEqual(["https://app.example.com"]);
+  });
+
+  it.each([
+    "not-a-url",
+    "ftp://app.example.com",
+    "https://user@app.example.com",
+    "https://app.example.com/admin",
+    "https://app.example.com?preview=true",
+    "https://app.example.com#fragment",
+  ])("rejects an authenticated application URL that is not an exact HTTP origin: %s", (value) => {
+    expect(() => parseAuthBaseUrl(value)).toThrow("APP_SITE_URL must be an HTTP(S) origin");
+  });
+
   it("creates and idempotently links a Profile for an authentication user", async () => {
     const convex = convexTest(schema, modules);
     const args = { doc: { _id: "better-auth-user", email: " AUTH@Example.COM " }, model: "user" };

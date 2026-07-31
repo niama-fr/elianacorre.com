@@ -1,0 +1,5 @@
+@import "@ec/ui/styles/admin.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../../../packages/domain/src/**/*.ts";
+@source "../../../packages/ui/src/components/**/*.{ts,tsx}";

@@ -11,6 +11,7 @@ const zAuthUser = z.object({ _id: z.string(), email: z.email() });
 const zAuthSession = z.object({ _id: z.string() });
 
 export const createBackend = () => {
+  vi.stubEnv("APP_SITE_URL", "https://app.example.com");
   vi.stubEnv("CAPABILITY_SIGNING_SECRET", "test-capability-secret");
   vi.stubEnv("SITE_URL", "https://www.elianacorre.com");
   vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");

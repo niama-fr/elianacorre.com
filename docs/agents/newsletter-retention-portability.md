@@ -29,7 +29,7 @@ No retention phase starts a Loops delivery workflow or sends a re-engagement ema
 
 1. Start the local application with `rtk proxy bun run dev`, or open the authenticated administration area for the intended deployment.
 2. Confirm the deployment name printed by Convex before continuing. Never use production merely to obtain test data.
-3. Open `/admin/privacy` and locate **Portabilité globale de la newsletter**.
+3. Open `/privacy` and locate **Portabilité globale de la newsletter**.
 4. Select **Télécharger JSON** or **Télécharger CSV**.
 5. Store the file only in the approved migration workspace and delete temporary copies when the migration or audit ends.
 
@@ -47,11 +47,11 @@ rtk proxy bun run build
 rtk git diff --check
 ```
 
-In `/admin/privacy`, confirm an export downloads in both formats and **Dernières exécutions de rétention** shows the latest run as `Terminée` with plausible counters. Seed synthetic records immediately before and exactly at every boundary; never use a real subscriber for a destructive test.
+In `/privacy`, confirm an export downloads in both formats and **Dernières exécutions de rétention** shows the latest run as `Terminée` with plausible counters. Seed synthetic records immediately before and exactly at every boundary; never use a real subscriber for a destructive test.
 
 ## Recovery and rollback
 
-- A run marked `Interrompue` names the failed application phase. Inspect the linked workflow ID and invocation in **Convex Dashboard → Logs**, correct the cause, then open **Functions**, select `retention:startRun`, enter `{}`, and select **Run function**. A retry creates a new `retentionRuns` attempt with counters starting at zero and safely traverses the bounded phases again; already-applied operations are idempotent. If an application record says `En cours` but Workflow reports `failed` or `canceled`, `startRun` reconciles the old attempt to `Interrompue` before creating the new attempt. An actually in-progress workflow is returned without overlap. The expected result is a new attempt changing from `En cours` to `Terminée` in `/admin/privacy`. Running this against production requires Grégory's explicit approval.
+- A run marked `Interrompue` names the failed application phase. Inspect the linked workflow ID and invocation in **Convex Dashboard → Logs**, correct the cause, then open **Functions**, select `retention:startRun`, enter `{}`, and select **Run function**. A retry creates a new `retentionRuns` attempt with counters starting at zero and safely traverses the bounded phases again; already-applied operations are idempotent. If an application record says `En cours` but Workflow reports `failed` or `canceled`, `startRun` reconciles the old attempt to `Interrompue` before creating the new attempt. An actually in-progress workflow is returned without overlap. The expected result is a new attempt changing from `En cours` to `Terminée` in `/privacy`. Running this against production requires Grégory's explicit approval.
 - If an export fails, keep the source data unchanged, inspect the browser and Convex logs, and retry. Do not fall back to copying Convex tables or Loops contacts manually.
 - Anonymization and deletion are intentionally irreversible, and this repository does not currently document or guarantee a data-restore path. Stop the cron through an approved incident change and contact the Convex project owner if recovery may be possible from an externally configured backup. Do not recreate consent or e-book capabilities from a technical log.
 - Roll back faulty code through the normal pull-request workflow. Disabling the cron requires a dedicated Ready Linear issue unless stopping an active incident is explicitly approved.
@@ -62,7 +62,7 @@ Keep `SUPPRESSION_HASH_SECRET`, capability secrets, provider credentials, export
 
 ## Automation mapping and maintenance
 
-The daily Convex cron and Workflow component replace manually locating due records, sequencing the four retention phases, surfacing failed application steps for operator-triggered retry, recording counters, and repeating bounded pages. The equivalent human observation is the retention-run list in `/admin/privacy`; destructive manual execution still requires explicit approval. The two download buttons replace a direct database extraction and call the same authenticated Convex query used by the application.
+The daily Convex cron and Workflow component replace manually locating due records, sequencing the four retention phases, surfacing failed application steps for operator-triggered retry, recording counters, and repeating bounded pages. The equivalent human observation is the retention-run list in `/privacy`; destructive manual execution still requires explicit approval. The two download buttons replace a direct database extraction and call the same authenticated Convex query used by the application.
 
 Grégory owns this runbook. Update it whenever policy boundaries, batch size, run evidence, export columns, administrator authorization, provider data, recovery steps, or the Convex schedule changes.
 

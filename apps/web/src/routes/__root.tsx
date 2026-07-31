@@ -1,16 +1,25 @@
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import type { ConvexQueryClient } from "@convex-dev/react-query";
+import { readRootLayout } from "@ec/domain/helpers/layouts";
+import { GridBackground } from "@ec/ui/components/grid-background";
 import { Toaster } from "@ec/ui/components/sonner";
-import type { QueryClient } from "@tanstack/react-query";
-import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { TooltipProvider } from "@ec/ui/components/tooltip";
+import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import { Hydrate } from "@tanstack/react-start";
+import { visible } from "@tanstack/react-start/hydration";
 import { useEffect, useState } from "react";
 
-import { authClient } from "@/lib/auth/client";
+import { getServerFormState } from "@/lib/form/form.functions";
+import { requireActiveNewsletterLegalBundle } from "@/lib/newsletter-legal-bundles/functions";
+import { Footer } from "@/routes/-footer";
+import { Header } from "@/routes/-header";
+import { Newsletter } from "@/routes/-newsletter";
+
+import styleCss from "@/styles.css?url";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient; convexQueryClient: ConvexQueryClient }>()({
+export const Route = createRootRoute({
   head: () => ({
     links: [
+      { href: styleCss, rel: "stylesheet" },
       { href: "/favicon.ico", rel: "icon" },
       { href: "/favicon-32x32.png", rel: "icon", sizes: "32x32", type: "image/png" },
       { href: "/favicon-16x16.png", rel: "icon", sizes: "16x16", type: "image/png" },
@@ -24,13 +33,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient; conv
       { content: "#f4b8a8", name: "theme-color" },
     ],
   }),
+  loader: async () => {
+    const layout = readRootLayout();
+    const [bundle, formState] = await Promise.all([requireActiveNewsletterLegalBundle(), getServerFormState()]);
+    return { bundle, formState, layout };
+  },
   shellComponent: RootDocument,
 });
 
 // DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({ children }: React.PropsWithChildren) {
+  const { bundle, formState, layout } = Route.useLoaderData();
   const [isScrolled, setIsScrolled] = useState(false);
-  const { convexQueryClient } = Route.useRouteContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,18 +58,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    // @ts-expect-error -- The documented client construction is incompatible with the package's AuthClient type under TypeScript 6.
-    <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient}>
-      <html lang="fr" suppressHydrationWarning>
-        <head>
-          <HeadContent />
-        </head>
-        <body className="group/body" data-scrolled={isScrolled ? "" : undefined}>
-          {children}
-          <Toaster />
-          <Scripts />
-        </body>
-      </html>
-    </ConvexBetterAuthProvider>
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body className="group/body" data-scrolled={isScrolled ? "" : undefined}>
+        <TooltipProvider>
+          <GridBackground />
+          <Header {...layout} />
+          <main className="relative mt-20 flex-1 sm:mt-28 md:mt-40">{children}</main>
+          <Hydrate when={visible({ rootMargin: "800px" })} prefetch={visible({ rootMargin: "1600px" })}>
+            <Newsletter bundle={bundle} formState={formState} />
+          </Hydrate>
+          <Footer />
+        </TooltipProvider>
+        <Toaster />
+        <Scripts />
+      </body>
+    </html>
   );
 }

@@ -40,9 +40,26 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 // AUTH ------------------------------------------------------------------------------------------------------------------------------------
+export const parseAuthBaseUrl = (value: string): string => {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("APP_SITE_URL must be an HTTP(S) origin without a path, query, or hash");
+  }
+  const isHttpOrigin = url.protocol === "http:" || url.protocol === "https:";
+  const hasOnlyOrigin = url.pathname === "/" && url.search === "" && url.hash === "" && url.username === "" && url.password === "";
+  if (!(isHttpOrigin && hasOnlyOrigin)) throw new Error("APP_SITE_URL must be an HTTP(S) origin without a path, query, or hash");
+  return url.origin;
+};
+
+export const getAuthBaseUrl = (): string => parseAuthBaseUrl(env.APP_SITE_URL);
+
+export const getTrustedAuthOrigins = (): string[] => [getAuthBaseUrl()];
+
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
-    baseURL: env.SITE_URL,
+    baseURL: getAuthBaseUrl(),
     database: authComponent.adapter(ctx),
     plugins: [convex({ authConfig })],
     rateLimit: {
@@ -54,6 +71,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
         clientSecret: env.GOOGLE_CLIENT_SECRET,
       },
     },
+    trustedOrigins: getTrustedAuthOrigins(),
   });
 
 export const { getAuthUser } = authComponent.clientApi();
