@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted.
+Accepted for the React framework migration. The single-production-application topology is superseded by [ADR 0012](0012-separate-public-and-authenticated-applications.md).
 
 ## Context
 
@@ -18,11 +18,12 @@ Replace the Solid applications with one React application at `apps/web`. Use Tan
 
 ## Consequences
 
-The repository has one JSX runtime and one production application. Authentication follows the maintained React integration rather than a local Solid adapter.
+The repository has one JSX runtime. Authentication follows the maintained React integration rather than a local Solid adapter. ADR 0012 subsequently separates the public and authenticated route sets into independently deployed React applications.
 
 The replacement requires feature-parity review, updated deployment paths, and regression testing of public routes and authenticated dashboard routes. The previous implementation remains recoverable from Git history and the `NIA-21/solid-checkpoint` branch during migration.
 
 ## Links
 
 - [NIA-30](https://linear.app/niama/issue/NIA-30/replace-solid-with-the-supported-react-application)
+- [NIA-44](https://linear.app/niama/issue/NIA-44/split-public-and-authenticated-tanstack-applications)
 - [Convex Better Auth TanStack Start guide](https://labs.convex.dev/better-auth/framework-guides/tanstack-start)

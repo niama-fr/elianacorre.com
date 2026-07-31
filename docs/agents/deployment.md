@@ -25,7 +25,8 @@ Each deployment declares:
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
 - `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
 - `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
-- `SITE_URL`: exact application origin with no trailing path.
+- `SITE_URL`: exact public application origin with no trailing path; owns public capability and newsletter links.
+- `APP_SITE_URL`: exact authenticated application origin with no trailing path; owns Better Auth callbacks and trusted-origin checks.
 - `SUPPRESSION_HASH_SECRET`: unique secret generated from at least 32 random bytes; creates the irreversible suppression lookup value.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
 
@@ -34,9 +35,9 @@ Development and staging use only the separate Loops staging environment. Product
 The Google OAuth clients authorize these callbacks:
 
 ```text
-http://localhost:3002/api/auth/callback/google
-https://staging.elianacorre.com/api/auth/callback/google
-https://elianacorre.com/api/auth/callback/google
+http://localhost:3003/api/auth/callback/google
+https://app.staging.elianacorre.com/api/auth/callback/google
+https://app.elianacorre.com/api/auth/callback/google
 ```
 
 Dev and staging use the first two callbacks on one non-production client. Production uses only the final callback on its production client.
@@ -53,7 +54,14 @@ rtk proxy bunx convex dev --configure existing \
   --once
 ```
 
-Configure that deployment's environment variables in Convex, set the generated `VITE_CONVEX_URL` for `apps/web`, then run:
+Set the two local origins from `packages/backend`:
+
+```bash
+rtk proxy bunx convex env set SITE_URL http://localhost:3002
+rtk proxy bunx convex env set APP_SITE_URL http://localhost:3003
+```
+
+Put the generated `VITE_CONVEX_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. If the deployment does not use a `convex.cloud` URL, also set `VITE_CONVEX_SITE_URL` in `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
 
 ```bash
 rtk proxy bun run dev
@@ -158,7 +166,16 @@ Attach `staging.elianacorre.com` to the staging Worker under **Workers & Pages â
 rtk gh variable set STAGING_URL --env staging --body "https://staging.elianacorre.com"
 ```
 
-Set the staging Convex `SITE_URL` to the same origin and add its exact Google callback before verifying authentication.
+Set the staging Convex `SITE_URL` to the public staging origin and `APP_SITE_URL` to the authenticated staging origin. Add the exact authenticated origin's Google callback before verifying authentication.
+
+In the Convex dashboard, select the production deployment of `elianacorre-com-staging`, open **Settings â†’ Environment Variables**, and set:
+
+```text
+SITE_URL=https://staging.elianacorre.com
+APP_SITE_URL=https://app.staging.elianacorre.com
+```
+
+In Google Cloud Console, add `https://app.staging.elianacorre.com/api/auth/callback/google` to the non-production OAuth client's authorized redirect URIs. After the authenticated Worker and hostname are available, verify that sign-in returns to the authenticated host and that `POST /api/auth/sign-out` accepts that host's `Origin` and clears the Better Auth cookies.
 
 ## Production release
 
@@ -201,13 +218,17 @@ This keeps the current and previous Worker compatible during deployment and make
 Moving `elianacorre.com` from the existing project is a separate manual launch operation:
 
 1. Release and verify `v1.0.0` through the production `workers.dev` URL.
-2. Configure production Convex `SITE_URL`, Google OAuth, and `PRODUCTION_URL` for the apex domain.
+2. Configure production Convex `SITE_URL` for the apex domain, `APP_SITE_URL` for the authenticated hostname, Google OAuth for the authenticated callback, and `PRODUCTION_URL` for the public Worker.
 3. Detach the apex domain from the old Worker and attach it to `elianacorre-com`.
 4. Configure a permanent `www.elianacorre.com` redirect to `https://elianacorre.com`.
 5. Verify TLS, authentication, contact submission, canonical redirects, and rollback readiness.
 6. Keep the old Worker available temporarily for emergency recovery.
 
 Do not move the public domain as part of an ordinary staging or production workflow change.
+
+For production, select the production deployment of `elianacorre-com-b1869` in the Convex dashboard and set `SITE_URL` to `https://elianacorre.com` and `APP_SITE_URL` to `https://app.elianacorre.com`. In the production Google OAuth client, authorize only `https://app.elianacorre.com/api/auth/callback/google`. Confirm both values before approving the protected production deployment.
+
+To recover from an incorrect authenticated origin, restore the previous `APP_SITE_URL` in the affected Convex deployment and restore the corresponding Google OAuth redirect URI. Redeploy the backend functions, then repeat sign-in and sign-out verification. Never put OAuth credentials or Better Auth secrets in repository files or command arguments.
 
 ## Human verification
 

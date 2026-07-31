@@ -19,3 +19,4 @@ Exploration and evolving notes remain in the Niama Obsidian vault. Link the rele
 - [0009: Promote persistent staging to production](0009-promote-persistent-staging-to-production.md)
 - [0010: Separate Convex entry points, business policy, and data access](0010-separate-convex-entry-points-business-policy-and-data-access.md)
 - [0011: Render published legal Markdown dynamically](0011-render-published-legal-markdown-dynamically.md)
+- [0012: Separate public and authenticated applications](0012-separate-public-and-authenticated-applications.md)

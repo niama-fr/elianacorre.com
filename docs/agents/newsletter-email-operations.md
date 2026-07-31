@@ -132,7 +132,7 @@ Corriger l’URL ou le secret uniquement dans l’environnement touché, puis re
 
 ### Procédure
 
-1. Ouvrir `/admin/ebooks` dans l’environnement ciblé.
+1. Ouvrir `/ebooks` dans l’environnement ciblé.
 2. Téléverser le PDF approuvé comme brouillon, avec un titre et une version explicites.
 3. Prévisualiser le fichier et vérifier lisibilité, taille, nom, droits et absence de données sensibles.
 4. Publier le brouillon ; confirmer qu’une seule version est marquée publiée.
@@ -174,7 +174,7 @@ Annuler dans Loops tant que la campagne n’est pas partie. Après départ, ne p
 
 ### Interface
 
-Ouvrir `/admin/email-operations`. Une alerte terminale affiche le type de tâche, la catégorie structurée, le statut HTTP éventuel et le Workflow courant, sans adresse destinataire.
+Ouvrir `/email-operations`. Une alerte terminale affiche le type de tâche, la catégorie structurée, le statut HTTP éventuel et le Workflow courant, sans adresse destinataire.
 
 ### Procédure
 
@@ -208,7 +208,7 @@ Ne jamais utiliser une réponse transférée comme preuve suffisante, restaurer 
 
 ### Export
 
-Suivre `docs/agents/newsletter-retention-portability.md`. L’export JSON ou CSV de `/admin/privacy` est fournisseur-indépendant et constitue une donnée personnelle. Le stocker uniquement dans l’espace de migration approuvé et supprimer les copies temporaires.
+Suivre `docs/agents/newsletter-retention-portability.md`. L’export JSON ou CSV de `/privacy` est fournisseur-indépendant et constitue une donnée personnelle. Le stocker uniquement dans l’espace de migration approuvé et supprimer les copies temporaires.
 
 ### Réconciliation Convex → Loops
 
@@ -217,7 +217,7 @@ Suivre `docs/agents/newsletter-retention-portability.md`. L’export JSON ou CSV
 3. Ajouter ou mettre à jour via les tâches de synchronisation de l’application, jamais par import faisant de Loops l’autorité.
 4. Désinscrire dans Loops les anciens abonnés, restrictions et suppressions présents à tort.
 5. Ne pas réactiver automatiquement une plainte pour spam.
-6. Relancer les échecs depuis `/admin/email-operations` avec leur clé métier originale et une clé de livraison dérivée du compteur de relance.
+6. Relancer les échecs depuis `/email-operations` avec leur clé métier originale et une clé de livraison dérivée du compteur de relance.
 7. Refaire l’export et confirmer que les écarts sont nuls ou explicitement expliqués.
 
 ### Récupération
@@ -276,4 +276,4 @@ Grégory maintient ce runbook. Le mettre à jour lors de tout changement de four
 
 ## Correspondance avec l’automatisation
 
-L’application automatise la création durable des tâches, les reprises temporaires, l’idempotence, l’alerte terminale, l’historique Workflow, la relance contrôlée, la rétention et la publication versionnée des textes. L’équivalent humain consiste à suivre les écrans Convex, Loops et `/admin`, vérifier les résultats décrits et n’utiliser que les actions documentées. L’automatisation n’approuve ni une campagne, ni une modification externe, ni une mise en production.
+L’application automatise la création durable des tâches, les reprises temporaires, l’idempotence, l’alerte terminale, l’historique Workflow, la relance contrôlée, la rétention et la publication versionnée des textes. L’équivalent humain consiste à suivre les écrans Convex, Loops et `/`, vérifier les résultats décrits et n’utiliser que les actions documentées. L’automatisation n’approuve ni une campagne, ni une modification externe, ni une mise en production.

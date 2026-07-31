@@ -40,9 +40,11 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 // AUTH ------------------------------------------------------------------------------------------------------------------------------------
+export const getAuthBaseUrl = (): string => env.APP_SITE_URL;
+
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
-    baseURL: env.SITE_URL,
+    baseURL: getAuthBaseUrl(),
     database: authComponent.adapter(ctx),
     plugins: [convex({ authConfig })],
     rateLimit: {

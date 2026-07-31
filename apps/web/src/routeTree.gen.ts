@@ -9,41 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PublicRouteImport } from './routes/_public'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as OeuvresRouteImport } from './routes/oeuvres'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PublicIndexRouteImport } from './routes/_public/index'
-import { Route as PublicSplatRouteImport } from './routes/_public/$'
-import { Route as PublicOeuvresRouteImport } from './routes/_public/oeuvres'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as AdminEbooksRouteImport } from './routes/admin/ebooks'
-import { Route as AdminEmailOperationsRouteImport } from './routes/admin/email-operations'
-import { Route as AdminPrivacyRouteImport } from './routes/admin/privacy'
-import { Route as PublicCarnetsDeVoyageIndexRouteImport } from './routes/_public/carnets-de-voyage/index'
-import { Route as PublicConfidentialiteIndexRouteImport } from './routes/_public/confidentialite/index'
-import { Route as PublicContactIndexRouteImport } from './routes/_public/contact/index'
-import { Route as PublicMentionsLegalesIndexRouteImport } from './routes/_public/mentions-legales/index'
-import { Route as PublicNewsletterConfirmationRouteImport } from './routes/_public/newsletter/confirmation'
-import { Route as PublicNewsletterEbookRouteImport } from './routes/_public/newsletter/ebook'
-import { Route as PublicOeuvresIndexRouteImport } from './routes/_public/oeuvres/index'
-import { Route as PublicOeuvresSlugRouteImport } from './routes/_public/oeuvres/$slug'
-import { Route as PublicQuiSuisJeIndexRouteImport } from './routes/_public/qui-suis-je/index'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as CarnetsDeVoyageIndexRouteImport } from './routes/carnets-de-voyage/index'
+import { Route as ConfidentialiteIndexRouteImport } from './routes/confidentialite/index'
+import { Route as ContactIndexRouteImport } from './routes/contact/index'
+import { Route as MentionsLegalesIndexRouteImport } from './routes/mentions-legales/index'
+import { Route as NewsletterConfirmationRouteImport } from './routes/newsletter/confirmation'
+import { Route as NewsletterEbookRouteImport } from './routes/newsletter/ebook'
+import { Route as OeuvresIndexRouteImport } from './routes/oeuvres/index'
+import { Route as OeuvresSlugRouteImport } from './routes/oeuvres/$slug'
+import { Route as QuiSuisJeIndexRouteImport } from './routes/qui-suis-je/index'
 
-const PublicRoute = PublicRouteImport.update({
-  id: '/_public',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConnexionRoute = ConnexionRouteImport.update({
-  id: '/connexion',
-  path: '/connexion',
+const OeuvresRoute = OeuvresRouteImport.update({
+  id: '/oeuvres',
+  path: '/oeuvres',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
@@ -56,183 +49,111 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PublicIndexRoute = PublicIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PublicRoute,
+const CarnetsDeVoyageIndexRoute = CarnetsDeVoyageIndexRouteImport.update({
+  id: '/carnets-de-voyage/',
+  path: '/carnets-de-voyage/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PublicSplatRoute = PublicSplatRouteImport.update({
-  id: '/$',
-  path: '/$',
-  getParentRoute: () => PublicRoute,
+const ConfidentialiteIndexRoute = ConfidentialiteIndexRouteImport.update({
+  id: '/confidentialite/',
+  path: '/confidentialite/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PublicOeuvresRoute = PublicOeuvresRouteImport.update({
-  id: '/oeuvres',
-  path: '/oeuvres',
-  getParentRoute: () => PublicRoute,
-} as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEbooksRoute = AdminEbooksRouteImport.update({
-  id: '/ebooks',
-  path: '/ebooks',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEmailOperationsRoute = AdminEmailOperationsRouteImport.update({
-  id: '/email-operations',
-  path: '/email-operations',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPrivacyRoute = AdminPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => AdminRoute,
-} as any)
-const PublicCarnetsDeVoyageIndexRoute =
-  PublicCarnetsDeVoyageIndexRouteImport.update({
-    id: '/carnets-de-voyage/',
-    path: '/carnets-de-voyage/',
-    getParentRoute: () => PublicRoute,
-  } as any)
-const PublicConfidentialiteIndexRoute =
-  PublicConfidentialiteIndexRouteImport.update({
-    id: '/confidentialite/',
-    path: '/confidentialite/',
-    getParentRoute: () => PublicRoute,
-  } as any)
-const PublicContactIndexRoute = PublicContactIndexRouteImport.update({
+const ContactIndexRoute = ContactIndexRouteImport.update({
   id: '/contact/',
   path: '/contact/',
-  getParentRoute: () => PublicRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PublicMentionsLegalesIndexRoute =
-  PublicMentionsLegalesIndexRouteImport.update({
-    id: '/mentions-legales/',
-    path: '/mentions-legales/',
-    getParentRoute: () => PublicRoute,
-  } as any)
-const PublicNewsletterConfirmationRoute =
-  PublicNewsletterConfirmationRouteImport.update({
-    id: '/newsletter/confirmation',
-    path: '/newsletter/confirmation',
-    getParentRoute: () => PublicRoute,
-  } as any)
-const PublicNewsletterEbookRoute = PublicNewsletterEbookRouteImport.update({
+const MentionsLegalesIndexRoute = MentionsLegalesIndexRouteImport.update({
+  id: '/mentions-legales/',
+  path: '/mentions-legales/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterConfirmationRoute = NewsletterConfirmationRouteImport.update({
+  id: '/newsletter/confirmation',
+  path: '/newsletter/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterEbookRoute = NewsletterEbookRouteImport.update({
   id: '/newsletter/ebook',
   path: '/newsletter/ebook',
-  getParentRoute: () => PublicRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PublicOeuvresIndexRoute = PublicOeuvresIndexRouteImport.update({
+const OeuvresIndexRoute = OeuvresIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => PublicOeuvresRoute,
+  getParentRoute: () => OeuvresRoute,
 } as any)
-const PublicOeuvresSlugRoute = PublicOeuvresSlugRouteImport.update({
+const OeuvresSlugRoute = OeuvresSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
-  getParentRoute: () => PublicOeuvresRoute,
+  getParentRoute: () => OeuvresRoute,
 } as any)
-const PublicQuiSuisJeIndexRoute = PublicQuiSuisJeIndexRouteImport.update({
+const QuiSuisJeIndexRoute = QuiSuisJeIndexRouteImport.update({
   id: '/qui-suis-je/',
   path: '/qui-suis-je/',
-  getParentRoute: () => PublicRoute,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof PublicIndexRoute
-  '/admin': typeof AdminRouteWithChildren
-  '/connexion': typeof ConnexionRoute
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/oeuvres': typeof OeuvresRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/$': typeof PublicSplatRoute
-  '/oeuvres': typeof PublicOeuvresRouteWithChildren
-  '/admin/ebooks': typeof AdminEbooksRoute
-  '/admin/email-operations': typeof AdminEmailOperationsRoute
-  '/admin/privacy': typeof AdminPrivacyRoute
-  '/admin/': typeof AdminIndexRoute
-  '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
-  '/newsletter/ebook': typeof PublicNewsletterEbookRoute
-  '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/carnets-de-voyage/': typeof PublicCarnetsDeVoyageIndexRoute
-  '/confidentialite/': typeof PublicConfidentialiteIndexRoute
-  '/contact/': typeof PublicContactIndexRoute
-  '/mentions-legales/': typeof PublicMentionsLegalesIndexRoute
-  '/oeuvres/': typeof PublicOeuvresIndexRoute
-  '/qui-suis-je/': typeof PublicQuiSuisJeIndexRoute
+  '/newsletter/confirmation': typeof NewsletterConfirmationRoute
+  '/newsletter/ebook': typeof NewsletterEbookRoute
+  '/oeuvres/$slug': typeof OeuvresSlugRoute
+  '/carnets-de-voyage/': typeof CarnetsDeVoyageIndexRoute
+  '/confidentialite/': typeof ConfidentialiteIndexRoute
+  '/contact/': typeof ContactIndexRoute
+  '/mentions-legales/': typeof MentionsLegalesIndexRoute
+  '/oeuvres/': typeof OeuvresIndexRoute
+  '/qui-suis-je/': typeof QuiSuisJeIndexRoute
 }
 export interface FileRoutesByTo {
-  '/connexion': typeof ConnexionRoute
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/$': typeof PublicSplatRoute
-  '/admin/ebooks': typeof AdminEbooksRoute
-  '/admin/email-operations': typeof AdminEmailOperationsRoute
-  '/admin/privacy': typeof AdminPrivacyRoute
-  '/': typeof PublicIndexRoute
-  '/admin': typeof AdminIndexRoute
-  '/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
-  '/newsletter/ebook': typeof PublicNewsletterEbookRoute
-  '/oeuvres/$slug': typeof PublicOeuvresSlugRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/carnets-de-voyage': typeof PublicCarnetsDeVoyageIndexRoute
-  '/confidentialite': typeof PublicConfidentialiteIndexRoute
-  '/contact': typeof PublicContactIndexRoute
-  '/mentions-legales': typeof PublicMentionsLegalesIndexRoute
-  '/oeuvres': typeof PublicOeuvresIndexRoute
-  '/qui-suis-je': typeof PublicQuiSuisJeIndexRoute
+  '/newsletter/confirmation': typeof NewsletterConfirmationRoute
+  '/newsletter/ebook': typeof NewsletterEbookRoute
+  '/oeuvres/$slug': typeof OeuvresSlugRoute
+  '/carnets-de-voyage': typeof CarnetsDeVoyageIndexRoute
+  '/confidentialite': typeof ConfidentialiteIndexRoute
+  '/contact': typeof ContactIndexRoute
+  '/mentions-legales': typeof MentionsLegalesIndexRoute
+  '/oeuvres': typeof OeuvresIndexRoute
+  '/qui-suis-je': typeof QuiSuisJeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_public': typeof PublicRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
-  '/connexion': typeof ConnexionRoute
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/oeuvres': typeof OeuvresRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_public/$': typeof PublicSplatRoute
-  '/_public/oeuvres': typeof PublicOeuvresRouteWithChildren
-  '/admin/ebooks': typeof AdminEbooksRoute
-  '/admin/email-operations': typeof AdminEmailOperationsRoute
-  '/admin/privacy': typeof AdminPrivacyRoute
-  '/_public/': typeof PublicIndexRoute
-  '/admin/': typeof AdminIndexRoute
-  '/_public/newsletter/confirmation': typeof PublicNewsletterConfirmationRoute
-  '/_public/newsletter/ebook': typeof PublicNewsletterEbookRoute
-  '/_public/oeuvres/$slug': typeof PublicOeuvresSlugRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/_public/carnets-de-voyage/': typeof PublicCarnetsDeVoyageIndexRoute
-  '/_public/confidentialite/': typeof PublicConfidentialiteIndexRoute
-  '/_public/contact/': typeof PublicContactIndexRoute
-  '/_public/mentions-legales/': typeof PublicMentionsLegalesIndexRoute
-  '/_public/oeuvres/': typeof PublicOeuvresIndexRoute
-  '/_public/qui-suis-je/': typeof PublicQuiSuisJeIndexRoute
+  '/newsletter/confirmation': typeof NewsletterConfirmationRoute
+  '/newsletter/ebook': typeof NewsletterEbookRoute
+  '/oeuvres/$slug': typeof OeuvresSlugRoute
+  '/carnets-de-voyage/': typeof CarnetsDeVoyageIndexRoute
+  '/confidentialite/': typeof ConfidentialiteIndexRoute
+  '/contact/': typeof ContactIndexRoute
+  '/mentions-legales/': typeof MentionsLegalesIndexRoute
+  '/oeuvres/': typeof OeuvresIndexRoute
+  '/qui-suis-je/': typeof QuiSuisJeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
-    | '/connexion'
-    | '/robots.txt'
-    | '/sitemap.xml'
     | '/$'
     | '/oeuvres'
-    | '/admin/ebooks'
-    | '/admin/email-operations'
-    | '/admin/privacy'
-    | '/admin/'
+    | '/robots.txt'
+    | '/sitemap.xml'
     | '/newsletter/confirmation'
     | '/newsletter/ebook'
     | '/oeuvres/$slug'
-    | '/api/auth/$'
     | '/carnets-de-voyage/'
     | '/confidentialite/'
     | '/contact/'
@@ -241,19 +162,13 @@ export interface FileRouteTypes {
     | '/qui-suis-je/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/connexion'
+    | '/'
+    | '/$'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/$'
-    | '/admin/ebooks'
-    | '/admin/email-operations'
-    | '/admin/privacy'
-    | '/'
-    | '/admin'
     | '/newsletter/confirmation'
     | '/newsletter/ebook'
     | '/oeuvres/$slug'
-    | '/api/auth/$'
     | '/carnets-de-voyage'
     | '/confidentialite'
     | '/contact'
@@ -262,60 +177,58 @@ export interface FileRouteTypes {
     | '/qui-suis-je'
   id:
     | '__root__'
-    | '/_public'
-    | '/admin'
-    | '/connexion'
+    | '/'
+    | '/$'
+    | '/oeuvres'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/_public/$'
-    | '/_public/oeuvres'
-    | '/admin/ebooks'
-    | '/admin/email-operations'
-    | '/admin/privacy'
-    | '/_public/'
-    | '/admin/'
-    | '/_public/newsletter/confirmation'
-    | '/_public/newsletter/ebook'
-    | '/_public/oeuvres/$slug'
-    | '/api/auth/$'
-    | '/_public/carnets-de-voyage/'
-    | '/_public/confidentialite/'
-    | '/_public/contact/'
-    | '/_public/mentions-legales/'
-    | '/_public/oeuvres/'
-    | '/_public/qui-suis-je/'
+    | '/newsletter/confirmation'
+    | '/newsletter/ebook'
+    | '/oeuvres/$slug'
+    | '/carnets-de-voyage/'
+    | '/confidentialite/'
+    | '/contact/'
+    | '/mentions-legales/'
+    | '/oeuvres/'
+    | '/qui-suis-je/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  PublicRoute: typeof PublicRouteWithChildren
-  AdminRoute: typeof AdminRouteWithChildren
-  ConnexionRoute: typeof ConnexionRoute
+  IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
+  OeuvresRoute: typeof OeuvresRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  NewsletterConfirmationRoute: typeof NewsletterConfirmationRoute
+  NewsletterEbookRoute: typeof NewsletterEbookRoute
+  CarnetsDeVoyageIndexRoute: typeof CarnetsDeVoyageIndexRoute
+  ConfidentialiteIndexRoute: typeof ConfidentialiteIndexRoute
+  ContactIndexRoute: typeof ContactIndexRoute
+  MentionsLegalesIndexRoute: typeof MentionsLegalesIndexRoute
+  QuiSuisJeIndexRoute: typeof QuiSuisJeIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_public': {
-      id: '/_public'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof PublicRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/connexion': {
-      id: '/connexion'
-      path: '/connexion'
-      fullPath: '/connexion'
-      preLoaderRoute: typeof ConnexionRouteImport
+    '/oeuvres': {
+      id: '/oeuvres'
+      path: '/oeuvres'
+      fullPath: '/oeuvres'
+      preLoaderRoute: typeof OeuvresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/robots.txt': {
@@ -332,194 +245,98 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_public/': {
-      id: '/_public/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof PublicIndexRouteImport
-      parentRoute: typeof PublicRoute
-    }
-    '/_public/$': {
-      id: '/_public/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof PublicSplatRouteImport
-      parentRoute: typeof PublicRoute
-    }
-    '/_public/oeuvres': {
-      id: '/_public/oeuvres'
-      path: '/oeuvres'
-      fullPath: '/oeuvres'
-      preLoaderRoute: typeof PublicOeuvresRouteImport
-      parentRoute: typeof PublicRoute
-    }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/ebooks': {
-      id: '/admin/ebooks'
-      path: '/ebooks'
-      fullPath: '/admin/ebooks'
-      preLoaderRoute: typeof AdminEbooksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/email-operations': {
-      id: '/admin/email-operations'
-      path: '/email-operations'
-      fullPath: '/admin/email-operations'
-      preLoaderRoute: typeof AdminEmailOperationsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/privacy': {
-      id: '/admin/privacy'
-      path: '/privacy'
-      fullPath: '/admin/privacy'
-      preLoaderRoute: typeof AdminPrivacyRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_public/carnets-de-voyage/': {
-      id: '/_public/carnets-de-voyage/'
+    '/carnets-de-voyage/': {
+      id: '/carnets-de-voyage/'
       path: '/carnets-de-voyage'
       fullPath: '/carnets-de-voyage/'
-      preLoaderRoute: typeof PublicCarnetsDeVoyageIndexRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof CarnetsDeVoyageIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/confidentialite/': {
-      id: '/_public/confidentialite/'
+    '/confidentialite/': {
+      id: '/confidentialite/'
       path: '/confidentialite'
       fullPath: '/confidentialite/'
-      preLoaderRoute: typeof PublicConfidentialiteIndexRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof ConfidentialiteIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/contact/': {
-      id: '/_public/contact/'
+    '/contact/': {
+      id: '/contact/'
       path: '/contact'
       fullPath: '/contact/'
-      preLoaderRoute: typeof PublicContactIndexRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof ContactIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/mentions-legales/': {
-      id: '/_public/mentions-legales/'
+    '/mentions-legales/': {
+      id: '/mentions-legales/'
       path: '/mentions-legales'
       fullPath: '/mentions-legales/'
-      preLoaderRoute: typeof PublicMentionsLegalesIndexRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof MentionsLegalesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/newsletter/confirmation': {
-      id: '/_public/newsletter/confirmation'
+    '/newsletter/confirmation': {
+      id: '/newsletter/confirmation'
       path: '/newsletter/confirmation'
       fullPath: '/newsletter/confirmation'
-      preLoaderRoute: typeof PublicNewsletterConfirmationRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof NewsletterConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/newsletter/ebook': {
-      id: '/_public/newsletter/ebook'
+    '/newsletter/ebook': {
+      id: '/newsletter/ebook'
       path: '/newsletter/ebook'
       fullPath: '/newsletter/ebook'
-      preLoaderRoute: typeof PublicNewsletterEbookRouteImport
-      parentRoute: typeof PublicRoute
+      preLoaderRoute: typeof NewsletterEbookRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_public/oeuvres/': {
-      id: '/_public/oeuvres/'
+    '/oeuvres/': {
+      id: '/oeuvres/'
       path: '/'
       fullPath: '/oeuvres/'
-      preLoaderRoute: typeof PublicOeuvresIndexRouteImport
-      parentRoute: typeof PublicOeuvresRoute
+      preLoaderRoute: typeof OeuvresIndexRouteImport
+      parentRoute: typeof OeuvresRoute
     }
-    '/_public/oeuvres/$slug': {
-      id: '/_public/oeuvres/$slug'
+    '/oeuvres/$slug': {
+      id: '/oeuvres/$slug'
       path: '/$slug'
       fullPath: '/oeuvres/$slug'
-      preLoaderRoute: typeof PublicOeuvresSlugRouteImport
-      parentRoute: typeof PublicOeuvresRoute
+      preLoaderRoute: typeof OeuvresSlugRouteImport
+      parentRoute: typeof OeuvresRoute
     }
-    '/_public/qui-suis-je/': {
-      id: '/_public/qui-suis-je/'
+    '/qui-suis-je/': {
+      id: '/qui-suis-je/'
       path: '/qui-suis-je'
       fullPath: '/qui-suis-je/'
-      preLoaderRoute: typeof PublicQuiSuisJeIndexRouteImport
-      parentRoute: typeof PublicRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      preLoaderRoute: typeof QuiSuisJeIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface PublicOeuvresRouteChildren {
-  PublicOeuvresSlugRoute: typeof PublicOeuvresSlugRoute
-  PublicOeuvresIndexRoute: typeof PublicOeuvresIndexRoute
+interface OeuvresRouteChildren {
+  OeuvresSlugRoute: typeof OeuvresSlugRoute
+  OeuvresIndexRoute: typeof OeuvresIndexRoute
 }
 
-const PublicOeuvresRouteChildren: PublicOeuvresRouteChildren = {
-  PublicOeuvresSlugRoute: PublicOeuvresSlugRoute,
-  PublicOeuvresIndexRoute: PublicOeuvresIndexRoute,
+const OeuvresRouteChildren: OeuvresRouteChildren = {
+  OeuvresSlugRoute: OeuvresSlugRoute,
+  OeuvresIndexRoute: OeuvresIndexRoute,
 }
 
-const PublicOeuvresRouteWithChildren = PublicOeuvresRoute._addFileChildren(
-  PublicOeuvresRouteChildren,
-)
-
-interface PublicRouteChildren {
-  PublicSplatRoute: typeof PublicSplatRoute
-  PublicOeuvresRoute: typeof PublicOeuvresRouteWithChildren
-  PublicIndexRoute: typeof PublicIndexRoute
-  PublicNewsletterConfirmationRoute: typeof PublicNewsletterConfirmationRoute
-  PublicNewsletterEbookRoute: typeof PublicNewsletterEbookRoute
-  PublicCarnetsDeVoyageIndexRoute: typeof PublicCarnetsDeVoyageIndexRoute
-  PublicConfidentialiteIndexRoute: typeof PublicConfidentialiteIndexRoute
-  PublicContactIndexRoute: typeof PublicContactIndexRoute
-  PublicMentionsLegalesIndexRoute: typeof PublicMentionsLegalesIndexRoute
-  PublicQuiSuisJeIndexRoute: typeof PublicQuiSuisJeIndexRoute
-}
-
-const PublicRouteChildren: PublicRouteChildren = {
-  PublicSplatRoute: PublicSplatRoute,
-  PublicOeuvresRoute: PublicOeuvresRouteWithChildren,
-  PublicIndexRoute: PublicIndexRoute,
-  PublicNewsletterConfirmationRoute: PublicNewsletterConfirmationRoute,
-  PublicNewsletterEbookRoute: PublicNewsletterEbookRoute,
-  PublicCarnetsDeVoyageIndexRoute: PublicCarnetsDeVoyageIndexRoute,
-  PublicConfidentialiteIndexRoute: PublicConfidentialiteIndexRoute,
-  PublicContactIndexRoute: PublicContactIndexRoute,
-  PublicMentionsLegalesIndexRoute: PublicMentionsLegalesIndexRoute,
-  PublicQuiSuisJeIndexRoute: PublicQuiSuisJeIndexRoute,
-}
-
-const PublicRouteWithChildren =
-  PublicRoute._addFileChildren(PublicRouteChildren)
-
-interface AdminRouteChildren {
-  AdminEbooksRoute: typeof AdminEbooksRoute
-  AdminEmailOperationsRoute: typeof AdminEmailOperationsRoute
-  AdminPrivacyRoute: typeof AdminPrivacyRoute
-  AdminIndexRoute: typeof AdminIndexRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminEbooksRoute: AdminEbooksRoute,
-  AdminEmailOperationsRoute: AdminEmailOperationsRoute,
-  AdminPrivacyRoute: AdminPrivacyRoute,
-  AdminIndexRoute: AdminIndexRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+const OeuvresRouteWithChildren =
+  OeuvresRoute._addFileChildren(OeuvresRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  PublicRoute: PublicRouteWithChildren,
-  AdminRoute: AdminRouteWithChildren,
-  ConnexionRoute: ConnexionRoute,
+  IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
+  OeuvresRoute: OeuvresRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  NewsletterConfirmationRoute: NewsletterConfirmationRoute,
+  NewsletterEbookRoute: NewsletterEbookRoute,
+  CarnetsDeVoyageIndexRoute: CarnetsDeVoyageIndexRoute,
+  ConfidentialiteIndexRoute: ConfidentialiteIndexRoute,
+  ContactIndexRoute: ContactIndexRoute,
+  MentionsLegalesIndexRoute: MentionsLegalesIndexRoute,
+  QuiSuisJeIndexRoute: QuiSuisJeIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
