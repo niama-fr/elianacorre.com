@@ -2,7 +2,7 @@ import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { internal } from "./_generated/api";
-import { getAuthBaseUrl } from "./auth";
+import { getAuthBaseUrl, getTrustedAuthOrigins, parseAuthBaseUrl } from "./auth";
 import schema from "./schema";
 import { modules } from "./test.setup";
 
@@ -16,6 +16,18 @@ describe("authentication identity synchronization", () => {
     vi.stubEnv("SITE_URL", "https://www.example.com");
 
     expect(getAuthBaseUrl()).toBe("https://app.example.com");
+    expect(getTrustedAuthOrigins()).toStrictEqual(["https://app.example.com"]);
+  });
+
+  it.each([
+    "not-a-url",
+    "ftp://app.example.com",
+    "https://user@app.example.com",
+    "https://app.example.com/admin",
+    "https://app.example.com?preview=true",
+    "https://app.example.com#fragment",
+  ])("rejects an authenticated application URL that is not an exact HTTP origin: %s", (value) => {
+    expect(() => parseAuthBaseUrl(value)).toThrow("APP_SITE_URL must be an HTTP(S) origin");
   });
 
   it("creates and idempotently links a Profile for an authentication user", async () => {

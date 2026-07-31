@@ -1,5 +1,7 @@
 import { Button } from "@ec/ui/components/button";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth/client";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
@@ -17,14 +19,24 @@ export const Route = createFileRoute("/connexion")({
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function SignInPage() {
   const search = Route.useSearch();
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   const signIn = async () => {
-    await authClient.signIn.social({ callbackURL: search.redirect, provider: "google" });
+    setIsSigningIn(true);
+    try {
+      const { error } = await authClient.signIn.social({ callbackURL: search.redirect, provider: "google" });
+      if (error) throw new Error("Google sign-in failed");
+    } catch {
+      setIsSigningIn(false);
+      toast.error("La connexion a échoué. Réessayez.");
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-svh">
-      <Button onClick={() => void signIn()}>Connexion</Button>
+      <Button disabled={isSigningIn} onClick={() => void signIn()}>
+        {isSigningIn ? "Connexion…" : "Connexion"}
+      </Button>
     </div>
   );
 }

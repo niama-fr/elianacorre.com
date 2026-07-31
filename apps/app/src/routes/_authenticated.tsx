@@ -5,8 +5,10 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@ec/ui/components
 import { Toaster } from "@ec/ui/components/sonner";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth/client";
+import { signOutAndReload } from "@/lib/auth/client";
 import { AppSidebar } from "@/routes/_authenticated/-sidebar";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
@@ -30,6 +32,18 @@ export const ADMIN = {
 
 // DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
 function AuthenticatedLayout() {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOutAndReload();
+    } catch {
+      setIsSigningOut(false);
+      toast.error("La déconnexion a échoué. Réessayez.");
+    }
+  };
+
   return (
     <SidebarProvider>
       <AppSidebar logoImg={readImageBySlug("logo")} />
@@ -38,16 +52,11 @@ function AuthenticatedLayout() {
           <SidebarTrigger />
           <div className={ADMIN.actions()}>
             <Button
+              aria-label="Se déconnecter"
+              disabled={isSigningOut}
               size="icon"
-              onClick={() =>
-                void authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      location.reload();
-                    },
-                  },
-                })
-              }
+              title="Se déconnecter"
+              onClick={() => void handleSignOut()}
             >
               <span className={ADMIN.signout()} />
             </Button>
