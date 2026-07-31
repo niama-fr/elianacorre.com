@@ -4,6 +4,8 @@ import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
 import { clientEnv } from "./config/env";
+import { RoutePendingPage } from "./routes/-pending";
+import { SafeRouteErrorPage } from "./routes/-safe-error";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -20,6 +22,8 @@ export function getRouter() {
 
   const router = createRouter({
     context: { convexQueryClient, queryClient, token: undefined },
+    defaultErrorComponent: SafeRouteErrorPage,
+    defaultPendingComponent: RoutePendingPage,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
     routeTree,

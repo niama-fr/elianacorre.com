@@ -1,11 +1,10 @@
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
 import type { Id } from "@ec/backend/types";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery as useConvexQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,8 +27,11 @@ const FAILURE_LABELS = {
 } as const;
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
+const failedTasksQuery = convexQuery(api.loops.listFailedTasks, {});
+
 export const Route = createFileRoute("/_authenticated/email-operations")({
   component: EmailOperationsPage,
+  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(failedTasksQuery),
 });
 
 const formatDate = (timestamp: number | null) =>
@@ -37,7 +39,7 @@ const formatDate = (timestamp: number | null) =>
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function EmailOperationsPage() {
-  const failedTasks = useConvexQuery(api.loops.listFailedTasks, {});
+  const { data: failedTasks } = useSuspenseQuery(failedTasksQuery);
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"loopsTasks">>();
   const acknowledge = useMutation({ mutationFn: useConvexMutation(api.loops.acknowledgeFailedTask) });
   const replay = useMutation({ mutationFn: useConvexMutation(api.loops.replayFailedTask) });
@@ -62,9 +64,8 @@ function EmailOperationsPage() {
         </p>
       </header>
 
-      {failedTasks === undefined && <p className="text-muted-foreground text-sm">Chargement…</p>}
-      {failedTasks?.length === 0 && <p className="rounded-xl border p-4 text-muted-foreground text-sm">Aucune alerte active.</p>}
-      {failedTasks && failedTasks.length > 0 && (
+      {failedTasks.length === 0 && <p className="rounded-xl border p-4 text-muted-foreground text-sm">Aucune alerte active.</p>}
+      {failedTasks.length > 0 && (
         <ul className="flex flex-col gap-3">
           {failedTasks.map((task) => (
             <li className="grid gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-red-950 sm:grid-cols-[1fr_auto]" key={task._id}>

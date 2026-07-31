@@ -1,17 +1,22 @@
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Input } from "@ec/ui/components/input";
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@ec/ui/components/item";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useConvex, useQuery as useConvexQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/privacy")({ component: AdminPrivacyPage });
+const retentionRunsQuery = convexQuery(api.retention.listRecentRuns, {});
+
+export const Route = createFileRoute("/_authenticated/privacy")({
+  component: AdminPrivacyPage,
+  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(retentionRunsQuery),
+});
 
 type PrivacySubject = NonNullable<FunctionReturnType<typeof api.privacy.inspectSubject>>;
 type Operation = "access" | "erasure" | "export" | "objection" | "rectification" | "suppressionRemoval" | "unsubscription";
@@ -36,7 +41,7 @@ function AdminPrivacyPage() {
   const [exporting, setExporting] = useState<"csv" | "json">();
   const [searchedEmail, setSearchedEmail] = useState<string>();
   const subject = useConvexQuery(api.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
-  const retentionRuns = useConvexQuery(api.retention.listRecentRuns, {});
+  const { data: retentionRuns } = useSuspenseQuery(retentionRunsQuery);
 
   const downloadPortabilityExport = async (format: "csv" | "json") => {
     setExporting(format);
@@ -92,9 +97,8 @@ function AdminPrivacyPage() {
       </PrivacySection>
 
       <PrivacySection title="Dernières exécutions de rétention">
-        {retentionRuns === undefined && <p className="text-muted-foreground text-sm">Chargement…</p>}
-        {retentionRuns?.length === 0 && <p className="text-muted-foreground text-sm">Aucune exécution enregistrée.</p>}
-        {retentionRuns && retentionRuns.length > 0 && (
+        {retentionRuns.length === 0 && <p className="text-muted-foreground text-sm">Aucune exécution enregistrée.</p>}
+        {retentionRuns.length > 0 && (
           <ul className="flex flex-col gap-2 text-sm">
             {retentionRuns.map((run) => (
               <li className="grid gap-1 rounded-xl border p-3 sm:grid-cols-4" key={run._id}>

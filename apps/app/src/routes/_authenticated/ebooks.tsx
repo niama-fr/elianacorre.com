@@ -5,26 +5,22 @@ import { formatSize } from "@ec/domain/helpers/ebooks";
 import { zEbookCreateValues, type Ebooks } from "@ec/domain/schemas/ebooks";
 import { Alert } from "@ec/ui/components/alert";
 import { Item, ItemHeader, ItemTitle, ItemContent } from "@ec/ui/components/item";
-import { Skeleton } from "@ec/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
 import { useAppForm } from "@ec/ui/hooks/app-form";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-// import { createServerFn } from "@tanstack/react-start";
 import { useTable, FlexRender } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 import { toast } from "sonner";
-// import { fetchAuthQuery } from "@/lib/auth/index.server";
 
 import { features, getColumns } from "./ebooks/-table-features";
 
-// SERVER ----------------------------------------------------------------------------------------------------------------------------------
-// export const fetchAllEbooks = createServerFn({ method: "GET" }).handler(async () => await fetchAuthQuery(api.ebooks.list));
+const ebooksQuery = convexQuery(api.ebooks.list);
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/ebooks")({
   component: EbooksPage,
-  // loader: async () => ({ ebooks: await fetchAllEbooks() }),
+  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(ebooksQuery),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -57,8 +53,6 @@ const ADMIN = {
 };
 
 function EbooksPage() {
-  // const d = Route.useLoaderData();
-
   return (
     <section className={ADMIN.base()}>
       <header>
@@ -75,7 +69,7 @@ function EbooksPage() {
 // CURRENT VERSION -------------------------------------------------------------------------------------------------------------------------
 function EbookCurrentVersion() {
   const { data } = useSuspenseQuery({
-    ...convexQuery(api.ebooks.list),
+    ...ebooksQuery,
     select: (docs) => docs.find(({ status }) => status === "published"),
   });
 
@@ -154,7 +148,7 @@ function EbookForm() {
 
 // TABLE -----------------------------------------------------------------------------------------------------------------------------------
 function EbookItems() {
-  const { data, isLoading, isError, isFetched } = useSuspenseQuery(convexQuery(api.ebooks.list));
+  const { data } = useSuspenseQuery(ebooksQuery);
   const publish = useMutation({ mutationFn: useConvexMutation(api.ebooks.publish) });
 
   const table = useTable({
@@ -188,16 +182,6 @@ function EbookItems() {
           ))}
         </TableHeader>
         <TableBody>
-          {isLoading &&
-            Array.from({ length: 8 }).map((_, i) => (
-              <TableRow key={i}>
-                {visibleColumns.map(({ id }) => (
-                  <TableCell key={id}>
-                    <Skeleton className="h-8 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
           {hasRows &&
             rows.map((row) => (
               <TableRow key={row.id}>
@@ -209,14 +193,7 @@ function EbookItems() {
               </TableRow>
             ))}
 
-          {isError && (
-            <TableRow>
-              <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
-                Error loading jobs.
-              </TableCell>
-            </TableRow>
-          )}
-          {isFetched && !hasRows && (
+          {!hasRows && (
             <TableRow>
               <TableCell colSpan={visibleColumns.length} className="h-24 text-center">
                 <Alert>Aucune version publiée pour le moment.</Alert>
