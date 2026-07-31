@@ -91,7 +91,7 @@ Any commit after final review invalidates the review. Rerun checks and repeat th
 After squash merge:
 
 1. Confirm the merge commit in GitHub Web.
-2. Confirm staging when the issue affects runtime behavior.
+2. Confirm both public and authenticated staging deployments when the issue affects runtime behavior; mark an unaffected host as not required explicitly.
 3. Add a Linear delivery-complete comment:
 
 ```markdown

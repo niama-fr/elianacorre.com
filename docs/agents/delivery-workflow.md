@@ -76,7 +76,7 @@ If a commit changes after criteria were reviewed, re-evaluate affected criteria 
 8. Required checks and review must pass before merge. The branch must be current with `main`.
 9. Codex reconciles and checks objective Linear acceptance criteria before moving the issue to `In Review`, then performs a final two-axis review against repository standards and the issue before merge.
 10. Grégory reviews the required checks and manually merges the pull request. The merge action is the human gate for this solo repository.
-11. Approved merges deploy automatically to persistent staging.
+11. Approved merges deploy both applications automatically to persistent staging.
 12. Production releases promote the latest successful staging commit through a separate SemVer workflow dispatch and protected environment approval.
 
 ## Preferred human loop
@@ -101,7 +101,7 @@ The concise step-by-step procedure, including preferred surfaces, Codex prompts,
 
 ## GitHub enforcement
 
-Pull requests targeting `main` expose four stable required checks:
+Pull requests targeting `main` expose four stable required checks across both applications and all shared packages:
 
 - `Quality`
 - `Typecheck`
@@ -138,11 +138,11 @@ Exploration begins in Obsidian when useful. Once a technical decision is final, 
 
 Google Drive holds source assets and collaborative drafts. Optimize and copy production assets into Git or the production asset store. Never make the website depend on personal Drive links. Final published website copy lives in Git.
 
-## Production application replacement
+## Production application topology
 
-`apps/web` is the production application. Framework experiments and replacement applications do not remain as parallel workspaces after a migration is accepted.
+`apps/web` is the public production application and `apps/app` is the authenticated production application. They run as independent Cloudflare Workers but deploy together for each release from one repository, while sharing workspace packages and one environment-matched Convex backend. Framework experiments and replacement applications do not remain as additional parallel workspaces after a migration is accepted.
 
-A replacement may become the production application only when:
+A replacement may take over either production responsibility only when:
 
 - It has feature parity with the production application.
 - Critical user flows have automated tests.

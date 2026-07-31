@@ -2,12 +2,12 @@
 
 Run these commands from the repository root before opening or merging a pull request:
 
-| Command             | Verifies                                                                                                |
-| ------------------- | ------------------------------------------------------------------------------------------------------- |
-| `bun run test`      | Domain validation and isolated Convex authorization, contact, draft, publication, and rollback behavior |
-| `bun run typecheck` | The React application and first-party domain, backend, and UI packages                                  |
-| `bun run check`     | Ultracite policy through Oxfmt formatting and Oxlint static-analysis rules                              |
-| `bun run build`     | The production React client, TanStack Start server, and Cloudflare Worker bundle                        |
+| Command | Verifies |
+| --- | --- |
+| `bun run test` | Both applications plus domain validation and isolated Convex authorization, contact, draft, publication, and rollback behavior |
+| `bun run typecheck` | Both React applications and first-party domain, backend, and UI packages |
+| `bun run check` | Ultracite policy through Oxfmt formatting and Oxlint static-analysis rules |
+| `bun run build` | Both production React clients, TanStack Start servers, and Cloudflare Worker bundles |
 
 ## Test scope
 
@@ -19,7 +19,7 @@ Domain tests verify contact validation independently from persistence. Backend c
 
 ## Type-check scope
 
-React application type checking follows the active TanStack route graph from `apps/web/src/router.tsx`. Domain schemas, Convex functions and tests, and shared React UI are checked through their workspace scripts.
+React application type checking follows the independent TanStack route graphs from `apps/web/src/router.tsx` and `apps/app/src/router.tsx`. Domain schemas, Convex functions and tests, and shared React UI are checked through their workspace scripts.
 
 ## Static-quality scope
 
