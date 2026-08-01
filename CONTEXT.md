@@ -24,7 +24,7 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 **Legal Document**: A published or draft French privacy notice. Published legal documents are historical evidence and must not be changed after publication; future internationalization will be handled as a broader product decision rather than in the current legal document model. Historical newsletter-consent legal texts remain readable but are no longer published. _Avoid_: Static newsletter consent, locale-specific copy
 
-**Historical Newsletter Legal Bundle**: The legacy pair of newsletter-consent and privacy legal documents referenced by subscriptions created before privacy-notice-only evidence. Historical bundles remain immutable and readable during migration, but no active application path publishes or selects a new bundle. _Avoid_: Active newsletter evidence, current privacy notice
+**Historical Newsletter Legal Bundle**: The retired pair of newsletter-consent and privacy legal documents formerly referenced by subscriptions. After the privacy-notice backfill, the obsolete references and bundle rows are removed through a dedicated cleanup migration; the underlying legal texts remain unchanged until separately governed retention applies. No active application path reads, publishes, or selects a bundle. _Avoid_: Active newsletter evidence, current privacy notice
 
 **Pending Subscription**: A newsletter request whose email address has not yet been confirmed. Its identifying data expires after 30 days and does not grant newsletter delivery or welcome e-book access. _Avoid_: Newsletter subscriber
 

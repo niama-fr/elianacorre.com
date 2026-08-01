@@ -91,22 +91,10 @@ describe("privacy administration", () => {
         publishedAt: 1,
         publishedBy: admin._id,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "Legacy consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: admin._id,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId: insertedPrivacyNoticeId,
-        publishedAt: 1,
-        publishedBy: admin._id,
-      });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20,
         confirmedFrom: "email",
-        legalBundleId,
+        privacyNoticeId: insertedPrivacyNoticeId,
         profileId,
         requestedAt: 10,
         unsubscribedAt: null,

@@ -10,7 +10,6 @@ import { zNewsConfirmationFields } from "@ec/domain/schemas/news-confirmations";
 import { zNewsRestrictionFields } from "@ec/domain/schemas/news-restrictions";
 import { zNewsSubscriptionFields } from "@ec/domain/schemas/news-subscriptions";
 import { zNewsSuppressionFields } from "@ec/domain/schemas/news-suppressions";
-import { zNewsletterLegalBundleFields } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
 import { zPrivacyGrantFields } from "@ec/domain/schemas/privacy-grants";
 import { zProfileFields } from "@ec/domain/schemas/profiles";
@@ -45,7 +44,6 @@ export default defineSchema({
     .index("by_profile_id_and_unsubscribed_at", ["profileId", "unsubscribedAt"])
     .index("by_profile_id_and_confirmed_at", ["profileId", "confirmedAt"]),
   newsSuppressions: defineTable(zodOutputToConvex(zNewsSuppressionFields)).index("by_canonical_email_hash", ["canonicalEmailHash"]),
-  newsletterLegalBundles: defineTable(zodOutputToConvex(zNewsletterLegalBundleFields)).index("by_published_at", ["publishedAt"]),
   privacyAudits: defineTable(zodOutputToConvex(zPrivacyAuditFields)).index("by_subject_hash", ["subjectHash"]),
   privacyGrants: defineTable(zodOutputToConvex(zPrivacyGrantFields)).index("by_subject_hash_and_request_kind", [
     "subjectHash",

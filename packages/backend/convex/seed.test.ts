@@ -26,17 +26,15 @@ describe("deployment seed", () => {
     await convex.mutation(internal.seed.init, {});
 
     const state = await convex.run(async (ctx) => {
-      const bundles = await ctx.db.query("newsletterLegalBundles").collect();
       const notices = await ctx.db
         .query("legalTexts")
         .withIndex("by_kind_and_published_at", (q) => q.eq("kind", "privacyNotice"))
         .collect();
       return {
-        bundleCount: bundles.length,
         currentNoticeCount: notices.filter(({ content }) => content === PRIVACY_NOTICE.content).length,
         noticeCount: notices.length,
       };
     });
-    expect(state).toStrictEqual({ bundleCount: 0, currentNoticeCount: 1, noticeCount: 2 });
+    expect(state).toStrictEqual({ currentNoticeCount: 1, noticeCount: 2 });
   });
 });

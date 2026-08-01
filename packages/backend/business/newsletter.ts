@@ -18,7 +18,6 @@ import {
   patchNewsSubscription,
 } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
-import { requirePublishedNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
 import { createContactProfile, getProfile, getProfileIdByEmail } from "../data/profiles";
 import { issueInitialEbookDownload, issueReplacementEbookDownload } from "./ebooks";
 import { resolveEmailDeliveryRestrictionByConfirmation } from "./email-delivery-restrictions";
@@ -55,7 +54,7 @@ export async function subscribeToNewsletter(ctx: MutationCtx, opts: SubscribeToN
   const { email, firstName, now, requestIp, website } = opts;
   if (website !== "" || (await getNewsSuppressionByEmail(ctx, email))) return;
 
-  const privacyNoticeId = await resolvePrivacyNoticeId(ctx, opts);
+  await requirePublishedPrivacyNotice(ctx, { id: opts.privacyNoticeId, requestedAt: now });
 
   let profileId = await getProfileIdByEmail(ctx, email);
   const subscription = profileId ? await getCurrentNewsSubscription(ctx, profileId) : null;
@@ -83,8 +82,9 @@ export async function subscribeToNewsletter(ctx: MutationCtx, opts: SubscribeToN
   if (!(await tryConsumeConfirmationRateLimit(ctx, { email, requestIp }))) return;
 
   profileId ??= await createContactProfile(ctx, { email, firstName });
-  const subscriptionId = subscription?._id ?? (await createNewsSubscription(ctx, { privacyNoticeId, profileId, requestedAt: now }));
-  if (subscription) await patchNewsSubscription(ctx, subscriptionId, { privacyNoticeId, requestedAt: now });
+  const subscriptionId =
+    subscription?._id ?? (await createNewsSubscription(ctx, { privacyNoticeId: opts.privacyNoticeId, profileId, requestedAt: now }));
+  if (subscription) await patchNewsSubscription(ctx, subscriptionId, { privacyNoticeId: opts.privacyNoticeId, requestedAt: now });
 
   const newsConfirmationId = await replaceNewsConfirmationForSubscription(ctx, {
     kind: "subscription",
@@ -97,8 +97,7 @@ export async function subscribeToNewsletter(ctx: MutationCtx, opts: SubscribeToN
 type SubscribeToNewsletterOpts = WithNow<{
   email: string;
   firstName?: string;
-  legalBundleId?: Id<"newsletterLegalBundles">;
-  privacyNoticeId?: Id<"legalTexts">;
+  privacyNoticeId: Id<"legalTexts">;
   requestIp: string;
   website: string;
 }>;
@@ -149,23 +148,6 @@ async function resolveConfirmationFromToken(ctx: QueryCtx, { now, token }: WithN
 
   const confirmation = await getNewsConfirmation(ctx, id);
   return confirmation && confirmation._creationTime + CONFIRMATION_TTL_MS > now ? confirmation : null;
-}
-
-async function resolvePrivacyNoticeId(ctx: QueryCtx, opts: SubscribeToNewsletterOpts) {
-  const { legalBundleId, now: requestedAt, privacyNoticeId } = opts;
-  if (privacyNoticeId !== undefined) {
-    await requirePublishedPrivacyNotice(ctx, { id: privacyNoticeId, requestedAt });
-    if (legalBundleId === undefined) return privacyNoticeId;
-
-    const bundle = await requirePublishedNewsletterLegalBundle(ctx, { id: legalBundleId, requestedAt });
-    if (bundle.privacyNoticeId !== privacyNoticeId) throw new Error("MISMATCHED_PRIVACY_NOTICE");
-    return privacyNoticeId;
-  }
-
-  if (legalBundleId === undefined) throw new Error("MISSING_PRIVACY_NOTICE");
-  const bundle = await requirePublishedNewsletterLegalBundle(ctx, { id: legalBundleId, requestedAt });
-  await requirePublishedPrivacyNotice(ctx, { id: bundle.privacyNoticeId, requestedAt });
-  return bundle.privacyNoticeId;
 }
 
 async function tryConsumeConfirmationRateLimit(ctx: MutationCtx, { email, requestIp }: { email: string; requestIp: string }) {

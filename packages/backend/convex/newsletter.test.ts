@@ -157,33 +157,6 @@ describe("newsletter subscription", () => {
     });
   });
 
-  it("accepts a legacy legal bundle while storing its privacy notice", async () => {
-    const convex = await createBackend();
-    const legalBundleId = await convex.run(async (ctx) => {
-      const privacyNotice = await ctx.db.get(convex.privacyNoticeId);
-      if (privacyNotice === null) throw new Error("Privacy notice was not found");
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "legacy consent",
-        kind: "newsletterConsent",
-        publishedAt: privacyNotice.publishedAt,
-        publishedBy: privacyNotice.publishedBy,
-      });
-      return await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId: privacyNotice._id,
-        publishedAt: privacyNotice.publishedAt,
-        publishedBy: privacyNotice.publishedBy,
-      });
-    });
-
-    const { privacyNoticeId: _, ...request } = createRequest(convex);
-    await convex.mutation(api.newsletter.subscribe, { ...request, legalBundleId });
-
-    const subscription = await convex.run(async (ctx) => await ctx.db.query("newsSubscriptions").unique());
-    expect(subscription).toMatchObject({ privacyNoticeId: convex.privacyNoticeId });
-    expect(subscription).not.toHaveProperty("legalBundleId");
-  });
-
   it("records the privacy notice presented by a stale page after a newer notice is published", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(1000);
