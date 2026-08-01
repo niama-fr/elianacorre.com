@@ -10,8 +10,7 @@ export const zNewsSubscriptionConfirmedFrom = z.literal(confirmedFrom);
 export const zNewsSubscriptionFields = z.object({
   confirmedAt: z.number().nullable(),
   confirmedFrom: zNewsSubscriptionConfirmedFrom.nullable(),
-  legalBundleId: zid("newsletterLegalBundles").optional(),
-  privacyNoticeId: zid("legalTexts").optional(),
+  privacyNoticeId: zid("legalTexts"),
   profileId: zid("profiles"),
   requestedAt: z.number(),
   unsubscribedAt: z.number().nullable(),
@@ -28,26 +27,19 @@ export const zNewsSubscriptionUpsertValues = z.object({
 });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSubscriptionCreate = zNewsSubscriptionFields
-  .pick({ privacyNoticeId: true, profileId: true, requestedAt: true })
-  .required({ privacyNoticeId: true });
+export const zNewsSubscriptionCreate = zNewsSubscriptionFields.pick({ privacyNoticeId: true, profileId: true, requestedAt: true });
 
-export const zNewsSubscriptionUpsert = z
-  .object({
-    consent: z.boolean().refine((value) => value),
-    email: zCanonicalEmail,
-    firstName: z
-      .string()
-      .trim()
-      .transform((value) => (value === "" ? undefined : value)),
-    legalBundleId: zid("newsletterLegalBundles").optional(),
-    privacyNoticeId: zid("legalTexts").optional(),
-    requestIp: z.string().trim().min(1),
-    website: z.string().trim().default(""),
-  })
-  .refine(({ legalBundleId, privacyNoticeId }) => legalBundleId !== undefined || privacyNoticeId !== undefined, {
-    message: "A privacy notice or legacy legal bundle is required",
-  });
+export const zNewsSubscriptionUpsert = z.object({
+  consent: z.boolean().refine((value) => value),
+  email: zCanonicalEmail,
+  firstName: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? undefined : value)),
+  privacyNoticeId: zid("legalTexts"),
+  requestIp: z.string().trim().min(1),
+  website: z.string().trim().default(""),
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsSubscriptions = {

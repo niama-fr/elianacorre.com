@@ -12,7 +12,7 @@ The privacy-policy route must render the active published Convex privacy notice 
 
 Store privacy-notice content as CommonMark Markdown and fetch the active published privacy notice once, through a TanStack Start server function, in the public layout loader. The server function owns the Convex HTTP client and environment access; public routes receive the result as ordinary loader data and do not import Convex React Query. The privacy route reuses its parent layout's notice rather than issuing another query. The invariant newsletter-consent sentence is repository-owned website copy rather than a published legal-text version. Raw HTML is outside the supported contract. The web renderer permits only HTTP, HTTPS, mail, telephone, root-relative, and fragment links, and shifts Markdown headings below the route’s page heading.
 
-The existing plain-text privacy records require no content backfill because plain text is valid CommonMark. Running the Convex seed after deployment creates and publishes a new privacy-notice version when the canonical Markdown content differs. New newsletter consent evidence stores the exact published privacy-notice ID presented with the form. Historical bundle and newsletter-consent records remain immutable and readable during the migration.
+The existing plain-text privacy records require no content backfill because plain text is valid CommonMark. Running the Convex seed after deployment creates and publishes a new privacy-notice version when the canonical Markdown content differs. New newsletter consent evidence stores the exact published privacy-notice ID presented with the form. The completed NIA-48 migration removed the obsolete bundle records while retaining the underlying historical legal texts.
 
 Route loading fails through the application error path when Convex is unavailable or the active privacy notice is missing. Empty legal Markdown also fails explicitly. The route does not silently serve duplicated, empty, or indefinitely stale policy text.
 
@@ -39,7 +39,7 @@ Linear owns the delivery task, Git owns approved legal copy and this decision, C
 
 ### Verification
 
-In the target Convex dashboard, inspect **Data → legalTexts** and confirm the latest published `privacyNotice.content` matches the repository constant. Confirm the seed did not create a `newsletterConsent` legal text or `newsletterLegalBundles` record. Then load `/confidentialite`, view the server response or page source, and confirm the privacy title, headings, lists, emphasis, mail link, and CNIL link are present. `/mentions-legales` must remain distinct.
+In the target Convex dashboard, inspect **Data → legalTexts** and confirm the latest published `privacyNotice.content` matches the repository constant. Confirm the schema has no newsletter legal-bundle table and the seed did not create a `newsletterConsent` legal text. Then load `/confidentialite`, view the server response or page source, and confirm the privacy title, headings, lists, emphasis, mail link, and CNIL link are present. `/mentions-legales` must remain distinct.
 
 ### Recovery and rollback
 
@@ -49,26 +49,25 @@ If the seed fails, the previous active privacy notice remains authoritative: cor
 
 GitHub’s staging and production workflows automate the manual Convex deploy, `bunx convex run seed:init`, web build, and Worker deployment steps. Grégory owns legal-copy approval, protected production approval, and visual/content validation. Update this ADR and the deployment runbook whenever the content format, seed mutation, workflow names, verification fields, or recovery path changes.
 
-## Subscription evidence migration runbook
+## Subscription evidence migration record
 
-### Outcome and prerequisites
+### Outcome
 
-This one-time expand–migrate–contract process adds `privacyNoticeId` to historical subscriptions without rewriting or deleting their existing `legalBundleId`, bundle, or legal-text evidence. The operator needs the NIA-48 compatible schema and migration code, Bun and Git, dashboard access to the personal development, staging, and production Convex deployments, and a deployment-scoped key for each non-development target.
+The NIA-48 expand–migrate–contract process added `privacyNoticeId` to historical subscriptions. The backfill was completed and verified in development, staging, and production before cleanup began. `privacyNoticeId` is now required; active requests, reads, and writes no longer accept or resolve bundle references. Grégory subsequently chose to remove the obsolete bundle references and rows while retaining the underlying legal texts.
 
-### Manual procedure and expected results
+### Completed procedure and retained evidence
 
-1. Confirm the checkout contains the compatible schema: both subscription references are optional, new writes use `privacyNoticeId`, and legacy requests remain accepted. Run the complete verification commands in [`docs/agents/verification.md`](../agents/verification.md).
-2. Deploy the compatible release through the environment’s canonical path: `bunx convex dev` for the personal development deployment, the successful merge-to-`main` workflow for staging, and the protected SemVer production promotion in [`docs/agents/deployment.md`](../agents/deployment.md) for production. Confirm the expected commit and Convex deployment in GitHub and the Convex dashboard before continuing; do not deploy production Convex code independently from its release.
-3. In that deployment’s Convex dashboard function runner, select `migrations:backfillSubscriptionPrivacyNoticeIds` and run `{"dryRun":true}`. Expect one batch to complete without a persisted data change.
-4. Run the same function with `{}`. Monitor the Migrations component status until it reports completion. An interrupted run is resumed by invoking the same function again.
-5. Under **Data → newsSubscriptions**, verify every subscription has `privacyNoticeId`. For a sample of legacy rows, follow `legalBundleId` to `newsletterLegalBundles.privacyNoticeId` and confirm it equals the new field. Repeat the deploy, dry run, execution, and verification separately for development, staging, and production.
-6. Deploy the compatible website and backend release. Rerun the idempotent migration afterward to catch subscriptions created during the rollout, then repeat the zero-missing and sample-equivalence checks before beginning the contract release.
+1. The compatible release made both references optional, wrote `privacyNoticeId`, and temporarily accepted legacy requests.
+2. Each environment ran `migrations:backfillSubscriptionPrivacyNoticeIds`, then verified that every subscription had `privacyNoticeId` and that sampled legacy references resolved to the same privacy notice.
+3. Production `v1.0.2` deployed the compatible release through the protected workflow before the production backfill was run and verified.
+4. The cleanup release requires `privacyNoticeId` and removes the backfill, bundle query, legacy request input, and read fallback. It exposes two resumable migrations: `migrations:clearSubscriptionLegalBundleIds` and `migrations:deleteNewsletterLegalBundles`.
+5. In each environment, dry-run and then execute `clearSubscriptionLegalBundleIds`. Verify no subscription has `legalBundleId` before dry-running and executing `deleteNewsletterLegalBundles`.
+6. Each environment was verified with an empty bundle table, no subscription `legalBundleId`, and a retained `privacyNoticeId` on every subscription.
+7. The contract release removed the legacy field and table from the schema together with the cleanup migrations and Migrations component.
 
-### Recovery, security, automation, and maintenance
+### Recovery and maintenance
 
-If a row has no legacy bundle, a missing bundle, a wrong-kind privacy record, or a privacy notice published after the request, the migration fails without patching that row. Preserve the widened schema, investigate the historical evidence, correct migration code through NIA-48, redeploy, and resume; never synthesize, delete, or rewrite historical consent evidence. Before the contract release, application rollback may continue reading legacy bundles. After new evidence exists, do not roll the schema back to a version that rejects `privacyNoticeId`.
-
-Deploy keys remain only in approved secret stores and should grant only the required deployment permissions. The dashboard invocation is the human equivalent of `bunx convex run migrations:backfillSubscriptionPrivacyNoticeIds`; production execution and any destructive contract step require Grégory’s explicit approval. Grégory records completion evidence on NIA-48 and owns this runbook until the contract release removes the migration function. Update it if the function name, arguments, deployment topology, verification fields, or recovery behavior changes.
+Run the cleanup migrations strictly in the documented order; deleting bundles before clearing references would leave dangling legacy IDs. The operations deliberately preserve `privacyNoticeId`, consent lifecycle fields, and both underlying legal texts. A rollback after cleanup must use a version that understands required `privacyNoticeId`; the pre-migration application is no longer safe. If verification finds a missing privacy reference, stop and investigate rather than deleting anything further.
 
 ## References
 

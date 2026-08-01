@@ -12,13 +12,13 @@
   "scripts": {
     "codegen": "convex codegen",
     "deploy": "convex deploy",
+    "deploy:production": "convex deploy --env-file .env.production.local",
     "dev": "convex dev --run seed:init",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.5",
-    "@convex-dev/migrations": "0.3.6",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/workflow": "^0.4.4",
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
