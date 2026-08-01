@@ -3,7 +3,7 @@ import { isAnonymizedEmail } from "@ec/domain/helpers/newsletter";
 
 import { takeEbookIssuances } from "../data/ebook-issuances";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
-import { takeNewsSubscriptions } from "../data/news-subscriptions";
+import { resolveNewsSubscriptionPrivacyNoticeId, takeNewsSubscriptions } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail, takeNewsSuppressions } from "../data/news-suppressions";
 import { takeProfiles } from "../data/profiles";
 
@@ -31,13 +31,21 @@ export async function createNewsletterDataExport(ctx: QueryCtx, format: "csv" | 
     ]);
     if (subscriptions.length === 0 && issuances.length === 0 && !restriction && !suppression) continue;
     const hasCurrentConsent = subscriptions.some(({ confirmedAt, unsubscribedAt }) => confirmedAt !== null && unsubscribedAt === null);
-    people.push({
-      consentPeriods: subscriptions.map(({ confirmedAt, legalBundleId, requestedAt, unsubscribedAt }) => ({
+    const consentPeriods = await Promise.all(
+      subscriptions.map(async ({ confirmedAt, requestedAt, unsubscribedAt, ...subscription }) => ({
         confirmedAt,
-        legalBundleId,
+        privacyNoticeId: await resolveNewsSubscriptionPrivacyNoticeId(ctx, {
+          confirmedAt,
+          requestedAt,
+          unsubscribedAt,
+          ...subscription,
+        }),
         requestedAt,
         unsubscribedAt,
-      })),
+      }))
+    );
+    people.push({
+      consentPeriods,
       ebookAccess: issuances.map(({ ebookId, kind }) => ({ ebookId, kind })),
       email: profile.email,
       firstName: profile.firstName ?? null,

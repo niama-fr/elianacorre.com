@@ -19,11 +19,11 @@ export const Route = createFileRoute("/confidentialite/")({
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------
 function PrivacyPolicyPage() {
-  const { bundle } = RootRoute.useLoaderData();
+  const { privacyNotice } = RootRoute.useLoaderData();
   return (
     <Hero title={["Politique de", "confidentialité"]}>
       <HeroContent className="z-10 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
-        <PrivacyNoticeMarkdown content={bundle.privacyNotice.content} />
+        <PrivacyNoticeMarkdown content={privacyNotice.content} />
       </HeroContent>
     </Hero>
   );

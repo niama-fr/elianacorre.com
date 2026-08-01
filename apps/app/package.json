@@ -28,7 +28,7 @@
     "@tanstack/react-table": "^9.0.0-beta.65",
     "better-auth": "~1.6.25",
     "class-variance-authority": "^0.7.1",
-    "convex": "^1.42.3",
+    "convex": "1.42.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sonner": "^2.0.7",

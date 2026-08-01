@@ -1,9 +1,8 @@
-import { NEWSLETTER_CONSENT, PRIVACY_NOTICE } from "@ec/domain/helpers/legal-texts";
+import { PRIVACY_NOTICE } from "@ec/domain/helpers/legal-texts";
 import { zProfileAdminsSeed } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
-import { getActiveNewsletterConsent, getActivePrivacyNotice } from "../data/legal-texts";
-import { getActiveNewsletterLegalBundle } from "../data/newsletter-legal-bundles";
+import { getActivePrivacyNotice } from "../data/legal-texts";
 import { getProfileByEmail } from "../data/profiles";
 import type { Id } from "./_generated/dataModel";
 import { env } from "./_generated/server";
@@ -28,21 +27,8 @@ export const init = zInternalMutation({
     const [publishedBy] = profileIds;
     const publishedAt = Date.now();
 
-    const newsletterConsent = await getActiveNewsletterConsent(ctx);
-    const newsletterConsentId =
-      newsletterConsent?.content === NEWSLETTER_CONSENT.content
-        ? newsletterConsent._id
-        : await ctx.db.insert("legalTexts", { ...NEWSLETTER_CONSENT, publishedAt, publishedBy });
-
     const privacyNotice = await getActivePrivacyNotice(ctx);
-    const privacyNoticeId =
-      privacyNotice?.content === PRIVACY_NOTICE.content
-        ? privacyNotice._id
-        : await ctx.db.insert("legalTexts", { ...PRIVACY_NOTICE, publishedAt, publishedBy });
-
-    const newsletterLegalBundle = await getActiveNewsletterLegalBundle(ctx);
-    const legalTextChanged =
-      newsletterLegalBundle?.newsletterConsentId !== newsletterConsentId || newsletterLegalBundle.privacyNoticeId !== privacyNoticeId;
-    if (legalTextChanged) await ctx.db.insert("newsletterLegalBundles", { newsletterConsentId, privacyNoticeId, publishedAt, publishedBy });
+    if (privacyNotice?.content !== PRIVACY_NOTICE.content)
+      await ctx.db.insert("legalTexts", { ...PRIVACY_NOTICE, publishedAt, publishedBy });
   },
 });

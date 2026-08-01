@@ -8,7 +8,7 @@ import { visible } from "@tanstack/react-start/hydration";
 import { useEffect, useState } from "react";
 
 import { getServerFormState } from "@/lib/form/form.functions";
-import { requireActiveNewsletterLegalBundle } from "@/lib/newsletter-legal-bundles/functions";
+import { requireActivePrivacyNotice } from "@/lib/legal-texts/legal-texts.functions";
 import { Footer } from "@/routes/-footer";
 import { Header } from "@/routes/-header";
 import { Newsletter } from "@/routes/-newsletter";
@@ -35,15 +35,15 @@ export const Route = createRootRoute({
   }),
   loader: async () => {
     const layout = readRootLayout();
-    const [bundle, formState] = await Promise.all([requireActiveNewsletterLegalBundle(), getServerFormState()]);
-    return { bundle, formState, layout };
+    const [privacyNotice, formState] = await Promise.all([requireActivePrivacyNotice(), getServerFormState()]);
+    return { formState, layout, privacyNotice };
   },
   shellComponent: RootDocument,
 });
 
 // DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
 function RootDocument({ children }: React.PropsWithChildren) {
-  const { bundle, formState, layout } = Route.useLoaderData();
+  const { formState, layout, privacyNotice } = Route.useLoaderData();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ function RootDocument({ children }: React.PropsWithChildren) {
           <Header {...layout} />
           <main className="relative mt-20 flex-1 sm:mt-28 md:mt-40">{children}</main>
           <Hydrate when={visible({ rootMargin: "800px" })} prefetch={visible({ rootMargin: "1600px" })}>
-            <Newsletter bundle={bundle} formState={formState} />
+            <Newsletter formState={formState} privacyNoticeId={privacyNotice._id} />
           </Hydrate>
           <Footer />
         </TooltipProvider>

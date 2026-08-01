@@ -28,22 +28,10 @@ const createSubscriber = async (convex: TestConvex<typeof schema>, email = "read
       publishedAt: 1,
       publishedBy: admin._id,
     });
-    const newsletterConsentId = await ctx.db.insert("legalTexts", {
-      content: "Consent",
-      kind: "newsletterConsent",
-      publishedAt: 1,
-      publishedBy: admin._id,
-    });
-    const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-      newsletterConsentId,
-      privacyNoticeId,
-      publishedAt: 1,
-      publishedBy: admin._id,
-    });
     const subscriptionId = await ctx.db.insert("newsSubscriptions", {
       confirmedAt: 20,
       confirmedFrom: "email",
-      legalBundleId,
+      privacyNoticeId,
       profileId,
       requestedAt: 10,
       unsubscribedAt: null,
@@ -90,28 +78,28 @@ describe("privacy administration", () => {
   it("keeps consent, delivery eligibility, e-book history, and privacy state distinct", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
-    await convex.run(async (ctx) => {
+    const privacyNoticeId = await convex.run(async (ctx) => {
       const admin = await ctx.db
         .query("profiles")
         .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
         .unique();
       if (admin === null) throw new Error("Admin profile was not found");
       const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
-      const privacyNoticeId = await ctx.db.insert("legalTexts", {
+      const insertedPrivacyNoticeId = await ctx.db.insert("legalTexts", {
         content: "Privacy",
         kind: "privacyNotice",
         publishedAt: 1,
         publishedBy: admin._id,
       });
       const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "Consent",
+        content: "Legacy consent",
         kind: "newsletterConsent",
         publishedAt: 1,
         publishedBy: admin._id,
       });
       const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
         newsletterConsentId,
-        privacyNoticeId,
+        privacyNoticeId: insertedPrivacyNoticeId,
         publishedAt: 1,
         publishedBy: admin._id,
       });
@@ -146,6 +134,7 @@ describe("privacy administration", () => {
         version: 1,
       });
       await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
+      return insertedPrivacyNoticeId;
     });
 
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" })).resolves.toMatchObject({
@@ -155,7 +144,7 @@ describe("privacy administration", () => {
         status: "restricted",
       },
       newsletterConsent: {
-        periods: [{ confirmedAt: 20, requestedAt: 10, unsubscribedAt: null }],
+        periods: [{ confirmedAt: 20, privacyNoticeId, requestedAt: 10, unsubscribedAt: null }],
       },
       privacyState: { suppressed: false },
       welcomeEbookAccess: {

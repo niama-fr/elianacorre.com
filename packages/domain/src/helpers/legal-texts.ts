@@ -1,11 +1,5 @@
 import type { LegalTexts } from "@ec/domain/schemas/legal-texts";
 
-export const NEWSLETTER_CONSENT: LegalTexts["Create"] = {
-  content:
-    "Je souhaite recevoir par e-mail la lettre d’Eliana Corré. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre.",
-  kind: "newsletterConsent",
-};
-
 export const PRIVACY_NOTICE: LegalTexts["Create"] = {
   content: `## Responsable du traitement
 

@@ -1,5 +1,5 @@
+import type { Id } from "@ec/backend/types";
 import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
-import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
 import { useAppForm } from "@ec/ui/hooks/web-form";
 import { cn } from "@ec/ui/lib/utils";
 import { mergeForm, useTransform } from "@tanstack/react-form-start";
@@ -19,12 +19,12 @@ const FORM = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function NewsletterForm({ bundle, className, formState }: NewsletterFormProps) {
+export function NewsletterForm({ className, formState, privacyNoticeId }: NewsletterFormProps) {
   const submitRef = useRef<HTMLButtonElement>(null);
 
   const form = useAppForm({
     ...newsletterFormOptions,
-    defaultValues: { consent: false, email: "", firstName: "", legalBundleId: bundle._id, website: "" },
+    defaultValues: { consent: false, email: "", firstName: "", privacyNoticeId, website: "" },
     onSubmit: async ({ value: data }) => {
       try {
         await subscribeToNewsletter({ data });
@@ -65,7 +65,7 @@ export function NewsletterForm({ bundle, className, formState }: NewsletterFormP
       }}
     >
       <form.AppForm>
-        <form.AppField name="legalBundleId">
+        <form.AppField name="privacyNoticeId">
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField readOnly type="hidden" />
@@ -86,7 +86,9 @@ export function NewsletterForm({ bundle, className, formState }: NewsletterFormP
           )}
         </form.AppField>
         <form.AppField name="consent" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.consent }}>
-          {(f) => <f.CheckboxField label={bundle.newsletterConsent.content} />}
+          {(f) => (
+            <f.CheckboxField label="Je souhaite recevoir par e-mail la gazette itinérante. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre." />
+          )}
         </form.AppField>
 
         <form.Submit ref={submitRef} icon="icon-[line-md--email-plus]" intent="secondary" label="M’inscrire" className={FORM.submit()} />
@@ -94,4 +96,4 @@ export function NewsletterForm({ bundle, className, formState }: NewsletterFormP
     </form>
   );
 }
-type NewsletterFormProps = { bundle: NewsletterLegalBundles["Entity"]; className?: string; formState: ServerFormState };
+type NewsletterFormProps = { className?: string; formState: ServerFormState; privacyNoticeId: Id<"legalTexts"> };

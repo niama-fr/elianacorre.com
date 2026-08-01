@@ -5,7 +5,12 @@ import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 
 import { ebookIssuanceFromDoc, listEbookIssuancesNewestFirst } from "../data/ebook-issuances";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
-import { getCurrentNewsSubscription, listNewsSubscriptionsNewestFirst, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
+import {
+  getCurrentNewsSubscription,
+  listNewsSubscriptionsNewestFirst,
+  markNewsSubscriptionUnsubscribed,
+  resolveNewsSubscriptionPrivacyNoticeId,
+} from "../data/news-subscriptions";
 import { deleteNewsSuppressionByEmail, ensureNewsSuppression, getNewsSuppressionByEmail } from "../data/news-suppressions";
 import { createPrivacyAuditRequest, createPrivacyAuditVerification, listPrivacyAuditsByEmail } from "../data/privacy-audits";
 import { consumePrivacyGrant, listActivePrivacyGrants, replacePrivacyGrant, revokePrivacyGrant } from "../data/privacy-grants";
@@ -50,6 +55,12 @@ export async function inspectPrivacySubject(ctx: QueryCtx, email: string) {
   ]);
 
   const issuances = await Promise.all(ebookIssuances.map(async (doc) => await ebookIssuanceFromDoc(ctx, doc)));
+  const resolvedConsentPeriods = await Promise.all(
+    consentPeriods.map(async (period) => ({
+      ...period,
+      privacyNoticeId: await resolveNewsSubscriptionPrivacyNoticeId(ctx, period),
+    }))
+  );
 
   const currentConsent = consentPeriods.find(({ confirmedAt, unsubscribedAt }) => confirmedAt !== null && unsubscribedAt === null);
 
@@ -61,7 +72,7 @@ export async function inspectPrivacySubject(ctx: QueryCtx, email: string) {
 
   return {
     deliveryEligibility: { eligible: status === "eligible", restriction, status },
-    newsletterConsent: { periods: consentPeriods },
+    newsletterConsent: { periods: resolvedConsentPeriods },
     privacyState: {
       audits,
       grants: grants.map(({ expiresAt, requestKind }) => ({ expiresAt, requestKind })),

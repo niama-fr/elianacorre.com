@@ -213,22 +213,10 @@ describe("Loops webhooks", () => {
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
       const insertedSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2,
         confirmedFrom: "email",
-        legalBundleId,
+        privacyNoticeId,
         profileId: insertedProfileId,
         requestedAt: 1,
         unsubscribedAt: null,
@@ -278,7 +266,7 @@ describe("Loops webhooks", () => {
       return await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20_000,
         confirmedFrom: "email",
-        legalBundleId: previous.legalBundleId,
+        privacyNoticeId: previous.privacyNoticeId,
         profileId,
         requestedAt: 20_000,
         unsubscribedAt: null,
@@ -299,49 +287,37 @@ describe("Loops webhooks", () => {
 
   it("creates one new consent period and contact reconciliation for an ordinary resubscription", async () => {
     const convex = createBackend();
-    const { activeLegalBundleId, historicalSubscriptionId, profileId } = await convex.run(async (ctx) => {
+    const { activePrivacyNoticeId, historicalSubscriptionId, profileId } = await convex.run(async (ctx) => {
       const insertedProfileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
       const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
-      const privacyNoticeId = await ctx.db.insert("legalTexts", {
-        content: "privacy",
+      const previousPrivacyNoticeId = await ctx.db.insert("legalTexts", {
+        content: "previous privacy",
         kind: "privacyNotice",
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const previousLegalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const insertedActiveLegalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
+      const insertedActivePrivacyNoticeId = await ctx.db.insert("legalTexts", {
+        content: "active privacy",
+        kind: "privacyNotice",
         publishedAt: 5000,
         publishedBy: adminId,
       });
-      await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
+      await ctx.db.insert("legalTexts", {
+        content: "future privacy",
+        kind: "privacyNotice",
         publishedAt: 15_000,
         publishedBy: adminId,
       });
       const insertedHistoricalSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 2000,
         confirmedFrom: "email",
-        legalBundleId: previousLegalBundleId,
+        privacyNoticeId: previousPrivacyNoticeId,
         profileId: insertedProfileId,
         requestedAt: 1000,
         unsubscribedAt: 4000,
       });
       return {
-        activeLegalBundleId: insertedActiveLegalBundleId,
+        activePrivacyNoticeId: insertedActivePrivacyNoticeId,
         historicalSubscriptionId: insertedHistoricalSubscriptionId,
         profileId: insertedProfileId,
       };
@@ -372,7 +348,7 @@ describe("Loops webhooks", () => {
       expect.objectContaining({
         confirmedAt: 10_000,
         confirmedFrom: "loops",
-        legalBundleId: activeLegalBundleId,
+        privacyNoticeId: activePrivacyNoticeId,
         profileId,
         requestedAt: 10_000,
         unsubscribedAt: null,
@@ -405,22 +381,10 @@ describe("Loops webhooks", () => {
           publishedAt: 1,
           publishedBy: adminId,
         });
-        const newsletterConsentId = await ctx.db.insert("legalTexts", {
-          content: "consent",
-          kind: "newsletterConsent",
-          publishedAt: 1,
-          publishedBy: adminId,
-        });
-        const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-          newsletterConsentId,
-          privacyNoticeId,
-          publishedAt: 1,
-          publishedBy: adminId,
-        });
         await ctx.db.insert("newsSubscriptions", {
           confirmedAt: 1000,
           confirmedFrom: "email",
-          legalBundleId,
+          privacyNoticeId,
           profileId: insertedProfileId,
           requestedAt: 1000,
           unsubscribedAt: 2000,
@@ -470,22 +434,10 @@ describe("Loops webhooks", () => {
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 20_000,
         confirmedFrom: "email",
-        legalBundleId,
+        privacyNoticeId,
         profileId,
         requestedAt: 15_000,
         unsubscribedAt: 30_000,
