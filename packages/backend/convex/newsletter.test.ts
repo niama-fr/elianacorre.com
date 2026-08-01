@@ -26,12 +26,12 @@ const CAPABILITY_SECRET = "test-capability-secret";
 const SUPPRESSION_SECRET = "test-suppression-secret";
 const NEWSLETTER_REQUEST_DEFAULTS = { firstName: "", requestIp: "127.0.0.1", website: "" } as const;
 
-type NewsletterTestBackend = TestConvex<typeof schema> & { legalBundleId: Id<"newsletterLegalBundles"> };
+type NewsletterTestBackend = TestConvex<typeof schema> & { privacyNoticeId: Id<"legalTexts"> };
 
 const createRequest = (convex: NewsletterTestBackend, email = "reader@example.com") => ({
   consent: true,
   email,
-  legalBundleId: convex.legalBundleId,
+  privacyNoticeId: convex.privacyNoticeId,
   ...NEWSLETTER_REQUEST_DEFAULTS,
 });
 const createEbookRecoveryRequest = (email = "reader@example.com") => ({ email, requestIp: "127.0.0.1", website: "" });
@@ -45,24 +45,17 @@ const createBackend = async () => {
   registerRateLimiter(convex);
   registerLoops(convex, "loops", loopsModules);
   registerAggregate(convex, "loops/contactAggregate");
-  const legalBundleId = await convex.run(async (ctx) => {
+  const privacyNoticeId = await convex.run(async (ctx) => {
     const publishedAt = Date.now();
     const publishedBy = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
-    const privacyNoticeId = await ctx.db.insert("legalTexts", {
+    return await ctx.db.insert("legalTexts", {
       content: "privacy",
       kind: "privacyNotice",
       publishedAt,
       publishedBy,
     });
-    const newsletterConsentId = await ctx.db.insert("legalTexts", {
-      content: "consent",
-      kind: "newsletterConsent",
-      publishedAt,
-      publishedBy,
-    });
-    return await ctx.db.insert("newsletterLegalBundles", { newsletterConsentId, privacyNoticeId, publishedAt, publishedBy });
   });
-  return Object.assign(convex, { legalBundleId });
+  return Object.assign(convex, { privacyNoticeId });
 };
 
 const authenticateAdmin = async (convex: TestConvex<typeof schema>) => {
@@ -164,93 +157,133 @@ describe("newsletter subscription", () => {
     });
   });
 
-  it("records the bundle presented by a stale page after a newer bundle is published", async () => {
+  it("accepts a legacy legal bundle while storing its privacy notice", async () => {
+    const convex = await createBackend();
+    const legalBundleId = await convex.run(async (ctx) => {
+      const privacyNotice = await ctx.db.get(convex.privacyNoticeId);
+      if (privacyNotice === null) throw new Error("Privacy notice was not found");
+      const newsletterConsentId = await ctx.db.insert("legalTexts", {
+        content: "legacy consent",
+        kind: "newsletterConsent",
+        publishedAt: privacyNotice.publishedAt,
+        publishedBy: privacyNotice.publishedBy,
+      });
+      return await ctx.db.insert("newsletterLegalBundles", {
+        newsletterConsentId,
+        privacyNoticeId: privacyNotice._id,
+        publishedAt: privacyNotice.publishedAt,
+        publishedBy: privacyNotice.publishedBy,
+      });
+    });
+
+    const { privacyNoticeId: _, ...request } = createRequest(convex);
+    await convex.mutation(api.newsletter.subscribe, { ...request, legalBundleId });
+
+    const subscription = await convex.run(async (ctx) => await ctx.db.query("newsSubscriptions").unique());
+    expect(subscription).toMatchObject({ privacyNoticeId: convex.privacyNoticeId });
+    expect(subscription).not.toHaveProperty("legalBundleId");
+  });
+
+  it("records the privacy notice presented by a stale page after a newer notice is published", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(1000);
     const convex = await createBackend();
-    const presentedLegalBundleId = convex.legalBundleId;
+    const presentedPrivacyNoticeId = convex.privacyNoticeId;
     vi.setSystemTime(1001);
     await convex.run(async (ctx) => {
-      const presentedBundle = await ctx.db.get(presentedLegalBundleId);
-      if (presentedBundle === null) throw new Error("Presented legal bundle was not found");
-      await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId: presentedBundle.newsletterConsentId,
-        privacyNoticeId: presentedBundle.privacyNoticeId,
+      const presentedPrivacyNotice = await ctx.db.get(presentedPrivacyNoticeId);
+      if (presentedPrivacyNotice === null) throw new Error("Presented privacy notice was not found");
+      await ctx.db.insert("legalTexts", {
+        content: "updated privacy",
+        kind: "privacyNotice",
         publishedAt: Date.now(),
-        publishedBy: presentedBundle.publishedBy,
+        publishedBy: presentedPrivacyNotice.publishedBy,
       });
     });
 
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
 
     const subscription = await convex.run(async (ctx) => await ctx.db.query("newsSubscriptions").unique());
-    expect(subscription?.legalBundleId).toBe(presentedLegalBundleId);
+    expect(subscription?.privacyNoticeId).toBe(presentedPrivacyNoticeId);
   });
 
-  it("updates a repeated pending request to the bundle presented for that request", async () => {
+  it("updates a repeated pending request to the privacy notice presented for that request", async () => {
     const convex = await createBackend();
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
-    const latestLegalBundleId = await convex.run(async (ctx) => {
-      const presentedBundle = await ctx.db.get(convex.legalBundleId);
-      if (presentedBundle === null) throw new Error("Presented legal bundle was not found");
-      return await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId: presentedBundle.newsletterConsentId,
-        privacyNoticeId: presentedBundle.privacyNoticeId,
+    const latestPrivacyNoticeId = await convex.run(async (ctx) => {
+      const presentedPrivacyNotice = await ctx.db.get(convex.privacyNoticeId);
+      if (presentedPrivacyNotice === null) throw new Error("Presented privacy notice was not found");
+      return await ctx.db.insert("legalTexts", {
+        content: "updated privacy",
+        kind: "privacyNotice",
         publishedAt: Date.now(),
-        publishedBy: presentedBundle.publishedBy,
+        publishedBy: presentedPrivacyNotice.publishedBy,
       });
     });
 
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
     const staleRequestSubscription = await convex.run(async (ctx) => await ctx.db.query("newsSubscriptions").unique());
-    expect(staleRequestSubscription?.legalBundleId).toBe(convex.legalBundleId);
+    expect(staleRequestSubscription?.privacyNoticeId).toBe(convex.privacyNoticeId);
 
-    await convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), legalBundleId: latestLegalBundleId });
+    await convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId: latestPrivacyNoticeId });
 
     const subscriptions = await convex.run(async (ctx) => await ctx.db.query("newsSubscriptions").collect());
-    expect(subscriptions).toMatchObject([{ legalBundleId: latestLegalBundleId }]);
+    expect(subscriptions).toMatchObject([{ privacyNoticeId: latestPrivacyNoticeId }]);
     expect(subscriptions).toHaveLength(1);
   });
 
-  it("rejects tampered, missing, and unpublished bundle references without changing consent evidence", async () => {
+  it("rejects tampered, missing, wrong-kind, unpublished, and future privacy notices without changing consent evidence", async () => {
     const convex = await createBackend();
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
     const invalidIds = await convex.run(async (ctx) => {
-      const publishedBundle = await ctx.db.get(convex.legalBundleId);
-      if (publishedBundle === null) throw new Error("Published legal bundle was not found");
-      const { newsletterConsentId, privacyNoticeId, publishedAt, publishedBy } = publishedBundle;
-      const missingId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt,
-        publishedBy,
+      const publishedPrivacyNotice = await ctx.db.get(convex.privacyNoticeId);
+      if (publishedPrivacyNotice === null) throw new Error("Published privacy notice was not found");
+      const missingId = await ctx.db.insert("legalTexts", {
+        content: "missing privacy",
+        kind: "privacyNotice",
+        publishedAt: publishedPrivacyNotice.publishedAt,
+        publishedBy: publishedPrivacyNotice.publishedBy,
       });
       await ctx.db.delete(missingId);
-      const unpublishedId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
+      const unpublishedId = await ctx.db.insert("legalTexts", {
+        content: "unpublished privacy",
+        kind: "privacyNotice",
         publishedAt: null,
         publishedBy: null,
       });
-      return { missingId, unpublishedId };
+      const wrongKindId = await ctx.db.insert("legalTexts", {
+        content: "consent",
+        kind: "newsletterConsent",
+        publishedAt: publishedPrivacyNotice.publishedAt,
+        publishedBy: publishedPrivacyNotice.publishedBy,
+      });
+      const futureId = await ctx.db.insert("legalTexts", {
+        content: "future privacy",
+        kind: "privacyNotice",
+        publishedAt: Date.now() + 60_000,
+        publishedBy: publishedPrivacyNotice.publishedBy,
+      });
+      return { futureId, missingId, unpublishedId, wrongKindId };
     });
 
-    await expect(convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), legalBundleId: "tampered" })).rejects.toThrow(
-      'Validator error: Expected ID for table "newsletterLegalBundles", got `tampered`'
+    await expect(convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId: "tampered" })).rejects.toThrow(
+      'Validator error: Expected ID for table "legalTexts", got `tampered`'
     );
-    await expect(
-      convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), legalBundleId: invalidIds.missingId })
-    ).rejects.toThrow("INVALID_NEWSLETTER_LEGAL_BUNDLE");
-    await expect(
-      convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), legalBundleId: invalidIds.unpublishedId })
-    ).rejects.toThrow("INVALID_NEWSLETTER_LEGAL_BUNDLE");
+    const invalidResults = await Promise.allSettled(
+      [invalidIds.missingId, invalidIds.unpublishedId, invalidIds.wrongKindId, invalidIds.futureId].map(
+        async (privacyNoticeId) => await convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId })
+      )
+    );
+    expect(
+      invalidResults.map((result) => result.status === "rejected" && String(result.reason).includes("INVALID_PRIVACY_NOTICE"))
+    ).toStrictEqual([true, true, true, true]);
 
     const evidence = await convex.run(async (ctx) => ({
       confirmations: await ctx.db.query("newsConfirmations").collect(),
       subscriptions: await ctx.db.query("newsSubscriptions").collect(),
       tasks: await ctx.db.query("loopsTasks").collect(),
     }));
-    expect(evidence.subscriptions).toMatchObject([{ legalBundleId: convex.legalBundleId }]);
+    expect(evidence.subscriptions).toMatchObject([{ privacyNoticeId: convex.privacyNoticeId }]);
     expect(evidence).toMatchObject({ confirmations: [{}], subscriptions: [{}], tasks: [{}] });
   });
 

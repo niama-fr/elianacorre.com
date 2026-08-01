@@ -13,7 +13,9 @@ import type * as contactRequests from "../contactRequests.js";
 import type * as crons from "../crons.js";
 import type * as ebooks from "../ebooks.js";
 import type * as http from "../http.js";
+import type * as legalTexts from "../legalTexts.js";
 import type * as loops from "../loops.js";
+import type * as migrations from "../migrations.js";
 import type * as newsletter from "../newsletter.js";
 import type * as newsletterLegalBundles from "../newsletterLegalBundles.js";
 import type * as privacy from "../privacy.js";
@@ -34,7 +36,9 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   ebooks: typeof ebooks;
   http: typeof http;
+  legalTexts: typeof legalTexts;
   loops: typeof loops;
+  migrations: typeof migrations;
   newsletter: typeof newsletter;
   newsletterLegalBundles: typeof newsletterLegalBundles;
   privacy: typeof privacy;
@@ -72,6 +76,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+  migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   loops: import("@devwithbobby/loops/_generated/component.js").ComponentApi<"loops">;
   workflow: import("@convex-dev/workflow/_generated/component.js").ComponentApi<"workflow">;

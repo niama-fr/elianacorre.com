@@ -1,4 +1,4 @@
-import type { NewsletterLegalBundles } from "@ec/domain/schemas/newsletter-legal-bundles";
+import type { Id } from "@ec/backend/types";
 import { Alert, AlertDescription } from "@ec/ui/components/alert";
 import { Section, SectionContent, SectionMain, SectionTitle } from "@ec/ui/components/section";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -32,7 +32,7 @@ const NEWSLETTER = {
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
-export function Newsletter({ bundle, formState }: NewsletterProps) {
+export function Newsletter({ formState, privacyNoticeId }: NewsletterProps) {
   const navigate = useNavigate();
   const ref = useOnInView((inView) => void navigate(getNewsletterHashNavigation(inView)));
 
@@ -58,10 +58,10 @@ export function Newsletter({ bundle, formState }: NewsletterProps) {
               </AlertDescription>
             </Alert>
           </div>
-          <NewsletterForm bundle={bundle} formState={formState} className={NEWSLETTER.form()} />
+          <NewsletterForm privacyNoticeId={privacyNoticeId} formState={formState} className={NEWSLETTER.form()} />
         </SectionContent>
       </SectionMain>
     </Section>
   );
 }
-type NewsletterProps = { bundle: NewsletterLegalBundles["Entity"]; formState: ServerFormState };
+type NewsletterProps = { formState: ServerFormState; privacyNoticeId: Id<"legalTexts"> };

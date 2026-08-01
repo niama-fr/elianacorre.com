@@ -38,7 +38,7 @@ describe("newsletter portability export", () => {
         publishedBy: admin._id,
       });
       const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "Consent",
+        content: "Legacy consent",
         kind: "newsletterConsent",
         publishedAt: 1,
         publishedBy: admin._id,
@@ -99,7 +99,7 @@ describe("newsletter portability export", () => {
         occurredAt: 1,
         webhookId: "secret-webhook-id",
       });
-      return { ebookId, legalBundleId };
+      return { ebookId, privacyNoticeId };
     });
 
     const result = {
@@ -110,7 +110,7 @@ describe("newsletter portability export", () => {
     expect({
       csvHasEligibility: result.csv.content.includes('""eligible"":false') && result.csv.content.includes('""restricted"":true'),
       csvHasPersonAndSuppression: result.csv.content.includes("reader@example.com") && result.csv.content.includes('"suppression"'),
-      jsonHasConsent: result.json.content.includes(`"legalBundleId": "${seeded.legalBundleId}"`),
+      jsonHasConsent: result.json.content.includes(`"privacyNoticeId": "${seeded.privacyNoticeId}"`),
       jsonHasEbookAccess: result.json.content.includes(`"ebookId": "${seeded.ebookId}"`),
       jsonHasEligibility: result.json.content.includes('"eligible": false') && result.json.content.includes('"restricted": true'),
       suppressionIsPortable: [result.csv.content, result.json.content].every((content) => content.includes("minimum-objection-hash")),

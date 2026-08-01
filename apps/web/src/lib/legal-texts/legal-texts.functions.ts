@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { clientEnv } from "@/config/env";
 
-export const requireActiveNewsletterLegalBundle = createServerFn({ method: "GET" }).handler(async () => {
+export const requireActivePrivacyNotice = createServerFn({ method: "GET" }).handler(async () => {
   const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
-  return await convex.query(api.newsletterLegalBundles.requireActive);
+  return await convex.query(api.legalTexts.requireActivePrivacyNotice);
 });

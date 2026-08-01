@@ -9,24 +9,17 @@ import { modules } from "./test.setup";
 describe("deployment seed", () => {
   afterEach(() => vi.unstubAllEnvs());
 
-  it("publishes changed legal text in a new immutable bundle and remains idempotent", async () => {
+  it("publishes a changed privacy notice without creating a legal bundle and remains idempotent", async () => {
     vi.stubEnv("WHITELIST_SEED", '["admin@example.com"]');
     const convex = convexTest(schema, modules);
     await convex.run(async (ctx) => {
       const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "current consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const privacyNoticeId = await ctx.db.insert("legalTexts", {
+      await ctx.db.insert("legalTexts", {
         content: "outdated privacy notice",
         kind: "privacyNotice",
         publishedAt: 1,
         publishedBy: adminId,
       });
-      await ctx.db.insert("newsletterLegalBundles", { newsletterConsentId, privacyNoticeId, publishedAt: 1, publishedBy: adminId });
     });
 
     await convex.mutation(internal.seed.init, {});
@@ -38,13 +31,12 @@ describe("deployment seed", () => {
         .query("legalTexts")
         .withIndex("by_kind_and_published_at", (q) => q.eq("kind", "privacyNotice"))
         .collect();
-      const currentNotice = notices.find(({ content }) => content === PRIVACY_NOTICE.content);
       return {
         bundleCount: bundles.length,
-        currentBundlePublished: currentNotice !== undefined && bundles.some(({ privacyNoticeId }) => privacyNoticeId === currentNotice._id),
+        currentNoticeCount: notices.filter(({ content }) => content === PRIVACY_NOTICE.content).length,
         noticeCount: notices.length,
       };
     });
-    expect(state).toStrictEqual({ bundleCount: 2, currentBundlePublished: true, noticeCount: 2 });
+    expect(state).toStrictEqual({ bundleCount: 0, currentNoticeCount: 1, noticeCount: 2 });
   });
 });

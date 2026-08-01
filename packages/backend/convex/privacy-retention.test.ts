@@ -47,25 +47,13 @@ describe("privacy retention policy", () => {
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "Consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
       const retainedProfileId = await ctx.db.insert("profiles", { email: "retained@example.com", role: "contact" });
       const expiredProfileId = await ctx.db.insert("profiles", { email: "expired@example.com", role: "contact" });
       const accountProfileId = await ctx.db.insert("profiles", { email: "account@example.com", role: "member" });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
         confirmedFrom: null,
-        legalBundleId,
+        privacyNoticeId,
         profileId: retainedProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS + 1,
         unsubscribedAt: null,
@@ -73,7 +61,7 @@ describe("privacy retention policy", () => {
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
         confirmedFrom: null,
-        legalBundleId,
+        privacyNoticeId,
         profileId: expiredProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS,
         unsubscribedAt: null,
@@ -81,7 +69,7 @@ describe("privacy retention policy", () => {
       const accountSubscriptionId = await ctx.db.insert("newsSubscriptions", {
         confirmedAt: null,
         confirmedFrom: null,
-        legalBundleId,
+        privacyNoticeId,
         profileId: accountProfileId,
         requestedAt: NOW - PENDING_RETENTION_MS,
         unsubscribedAt: null,
@@ -172,22 +160,10 @@ describe("privacy retention policy", () => {
         publishedAt: 1,
         publishedBy: adminId,
       });
-      const newsletterConsentId = await ctx.db.insert("legalTexts", {
-        content: "Consent",
-        kind: "newsletterConsent",
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
-      const legalBundleId = await ctx.db.insert("newsletterLegalBundles", {
-        newsletterConsentId,
-        privacyNoticeId,
-        publishedAt: 1,
-        publishedBy: adminId,
-      });
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 1,
         confirmedFrom: "email",
-        legalBundleId,
+        privacyNoticeId,
         profileId: formerProfileId,
         requestedAt: 1,
         unsubscribedAt: getFormerSubscriberCutoff(NOW),
@@ -195,7 +171,7 @@ describe("privacy retention policy", () => {
       await ctx.db.insert("newsSubscriptions", {
         confirmedAt: 1,
         confirmedFrom: "email",
-        legalBundleId,
+        privacyNoticeId,
         profileId: retainedProfileId,
         requestedAt: 1,
         unsubscribedAt: getFormerSubscriberCutoff(NOW) + 1,

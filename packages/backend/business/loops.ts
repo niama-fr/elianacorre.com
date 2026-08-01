@@ -12,6 +12,7 @@ import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
+import { requirePrivacyNoticeAt } from "../data/legal-texts";
 import {
   replaceLoopsTaskWorkflows,
   createLoopsTask,
@@ -28,7 +29,6 @@ import {
   markNewsSubscriptionConfirmed,
   markNewsSubscriptionUnsubscribed,
 } from "../data/news-subscriptions";
-import { requireNewsletterLegalBundleAt } from "../data/newsletter-legal-bundles";
 import { getProfileIdByEmail } from "../data/profiles";
 import { applyEmailDeliveryRestriction } from "./email-delivery-restrictions";
 
@@ -124,8 +124,8 @@ export async function processLoopsWebhook(ctx: MutationCtx, { email, kind, messa
       latestConsentEventAt = Math.max(latestConsentEventAt, period.requestedAt, period.confirmedAt ?? 0, period.unsubscribedAt ?? 0);
     const latestRestrictionEventAt = latestRestriction ? Math.max(latestRestriction.lastOccurredAt, latestRestriction.resolvedAt ?? 0) : 0;
     if (occurredAt <= Math.max(latestConsentEventAt, latestRestrictionEventAt)) return;
-    const { _id: legalBundleId } = await requireNewsletterLegalBundleAt(ctx, occurredAt);
-    const subscriptionId = await createNewsSubscription(ctx, { legalBundleId, profileId, requestedAt: occurredAt });
+    const { _id: privacyNoticeId } = await requirePrivacyNoticeAt(ctx, occurredAt);
+    const subscriptionId = await createNewsSubscription(ctx, { privacyNoticeId, profileId, requestedAt: occurredAt });
     await markNewsSubscriptionConfirmed(ctx, subscriptionId, { confirmedFrom: "loops", now: occurredAt });
     const restriction = await getActiveNewsRestriction(ctx, profileId);
     await enqueueSyncContactForResubscription(ctx, { profileId, subscribed: restriction === null, webhookId: id });

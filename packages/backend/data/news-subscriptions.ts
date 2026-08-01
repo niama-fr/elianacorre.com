@@ -2,6 +2,10 @@ import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
 import type { WithNow } from "@ec/domain/schemas/utils";
+import { ConvexError } from "convex/values";
+
+import { requirePublishedPrivacyNotice } from "./legal-texts";
+import { requirePublishedNewsletterLegalBundle } from "./newsletter-legal-bundles";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getNewsSubscription = async (ctx: QueryCtx, id: Id<"newsSubscriptions">) => await ctx.db.get("newsSubscriptions", id);
@@ -32,6 +36,21 @@ export const takeNewsSubscriptions = async (ctx: QueryCtx, limit: number, profil
     .query("newsSubscriptions")
     .withIndex("by_profile_id_and_confirmed_at", (q) => q.eq("profileId", profileId))
     .take(limit);
+
+export const resolveNewsSubscriptionPrivacyNoticeId = async (ctx: QueryCtx, subscription: NewsSubscriptions["Doc"]) => {
+  if (subscription.privacyNoticeId !== undefined) {
+    await requirePublishedPrivacyNotice(ctx, { id: subscription.privacyNoticeId, requestedAt: subscription.requestedAt });
+    return subscription.privacyNoticeId;
+  }
+  if (subscription.legalBundleId === undefined) throw new ConvexError("MISSING_SUBSCRIPTION_PRIVACY_NOTICE");
+
+  const bundle = await requirePublishedNewsletterLegalBundle(ctx, {
+    id: subscription.legalBundleId,
+    requestedAt: subscription.requestedAt,
+  });
+  await requirePublishedPrivacyNotice(ctx, { id: bundle.privacyNoticeId, requestedAt: subscription.requestedAt });
+  return bundle.privacyNoticeId;
+};
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createNewsSubscription = async (ctx: MutationCtx, payload: NewsSubscriptions["Create"]) =>
