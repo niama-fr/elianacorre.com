@@ -3,8 +3,7 @@ import { zid } from "convex-helpers/server/zod4";
 import z from "zod";
 
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
-const kinds = ["newsletterConsent", "privacyNotice"] as const;
-export const zLegalTextKind = z.literal(kinds);
+export const zLegalTextKind = z.literal("privacyNotice");
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zMarkdownContent = z

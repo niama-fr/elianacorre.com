@@ -205,7 +205,7 @@ describe("newsletter subscription", () => {
     expect(subscriptions).toHaveLength(1);
   });
 
-  it("rejects tampered, missing, wrong-kind, unpublished, and future privacy notices without changing consent evidence", async () => {
+  it("rejects tampered, missing, unpublished, and future privacy notices without changing consent evidence", async () => {
     const convex = await createBackend();
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
     const invalidIds = await convex.run(async (ctx) => {
@@ -224,32 +224,26 @@ describe("newsletter subscription", () => {
         publishedAt: null,
         publishedBy: null,
       });
-      const wrongKindId = await ctx.db.insert("legalTexts", {
-        content: "consent",
-        kind: "newsletterConsent",
-        publishedAt: publishedPrivacyNotice.publishedAt,
-        publishedBy: publishedPrivacyNotice.publishedBy,
-      });
       const futureId = await ctx.db.insert("legalTexts", {
         content: "future privacy",
         kind: "privacyNotice",
         publishedAt: Date.now() + 60_000,
         publishedBy: publishedPrivacyNotice.publishedBy,
       });
-      return { futureId, missingId, unpublishedId, wrongKindId };
+      return { futureId, missingId, unpublishedId };
     });
 
     await expect(convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId: "tampered" })).rejects.toThrow(
       'Validator error: Expected ID for table "legalTexts", got `tampered`'
     );
     const invalidResults = await Promise.allSettled(
-      [invalidIds.missingId, invalidIds.unpublishedId, invalidIds.wrongKindId, invalidIds.futureId].map(
+      [invalidIds.missingId, invalidIds.unpublishedId, invalidIds.futureId].map(
         async (privacyNoticeId) => await convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId })
       )
     );
     expect(
       invalidResults.map((result) => result.status === "rejected" && String(result.reason).includes("INVALID_PRIVACY_NOTICE"))
-    ).toStrictEqual([true, true, true, true]);
+    ).toStrictEqual([true, true, true]);
 
     const evidence = await convex.run(async (ctx) => ({
       confirmations: await ctx.db.query("newsConfirmations").collect(),
