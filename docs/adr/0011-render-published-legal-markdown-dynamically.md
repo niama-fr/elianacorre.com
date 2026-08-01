@@ -12,7 +12,7 @@ The privacy-policy route must render the active published Convex privacy notice 
 
 Store privacy-notice content as CommonMark Markdown and fetch the active published privacy notice once, through a TanStack Start server function, in the public layout loader. The server function owns the Convex HTTP client and environment access; public routes receive the result as ordinary loader data and do not import Convex React Query. The privacy route reuses its parent layout's notice rather than issuing another query. The invariant newsletter-consent sentence is repository-owned website copy rather than a published legal-text version. Raw HTML is outside the supported contract. The web renderer permits only HTTP, HTTPS, mail, telephone, root-relative, and fragment links, and shifts Markdown headings below the route’s page heading.
 
-The existing plain-text privacy records require no content backfill because plain text is valid CommonMark. Running the Convex seed after deployment creates and publishes a new privacy-notice version when the canonical Markdown content differs. New newsletter consent evidence stores the exact published privacy-notice ID presented with the form. The completed NIA-48 migration removed the obsolete bundle records while retaining the underlying historical legal texts.
+The existing plain-text privacy records require no content backfill because plain text is valid CommonMark. Running the Convex seed after deployment creates and publishes a new privacy-notice version when the canonical Markdown content differs. New newsletter consent evidence stores the exact published privacy-notice ID presented with the form. The completed NIA-48 migrations removed the obsolete bundle records and newsletter-consent legal-text records.
 
 Route loading fails through the application error path when Convex is unavailable or the active privacy notice is missing. Empty legal Markdown also fails explicitly. The route does not silently serve duplicated, empty, or indefinitely stale policy text.
 
@@ -63,11 +63,12 @@ The NIA-48 expand–migrate–contract process added `privacyNoticeId` to histor
 4. The cleanup release requires `privacyNoticeId` and removes the backfill, bundle query, legacy request input, and read fallback. It exposes two resumable migrations: `migrations:clearSubscriptionLegalBundleIds` and `migrations:deleteNewsletterLegalBundles`.
 5. In each environment, dry-run and then execute `clearSubscriptionLegalBundleIds`. Verify no subscription has `legalBundleId` before dry-running and executing `deleteNewsletterLegalBundles`.
 6. Each environment was verified with an empty bundle table, no subscription `legalBundleId`, and a retained `privacyNoticeId` on every subscription.
-7. The contract release removed the legacy field and table from the schema together with the cleanup migrations and Migrations component.
+7. The first contract release removed the legacy field and table from the schema together with the cleanup migrations and Migrations component.
+8. After newsletter-consent legal-text rows were deleted and verified absent in every environment, the final contract release removed `newsletterConsent` from the legal-text kind schema and removed its completed migration.
 
 ### Recovery and maintenance
 
-Run the cleanup migrations strictly in the documented order; deleting bundles before clearing references would leave dangling legacy IDs. The operations deliberately preserve `privacyNoticeId`, consent lifecycle fields, and both underlying legal texts. A rollback after cleanup must use a version that understands required `privacyNoticeId`; the pre-migration application is no longer safe. If verification finds a missing privacy reference, stop and investigate rather than deleting anything further.
+The cleanup preserved `privacyNoticeId`, consent lifecycle fields, and privacy-notice legal texts. A rollback after cleanup must use a version that understands required `privacyNoticeId`; the pre-migration application is no longer safe. If verification finds a missing privacy reference, stop and investigate rather than deleting anything further.
 
 ## References
 
