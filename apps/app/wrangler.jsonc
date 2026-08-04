@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "app-elianacorre-com",
-  "compatibility_date": "2025-09-02",
+  "compatibility_date": "2026-08-04",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server.ts",
   "preview_urls": false,
 }

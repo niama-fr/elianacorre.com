@@ -205,10 +205,10 @@ describe("newsletter subscription", () => {
     expect(subscriptions).toHaveLength(1);
   });
 
-  it("rejects tampered, missing, unpublished, and future privacy notices without changing consent evidence", async () => {
+  it("rejects tampered and missing privacy notices without changing consent evidence", async () => {
     const convex = await createBackend();
     await convex.mutation(api.newsletter.subscribe, createRequest(convex));
-    const invalidIds = await convex.run(async (ctx) => {
+    const missingPrivacyNoticeId = await convex.run(async (ctx) => {
       const publishedPrivacyNotice = await ctx.db.get(convex.privacyNoticeId);
       if (publishedPrivacyNotice === null) throw new Error("Published privacy notice was not found");
       const missingId = await ctx.db.insert("legalTexts", {
@@ -218,40 +218,24 @@ describe("newsletter subscription", () => {
         publishedBy: publishedPrivacyNotice.publishedBy,
       });
       await ctx.db.delete(missingId);
-      const unpublishedId = await ctx.db.insert("legalTexts", {
-        content: "unpublished privacy",
-        kind: "privacyNotice",
-        publishedAt: null,
-        publishedBy: null,
-      });
-      const futureId = await ctx.db.insert("legalTexts", {
-        content: "future privacy",
-        kind: "privacyNotice",
-        publishedAt: Date.now() + 60_000,
-        publishedBy: publishedPrivacyNotice.publishedBy,
-      });
-      return { futureId, missingId, unpublishedId };
+      return missingId;
     });
+    const readConsentEvidence = async () =>
+      await convex.run(async (ctx) => ({
+        confirmations: await ctx.db.query("newsConfirmations").collect(),
+        subscriptions: await ctx.db.query("newsSubscriptions").collect(),
+        tasks: await ctx.db.query("loopsTasks").collect(),
+      }));
+    const evidenceBeforeInvalidRequests = await readConsentEvidence();
 
     await expect(convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId: "tampered" })).rejects.toThrow(
       'Validator error: Expected ID for table "legalTexts", got `tampered`'
     );
-    const invalidResults = await Promise.allSettled(
-      [invalidIds.missingId, invalidIds.unpublishedId, invalidIds.futureId].map(
-        async (privacyNoticeId) => await convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId })
-      )
-    );
-    expect(
-      invalidResults.map((result) => result.status === "rejected" && String(result.reason).includes("INVALID_PRIVACY_NOTICE"))
-    ).toStrictEqual([true, true, true]);
+    await expect(
+      convex.mutation(api.newsletter.subscribe, { ...createRequest(convex), privacyNoticeId: missingPrivacyNoticeId })
+    ).rejects.toThrow("INVALID_PRIVACY_NOTICE");
 
-    const evidence = await convex.run(async (ctx) => ({
-      confirmations: await ctx.db.query("newsConfirmations").collect(),
-      subscriptions: await ctx.db.query("newsSubscriptions").collect(),
-      tasks: await ctx.db.query("loopsTasks").collect(),
-    }));
-    expect(evidence.subscriptions).toMatchObject([{ privacyNoticeId: convex.privacyNoticeId }]);
-    expect(evidence).toMatchObject({ confirmations: [{}], subscriptions: [{}], tasks: [{}] });
+    await expect(readConsentEvidence()).resolves.toStrictEqual(evidenceBeforeInvalidRequests);
   });
 
   it("keeps honeypot and suppression requests indistinguishable and side-effect free", async () => {

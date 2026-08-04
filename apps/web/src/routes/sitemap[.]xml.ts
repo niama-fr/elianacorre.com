@@ -1,11 +1,12 @@
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { createSitemapXml } from "@/lib/seo";
+import { createSitemapXml } from "@/seo/discovery";
 
 export const createSitemapResponse = () =>
   new Response(createSitemapXml(), {
     headers: {
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      ...CACHE_ROUTE_HEADERS.publicDiscovery,
       "Content-Type": "application/xml; charset=utf-8",
     },
   });

@@ -1,8 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "elianacorre-com",
-  "compatibility_date": "2025-09-02",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat", "enable_ctx_exports"],
+  "cache": {
+    "enabled": false,
+  },
+  "exports": {
+    "default": { "type": "worker", "cache": { "enabled": false } },
+    "CachedApp": { "type": "worker", "cache": { "enabled": true } },
+  },
   "main": "./src/server.ts",
   "preview_urls": false,
+  "secrets": {
+    "required": ["CACHE_REVALIDATION_SECRET"],
+  },
 }

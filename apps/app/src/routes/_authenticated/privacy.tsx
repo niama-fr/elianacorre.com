@@ -365,7 +365,12 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
             </DialogDescription>
           </DialogHeader>
           <DialogFooter showCloseButton>
-            <Button disabled={verification.isPending} onClick={() => void confirm()}>
+            <Button
+              disabled={verification.isPending}
+              onClick={() => {
+                void confirm();
+              }}
+            >
               {verification.isPending ? "Enregistrement…" : "Confirmer"}
             </Button>
           </DialogFooter>
@@ -496,7 +501,9 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             <Button
               disabled={isPending}
               variant={operation === "erasure" ? "destructive" : "default"}
-              onClick={() => void confirmOperation()}
+              onClick={() => {
+                void confirmOperation();
+              }}
             >
               {isPending ? "Traitement…" : "Confirmer"}
             </Button>

@@ -7,13 +7,13 @@ import { cn } from "@ec/ui/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
-import { createSeoHead } from "@/lib/seo";
+import { seoHead } from "@/seo/head";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/carnets-de-voyage/")({
   component: TravelDiariesPage,
   head: () =>
-    createSeoHead({
+    seoHead({
       description:
         "Découvre l’art du carnet de voyage avec Eliana Corré et reçois un e-book pour observer, dessiner et raconter ton quotidien.",
       image: "https://ik.imagekit.io/elianacorre/carnets-de-voyage/hero.jpg",

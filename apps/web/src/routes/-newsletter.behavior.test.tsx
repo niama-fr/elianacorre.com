@@ -20,7 +20,7 @@ const ACTIVE_PRIVACY_NOTICE = zLegalText.parse({
   content: "Notice de confidentialité.",
   kind: "privacyNotice",
   publishedAt: 1,
-  publishedBy: null,
+  publishedBy: "k170e5dj9c8heby7eah6c4mr6h7a7tw5",
 });
 
 const renderValidNewsletterForm = () => {

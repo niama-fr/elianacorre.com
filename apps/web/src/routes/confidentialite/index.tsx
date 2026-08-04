@@ -1,8 +1,8 @@
 import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { createSeoHead } from "@/lib/seo";
 import { Route as RootRoute } from "@/routes/__root";
+import { seoHead } from "@/seo/head";
 
 import { PrivacyNoticeMarkdown } from "./-privacy-notice-markdown";
 
@@ -10,7 +10,7 @@ import { PrivacyNoticeMarkdown } from "./-privacy-notice-markdown";
 export const Route = createFileRoute("/confidentialite/")({
   component: PrivacyPolicyPage,
   head: () =>
-    createSeoHead({
+    seoHead({
       description: "Politique de confidentialité du site elianacorre.com et de la lettre d’Eliana Corré.",
       path: "/confidentialite",
       title: "Politique de confidentialité — Eliana Corré",

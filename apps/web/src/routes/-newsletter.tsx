@@ -34,7 +34,9 @@ const NEWSLETTER = {
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
 export function Newsletter({ formState, privacyNoticeId }: NewsletterProps) {
   const navigate = useNavigate();
-  const ref = useOnInView((inView) => void navigate(getNewsletterHashNavigation(inView)));
+  const ref = useOnInView((inView) => {
+    void navigate(getNewsletterHashNavigation(inView));
+  });
 
   return (
     <Section id="la-gazette-itinerante" ref={ref} intent="secondary">

@@ -1,6 +1,7 @@
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SITE_ORIGIN } from "@/lib/seo";
+import { SITE_ORIGIN } from "@/seo/head";
 
 export const createRobotsText = () =>
   `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /connexion\nDisallow: /newsletter/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`;
@@ -8,7 +9,7 @@ export const createRobotsText = () =>
 export const createRobotsResponse = () =>
   new Response(createRobotsText(), {
     headers: {
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      ...CACHE_ROUTE_HEADERS.publicDiscovery,
       "Content-Type": "text/plain; charset=utf-8",
     },
   });

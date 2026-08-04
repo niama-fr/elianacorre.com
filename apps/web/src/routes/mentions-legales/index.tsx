@@ -1,13 +1,13 @@
 import { Hero, HeroContent } from "@ec/ui/components/hero";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import { createSeoHead } from "@/lib/seo";
+import { seoHead } from "@/seo/head";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/mentions-legales/")({
   component: LegalNoticesPage,
   head: () =>
-    createSeoHead({
+    seoHead({
       description: "Mentions légales, édition et hébergement du site elianacorre.com.",
       path: "/mentions-legales",
       title: "Mentions légales — Eliana Corré",

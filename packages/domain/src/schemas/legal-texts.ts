@@ -15,8 +15,8 @@ export const zMarkdownContent = z
 export const zLegalTextFields = z.object({
   content: zMarkdownContent,
   kind: zLegalTextKind,
-  publishedAt: z.number().nullable(),
-  publishedBy: zid("profiles").nullable(),
+  publishedAt: z.number(),
+  publishedBy: zid("profiles"),
 });
 export const zLegalTextDoc = z.object({ ...zDocCommon("legalTexts").shape, ...zLegalTextFields.shape });
 
@@ -26,10 +26,7 @@ export const zLegalTextEntry = zLegalTextDoc;
 export const zLegalText = zLegalTextEntry;
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zLegalTextCreate = z.object({
-  content: zMarkdownContent,
-  kind: zLegalTextKind,
-});
+export const zLegalTextCreate = zLegalTextFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type LegalTexts = {

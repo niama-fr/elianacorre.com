@@ -1,10 +1,11 @@
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 
 import { confirmNewsletter } from "@/lib/newsletter/newsletter.functions";
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
-import { createNoindexHead } from "@/lib/seo";
+import { noindexHead } from "@/seo/head";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
 const zSearch = z.object({ token: z.string().optional() });
@@ -13,7 +14,8 @@ const zSearch = z.object({ token: z.string().optional() });
 // oxlint-disable-next-line sort-keys
 export const Route = createFileRoute("/newsletter/confirmation")({
   component: NewsletterConfirmationPage,
-  head: () => createNoindexHead("Confirmation — Eliana Corré"),
+  head: () => noindexHead("Confirmation — Eliana Corré"),
+  headers: () => CACHE_ROUTE_HEADERS.private,
   loaderDeps: ({ search: { token } }) => ({ token }),
   loader: async ({ deps: { token } }) => {
     if (!token) return { confirmed: false, downloadToken: null } as const;

@@ -1,15 +1,19 @@
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
+import { env, exports } from "cloudflare:workers";
 
-import { SECURITY_HEADERS } from "@/lib/seo";
+import { applyCachePolicy, isPublicCacheCandidate } from "@/http/cache-policy";
+import { handlePrivacyNoticeRevalidation } from "@/http/cache-revalidation";
+import { applySecurityHeaders } from "@/http/security-policy";
 
-export const applySecurityHeaders = (response: Response): Response => {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
-  return new Response(response.body, { headers, status: response.status, statusText: response.statusText });
-};
+export { CachedApp } from "@/http/cached-app";
 
+// GATEWAY ---------------------------------------------------------------------------------------------------------------------------------
 export default createServerEntry({
-  async fetch(request) {
-    return applySecurityHeaders(await handler.fetch(request));
+  async fetch(req) {
+    const opts = { purge: async () => await exports.CachedApp.purgePrivacyNotice(), request: req, secret: env.CACHE_REVALIDATION_SECRET };
+    const response =
+      (await handlePrivacyNoticeRevalidation(opts)) ??
+      (isPublicCacheCandidate(req) ? await exports.CachedApp.fetch(req) : applyCachePolicy(req, await handler.fetch(req)));
+    return applySecurityHeaders(response);
   },
 });

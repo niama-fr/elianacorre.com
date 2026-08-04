@@ -1,7 +1,4 @@
-import type { LegalTexts } from "@ec/domain/schemas/legal-texts";
-
-export const PRIVACY_NOTICE: LegalTexts["Create"] = {
-  content: `## Responsable du traitement
+export const PRIVACY_NOTICE = `## Responsable du traitement
 
 - **Eliana Corré**
 - 107 chemin de ligne, Les Canots
@@ -50,6 +47,4 @@ Vous pouvez introduire une réclamation auprès de la [CNIL](https://www.cnil.fr
 
 ## Transferts internationaux
 
-Convex n’est pas déployé dans une région européenne. Convex, Loops, Cloudflare, Google ou certains de leurs sous-traitants peuvent donc traiter des données hors de l’Espace économique européen, notamment aux États-Unis. Selon le prestataire et le pays concernés, ces transferts reposent sur une décision d’adéquation, notamment le cadre de protection des données UE–États-Unis lorsque le destinataire est certifié, ou sur les clauses contractuelles types approuvées par la Commission européenne, complétées si nécessaire par des garanties supplémentaires. Vous pouvez demander des informations complémentaires à [contact@elianacorre.com](mailto:contact@elianacorre.com).`,
-  kind: "privacyNotice",
-};
+Convex n’est pas déployé dans une région européenne. Convex, Loops, Cloudflare, Google ou certains de leurs sous-traitants peuvent donc traiter des données hors de l’Espace économique européen, notamment aux États-Unis. Selon le prestataire et le pays concernés, ces transferts reposent sur une décision d’adéquation, notamment le cadre de protection des données UE–États-Unis lorsque le destinataire est certifié, ou sur les clauses contractuelles types approuvées par la Commission européenne, complétées si nécessaire par des garanties supplémentaires. Vous pouvez demander des informations complémentaires à [contact@elianacorre.com](mailto:contact@elianacorre.com).`;

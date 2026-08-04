@@ -1,4 +1,5 @@
 import { readRootLayout } from "@ec/domain/helpers/layouts";
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { GridBackground } from "@ec/ui/components/grid-background";
 import { Toaster } from "@ec/ui/components/sonner";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
@@ -33,6 +34,7 @@ export const Route = createRootRoute({
       { content: "#f4b8a8", name: "theme-color" },
     ],
   }),
+  headers: () => CACHE_ROUTE_HEADERS.publicHtml,
   loader: async () => {
     const layout = readRootLayout();
     const [privacyNotice, formState] = await Promise.all([requireActivePrivacyNotice(), getServerFormState()]);

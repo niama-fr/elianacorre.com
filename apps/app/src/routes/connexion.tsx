@@ -5,12 +5,12 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth/client";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
-import { createNoindexHead } from "@/lib/seo";
+import { noindexHead } from "@/seo/head";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/connexion")({
   component: SignInPage,
-  head: () => createNoindexHead("Connexion — Eliana Corré"),
+  head: () => noindexHead("Connexion — Eliana Corré"),
   validateSearch: (search) => ({
     redirect: getSafeAuthRedirect(search.redirect),
   }),
@@ -34,7 +34,12 @@ function SignInPage() {
 
   return (
     <div className="flex items-center justify-center min-h-svh">
-      <Button disabled={isSigningIn} onClick={() => void signIn()}>
+      <Button
+        disabled={isSigningIn}
+        onClick={() => {
+          void signIn();
+        }}
+      >
         {isSigningIn ? "Connexion…" : "Connexion"}
       </Button>
     </div>

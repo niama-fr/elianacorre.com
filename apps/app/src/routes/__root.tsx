@@ -1,5 +1,6 @@
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import type { ConvexQueryClient } from "@convex-dev/react-query";
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { Toaster } from "@ec/ui/components/sonner";
 import { ThemeProvider } from "@ec/ui/components/theme-provider";
 import { TooltipProvider } from "@ec/ui/components/tooltip";
@@ -26,6 +27,7 @@ export const Route = createRootRouteWithContext<{
     links: [{ href: appCss, rel: "stylesheet" }],
     meta: [{ charSet: "utf-8" }, { content: "width=device-width, initial-scale=1", name: "viewport" }, { title: "TanStack Start Starter" }],
   }),
+  headers: () => CACHE_ROUTE_HEADERS.private,
   shellComponent: RootDocument,
 });
 

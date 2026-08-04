@@ -12,13 +12,13 @@ import {
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
-import { createSeoHead } from "@/lib/seo";
+import { seoHead } from "@/seo/head";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/qui-suis-je/")({
   component: RouteComponent,
   head: () =>
-    createSeoHead({
+    seoHead({
       description: "Découvre le parcours, les inspirations et la démarche artistique d’Eliana Corré, artiste peintre réunionnaise.",
       image: "https://ik.imagekit.io/elianacorre/decouvrez-mon-parcours.jpg",
       path: "/qui-suis-je",

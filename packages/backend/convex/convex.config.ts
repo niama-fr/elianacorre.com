@@ -10,6 +10,7 @@ const app = defineApp({
   env: {
     APP_SITE_URL: v.string(),
     BETTER_AUTH_SECRET: v.string(),
+    CACHE_REVALIDATION_SECRET: v.optional(v.string()),
     CAPABILITY_SIGNING_SECRET: v.string(),
     GOOGLE_CLIENT_ID: v.string(),
     GOOGLE_CLIENT_SECRET: v.string(),
