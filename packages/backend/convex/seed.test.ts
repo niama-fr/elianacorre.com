@@ -22,7 +22,9 @@ describe("deployment seed", () => {
       });
     });
 
+    const beforePublication = Date.now();
     await convex.mutation(internal.seed.init, {});
+    const afterPublication = Date.now();
     await convex.mutation(internal.seed.init, {});
 
     const state = await convex.run(async (ctx) => {
@@ -30,11 +32,19 @@ describe("deployment seed", () => {
         .query("legalTexts")
         .withIndex("by_kind_and_published_at", (q) => q.eq("kind", "privacyNotice"))
         .collect();
+      const scheduledFunctions = await ctx.db.system.query("_scheduled_functions").collect();
       return {
-        currentNoticeCount: notices.filter(({ content }) => content === PRIVACY_NOTICE.content).length,
+        currentNotices: notices.filter(({ content }) => content === PRIVACY_NOTICE),
         noticeCount: notices.length,
+        scheduledFunctions,
       };
     });
-    expect(state).toStrictEqual({ currentNoticeCount: 1, noticeCount: 2 });
+    expect(state.currentNotices).toHaveLength(1);
+    expect(state.currentNotices[0]?.publishedAt).toBeGreaterThanOrEqual(beforePublication);
+    expect(state.currentNotices[0]?.publishedAt).toBeLessThanOrEqual(afterPublication);
+    expect(state).toMatchObject({
+      noticeCount: 2,
+      scheduledFunctions: [{ name: "cache:revalidatePrivacyNotice", state: { kind: "pending" } }],
+    });
   });
 });

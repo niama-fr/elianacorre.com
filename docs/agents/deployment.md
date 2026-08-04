@@ -14,6 +14,42 @@ The personal dev deployment in the production Convex project is unused. Pull req
 
 `main` is the integration branch. A successful merge deploys to staging, where manual browser validation occurs. Production remains unchanged until the latest successful staging commit is deliberately promoted.
 
+## Cloudflare response caching
+
+### Worker TypeScript types
+
+Generate Cloudflare runtime and configured binding types in each application with `bun run cf-typegen`. Commit the resulting `worker-configuration.d.ts` and rerun the command whenever Wrangler bindings, compatibility flags, or the compatibility date change. Do not add `@cloudflare/workers-types`; generated types match the deployed Worker configuration.
+
+Wrangler intentionally cannot discover production secrets. Narrow secret bindings at runtime before use; never add their values to generated declarations or Wrangler variables.
+
+The public Worker disables caching on its externally exposed default gateway and enables it only on the named `CachedApp` entrypoint in `apps/web/wrangler.jsonc`. The gateway runs before cache lookup and forwards only anonymous GET and HEAD requests without cookies, authorization, capability tokens, or newsletter capability paths through the cached loopback entrypoint. Anonymous successful HTML remains dynamic at build time because the root layout contains the current Convex privacy notice. The cached application sends browsers `Cache-Control: private, no-store` while `Cloudflare-CDN-Cache-Control` gives Cloudflare one hour of freshness and five minutes of stale-while-revalidate. The authenticated Worker sends both browser and Cloudflare `no-store` policies on every response. Requests carrying cookies or authorization, signed newsletter capability routes, redirects, errors, and responses with `Set-Cookie` are never shared.
+
+TanStack routes declare public, discovery, or private cache intent using the protocol contracts in `packages/http/src/cache-policy.ts`. Application enforcement lives under each app's `src/http` folder; document metadata and search discovery live under `src/seo`. Request eligibility is checked by the uncached gateway and repeated by `CachedApp`'s response policy as defense in depth. `CachedApp` removes the internal intent header before responding and treats it only as permission to consider storage: status, response cookies, and content type still determine final eligibility. Missing intent is always private.
+
+### NIA-46 security-policy follow-up
+
+NIA-45 establishes the module boundaries but does not change the existing CSP contract. NIA-46 must complete these security-specific steps without moving cache classification back into security or SEO code:
+
+1. Replace the inherited public policy in `apps/web/src/http/security-policy.ts` and create the authenticated application's policy under `apps/app/src/http`; each policy must be application-specific.
+2. Register both policies through the supported TanStack Start middleware seam, while retaining the custom server entries until equivalent HTML, server-route, server-function, redirect, and error coverage is proven.
+3. Keep cached public HTML compatible with deterministic CSP; give dynamic capability responses the policy required by their execution model.
+4. Generate a cryptographically strong nonce per uncached authenticated response and propagate it to TanStack-generated scripts.
+5. Register and test CSRF middleware for every state-changing same-origin server route and server function that requires it.
+6. Prevent the public app from connecting to authenticated Convex surfaces while allowing the authenticated app's Better Auth and Convex traffic.
+7. Decide Cloudflare Web Analytics independently for both hosts, deploy CSP in report-only mode, inspect violations, and obtain Grégory's approval before enforcement.
+
+Security tests must cover representative cached public, capability, authenticated, redirect, error, and server-function responses. SEO modules must remain limited to document-head metadata and public discovery; neither CSP nor response cache directives belong there.
+
+Shared public HTML is tagged `privacy-notice`. When the seed publishes changed privacy Markdown, Convex schedules `cache:revalidatePrivacyNotice`, which sends an authenticated `POST /_cache/revalidate/privacy-notice` to the environment's `SITE_URL`. The uncached gateway authenticates the request and calls `CachedApp`'s custom purge method; custom RPC bypasses cache lookup while purging the cached application's tagged responses. Failed or unconfigured invalidation never rolls back the immutable publication; one-hour freshness plus five-minute stale-while-revalidate remains the recovery bound.
+
+Generate a different secret for each environment. In the Convex dashboard, select the environment's deployment and set `CACHE_REVALIDATION_SECRET` under **Settings → Environment Variables**. In Cloudflare, open the matching public Worker and add the same value under **Settings → Variables and Secrets → Secrets**. Never configure it on the authenticated Worker, expose it as a `VITE_` variable, paste it into commands, or commit it. To rotate it, update the public Worker first, immediately update the matching Convex deployment, then run `bunx convex run cache:revalidatePrivacyNotice` from `packages/backend` with that deployment selected. A successful result is `{ status: "revalidated" }`; restore the previous value on both systems if the check fails.
+
+No dashboard Cache Rule should override these origin policies. In particular, do not configure an Edge TTL that ignores cache-control headers and do not strip `Set-Cookie`. After deploying staging, make two anonymous requests to the same public HTML URL and inspect `CF-Cache-Status`: the first should be `MISS` and the second `HIT`. Confirm the browser-facing `Cache-Control` remains `private, no-store`. Repeat with a cookie, a signed `/newsletter/confirmation` or `/newsletter/ebook` URL, and every authenticated-app response; each must report `BYPASS` and must not expose a shared freshness policy.
+
+To verify expiry, stale revalidation, and legal publication, first record the active notice rendered by `/confidentialite` and the response's `Age`, then publish a changed staging notice. Keep requesting the same anonymous URL without cookies. Until `Age` reaches 3600 seconds, the old notice may remain a `HIT`. The first request after expiry should return the old notice with `CF-Cache-Status: UPDATING` while Cloudflare refreshes it in the background. Record that response, then continue polling: the changed notice must appear as a fresh `HIT` within the five-minute stale window, making the nominal healthy-origin publication bound 65 minutes. Restore approved staging content through the normal seed workflow after the test.
+
+If private data appears in a cached response or a public response remains stale beyond 65 minutes, disable Workers Cache for the affected Worker in **Workers & Pages → Settings → Cache**, then use the Worker's own cache controls to purge its cached responses. Zone-level dashboard purges do not affect Workers Cache. Keep the authenticated Worker uncached, inspect the response headers and request cookie/capability exclusions, deploy a correction through `main`, and repeat the staging evidence before re-enabling public caching. Purging or changing production caching requires Grégory's explicit approval. Update this section whenever cache eligibility, TTLs, shared layout data, or the Cloudflare cache interface changes.
+
 ## Environment isolation
 
 Every Convex deployment owns separate data, files, functions, environment variables, Better Auth sessions, and scheduled jobs. Staging data is disposable and must never be copied to production. Real identities, content, contacts, and future consent records remain authoritative only in the production deployment.
@@ -21,6 +57,7 @@ Every Convex deployment owns separate data, files, functions, environment variab
 Each deployment declares:
 
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
+- `CACHE_REVALIDATION_SECRET`: one environment-specific secret, generated from at least 32 random bytes and configured identically in the Convex deployment and its matching public Worker; authenticates privacy-notice cache invalidation.
 - `CAPABILITY_SIGNING_SECRET`: unique secret generated from at least 32 random bytes; signs short-lived newsletter confirmation and e-book download URLs.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
 - `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.

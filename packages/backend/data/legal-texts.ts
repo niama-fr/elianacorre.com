@@ -1,5 +1,6 @@
-import type { QueryCtx } from "@ec/backend/server";
+import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
+import type { LegalTexts } from "@ec/domain/schemas/legal-texts";
 import { ConvexError } from "convex/values";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
@@ -11,7 +12,7 @@ export const getPrivacyNotice = async (ctx: QueryCtx, id: Id<"legalTexts">) => {
 export const getActivePrivacyNotice = async (ctx: QueryCtx) =>
   await ctx.db
     .query("legalTexts")
-    .withIndex("by_kind_and_published_at", (q) => q.eq("kind", "privacyNotice").gt("publishedAt", null))
+    .withIndex("by_kind_and_published_at", (q) => q.eq("kind", "privacyNotice"))
     .order("desc")
     .first();
 
@@ -29,20 +30,18 @@ export const requireActivePrivacyNotice = async (ctx: QueryCtx) => {
   return doc;
 };
 
-export const requireLegalText = async (ctx: QueryCtx, id: Id<"legalTexts">) => {
-  const doc = await ctx.db.get("legalTexts", id);
-  if (!doc) throw new ConvexError("UNKNOWN_LEGAL_TEXT");
-  return doc;
-};
-
 export const requirePrivacyNoticeAt = async (ctx: QueryCtx, occurredAt: number) => {
   const doc = await getPrivacyNoticeAt(ctx, occurredAt);
   if (!doc) throw new ConvexError("NO_APPLICABLE_PRIVACY_NOTICE");
   return doc;
 };
 
-export const requirePublishedPrivacyNotice = async (ctx: QueryCtx, { id, requestedAt }: { id: Id<"legalTexts">; requestedAt: number }) => {
+export const requirePrivacyNotice = async (ctx: QueryCtx, id: Id<"legalTexts">) => {
   const doc = await getPrivacyNotice(ctx, id);
-  if (!doc || doc.publishedAt === null || doc.publishedAt > requestedAt) throw new ConvexError("INVALID_PRIVACY_NOTICE");
+  if (!doc) throw new ConvexError("INVALID_PRIVACY_NOTICE");
   return doc;
 };
+
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const createPrivacyNotice = async (ctx: MutationCtx, create: Omit<LegalTexts["Create"], "kind">) =>
+  await ctx.db.insert("legalTexts", { ...create, kind: "privacyNotice" });

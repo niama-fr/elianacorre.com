@@ -2,7 +2,7 @@ import { useLocation } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster({ ...props }: ToasterProps) {
   const pathname = useLocation({ select: (l) => l.pathname });
   const { theme: userTheme = "system" } = useTheme();
   const theme = (pathname.startsWith("/admin") ? userTheme : "light") as ToasterProps["theme"];
@@ -34,6 +34,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
-};
+}
 
 export { Toaster };

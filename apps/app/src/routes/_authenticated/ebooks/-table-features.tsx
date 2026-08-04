@@ -10,13 +10,15 @@ import { createColumnHelper, tableFeatures } from "@tanstack/react-table";
 export const features = tableFeatures({});
 
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
-const OpenFileBtn = ({ href }: { href: string }) => (
-  <Button variant="secondary" size="icon">
-    <a href={href} rel="noreferrer" target="_blank" aria-label="Lien externe" className="size-4">
-      <span className="icon-[tabler--link] size-4" />
-    </a>
-  </Button>
-);
+function OpenFileBtn({ href }: { href: string }) {
+  return (
+    <Button variant="secondary" size="icon">
+      <a href={href} rel="noreferrer" target="_blank" aria-label="Lien externe" className="size-4">
+        <span className="icon-[tabler--link] size-4" />
+      </a>
+    </Button>
+  );
+}
 
 // COLUMNS ---------------------------------------------------------------------------------------------------------------------------------
 const helper = createColumnHelper<typeof features, Ebooks["Entity"]>();
@@ -52,7 +54,13 @@ export const getColumns = ({ publish }: GetColumnsArgs) =>
         return (
           <ButtonGroup>
             <OpenFileBtn href={original.url} />
-            <Button variant="success" size="icon" onClick={() => void publish(original._id)}>
+            <Button
+              variant="success"
+              size="icon"
+              onClick={() => {
+                void publish(original._id);
+              }}
+            >
               <span className="icon-[tabler--check] size-4" />
             </Button>
           </ButtonGroup>

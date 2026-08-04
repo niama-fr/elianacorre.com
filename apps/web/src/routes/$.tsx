@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import { createNoindexHead } from "@/lib/seo";
 import { NotFoundPage } from "@/routes/-not-found";
+import { noindexHead } from "@/seo/head";
 
 export const loadNotFound = () => {
   notFound({ throw: true });
@@ -10,7 +10,7 @@ export const loadNotFound = () => {
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/$")({
-  head: () => createNoindexHead("Page introuvable — Eliana Corré"),
+  head: () => noindexHead("Page introuvable — Eliana Corré"),
   loader: loadNotFound,
   notFoundComponent: NotFoundPage,
 });

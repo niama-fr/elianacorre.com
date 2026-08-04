@@ -56,7 +56,9 @@ function AuthenticatedLayout() {
               disabled={isSigningOut}
               size="icon"
               title="Se déconnecter"
-              onClick={() => void handleSignOut()}
+              onClick={() => {
+                void handleSignOut();
+              }}
             >
               <span className={ADMIN.signout()} />
             </Button>

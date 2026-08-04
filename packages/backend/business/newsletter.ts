@@ -7,7 +7,7 @@ import type { NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
 import type { WithNow } from "@ec/domain/schemas/utils";
 
 import { components } from "../convex/_generated/api";
-import { requirePublishedPrivacyNotice } from "../data/legal-texts";
+import { requirePrivacyNotice } from "../data/legal-texts";
 import { deleteNewsConfirmation, getNewsConfirmation, replaceNewsConfirmationForSubscription } from "../data/news-confirmations";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
 import {
@@ -54,7 +54,7 @@ export async function subscribeToNewsletter(ctx: MutationCtx, opts: SubscribeToN
   const { email, firstName, now, requestIp, website } = opts;
   if (website !== "" || (await getNewsSuppressionByEmail(ctx, email))) return;
 
-  await requirePublishedPrivacyNotice(ctx, { id: opts.privacyNoticeId, requestedAt: now });
+  await requirePrivacyNotice(ctx, opts.privacyNoticeId);
 
   let profileId = await getProfileIdByEmail(ctx, email);
   const subscription = profileId ? await getCurrentNewsSubscription(ctx, profileId) : null;

@@ -5,7 +5,7 @@ import { Section, SectionMain } from "@ec/ui/components/section";
 import { WorksGrid } from "@ec/ui/components/works-grid";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import { createSeoHead } from "@/lib/seo";
+import { seoHead } from "@/seo/head";
 
 type CollectionPage = { set: ReturnType<typeof readAllSets>[number]; works: ReturnType<typeof readWorksSetPage> };
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/oeuvres/$slug")({
   head: ({ params: { slug } }) => {
     const set = readAllSets().find((candidate) => candidate.slug === slug);
     return set
-      ? createSeoHead({
+      ? seoHead({
           description: set.content,
           image: set.image.src,
           path: `/oeuvres/${set.slug}`,

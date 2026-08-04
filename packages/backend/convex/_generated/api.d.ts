@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as cache from "../cache.js";
 import type * as contactRequests from "../contactRequests.js";
 import type * as crons from "../crons.js";
 import type * as ebooks from "../ebooks.js";
@@ -30,6 +31,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  cache: typeof cache;
   contactRequests: typeof contactRequests;
   crons: typeof crons;
   ebooks: typeof ebooks;

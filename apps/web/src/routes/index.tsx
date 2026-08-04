@@ -7,13 +7,13 @@ import { WorksGrid } from "@ec/ui/components/works-grid";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
-import { createSeoHead } from "@/lib/seo";
+import { seoHead } from "@/seo/head";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/")({
   component: IndexPage,
   head: () =>
-    createSeoHead({
+    seoHead({
       description: "Découvre les œuvres et carnets de voyage d’Eliana Corré, artiste peintre à La Réunion.",
       path: "/",
       title: "Eliana Corré — Artiste peintre à La Réunion",

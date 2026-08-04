@@ -1,3 +1,4 @@
+import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { Button } from "@ec/ui/components/button";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ec/ui/components/tooltip";
@@ -6,7 +7,7 @@ import { useEffect } from "react";
 import z from "zod";
 
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
-import { createNoindexHead } from "@/lib/seo";
+import { noindexHead } from "@/seo/head";
 
 import { EbookRecoveryFormDialog } from "./-ebook-recovery-form-dialog";
 
@@ -16,7 +17,8 @@ const zSearch = z.object({ token: z.string().optional() });
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/newsletter/ebook")({
   component: NewsletterEbookPage,
-  head: () => createNoindexHead("Votre e-book — Eliana Corré"),
+  head: () => noindexHead("Votre e-book — Eliana Corré"),
+  headers: () => CACHE_ROUTE_HEADERS.private,
   validateSearch: zSearch,
 });
 

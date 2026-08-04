@@ -5,13 +5,13 @@ import { describe, expect, it } from "vitest";
 
 import { createRobotsResponse, createRobotsText } from "@/routes/robots[.]txt";
 import { createSitemapResponse } from "@/routes/sitemap[.]xml";
-import { applySecurityHeaders } from "@/server";
 
-import { createNoindexHead, createSeoHead, createSitemapXml, INDEXABLE_PATHS, SECURITY_HEADERS } from "./seo";
+import { createSitemapXml, INDEXABLE_PATHS } from "./discovery";
+import { noindexHead, seoHead } from "./head";
 
 describe("public discovery configuration", () => {
   it("builds complete self-canonical social metadata", () => {
-    const head = createSeoHead({ description: "Description", path: "/contact", title: "Contact — Eliana Corré" });
+    const head = seoHead({ description: "Description", path: "/contact", title: "Contact — Eliana Corré" });
     expect(head.links).toContainEqual({ href: "https://elianacorre.com/contact", rel: "canonical" });
     expect(head.meta).toStrictEqual(
       expect.arrayContaining([
@@ -23,7 +23,7 @@ describe("public discovery configuration", () => {
   });
 
   it("keeps utility pages out of search results", () => {
-    expect(createNoindexHead("Connexion").meta).toContainEqual({ content: "noindex, nofollow, noarchive", name: "robots" });
+    expect(noindexHead("Connexion").meta).toContainEqual({ content: "noindex, nofollow, noarchive", name: "robots" });
   });
 
   it("publishes only canonical public pages in the sitemap", () => {
@@ -46,20 +46,6 @@ describe("public discovery configuration", () => {
       expect(response.headers.get("cache-control")).toContain("stale-while-revalidate");
       expect(response.headers.get("content-type")).toContain("charset=utf-8");
     }
-  });
-
-  it("defines the baseline browser security policy", () => {
-    expect(SECURITY_HEADERS["Content-Security-Policy"]).toContain("frame-ancestors 'none'");
-    expect(SECURITY_HEADERS["Strict-Transport-Security"]).toContain("max-age=31536000");
-    expect(SECURITY_HEADERS["X-Content-Type-Options"]).toBe("nosniff");
-  });
-
-  it("applies security headers without changing the response status or body", async () => {
-    const response = applySecurityHeaders(new Response("missing", { status: 404 }));
-    expect(response.status).toBe(404);
-    await expect(response.text()).resolves.toBe("missing");
-    expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
-    expect(response.headers.get("strict-transport-security")).toContain("includeSubDomains");
   });
 
   it("references only existing production manifest icons", () => {

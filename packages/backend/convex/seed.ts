@@ -2,6 +2,7 @@ import { PRIVACY_NOTICE } from "@ec/domain/helpers/legal-texts";
 import { zProfileAdminsSeed } from "@ec/domain/schemas/profiles";
 import { ConvexError } from "convex/values";
 
+import { publishPrivacyNotice } from "../business/legal-texts";
 import { getActivePrivacyNotice } from "../data/legal-texts";
 import { getProfileByEmail } from "../data/profiles";
 import type { Id } from "./_generated/dataModel";
@@ -25,10 +26,8 @@ export const init = zInternalMutation({
     );
 
     const [publishedBy] = profileIds;
-    const publishedAt = Date.now();
 
     const privacyNotice = await getActivePrivacyNotice(ctx);
-    if (privacyNotice?.content !== PRIVACY_NOTICE.content)
-      await ctx.db.insert("legalTexts", { ...PRIVACY_NOTICE, publishedAt, publishedBy });
+    if (privacyNotice?.content !== PRIVACY_NOTICE) await publishPrivacyNotice(ctx, { content: PRIVACY_NOTICE, publishedBy });
   },
 });
