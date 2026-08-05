@@ -5,24 +5,7 @@ import { createMiddleware } from "@tanstack/react-start";
 export type SecurityPolicyMode = "enforce" | "report-only";
 
 export const CLOUDFLARE_WEB_ANALYTICS_POLICY = "disabled" as const;
-
-const PUBLIC_CSP = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "connect-src 'self'",
-  "font-src 'self' data:",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "img-src 'self' data: blob: https://ik.imagekit.io",
-  "object-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "upgrade-insecure-requests",
-].join("; ");
-
-// Capability pages use the same deterministic policy as cached marketing HTML. Their private cache
-// classification belongs to cache-policy.ts and must not change the security policy's interface.
-const PUBLIC_CAPABILITY_CSP = PUBLIC_CSP;
+export const SECURITY_NONCE_CONTEXT_KEY = "securityNonce" as const;
 
 const COMMON_SECURITY_HEADERS = {
   [HTTP_HEADER.permissionsPolicy]: "camera=(), geolocation=(), microphone=()",
@@ -32,26 +15,35 @@ const COMMON_SECURITY_HEADERS = {
   [HTTP_HEADER.xFrameOptions]: "DENY",
 } as const;
 
-export const SECURITY_HEADERS = {
-  [HTTP_HEADER.contentSecurityPolicy]: PUBLIC_CSP,
-  ...COMMON_SECURITY_HEADERS,
-} as const;
-
-const CAPABILITY_PATHS = new Set(["/newsletter/confirmation", "/newsletter/ebook"]);
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // HELPERS ------------------------------------------------------------------------------------------------------------------------------
 export const resolveSecurityPolicyMode = (value: string | undefined): SecurityPolicyMode =>
   value === "enforce" ? "enforce" : "report-only";
 
+export const createResponseNonce = (): string => {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCodePoint(...bytes));
+};
+
 export const isCsrfProtectedRequest = ({ handlerType, request }: { handlerType: "serverFn" | "router"; request: Request }): boolean =>
   handlerType === "serverFn" || STATE_CHANGING_METHODS.has(request.method);
 
+export const getSecurityNonce = (context: unknown): string | undefined => {
+  if (typeof context !== "object" || context === null || !(SECURITY_NONCE_CONTEXT_KEY in context)) return undefined;
+
+  const nonce = context[SECURITY_NONCE_CONTEXT_KEY];
+  return typeof nonce === "string" ? nonce : undefined;
+};
+
 // APPLY --------------------------------------------------------------------------------------------------------------------------------
-export const applySecurityHeaders = (request: Request, response: Response, mode: SecurityPolicyMode = "report-only"): Response => {
+export const applySecurityHeaders = (
+  response: Response,
+  { mode = "report-only", nonce }: { mode?: SecurityPolicyMode; nonce?: string } = {}
+): Response => {
   const headers = new Headers(response.headers);
-  const pathname = normalizePathname(new URL(request.url).pathname);
-  const contentSecurityPolicy = CAPABILITY_PATHS.has(pathname) ? PUBLIC_CAPABILITY_CSP : PUBLIC_CSP;
+  const contentSecurityPolicy = createContentSecurityPolicy(nonce);
 
   for (const [name, value] of Object.entries(COMMON_SECURITY_HEADERS)) headers.set(name, value);
 
@@ -63,13 +55,29 @@ export const applySecurityHeaders = (request: Request, response: Response, mode:
 };
 
 export const createSecurityMiddleware = (mode: SecurityPolicyMode) =>
-  createMiddleware().server(async ({ next, request }) => {
+  createMiddleware().server(async ({ next, handlerType }) => {
+    const nonce = handlerType === "router" ? createResponseNonce() : undefined;
     // The middleware must inspect the downstream response before returning it.
     // oxlint-disable-next-line node/callback-return
-    const result = await next();
-    return { ...result, response: applySecurityHeaders(request, result.response, mode) };
+    const result = nonce === undefined ? await next() : await next({ context: { [SECURITY_NONCE_CONTEXT_KEY]: nonce } });
+
+    return { ...result, response: applySecurityHeaders(result.response, { mode, nonce }) };
   });
 
-function normalizePathname(pathname: string): string {
-  return pathname === "/" ? pathname : pathname.replace(/\/+$/u, "");
+function createContentSecurityPolicy(nonce: string | undefined): string {
+  const scriptSource = nonce === undefined ? "'self'" : `'self' 'nonce-${nonce}'`;
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud wss://*.convex.site",
+    "font-src 'self' data:",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "img-src 'self' data: blob: https://ik.imagekit.io",
+    "object-src 'none'",
+    `script-src ${scriptSource}`,
+    "style-src 'self' 'unsafe-inline'",
+    "upgrade-insecure-requests",
+  ].join("; ");
 }

@@ -5,4 +5,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server.ts",
   "preview_urls": false,
+  "vars": {
+    "CSP_MODE": "report-only",
+  },
 }

@@ -12,6 +12,9 @@
   },
   "main": "./src/server.ts",
   "preview_urls": false,
+  "vars": {
+    "CSP_MODE": "report-only",
+  },
   "secrets": {
     "required": ["CACHE_REVALIDATION_SECRET"],
   },

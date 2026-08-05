@@ -120,14 +120,14 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
-          bunx wrangler deploy --name elianacorre-com --tag "$ROLLBACK_SHA" --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}" --keep-vars
+          bunx wrangler deploy --name elianacorre-com --var "CSP_MODE:enforce" --tag "$ROLLBACK_SHA" --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}" --keep-vars
       - name: Deploy authenticated rollback Worker
         working-directory: apps/app
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: >-
-          bunx wrangler deploy --name app-elianacorre-com --tag "$ROLLBACK_SHA" --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}" --keep-vars
+          bunx wrangler deploy --name app-elianacorre-com --var "CSP_MODE:enforce" --tag "$ROLLBACK_SHA" --message "Rollback to ${ROLLBACK_TAG}: ${ROLLBACK_REASON}" --keep-vars
       - name: Record rollback summary
         run: |
           {
