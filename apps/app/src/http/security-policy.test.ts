@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   applySecurityHeaders,
+  applySecurityNonce,
   CLOUDFLARE_WEB_ANALYTICS_POLICY,
   createResponseNonce,
   getSecurityNonce,
   isCsrfProtectedRequest,
+  resolveSecurityPolicyMode,
 } from "./security-policy";
 
 const request = (pathname: string, init?: RequestInit) => new Request(`https://app.elianacorre.com${pathname}`, init);
@@ -13,6 +15,13 @@ const request = (pathname: string, init?: RequestInit) => new Request(`https://a
 describe("authenticated security policy", () => {
   it("keeps Cloudflare Web Analytics disabled", () => {
     expect(CLOUDFLARE_WEB_ANALYTICS_POLICY).toBe("disabled");
+  });
+
+  it("accepts only the documented CSP modes", () => {
+    expect(resolveSecurityPolicyMode()).toBe("report-only");
+    expect(resolveSecurityPolicyMode("report-only")).toBe("report-only");
+    expect(resolveSecurityPolicyMode("enforce")).toBe("enforce");
+    expect(() => resolveSecurityPolicyMode("unexpected")).toThrow("Unsupported CSP_MODE value");
   });
 
   it("uses a per-response nonce for generated scripts and authenticated connections", () => {
@@ -48,6 +57,14 @@ describe("authenticated security policy", () => {
   it("reads the response nonce from Start request context", () => {
     expect(getSecurityNonce({ securityNonce: "context-nonce" })).toBe("context-nonce");
     expect(getSecurityNonce({ securityNonce: 123 })).toBeUndefined();
+  });
+
+  it("propagates the context nonce to TanStack SSR options", () => {
+    const router: { options: { ssr?: { defaultSsr?: boolean; nonce?: string } } } = { options: { ssr: { defaultSsr: true } } };
+
+    applySecurityNonce(router, { securityNonce: "render-nonce" });
+
+    expect(router.options.ssr).toMatchObject({ defaultSsr: true, nonce: "render-nonce" });
   });
 
   it.each([

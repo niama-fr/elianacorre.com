@@ -41,8 +41,12 @@ const CAPABILITY_PATHS = new Set(["/newsletter/confirmation", "/newsletter/ebook
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // HELPERS ------------------------------------------------------------------------------------------------------------------------------
-export const resolveSecurityPolicyMode = (value: string | undefined): SecurityPolicyMode =>
-  value === "enforce" ? "enforce" : "report-only";
+export const resolveSecurityPolicyMode = (value?: string): SecurityPolicyMode => {
+  if (value === undefined || value === "report-only") return "report-only";
+  if (value === "enforce") return "enforce";
+
+  throw new Error(`Unsupported CSP_MODE value: ${value}`);
+};
 
 export const isCsrfProtectedRequest = ({ handlerType, request }: { handlerType: "serverFn" | "router"; request: Request }): boolean =>
   handlerType === "serverFn" || STATE_CHANGING_METHODS.has(request.method);

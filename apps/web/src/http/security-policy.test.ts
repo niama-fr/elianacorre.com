@@ -1,12 +1,26 @@
+import { CACHE_CONTROL } from "@ec/http/cache-policy";
 import { describe, expect, it } from "vitest";
 
-import { applySecurityHeaders, CLOUDFLARE_WEB_ANALYTICS_POLICY, isCsrfProtectedRequest } from "./security-policy";
+import { applyCachePolicy } from "./cache-policy";
+import {
+  applySecurityHeaders,
+  CLOUDFLARE_WEB_ANALYTICS_POLICY,
+  isCsrfProtectedRequest,
+  resolveSecurityPolicyMode,
+} from "./security-policy";
 
 const request = (pathname: string, init?: RequestInit) => new Request(`https://elianacorre.com${pathname}`, init);
 
 describe("public security policy", () => {
   it("keeps Cloudflare Web Analytics disabled", () => {
     expect(CLOUDFLARE_WEB_ANALYTICS_POLICY).toBe("disabled");
+  });
+
+  it("accepts only the documented CSP modes", () => {
+    expect(resolveSecurityPolicyMode()).toBe("report-only");
+    expect(resolveSecurityPolicyMode("report-only")).toBe("report-only");
+    expect(resolveSecurityPolicyMode("enforce")).toBe("enforce");
+    expect(() => resolveSecurityPolicyMode("unexpected")).toThrow("Unsupported CSP_MODE value");
   });
 
   it("defines a deterministic public CSP without authenticated Convex connections", () => {
@@ -22,10 +36,11 @@ describe("public security policy", () => {
 
   it("uses report-only CSP for capability responses before enforcement approval", () => {
     const response = applySecurityHeaders(request("/newsletter/confirmation?token=secret"), new Response("capability"), "report-only");
+    const cacheAwareResponse = applyCachePolicy(request("/newsletter/confirmation?token=secret"), response);
 
     expect(response.headers.get("content-security-policy")).toBeNull();
     expect(response.headers.get("content-security-policy-report-only")).toContain("form-action 'self'");
-    expect(response.headers.get("cache-control")).toBeNull();
+    expect(cacheAwareResponse.headers.get("cache-control")).toBe(CACHE_CONTROL.privateNoStore);
   });
 
   it.each([

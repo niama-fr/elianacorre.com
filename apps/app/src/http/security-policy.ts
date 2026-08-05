@@ -15,14 +15,19 @@ const COMMON_SECURITY_HEADERS = {
   [HTTP_HEADER.xFrameOptions]: "DENY",
 } as const;
 
+const RESPONSE_NONCE_BYTE_LENGTH = 16;
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // HELPERS ------------------------------------------------------------------------------------------------------------------------------
-export const resolveSecurityPolicyMode = (value: string | undefined): SecurityPolicyMode =>
-  value === "enforce" ? "enforce" : "report-only";
+export const resolveSecurityPolicyMode = (value?: string): SecurityPolicyMode => {
+  if (value === undefined || value === "report-only") return "report-only";
+  if (value === "enforce") return "enforce";
+
+  throw new Error(`Unsupported CSP_MODE value: ${value}`);
+};
 
 export const createResponseNonce = (): string => {
-  const bytes = new Uint8Array(16);
+  const bytes = new Uint8Array(RESPONSE_NONCE_BYTE_LENGTH);
   crypto.getRandomValues(bytes);
   return btoa(String.fromCodePoint(...bytes));
 };
@@ -35,6 +40,11 @@ export const getSecurityNonce = (context: unknown): string | undefined => {
 
   const nonce = context[SECURITY_NONCE_CONTEXT_KEY];
   return typeof nonce === "string" ? nonce : undefined;
+};
+
+export const applySecurityNonce = (router: { options: { ssr?: { nonce?: string } } }, context: unknown): void => {
+  const nonce = getSecurityNonce(context);
+  if (nonce) router.options.ssr = { ...router.options.ssr, nonce };
 };
 
 // APPLY --------------------------------------------------------------------------------------------------------------------------------

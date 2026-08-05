@@ -3,13 +3,26 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { applyCachePolicy } from "./cache-policy";
 import { PRIVACY_NOTICE_CACHE_TAG } from "./cache-revalidation";
+import { applySecurityHeaders, resolveSecurityPolicyMode } from "./security-policy";
 
 // ENTRYPOINT ------------------------------------------------------------------------------------------------------------------------------
 export class CachedApp extends WorkerEntrypoint {
-  // Cloudflare requires fetch to be an instance entrypoint even though rendering does not access instance state.
-  // oxlint-disable-next-line eslint/class-methods-use-this
   override async fetch(request: Request): Promise<Response> {
-    return applyCachePolicy(request, await handler.fetch(request));
+    const securityPolicyMode = resolveSecurityPolicyMode(this.env.CSP_MODE);
+
+    try {
+      return applyCachePolicy(request, await handler.fetch(request));
+    } catch (error) {
+      // oxlint-disable-next-line no-console -- Worker failures need structured operational evidence.
+      console.error(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : String(error),
+          message: "Cached app request failed",
+          path: new URL(request.url).pathname,
+        })
+      );
+      return applyCachePolicy(request, applySecurityHeaders(request, new Response(null, { status: 500 }), securityPolicyMode));
+    }
   }
 
   async purgePrivacyNotice(): Promise<boolean> {
