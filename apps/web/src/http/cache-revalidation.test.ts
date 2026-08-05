@@ -71,6 +71,7 @@ describe("privacy-notice cache revalidation", () => {
   });
 
   it("reports a thrown purge error without exposing its details", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(vi.fn());
     const request = createRequest({ headers: { Authorization: "Bearer secret" }, method: "POST" });
     const response = await handlePrivacyNoticeRevalidation({
       purge: vi.fn<() => Promise<boolean>>().mockRejectedValue(new Error("sensitive Cloudflare error")),
@@ -81,5 +82,9 @@ describe("privacy-notice cache revalidation", () => {
     expect(response?.status).toBe(500);
     expect(response?.headers.get("cache-control")).toBe("private, no-store");
     await expect(response?.json()).resolves.toStrictEqual({ revalidated: false });
+    expect(consoleError).toHaveBeenCalledWith(
+      JSON.stringify({ error: "sensitive Cloudflare error", message: "Privacy notice revalidation failed" })
+    );
+    consoleError.mockRestore();
   });
 });

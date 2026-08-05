@@ -116,6 +116,7 @@ describe("public cache gateway", () => {
   it("forwards anonymous reads to the cached entrypoint", () => {
     expect(isPublicCacheCandidate(new Request("https://elianacorre.com/"))).toBeTruthy();
     expect(isPublicCacheCandidate(new Request("https://elianacorre.com/robots.txt", { method: "HEAD" }))).toBeTruthy();
+    expect(isPublicCacheCandidate(new Request("https://elianacorre.com/oeuvres/un-roman"))).toBeTruthy();
   });
 
   it.each([
@@ -123,6 +124,8 @@ describe("public cache gateway", () => {
     ["authorization-bearing requests", new Request("https://elianacorre.com/", { headers: { Authorization: "Bearer secret" } })],
     ["mutations", new Request("https://elianacorre.com/", { method: "POST" })],
     ["token query parameters", new Request("https://elianacorre.com/?token=secret")],
+    ["tracking query parameters", new Request("https://elianacorre.com/?utm_source=newsletter")],
+    ["unknown application paths", new Request("https://elianacorre.com/api/future")],
     ["newsletter confirmations", new Request("https://elianacorre.com/newsletter/confirmation")],
     ["newsletter confirmations with a trailing slash", new Request("https://elianacorre.com/newsletter/confirmation/")],
     ["ebook capabilities", new Request("https://elianacorre.com/newsletter/ebook")],

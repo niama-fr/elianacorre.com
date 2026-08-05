@@ -12,7 +12,7 @@ One shared security middleware with application branches would make the public c
 
 ## Decision
 
-Each application owns its directives and TanStack adapter under `src/http/security-policy.ts` and registers it as the first global TanStack Start request middleware in `src/start.ts`. The policy-neutral `packages/http/src/security-policy.ts` module owns nonce generation, CSP serialization, deployment-mode validation, common headers, and immutable response reconstruction. It has no application switch, product origins, TanStack types, or cache classification.
+Each application owns its directives under `src/http/security-policy.ts`. The authenticated application registers its nonce-producing adapter as the first global TanStack Start request middleware because the nonce must exist before rendering. The public application applies its deterministic policy once at each Worker response entrypoint: the uncached gateway owns dynamic responses and `CachedApp` owns cacheable responses. Its TanStack middleware remains responsible only for CSRF. The policy-neutral `packages/http/src/security-policy.ts` module owns nonce generation, CSP serialization, deployment-mode validation, common headers, and immutable response reconstruction. It has no application switch, product origins, TanStack types, or cache classification.
 
 The public application uses a deterministic CSP:
 
@@ -25,7 +25,7 @@ The authenticated application generates 128 bits of Web Crypto randomness for ea
 
 CSP is selected by the `CSP_MODE` Worker variable. Local and staging use `report-only`; protected production and rollback workflows explicitly use `enforce`. Cloudflare Web Analytics is disabled for both applications until a separate host-specific decision permits and validates its script and beacon origins.
 
-CSRF middleware follows the security middleware and validates all server functions plus state-changing router requests. Public cache gateway and privacy revalidation handling remain in the custom public server entry; cache classification is not moved into the security modules.
+CSRF middleware validates all server functions plus state-changing router requests. The public cache gateway forwards only known public HTML and discovery routes with no query string to `CachedApp`; response intent remains a second, independent requirement before storage. Public cache gateway and privacy revalidation handling remain in the custom public server entry; cache classification is not moved into the security modules.
 
 ## Consequences
 

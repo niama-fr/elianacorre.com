@@ -18,7 +18,9 @@ export default createServerEntry({
       const revalidationResponse = await handlePrivacyNoticeRevalidation(opts);
       if (revalidationResponse) return applyWebSecurityPolicy(revalidationResponse, securityPolicyMode);
 
-      return isPublicCacheCandidate(req) ? await exports.CachedApp.fetch(req) : applyCachePolicy(req, await handler.fetch(req));
+      return isPublicCacheCandidate(req)
+        ? await exports.CachedApp.fetch(req)
+        : applyCachePolicy(req, applyWebSecurityPolicy(await handler.fetch(req), securityPolicyMode));
     } catch (error) {
       // oxlint-disable-next-line no-console -- Worker failures need structured operational evidence.
       console.error(

@@ -1,8 +1,8 @@
 import { applySecurityPolicy, serializeContentSecurityPolicy, type SecurityPolicyMode } from "@ec/http/security-policy";
-import { createMiddleware } from "@tanstack/react-start";
 
 export { isCsrfProtectedRequest } from "@ec/http/security-policy";
 
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 export const CLOUDFLARE_WEB_ANALYTICS_POLICY = "disabled" as const;
 
 export const WEB_CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
@@ -25,13 +25,6 @@ export const WEB_CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
   "worker-src": ["'self'", "blob:"],
 });
 
+// APPLY -----------------------------------------------------------------------------------------------------------------------------------
 export const applyWebSecurityPolicy = (response: Response, mode: SecurityPolicyMode = "report-only"): Response =>
   applySecurityPolicy(response, { contentSecurityPolicy: WEB_CONTENT_SECURITY_POLICY, mode });
-
-export const createSecurityMiddleware = (mode: SecurityPolicyMode) =>
-  createMiddleware().server(async ({ next }) => {
-    // The middleware must inspect the downstream response before returning it.
-    // oxlint-disable-next-line node/callback-return
-    const result = await next();
-    return { ...result, response: applyWebSecurityPolicy(result.response, mode) };
-  });

@@ -38,6 +38,16 @@ describe("public Worker gateway", () => {
     expect(serverState.handlerFetch).not.toHaveBeenCalled();
   });
 
+  it("secures uncached dynamic responses at the gateway", async () => {
+    serverState.handlerFetch.mockResolvedValue(new Response("private page", { headers: { "content-type": "text/html" } }));
+
+    const response = await server.fetch(new Request("https://elianacorre.com/contact", { headers: { cookie: "form-state=private" } }));
+
+    expect(response.headers.get("content-security-policy-report-only")).toContain("default-src 'self'");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(serverState.cachedFetch).not.toHaveBeenCalled();
+  });
+
   it("secures and disables caching for gateway errors", async () => {
     serverState.handlerFetch.mockRejectedValue(new Error("render failed"));
 
