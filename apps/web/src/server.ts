@@ -1,9 +1,10 @@
+import { resolveSecurityPolicyMode } from "@ec/http/security-policy";
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 import { env, exports } from "cloudflare:workers";
 
 import { applyCachePolicy, isPublicCacheCandidate } from "@/http/cache-policy";
 import { handlePrivacyNoticeRevalidation } from "@/http/cache-revalidation";
-import { applySecurityHeaders, resolveSecurityPolicyMode } from "@/http/security-policy";
+import { applyWebSecurityPolicy } from "@/http/security-policy";
 
 export { CachedApp } from "@/http/cached-app";
 
@@ -15,7 +16,7 @@ export default createServerEntry({
     try {
       const opts = { purge: async () => await exports.CachedApp.purgePrivacyNotice(), request: req, secret: env.CACHE_REVALIDATION_SECRET };
       const revalidationResponse = await handlePrivacyNoticeRevalidation(opts);
-      if (revalidationResponse) return applySecurityHeaders(req, revalidationResponse, securityPolicyMode);
+      if (revalidationResponse) return applyWebSecurityPolicy(revalidationResponse, securityPolicyMode);
 
       return isPublicCacheCandidate(req) ? await exports.CachedApp.fetch(req) : applyCachePolicy(req, await handler.fetch(req));
     } catch (error) {
@@ -27,7 +28,7 @@ export default createServerEntry({
           path: new URL(req.url).pathname,
         })
       );
-      return applyCachePolicy(req, applySecurityHeaders(req, new Response(null, { status: 500 }), securityPolicyMode));
+      return applyCachePolicy(req, applyWebSecurityPolicy(new Response(null, { status: 500 }), securityPolicyMode));
     }
   },
 });

@@ -12,7 +12,7 @@ One shared security middleware with application branches would make the public c
 
 ## Decision
 
-Each application owns its security policy under `src/http/security-policy.ts` and registers it as the first global TanStack Start request middleware in `src/start.ts`. The middleware applies common security headers to SSR, server routes, server functions, redirects, errors, and CSRF failures after the downstream handler returns.
+Each application owns its directives and TanStack adapter under `src/http/security-policy.ts` and registers it as the first global TanStack Start request middleware in `src/start.ts`. The policy-neutral `packages/http/src/security-policy.ts` module owns nonce generation, CSP serialization, deployment-mode validation, common headers, and immutable response reconstruction. It has no application switch, product origins, TanStack types, or cache classification.
 
 The public application uses a deterministic CSP:
 
@@ -21,7 +21,7 @@ The public application uses a deterministic CSP:
 - ImageKit is allowed for site images.
 - Capability pages use the same deterministic CSP; `src/http/cache-policy.ts` remains the sole owner of their private cache classification.
 
-The authenticated application generates 128 bits of Web Crypto randomness for each router response. Its middleware places the nonce in request context and the custom Start render callback assigns it to `router.options.ssr.nonce` before TanStack renders. TanStack then applies the same nonce to generated scripts and hydration metadata. Authenticated CSP allows same-origin scripts, the per-response nonce, Better Auth same-origin requests, and Convex HTTP/WebSocket origins.
+The authenticated application generates 128 bits of Web Crypto randomness for each router response. Its middleware places the nonce in request context and the custom Start render callback applies it through `router.update({ ssr: ... })` before TanStack renders. TanStack then applies the same nonce to generated scripts and hydration metadata. Authenticated CSP allows same-origin scripts, the per-response nonce, Better Auth same-origin requests, and the exact configured Convex HTTP/WebSocket origins.
 
 CSP is selected by the `CSP_MODE` Worker variable. Local and staging use `report-only`; protected production and rollback workflows explicitly use `enforce`. Cloudflare Web Analytics is disabled for both applications until a separate host-specific decision permits and validates its script and beacon origins.
 
@@ -29,7 +29,7 @@ CSRF middleware follows the security middleware and validates all server functio
 
 ## Consequences
 
-Security enforcement is local to each application and testable through a small response-policy interface. Public cached documents remain nonce-independent, while authenticated SSR receives a nonce without shared mutable state. A staging deployment can collect CSP violations before production enforcement. A future Web Analytics decision must update both policy modules, the deployment mode documentation, and the host-specific staging evidence.
+Security decisions remain local to each application while shared HTTP mechanics are testable through one small response-policy interface. Public cached documents remain nonce-independent, while authenticated SSR receives a nonce without shared mutable state. Worker logs and sampled traces are enabled for operational evidence; browser CSP violations still require staging inspection or a separately approved reporting endpoint. A future Web Analytics decision must update both policy modules, the deployment mode documentation, and the host-specific staging evidence.
 
 ## Verification
 

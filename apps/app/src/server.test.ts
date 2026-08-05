@@ -2,10 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import server from "./server";
 
-const serverState = vi.hoisted(() => ({
-  defaultStreamHandler: vi.fn<() => Promise<Response>>(),
-  router: { options: { ssr: { defaultSsr: true } } } as { options: { ssr: { defaultSsr?: boolean; nonce?: string } } },
-}));
+const serverState = vi.hoisted(() => {
+  const options: { ssr: { defaultSsr?: boolean; nonce?: string } } = { ssr: { defaultSsr: true } };
+
+  return {
+    defaultStreamHandler: vi.fn<() => Promise<Response>>(),
+    router: {
+      options,
+      update: vi.fn<(options: { ssr: { defaultSsr?: boolean; nonce?: string } }) => void>(),
+    },
+  };
+});
 
 vi.mock(import("@tanstack/react-start"), () => ({ getGlobalStartContext: () => ({ securityNonce: "render-nonce" }) }));
 // @ts-expect-error The narrow test adapter intentionally implements only the request-handler seam exercised here.
@@ -22,6 +29,9 @@ describe("authenticated Worker entrypoint", () => {
   beforeEach(() => {
     serverState.defaultStreamHandler.mockReset();
     serverState.router.options.ssr = { defaultSsr: true };
+    serverState.router.update.mockImplementation((options) => {
+      serverState.router.options = options;
+    });
   });
 
   it("propagates the request nonce through the real render seam", async () => {

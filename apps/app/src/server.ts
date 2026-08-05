@@ -1,13 +1,16 @@
+import { applySecurityPolicy, resolveSecurityPolicyMode } from "@ec/http/security-policy";
 import { getGlobalStartContext } from "@tanstack/react-start";
 import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/server";
 import { createServerEntry } from "@tanstack/react-start/server-entry";
 
+import { clientEnv } from "@/config/env";
 import { applyCachePolicy } from "@/http/cache-policy";
-import { applySecurityHeaders, applySecurityNonce, resolveSecurityPolicyMode } from "@/http/security-policy";
+import { createAppContentSecurityPolicy, getSecurityNonce } from "@/http/security-policy";
 
 const handler = createStartHandler({
   handler: async (options) => {
-    applySecurityNonce(options.router, getGlobalStartContext());
+    const nonce = getSecurityNonce(getGlobalStartContext());
+    if (nonce) options.router.update({ ssr: { ...options.router.options.ssr, nonce } });
     return await defaultStreamHandler(options);
   },
 });
@@ -28,7 +31,12 @@ export default createServerEntry({
           path: new URL(request.url).pathname,
         })
       );
-      return applyCachePolicy(applySecurityHeaders(new Response(null, { status: 500 }), { mode: securityPolicyMode }));
+      return applyCachePolicy(
+        applySecurityPolicy(new Response(null, { status: 500 }), {
+          contentSecurityPolicy: createAppContentSecurityPolicy({ convexUrl: clientEnv.VITE_CONVEX_URL }),
+          mode: securityPolicyMode,
+        })
+      );
     }
   },
 });

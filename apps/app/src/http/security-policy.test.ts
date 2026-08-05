@@ -1,57 +1,45 @@
+import { applySecurityPolicy, createContentSecurityPolicyNonce } from "@ec/http/security-policy";
 import { describe, expect, it } from "vitest";
 
 import {
-  applySecurityHeaders,
-  applySecurityNonce,
   CLOUDFLARE_WEB_ANALYTICS_POLICY,
-  createResponseNonce,
+  createAppContentSecurityPolicy,
+  createSecurityMiddleware,
   getSecurityNonce,
   isCsrfProtectedRequest,
-  resolveSecurityPolicyMode,
 } from "./security-policy";
 
 const request = (pathname: string, init?: RequestInit) => new Request(`https://app.elianacorre.com${pathname}`, init);
+const convexUrl = "https://exact-deployment.convex.cloud";
 
 describe("authenticated security policy", () => {
   it("keeps Cloudflare Web Analytics disabled", () => {
     expect(CLOUDFLARE_WEB_ANALYTICS_POLICY).toBe("disabled");
   });
 
-  it("accepts only the documented CSP modes", () => {
-    expect(resolveSecurityPolicyMode()).toBe("report-only");
-    expect(resolveSecurityPolicyMode("report-only")).toBe("report-only");
-    expect(resolveSecurityPolicyMode("enforce")).toBe("enforce");
-    expect(() => resolveSecurityPolicyMode("unexpected")).toThrow("Unsupported CSP_MODE value");
-  });
-
   it("uses a per-response nonce for generated scripts and authenticated connections", () => {
-    const nonce = createResponseNonce();
-    const response = applySecurityHeaders(new Response("page"), { mode: "enforce", nonce });
+    const nonce = createContentSecurityPolicyNonce();
+    const response = applySecurityPolicy(new Response("page"), {
+      contentSecurityPolicy: createAppContentSecurityPolicy({ convexUrl, nonce }),
+      mode: "enforce",
+    });
     const policy = response.headers.get("content-security-policy");
 
     expect(policy).toContain(`script-src 'self' 'nonce-${nonce}'`);
     expect(policy).not.toContain("script-src 'self' 'unsafe-inline'");
-    expect(policy).toMatch(/https:\/\/\*\.convex\.cloud.*wss:\/\/\*\.convex\.cloud.*wss:\/\/\*\.convex\.site/u);
-    expect(response.headers.get("content-security-policy-report-only")).toBeNull();
+    expect(policy).toContain("https://exact-deployment.convex.cloud");
+    expect(policy).toContain("wss://exact-deployment.convex.cloud");
+    expect(policy).not.toContain("*.convex");
   });
 
   it("can report the nonce policy before enforcement approval", () => {
-    const response = applySecurityHeaders(new Response("page"), {
+    const response = applySecurityPolicy(new Response("page"), {
+      contentSecurityPolicy: createAppContentSecurityPolicy({ convexUrl, nonce: "test-nonce" }),
       mode: "report-only",
-      nonce: "test-nonce",
     });
 
     expect(response.headers.get("content-security-policy")).toBeNull();
     expect(response.headers.get("content-security-policy-report-only")).toContain("'nonce-test-nonce'");
-  });
-
-  it("generates distinct base64 nonces with 128 bits of randomness", () => {
-    const first = createResponseNonce();
-    const second = createResponseNonce();
-
-    expect(first).not.toBe(second);
-    expect(first).toMatch(/^[A-Za-z0-9+/]{22}==$/u);
-    expect(atob(first)).toHaveLength(16);
   });
 
   it("reads the response nonce from Start request context", () => {
@@ -59,12 +47,28 @@ describe("authenticated security policy", () => {
     expect(getSecurityNonce({ securityNonce: 123 })).toBeUndefined();
   });
 
-  it("propagates the context nonce to TanStack SSR options", () => {
-    const router: { options: { ssr?: { defaultSsr?: boolean; nonce?: string } } } = { options: { ssr: { defaultSsr: true } } };
+  it("uses one nonce for TanStack request context and the outgoing CSP", async () => {
+    const middleware = createSecurityMiddleware({ convexUrl, mode: "enforce" });
+    const serverMiddleware = middleware.options.server;
+    if (!serverMiddleware) throw new Error("Security middleware has no server handler");
+    let downstreamContext: unknown;
 
-    applySecurityNonce(router, { securityNonce: "render-nonce" });
+    const result = await serverMiddleware({
+      context: undefined,
+      handlerType: "router",
+      // @ts-expect-error The test adapter records TanStack's generic context without narrowing its application type.
+      next: (options) => {
+        downstreamContext = options?.context;
+        return { context: options?.context ?? {}, pathname: "/", request: request("/"), response: new Response("page") };
+      },
+      pathname: "/",
+      request: request("/"),
+    });
+    if (result instanceof Response) throw new Error("Security middleware returned an unexpected bare response");
+    const nonce = getSecurityNonce(downstreamContext);
 
-    expect(router.options.ssr).toMatchObject({ defaultSsr: true, nonce: "render-nonce" });
+    expect(nonce).toBeTypeOf("string");
+    expect(result.response.headers.get("content-security-policy")).toContain(`'nonce-${nonce}'`);
   });
 
   it.each([
@@ -72,9 +76,9 @@ describe("authenticated security policy", () => {
     ["error", new Response("failure", { status: 500 })],
     ["server route", new Response('{"ok":true}', { headers: { "Content-Type": "application/json" } })],
   ])("preserves the %s response while adding private security headers", (_name, sourceResponse) => {
-    const response = applySecurityHeaders(sourceResponse, {
+    const response = applySecurityPolicy(sourceResponse, {
+      contentSecurityPolicy: createAppContentSecurityPolicy({ convexUrl, nonce: "test-nonce" }),
       mode: "enforce",
-      nonce: "test-nonce",
     });
 
     expect(response.status).toBe(sourceResponse.status);

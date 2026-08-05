@@ -11,6 +11,11 @@
     "CachedApp": { "type": "worker", "cache": { "enabled": true } },
   },
   "main": "./src/server.ts",
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 },
+  },
   "preview_urls": false,
   "vars": {
     "CSP_MODE": "report-only",

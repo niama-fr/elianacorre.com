@@ -1,9 +1,10 @@
+import { resolveSecurityPolicyMode } from "@ec/http/security-policy";
 import handler from "@tanstack/react-start/server-entry";
 import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { applyCachePolicy } from "./cache-policy";
 import { PRIVACY_NOTICE_CACHE_TAG } from "./cache-revalidation";
-import { applySecurityHeaders, resolveSecurityPolicyMode } from "./security-policy";
+import { applyWebSecurityPolicy } from "./security-policy";
 
 // ENTRYPOINT ------------------------------------------------------------------------------------------------------------------------------
 export class CachedApp extends WorkerEntrypoint {
@@ -11,7 +12,7 @@ export class CachedApp extends WorkerEntrypoint {
     const securityPolicyMode = resolveSecurityPolicyMode(this.env.CSP_MODE);
 
     try {
-      return applyCachePolicy(request, await handler.fetch(request));
+      return applyCachePolicy(request, applyWebSecurityPolicy(await handler.fetch(request), securityPolicyMode));
     } catch (error) {
       // oxlint-disable-next-line no-console -- Worker failures need structured operational evidence.
       console.error(
@@ -21,7 +22,7 @@ export class CachedApp extends WorkerEntrypoint {
           path: new URL(request.url).pathname,
         })
       );
-      return applyCachePolicy(request, applySecurityHeaders(request, new Response(null, { status: 500 }), securityPolicyMode));
+      return applyCachePolicy(request, applyWebSecurityPolicy(new Response(null, { status: 500 }), securityPolicyMode));
     }
   }
 
