@@ -1,11 +1,9 @@
-import { applySecurityPolicy, serializeContentSecurityPolicy, type SecurityPolicyMode } from "@ec/http/security-policy";
+import { applySecurityPolicy as applySecurityPolicy_, serializeContentSecurityPolicy } from "@ec/http/security-policy";
 
-export { isCsrfProtectedRequest } from "@ec/http/security-policy";
+import { getServerEnv } from "@/config/env";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-export const CLOUDFLARE_WEB_ANALYTICS_POLICY = "disabled" as const;
-
-export const WEB_CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
+const CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
   "base-uri": ["'none'"],
   "connect-src": ["'self'"],
   "default-src": ["'self'"],
@@ -26,5 +24,5 @@ export const WEB_CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
 });
 
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------
-export const applyWebSecurityPolicy = (response: Response, mode: SecurityPolicyMode = "report-only"): Response =>
-  applySecurityPolicy(response, { contentSecurityPolicy: WEB_CONTENT_SECURITY_POLICY, mode });
+export const applySecurityPolicy = (response: Response): Response =>
+  applySecurityPolicy_(response, { contentSecurityPolicy: CONTENT_SECURITY_POLICY, mode: getServerEnv().CSP_MODE });

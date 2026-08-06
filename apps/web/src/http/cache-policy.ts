@@ -21,7 +21,7 @@ const PUBLIC_WORK_PATH = /^\/oeuvres\/[^/]+$/u;
 export const isPublicCacheCandidate = (request: Request): boolean => isAnonymousCacheSafeRequest(request);
 
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------
-export const applyCachePolicy = (request: Request, response: Response): Response => {
+export const applyCachePolicy = ({ request, response }: { request: Request; response: Response }): Response => {
   const headers = new Headers(response.headers);
   headers.set(HTTP_HEADER.cacheControl, CACHE_CONTROL.privateNoStore);
   headers.delete(CACHE_HEADER.edgeControl);

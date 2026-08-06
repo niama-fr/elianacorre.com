@@ -10,6 +10,7 @@ export default defineConfig({
   },
   test: {
     env: {
+      VITE_CONVEX_SITE_URL: "https://newsletter-test.convex.site",
       VITE_CONVEX_URL: "https://newsletter-test.convex.cloud",
     },
   },

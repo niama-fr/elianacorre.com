@@ -130,6 +130,7 @@ jobs:
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          VITE_CONVEX_SITE_URL: ${{ vars.CONVEX_SITE_URL }}
         run: >-
           bunx convex deploy --cmd "cd ../.. && bun run build" --cmd-url-env-var-name VITE_CONVEX_URL --message "GitHub release ${RELEASE_TAG} at ${DEPLOY_SHA}"
       - name: Seed administrator profiles

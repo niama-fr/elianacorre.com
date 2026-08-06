@@ -101,6 +101,7 @@ jobs:
         working-directory: packages/backend
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          VITE_CONVEX_SITE_URL: ${{ vars.CONVEX_SITE_URL }}
         run: >-
           bunx convex deploy --cmd "cd ../.. && bun run build" --cmd-url-env-var-name VITE_CONVEX_URL --message "Rollback to ${ROLLBACK_TAG} at ${ROLLBACK_SHA}"
       - name: Seed administrator profiles after Convex rollback
@@ -112,6 +113,7 @@ jobs:
       - name: Build both Workers against current Convex
         if: inputs.scope == 'workers'
         env:
+          VITE_CONVEX_SITE_URL: ${{ vars.CONVEX_SITE_URL }}
           VITE_CONVEX_URL: ${{ vars.CONVEX_URL }}
         run: bun run build
       - name: Deploy public rollback Worker

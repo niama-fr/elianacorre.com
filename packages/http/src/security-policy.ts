@@ -1,9 +1,6 @@
 import { HTTP_HEADER } from "./headers";
 
-export type SecurityPolicyMode = "enforce" | "report-only";
-
-export type ContentSecurityPolicyDirectives = Readonly<Record<string, readonly string[] | true>>;
-
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const COMMON_SECURITY_HEADERS = {
   [HTTP_HEADER.permissionsPolicy]: "camera=(), geolocation=(), microphone=()",
   [HTTP_HEADER.referrerPolicy]: "strict-origin-when-cross-origin",
@@ -13,29 +10,20 @@ const COMMON_SECURITY_HEADERS = {
 } as const;
 
 const CONTENT_SECURITY_POLICY_NONCE_BYTE_LENGTH = 16;
-const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-export const isCsrfProtectedRequest = ({ handlerType, request }: { handlerType: "serverFn" | "router"; request: Request }): boolean =>
-  handlerType === "serverFn" || STATE_CHANGING_METHODS.has(request.method);
-
-export const resolveSecurityPolicyMode = (value?: string): SecurityPolicyMode => {
-  if (value === undefined || value === "report-only") return "report-only";
-  if (value === "enforce") return "enforce";
-
-  throw new Error(`Unsupported CSP_MODE value: ${value}`);
-};
-
+// RESOLVE MODE ----------------------------------------------------------------------------------------------------------------------------
 export const createContentSecurityPolicyNonce = (): string => {
   const bytes = new Uint8Array(CONTENT_SECURITY_POLICY_NONCE_BYTE_LENGTH);
   crypto.getRandomValues(bytes);
   return btoa(String.fromCodePoint(...bytes));
 };
 
-export const serializeContentSecurityPolicy = (directives: ContentSecurityPolicyDirectives): string =>
+export const serializeContentSecurityPolicy = (directives: Readonly<Record<string, readonly string[] | true>>): string =>
   Object.entries(directives)
     .map(([directive, values]) => (values === true ? directive : `${directive} ${values.join(" ")}`))
     .join("; ");
 
+// APPLY -----------------------------------------------------------------------------------------------------------------------------------
 export const applySecurityPolicy = (
   response: Response,
   { contentSecurityPolicy, mode = "report-only" }: { contentSecurityPolicy?: string; mode?: SecurityPolicyMode } = {}
@@ -61,3 +49,6 @@ export const applySecurityPolicy = (
     return new Response(response.body, { headers, status: response.status, statusText: response.statusText });
   }
 };
+
+// TYPES -----------------------------------------------------------------------------------------------------------------------------------
+export type SecurityPolicyMode = "enforce" | "report-only";

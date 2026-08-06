@@ -6,7 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-import { clientEnv } from "@/config/env";
+import { publicEnv } from "@/config/env";
 import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
 
 import { executeNewsletterSubscribe } from "./newsletter.server";
@@ -15,7 +15,7 @@ import { executeNewsletterSubscribe } from "./newsletter.server";
 export const confirmNewsletter = createServerFn({ method: "POST" })
   .validator(z.object({ token: z.string() }))
   .handler(async ({ data }) => {
-    const convex = createConvexHttpClient(clientEnv.VITE_CONVEX_URL);
+    const convex = createConvexHttpClient(publicEnv.VITE_CONVEX_URL);
     return await convex.mutation(api.newsletter.confirm, data);
   });
 

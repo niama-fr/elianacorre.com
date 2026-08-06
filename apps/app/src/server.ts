@@ -1,27 +1,24 @@
-import { applySecurityPolicy, resolveSecurityPolicyMode } from "@ec/http/security-policy";
 import { getGlobalStartContext } from "@tanstack/react-start";
 import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/server";
 import { createServerEntry } from "@tanstack/react-start/server-entry";
 
-import { clientEnv } from "@/config/env";
 import { applyCachePolicy } from "@/http/cache-policy";
-import { createAppContentSecurityPolicy, getSecurityNonce } from "@/http/security-policy";
+import { applySecurityPolicy, SECURITY_NONCE_CONTEXT_KEY } from "@/http/security-policy";
 
+// HANDLER ---------------------------------------------------------------------------------------------------------------------------------
 const handler = createStartHandler({
   handler: async (options) => {
-    const nonce = getSecurityNonce(getGlobalStartContext());
-    if (nonce) options.router.update({ ssr: { ...options.router.options.ssr, nonce } });
+    const nonce = getGlobalStartContext()?.[SECURITY_NONCE_CONTEXT_KEY];
+    if (nonce !== undefined) options.router.update({ ssr: { ...options.router.options.ssr, nonce } });
     return await defaultStreamHandler(options);
   },
 });
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
+// GATEWAY ---------------------------------------------------------------------------------------------------------------------------------
 export default createServerEntry({
   async fetch(request) {
-    const securityPolicyMode = resolveSecurityPolicyMode(process.env.CSP_MODE);
-
     try {
-      return applyCachePolicy(await handler(request));
+      return applyCachePolicy({ response: await handler(request) });
     } catch (error) {
       // oxlint-disable-next-line no-console -- Worker failures need structured operational evidence.
       console.error(
@@ -31,12 +28,7 @@ export default createServerEntry({
           path: new URL(request.url).pathname,
         })
       );
-      return applyCachePolicy(
-        applySecurityPolicy(new Response(null, { status: 500 }), {
-          contentSecurityPolicy: createAppContentSecurityPolicy({ convexUrl: clientEnv.VITE_CONVEX_URL }),
-          mode: securityPolicyMode,
-        })
-      );
+      return applyCachePolicy({ response: applySecurityPolicy(new Response(null, { status: 500 })) });
     }
   },
 });

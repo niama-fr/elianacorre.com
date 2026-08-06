@@ -104,7 +104,7 @@ rtk proxy bunx convex env set SITE_URL http://localhost:3002
 rtk proxy bunx convex env set APP_SITE_URL http://localhost:3003
 ```
 
-Put the generated `VITE_CONVEX_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. If the deployment does not use a `convex.cloud` URL, also set `VITE_CONVEX_SITE_URL` in `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
+Put the generated `VITE_CONVEX_URL` and matching `.convex.site` `VITE_CONVEX_SITE_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
 
 ```bash
 rtk proxy bun run dev
@@ -124,6 +124,7 @@ Secrets:
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
+- `CONVEX_SITE_URL`: staging `.convex.site` URL exposed to application builds as `VITE_CONVEX_SITE_URL`.
 - `STAGING_URL`: `https://staging.elianacorre.com`
 - `APP_STAGING_URL`: `https://app.staging.elianacorre.com`
 
@@ -144,6 +145,7 @@ Secrets:
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
+- `CONVEX_SITE_URL`: production `.convex.site` URL exposed to application builds as `VITE_CONVEX_SITE_URL`.
 - `CONVEX_URL`: production `.convex.cloud` URL used to build Workers-only rollbacks.
 - `PRODUCTION_URL`: use the production `workers.dev` URL before launch, then `https://elianacorre.com`.
 - `APP_PRODUCTION_URL`: use the authenticated production `workers.dev` URL before launch, then `https://app.elianacorre.com`.
