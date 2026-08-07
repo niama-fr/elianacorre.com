@@ -18,6 +18,7 @@
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
     "@ec/ui": "workspace:*",
+    "@ec/validation": "workspace:*",
     "@fontsource-variable/dancing-script": "^5.3.0",
     "@fontsource-variable/lexend": "^5.3.0",
     "@iconify/json": "^2.2.509",
@@ -41,8 +42,7 @@
     "react-markdown": "^10.1.0",
     "sonner": "^2.0.7",
     "tailwindcss": "^4.3.3",
-    "wrangler": "^4.118.0",
-    "zod": "^4.4.3"
+    "wrangler": "^4.118.0"
   },
   "devDependencies": {
     "@tanstack/devtools-vite": "^0.8.3",

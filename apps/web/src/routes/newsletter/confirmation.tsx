@@ -1,7 +1,7 @@
 import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
+import { z } from "@ec/validation/zod";
 import { createFileRoute } from "@tanstack/react-router";
-import z from "zod";
 
 import { confirmNewsletter } from "@/lib/newsletter/newsletter.functions";
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";

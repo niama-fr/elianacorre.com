@@ -1,5 +1,5 @@
+import { z } from "@ec/validation/zod";
 import { createServerOnlyFn } from "@tanstack/react-start";
-import { z } from "zod";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
 const zPublicEnv = z.object({
