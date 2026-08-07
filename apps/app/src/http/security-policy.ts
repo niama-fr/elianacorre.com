@@ -10,6 +10,11 @@ import { publicEnv, getServerEnv } from "@/config/env";
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 export const SECURITY_NONCE_CONTEXT_KEY = "securityNonce" as const;
 
+const SONNER_STYLE_SOURCES = [
+  "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+  "'sha256-CIxDM5jnsGiKqXs2v7NKCY5MzdR9gu6TtiMJrDw29AY='",
+];
+
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------
 export const applySecurityPolicy = (response: Response, nonce?: string): Response => {
   const { CSP_MODE: mode } = getServerEnv();
@@ -35,6 +40,7 @@ export const applySecurityPolicy = (response: Response, nonce?: string): Respons
       "script-src-attr": ["'none'"],
       "style-src": ["'self'", ...nonceSource],
       "style-src-attr": ["'unsafe-inline'"],
+      "style-src-elem": ["'self'", ...nonceSource, ...SONNER_STYLE_SOURCES],
       "worker-src": ["'self'", "blob:"],
     }),
     mode,
