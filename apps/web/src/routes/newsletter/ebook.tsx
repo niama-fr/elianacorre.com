@@ -2,9 +2,9 @@ import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { Button } from "@ec/ui/components/button";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ec/ui/components/tooltip";
+import { z } from "@ec/validation/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import z from "zod";
 
 import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
 import { noindexHead } from "@/seo/head";

@@ -1,10 +1,10 @@
 import { api } from "@ec/backend/api";
 import { createConvexHttpClient } from "@ec/backend/client";
 import { zNewsSubscriptionUpsertValues, type NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
+import { z } from "@ec/validation/zod";
 import { createServerValidate, ServerValidateError } from "@tanstack/react-form-start";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { z } from "zod";
 
 import { publicEnv } from "@/config/env";
 import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
