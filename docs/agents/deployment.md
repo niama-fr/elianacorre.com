@@ -22,7 +22,7 @@ Generate Cloudflare runtime and configured binding types in each application wit
 
 Wrangler intentionally cannot discover production secrets. Narrow secret bindings at runtime before use; never add their values to generated declarations or Wrangler variables.
 
-The public Worker disables caching on its externally exposed default gateway and enables it only on the named `CachedApp` entrypoint in `apps/web/wrangler.jsonc`. The gateway runs before cache lookup and forwards only anonymous GET and HEAD requests without cookies, authorization, capability tokens, or newsletter capability paths through the cached loopback entrypoint. Anonymous successful HTML remains dynamic at build time because the root layout contains the current Convex privacy notice. The cached application sends browsers `Cache-Control: private, no-store` while `Cloudflare-CDN-Cache-Control` gives Cloudflare one hour of freshness and five minutes of stale-while-revalidate. The authenticated Worker sends both browser and Cloudflare `no-store` policies on every response. Requests carrying cookies or authorization, signed newsletter capability routes, redirects, errors, and responses with `Set-Cookie` are never shared.
+The public Worker disables caching on its externally exposed default gateway and enables it only on the named `CachedApp` entrypoint in `apps/web/wrangler.jsonc`. The gateway runs before cache lookup and forwards only anonymous GET and HEAD requests for explicitly classified public HTML or discovery paths with no query string through the cached loopback entrypoint. Unknown paths, every query string, cookies, authorization, and newsletter capability paths stay on the uncached gateway. Anonymous successful HTML remains dynamic at build time because the root layout contains the current Convex privacy notice. The cached application sends browsers `Cache-Control: private, no-store` while `Cloudflare-CDN-Cache-Control` gives Cloudflare one hour of freshness and five minutes of stale-while-revalidate. The authenticated Worker sends both browser and Cloudflare `no-store` policies on every response. Requests carrying cookies or authorization, signed newsletter capability routes, redirects, errors, and responses with `Set-Cookie` are never shared.
 
 TanStack routes declare public, discovery, or private cache intent using the protocol contracts in `packages/http/src/cache-policy.ts`. Application enforcement lives under each app's `src/http` folder; document metadata and search discovery live under `src/seo`. Request eligibility is checked by the uncached gateway and repeated by `CachedApp`'s response policy as defense in depth. `CachedApp` removes the internal intent header before responding and treats it only as permission to consider storage: status, response cookies, and content type still determine final eligibility. Missing intent is always private.
 
@@ -31,12 +31,18 @@ TanStack routes declare public, discovery, or private cache intent using the pro
 NIA-45 establishes the module boundaries but does not change the existing CSP contract. NIA-46 must complete these security-specific steps without moving cache classification back into security or SEO code:
 
 1. Replace the inherited public policy in `apps/web/src/http/security-policy.ts` and create the authenticated application's policy under `apps/app/src/http`; each policy must be application-specific.
-2. Register both policies through the supported TanStack Start middleware seam, while retaining the custom server entries until equivalent HTML, server-route, server-function, redirect, and error coverage is proven.
+2. Register the authenticated nonce policy through the supported TanStack Start middleware seam. Apply the deterministic public policy at its uncached and cached Worker response entrypoints so every public response has one policy owner.
 3. Keep cached public HTML compatible with deterministic CSP; give dynamic capability responses the policy required by their execution model.
 4. Generate a cryptographically strong nonce per uncached authenticated response and propagate it to TanStack-generated scripts.
 5. Register and test CSRF middleware for every state-changing same-origin server route and server function that requires it.
 6. Prevent the public app from connecting to authenticated Convex surfaces while allowing the authenticated app's Better Auth and Convex traffic.
 7. Decide Cloudflare Web Analytics independently for both hosts, deploy CSP in report-only mode, inspect violations, and obtain Grégory's approval before enforcement.
+
+The public policy is deterministic so cached HTML can be reused: `connect-src` is limited to `'self'`, hydration and deferred interaction retain the required `'unsafe-inline'` script/style allowances, ImageKit remains allowed for images, and authenticated Convex origins are excluded. Capability pages use the same deterministic policy; their private cache classification remains in `src/http/cache-policy.ts`. The authenticated policy uses `script-src 'self' 'nonce-<per-response-value>'`, derives exact Convex HTTP and WebSocket origins from `VITE_CONVEX_URL`, and propagates the same nonce to TanStack-generated scripts through `router.update`. Both applications keep inline style attributes compatible with existing UI behavior while explicitly denying inline script attributes.
+
+`CSP_MODE` is `report-only` for local and staging Workers. The staging workflow deploys both applications with `--var "CSP_MODE:report-only"`; the protected production and rollback workflows use `--var "CSP_MODE:enforce"` after staging reports have been reviewed and enforcement is approved. Cloudflare Web Analytics is deliberately disabled for both Workers: the policies do not allow `static.cloudflareinsights.com` or `cloudflareinsights.com`, and enabling it later requires an application-specific policy change plus host-by-host validation.
+
+Both Workers enable persisted structured logs with full head sampling and distributed traces with a `0.01` head sampling rate. These settings retain Worker failures and request traces in Cloudflare observability; they do not collect browser CSP violations. Review browser console violations during staging unless a separate CSP reporting endpoint is deliberately introduced.
 
 Security tests must cover representative cached public, capability, authenticated, redirect, error, and server-function responses. SEO modules must remain limited to document-head metadata and public discovery; neither CSP nor response cache directives belong there.
 
@@ -98,7 +104,7 @@ rtk proxy bunx convex env set SITE_URL http://localhost:3002
 rtk proxy bunx convex env set APP_SITE_URL http://localhost:3003
 ```
 
-Put the generated `VITE_CONVEX_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. If the deployment does not use a `convex.cloud` URL, also set `VITE_CONVEX_SITE_URL` in `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
+Put the generated `VITE_CONVEX_URL` and matching `.convex.site` `VITE_CONVEX_SITE_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
 
 ```bash
 rtk proxy bun run dev
@@ -118,6 +124,7 @@ Secrets:
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
+- `CONVEX_SITE_URL`: staging `.convex.site` URL exposed to application builds as `VITE_CONVEX_SITE_URL`.
 - `STAGING_URL`: `https://staging.elianacorre.com`
 - `APP_STAGING_URL`: `https://app.staging.elianacorre.com`
 
@@ -138,6 +145,7 @@ Secrets:
 Variables:
 
 - `CLOUDFLARE_ACCOUNT_ID`
+- `CONVEX_SITE_URL`: production `.convex.site` URL exposed to application builds as `VITE_CONVEX_SITE_URL`.
 - `CONVEX_URL`: production `.convex.cloud` URL used to build Workers-only rollbacks.
 - `PRODUCTION_URL`: use the production `workers.dev` URL before launch, then `https://elianacorre.com`.
 - `APP_PRODUCTION_URL`: use the authenticated production `workers.dev` URL before launch, then `https://app.elianacorre.com`.

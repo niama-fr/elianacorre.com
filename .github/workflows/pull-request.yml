@@ -72,5 +72,6 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Build public and authenticated production applications
         env:
+          VITE_CONVEX_SITE_URL: https://build-only.convex.site
           VITE_CONVEX_URL: https://build-only.convex.cloud
         run: bun run build

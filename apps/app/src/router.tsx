@@ -3,7 +3,7 @@ import { notifyManager, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
-import { clientEnv } from "./config/env";
+import { publicEnv } from "./config/env";
 import { RoutePendingPage } from "./routes/-pending";
 import { SafeRouteErrorPage } from "./routes/-safe-error";
 import { routeTree } from "./routeTree.gen";
@@ -11,7 +11,7 @@ import { routeTree } from "./routeTree.gen";
 export function getRouter() {
   if (typeof document !== "undefined") notifyManager.setScheduler(window.requestAnimationFrame);
 
-  const convexUrl = clientEnv.VITE_CONVEX_URL;
+  const convexUrl = publicEnv.VITE_CONVEX_URL;
 
   const convexQueryClient = new ConvexQueryClient(convexUrl, { expectAuth: true });
 

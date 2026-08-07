@@ -4,23 +4,24 @@ import { HTTP_HEADER } from "@ec/http/headers";
 import { PRIVACY_NOTICE_CACHE_TAG } from "./cache-revalidation";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-const PRIVATE_CAPABILITY_PATHS = new Set(["/newsletter/confirmation", "/newsletter/ebook"]);
+const PUBLIC_CACHE_PATHS = new Set([
+  "/",
+  "/carnets-de-voyage",
+  "/confidentialite",
+  "/contact",
+  "/mentions-legales",
+  "/oeuvres",
+  "/qui-suis-je",
+  "/robots.txt",
+  "/sitemap.xml",
+]);
+const PUBLIC_WORK_PATH = /^\/oeuvres\/[^/]+$/u;
 
 // PREDICATES ------------------------------------------------------------------------------------------------------------------------------
 export const isPublicCacheCandidate = (request: Request): boolean => isAnonymousCacheSafeRequest(request);
 
-// INTERNAL --------------------------------------------------------------------------------------------------------------------------------
-function isAnonymousCacheSafeRequest(request: Request): boolean {
-  if (request.method !== "GET" && request.method !== "HEAD") return false;
-  if (request.headers.has(HTTP_HEADER.authorization) || request.headers.has(HTTP_HEADER.cookie)) return false;
-
-  const url = new URL(request.url);
-  const pathname = url.pathname === "/" ? url.pathname : url.pathname.replace(/\/+$/u, "");
-  return !url.searchParams.has("token") && !PRIVATE_CAPABILITY_PATHS.has(pathname);
-}
-
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------
-export const applyCachePolicy = (request: Request, response: Response): Response => {
+export const applyCachePolicy = ({ request, response }: { request: Request; response: Response }): Response => {
   const headers = new Headers(response.headers);
   headers.set(HTTP_HEADER.cacheControl, CACHE_CONTROL.privateNoStore);
   headers.delete(CACHE_HEADER.edgeControl);
@@ -40,6 +41,18 @@ export const applyCachePolicy = (request: Request, response: Response): Response
 
   return new Response(response.body, { headers, status: response.status, statusText: response.statusText });
 };
+
+// INTERNAL --------------------------------------------------------------------------------------------------------------------------------
+function isAnonymousCacheSafeRequest(request: Request): boolean {
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  if (request.headers.has(HTTP_HEADER.authorization) || request.headers.has(HTTP_HEADER.cookie)) return false;
+
+  const url = new URL(request.url);
+  if (url.search !== "") return false;
+
+  const pathname = url.pathname === "/" ? url.pathname : url.pathname.replace(/\/+$/u, "");
+  return PUBLIC_CACHE_PATHS.has(pathname) || PUBLIC_WORK_PATH.test(pathname);
+}
 
 function isCacheableDiscoveryResponse(request: Request, response: Response): boolean {
   if (!isAnonymousCacheSafeRequest(request)) return false;

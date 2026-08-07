@@ -1,17 +1,27 @@
+import { applySecurityPolicy as applySecurityPolicy_, serializeContentSecurityPolicy } from "@ec/http/security-policy";
+
+import { getServerEnv } from "@/config/env";
+
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-export const SECURITY_HEADERS = {
-  "Content-Security-Policy":
-    "default-src 'self'; base-uri 'self'; connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud; font-src 'self' data:; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://ik.imagekit.io; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; upgrade-insecure-requests",
-  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-} as const;
+const CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
+  "base-uri": ["'none'"],
+  "connect-src": ["'self'"],
+  "default-src": ["'self'"],
+  "font-src": ["'self'", "data:"],
+  "form-action": ["'self'"],
+  "frame-ancestors": ["'none'"],
+  "frame-src": ["'none'"],
+  "img-src": ["'self'", "data:", "blob:", "https://ik.imagekit.io"],
+  "manifest-src": ["'self'"],
+  "media-src": ["'self'", "blob:"],
+  "object-src": ["'none'"],
+  "script-src": ["'self'", "'unsafe-inline'"],
+  "script-src-attr": ["'none'"],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "style-src-attr": ["'unsafe-inline'"],
+  "worker-src": ["'self'", "blob:"],
+});
 
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------
-export const applySecurityHeaders = (res: Response): Response => {
-  const headers = new Headers(res.headers);
-  for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
-  return new Response(res.body, { headers, status: res.status, statusText: res.statusText });
-};
+export const applySecurityPolicy = (response: Response): Response =>
+  applySecurityPolicy_(response, { contentSecurityPolicy: CONTENT_SECURITY_POLICY, mode: getServerEnv().CSP_MODE });

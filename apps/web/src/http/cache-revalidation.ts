@@ -20,7 +20,14 @@ export const handlePrivacyNoticeRevalidation = async ({ purge, request, secret }
   try {
     const purged = await purge();
     return Response.json({ revalidated: purged }, { headers: PRIVATE_RESPONSE_HEADERS, status: purged ? 200 : 500 });
-  } catch {
+  } catch (error) {
+    // oxlint-disable-next-line no-console -- Purge failures need structured operational evidence.
+    console.error(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+        message: "Privacy notice revalidation failed",
+      })
+    );
     return Response.json({ revalidated: false }, { headers: PRIVATE_RESPONSE_HEADERS, status: 500 });
   }
 };
