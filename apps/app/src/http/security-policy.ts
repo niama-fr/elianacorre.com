@@ -35,7 +35,6 @@ export const applySecurityPolicy = (response: Response, nonce?: string): Respons
       "script-src-attr": ["'none'"],
       "style-src": ["'self'", ...nonceSource],
       "style-src-attr": ["'unsafe-inline'"],
-      "upgrade-insecure-requests": true,
       "worker-src": ["'self'", "blob:"],
     }),
     mode,

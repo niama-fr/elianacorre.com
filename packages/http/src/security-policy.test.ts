@@ -48,9 +48,8 @@ describe("HTTP security policy", () => {
       serializeContentSecurityPolicy({
         "default-src": ["'self'"],
         "object-src": ["'none'"],
-        "upgrade-insecure-requests": true,
       })
-    ).toBe("default-src 'self'; object-src 'none'; upgrade-insecure-requests");
+    ).toBe("default-src 'self'; object-src 'none'");
   });
 
   it("generates distinct base64 nonces with 128 bits of randomness", () => {

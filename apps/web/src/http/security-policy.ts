@@ -19,7 +19,6 @@ const CONTENT_SECURITY_POLICY = serializeContentSecurityPolicy({
   "script-src-attr": ["'none'"],
   "style-src": ["'self'", "'unsafe-inline'"],
   "style-src-attr": ["'unsafe-inline'"],
-  "upgrade-insecure-requests": true,
   "worker-src": ["'self'", "blob:"],
 });
 
