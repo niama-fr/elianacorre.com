@@ -33,7 +33,9 @@ const OPERATION_LABELS: Record<Operation, string> = {
 };
 
 const formatDate = (timestamp: number | null) =>
-  timestamp === null ? "—" : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(timestamp);
+  timestamp === null
+    ? "—"
+    : new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(timestamp);
 
 function AdminPrivacyPage() {
   const convex = useConvex();
