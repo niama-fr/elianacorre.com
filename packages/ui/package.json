@@ -7,7 +7,8 @@
     "./styles/*": "./src/styles/*",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./hooks/*": "./src/hooks/*.ts",
+    "./providers/*": "./src/providers/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
