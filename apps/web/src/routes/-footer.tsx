@@ -5,7 +5,7 @@ import { cva } from "class-variance-authority";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FOOTER = {
   base: cva("relative flex items-center justify-between bg-neutral-700 px-4 py-2 text-white"),
-  button: cva("self-end h-auto text-white px-0 py-0.5"),
+  button: cva("h-auto self-end px-0 py-0.5 text-white"),
   buttons: cva("flex flex-col sm:flex-row sm:gap-4"),
 };
 

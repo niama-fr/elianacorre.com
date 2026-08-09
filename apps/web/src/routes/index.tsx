@@ -32,7 +32,7 @@ const QUOTE = {
     md:py-20`),
   content: cva(`relative flex flex-col items-center gap-4
     sm:gap-8`),
-  sentence: cva(`font-heading font-bold text-3xl text-center
+  sentence: cva(`font-heading text-center text-3xl font-bold
     sm:text-5xl
     md:text-6xl
     2xl:text-7xl`),

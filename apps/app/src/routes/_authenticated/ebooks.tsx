@@ -26,9 +26,9 @@ export const Route = createFileRoute("/_authenticated/ebooks")({
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const ADMIN = {
   action: cva(
-    "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 font-semibold text-sm transition hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+    "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-semibold transition hover:border-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
   ),
-  badge: cva("inline-flex w-fit rounded-full px-2 py-1 font-semibold text-xs", {
+  badge: cva("inline-flex w-fit rounded-full px-2 py-1 text-xs font-semibold", {
     variants: {
       status: {
         archived: "bg-neutral-200 text-neutral-700",
@@ -39,17 +39,17 @@ const ADMIN = {
   }),
   base: cva("flex flex-col gap-8"),
   controls: cva("flex flex-wrap items-center gap-3"),
-  error: cva("rounded-md border border-red-300 bg-red-50 px-4 py-3 text-red-800 text-sm"),
+  error: cva("rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"),
   field: cva("flex flex-col gap-2"),
   form: cva("grid gap-4 rounded-md border border-neutral-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_1fr_auto] md:items-end"),
   input: cva("h-11 rounded-md border border-neutral-300 bg-white px-3 text-sm"),
-  item: cva("border-dashed border border-border rounded-none"),
-  label: cva("font-semibold text-neutral-800 text-sm"),
+  item: cva("border-border rounded-none border border-dashed"),
+  label: cva("text-sm font-semibold text-neutral-800"),
   muted: cva("text-muted-foreground text-sm"),
   table: cva("w-full border-collapse overflow-hidden rounded-md text-left text-sm"),
-  tableCell: cva("border-neutral-200 border-t px-3 py-3 align-middle"),
+  tableCell: cva("border-t border-neutral-200 px-3 py-3 align-middle"),
   tableHead: cva("bg-neutral-100 px-3 py-2 font-semibold text-neutral-700"),
-  title: cva("font-extrabold text-3xl text-foreground"),
+  title: cva("text-foreground text-3xl font-extrabold"),
 };
 
 function EbooksPage() {

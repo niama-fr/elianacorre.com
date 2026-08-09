@@ -6,11 +6,11 @@ import { cva } from "class-variance-authority";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const INPUT_FIELD = {
-  input: cva(`bg-white
-    focus-visible:ring-[2px] focus-visible:ring-ring 
-    group-data-[intent=secondary]/form:focus-visible:border-secondary group-data-[intent=secondary]/form:focus-visible:ring-secondary
+  input: cva(`focus-visible:ring-ring
+    group-data-[intent=secondary]/form:focus-visible:border-secondary group-data-[intent=secondary]/form:focus-visible:ring-secondary 
     group-data-[intent=secondary]/form:focus-visible:aria-invalid:border-destructive group-data-[intent=secondary]/form:focus-visible:aria-invalid:ring-destructive
-    aria-invalid:ring-[2px] aria-invalid:border-destructive aria-invalid:ring-destructive`),
+    aria-invalid:border-destructive aria-invalid:ring-destructive
+    bg-white focus-visible:ring-[2px] aria-invalid:ring-[2px]`),
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

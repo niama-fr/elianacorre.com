@@ -13,14 +13,12 @@ import { createStain, Stain, type StainActions, type StainState } from "@/routes
 const HEADER_TRANSITION = "duration-1000 ease-in-out motion-reduce:transition-none";
 
 export const HEADER = {
-  base: cva(
-    `fixed inset-x-0 top-0 z-50
-    group-data-scrolled/body:inset-x-4 group-data-scrolled/body:top-5
-    transition-[left,right,top] ${HEADER_TRANSITION}
-    lg:group-data-scrolled/body:inset-x-20`
-  ),
-  burger: cva("group/burger relative cursor-pointer rounded-full p-2 data-expanded:bg-accent md:hidden"),
-  burgerIcon: cva("pointer-events-none size-7 fill-none stroke-2 stroke-current"),
+  base: cva(`fixed inset-x-0 top-0 z-50
+    transition-[left,right,top] group-data-scrolled/body:inset-x-4
+    group-data-scrolled/body:top-5 ${HEADER_TRANSITION}
+    lg:group-data-scrolled/body:inset-x-20`),
+  burger: cva("group/burger data-expanded:bg-accent relative cursor-pointer rounded-full p-2 md:hidden"),
+  burgerIcon: cva("pointer-events-none size-7 fill-none stroke-current stroke-2"),
   burgerIconBar1: cva(`origin-center -translate-y-1.75 transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] 
     group-aria-expanded/burger:translate-x-0 group-aria-expanded/burger:translate-y-0 group-aria-expanded/burger:rotate-315`),
   burgerIconBar2: cva("origin-center transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.8)] group-aria-expanded/burger:rotate-45"),
@@ -28,19 +26,19 @@ export const HEADER = {
     group-aria-expanded/burger:translate-y-0 group-aria-expanded/burger:rotate-135`),
   burgerNav: cva("flex flex-col gap-1"),
   content: cva(
-    `relative mx-auto flex w-full items-center justify-between rounded-full px-4 py-2 bg-transparent
-    group-data-scrolled/body:bg-white group-data-scrolled/body:shadow-header
-    transition-[background-color,box-shadow] ${HEADER_TRANSITION}
+    `group-data-scrolled/body:shadow-header relative mx-auto flex w-full items-center justify-between rounded-full bg-transparent px-4
+    py-2 transition-[background-color,box-shadow]
+    group-data-scrolled/body:bg-white ${HEADER_TRANSITION}
     xl:container`
   ),
   icon: cva("flex size-7"),
   icons: cva("flex"),
   logo: cva("relative h-10 w-16 cursor-pointer"),
   logoContent: cva(`absolute -top-3 -left-3 w-20 
-    group-data-scrolled/body:w-16
-    transition-[width] ${HEADER_TRANSITION}
+    transition-[width]
+    group-data-scrolled/body:w-16 ${HEADER_TRANSITION}
     sm:w-24 sm:group-data-scrolled/body:w-16 
-    lg:w-40 md:group-data-scrolled/body:w-16`),
+    md:group-data-scrolled/body:w-16 lg:w-40`),
   nav: cva("relative cursor-pointer px-4 py-2"),
   navs: cva(`hidden items-center justify-center gap-2 font-bold text-black 
     md:flex`),

@@ -3,8 +3,8 @@ import { createStore, useSelector } from "@tanstack/react-store";
 import { cva } from "class-variance-authority";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-export const STAIN = cva(`STAIN pointer-events-none absolute top-0 left-0 rounded-full bg-accent transition-none
-                          ease-in-out motion-reduce:transition-none duration-300`);
+export const STAIN = cva(`STAIN bg-accent pointer-events-none absolute top-0 left-0 rounded-full transition-none
+                          duration-300 ease-in-out motion-reduce:transition-none`);
 
 const DEFAULT_ORIGIN = { offsetHeight: 40, offsetLeft: 0, offsetTop: 10, offsetWidth: 0 };
 

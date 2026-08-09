@@ -24,12 +24,12 @@ export const Route = createFileRoute("/carnets-de-voyage/")({
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const PAGE = {
-  badge: cva("text-white px-2 font-medium bg-secondary rounded-2xl"),
+  badge: cva("bg-secondary rounded-2xl px-2 font-medium text-white"),
   card: cva("bg-secondary/20 ring-0"),
-  cardItem: cva("flex gap-3 items-center text-lg"),
-  cardItemIcon: cva("icon-[tabler--star-filled] text-secondary flex-none size-7"),
+  cardItem: cva("flex items-center gap-3 text-lg"),
+  cardItemIcon: cva("icon-[tabler--star-filled] text-secondary size-7 flex-none"),
   cardItems: cva("flex flex-col gap-6"),
-  cardTitle: cva("text-xl uppercase font-extrabold items-center flex gap-2"),
+  cardTitle: cva("flex items-center gap-2 text-xl font-extrabold uppercase"),
   cardTitleIcon: cva("size-8"),
 };
 
@@ -70,7 +70,7 @@ function TravelDiariesPage() {
           kind="link"
           hash="la-gazette-itinerante"
           to="/carnets-de-voyage"
-          className={{ base: "text-lg self-center" }}
+          className={{ base: "self-center text-lg" }}
         >
           Rejoins-moi
         </Btn>
@@ -123,15 +123,15 @@ const CARD = {
   sm:px-6`),
   header: cva(`px-4
   sm:px-6`),
-  item: cva(`flex gap-3 items-center
+  item: cva(`flex items-center gap-3
   sm:text-lg
   2xl:text-xl`),
-  itemIcon: cva(`icon-[tabler--star-filled] flex-none size-5
-  group-data-[intent=primary]/card:text-primary
-  group-data-[intent=secondary]/card:text-secondary
+  itemIcon: cva(`icon-[tabler--star-filled] group-data-[intent=primary]/card:text-primary group-data-[intent=secondary]/card:text-secondary
+  size-5
+  flex-none
   sm:size-7`),
   items: cva("flex flex-col gap-6"),
-  title: cva(`uppercase font-extrabold items-center flex gap-2 text-start
+  title: cva(`flex items-center gap-2 text-start font-extrabold uppercase
   sm:text-xl
   2xl:text-2xl`),
   titleIcon: cva(`size-7

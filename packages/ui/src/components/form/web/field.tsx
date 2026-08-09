@@ -7,10 +7,10 @@ import { cva } from "class-variance-authority";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {
   error: cva(
-    `flex origin-top items-center gap-2 overflow-hidden rounded-xl bg-destructive px-2 py-1 text-destructive-foreground
-    before:icon-[lucide--circle-alert] before:size-4 before:shrink-0 before:content-['']`
+    `bg-destructive text-destructive-foreground before:icon-[lucide--circle-alert] flex origin-top items-center gap-2 overflow-hidden rounded-xl px-2
+    py-1 before:size-4 before:shrink-0 before:content-['']`
   ),
-  field: cva("gap-2 data-[invalid=true]:text-destructive"),
+  field: cva("data-[invalid=true]:text-destructive gap-2"),
   label: cva("data-hidden:sr-only"),
 };
 

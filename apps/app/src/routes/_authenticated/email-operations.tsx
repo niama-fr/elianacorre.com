@@ -58,13 +58,13 @@ function EmailOperationsPage() {
   return (
     <section className="flex flex-col gap-8">
       <header>
-        <h1 className="font-extrabold text-3xl text-foreground">Opérations e-mail</h1>
+        <h1 className="text-foreground text-3xl font-extrabold">Opérations e-mail</h1>
         <p className="text-muted-foreground text-sm">
           Échecs terminaux nécessitant une intervention. Les destinataires et contenus ne sont pas affichés ici.
         </p>
       </header>
 
-      {failedTasks.length === 0 && <p className="rounded-xl border p-4 text-muted-foreground text-sm">Aucune alerte active.</p>}
+      {failedTasks.length === 0 && <p className="text-muted-foreground rounded-xl border p-4 text-sm">Aucune alerte active.</p>}
       {failedTasks.length > 0 && (
         <ul className="flex flex-col gap-3">
           {failedTasks.map((task) => (

@@ -11,11 +11,11 @@ export const WORKS_GRID = {
     lg:grid-cols-3`),
   img: cva("absolute size-full object-cover"),
   infos:
-    cva(`absolute inset-0 flex flex-col justify-center items-center bg-black/50 text-white transition-opacity duration-300 opacity-0 pointer-events-none
+    cva(`pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 transition-opacity duration-300
     group-hover/item:opacity-100`),
-  item: cva(`flex-1 transition duration-300 group/item relative inset-shadow-2xs aspect-square w-full overflow-hidden rounded-3xl bg-neutral-200 shadow-lg cursor-pointer
-    hover:scale-none hover:blur-none 
-    group-hover/list:scale-[0.9] group-hover/list:blur-sm`),
+  item: cva(`group/item relative aspect-square w-full flex-1 cursor-pointer overflow-hidden rounded-3xl bg-neutral-200 shadow-lg inset-shadow-2xs transition duration-300
+    group-hover/list:scale-[0.9] group-hover/list:blur-sm 
+    hover:scale-none hover:blur-none`),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ export function WorksGrid(props: WorksGridProps) {
             />
           </ImageZoom>
           <div className={cn(WORKS_GRID.infos(), C.infos)}>
-            <h3 className="text-center font-bold font-heading text-4xl">{work.title}</h3>
+            <h3 className="font-heading text-center text-4xl font-bold">{work.title}</h3>
           </div>
         </li>
       ))}

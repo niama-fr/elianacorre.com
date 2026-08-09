@@ -33,37 +33,29 @@ function WorksLayout() {
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const WORKS = {
-  aside: cva(
-    `relative hidden flex-none aspect-square self-center
+  aside: cva(`relative hidden aspect-square flex-none self-center
     lg:flex lg:w-xs
     xl:w-sm 
-    2xl:w-md`
-  ),
-  base: cva(
-    `min-h-117.5
+    2xl:w-md`),
+  base: cva(`min-h-117.5
     lg:min-h-125 lg:items-stretch lg:gap-20
-    xl:min-h-auto`
-  ),
-  description: cva(
-    `flex flex-1 flex-col justify-center gap-8 transition
-    starting:translate-x-10 starting:opacity-0`
-  ),
+    xl:min-h-auto`),
+  description: cva(`flex flex-1 flex-col justify-center gap-8 transition
+    starting:translate-x-10 starting:opacity-0`),
   figure: cva("absolute size-full overflow-hidden rounded-3xl bg-neutral-200 shadow-2xl transition", {
     variants: {
       active: {
-        false: "-translate-z-96 z-10 scale-90 opacity-80",
-        true: "translate-z-0 z-40 scale-100 opacity-100",
+        false: "z-10 -translate-z-96 scale-90 opacity-80",
+        true: "z-40 translate-z-0 scale-100 opacity-100",
       },
     },
   }),
   image: cva("size-full object-cover"),
   main: cva("flex-1 justify-between"),
   nav: cva("flex w-full justify-between"),
-  title: cva(
-    `text-2xl 
+  title: cva(`text-2xl 
     sm:text-4xl 
-    2xl:text-5xl`
-  ),
+    2xl:text-5xl`),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------

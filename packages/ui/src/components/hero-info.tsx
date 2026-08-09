@@ -29,7 +29,7 @@ export function HeroInfo({ alert, btn: maybeBtn, children, content, title }: Her
           </Alert>
         )}
       </HeroContent>
-      <div className="w-full justify-end items-center flex gap-2">{children ?? <Btn {...btn} />}</div>
+      <div className="flex w-full items-center justify-end gap-2">{children ?? <Btn {...btn} />}</div>
     </Hero>
   );
 }

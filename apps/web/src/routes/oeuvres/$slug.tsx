@@ -17,8 +17,6 @@ export const readCollection = (slug: string): CollectionPage => {
 };
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-// oxfmt-ignore -- TanStack's loaderData inference requires loader to precede head under TypeScript 7.
-// oxlint-disable-next-line sort-keys -- Keep loader before head for TanStack's TypeScript 7 inference.
 export const Route = createFileRoute("/oeuvres/$slug")({
   component: WorksSetPage,
   loader: ({ params: { slug } }) => readCollection(slug),

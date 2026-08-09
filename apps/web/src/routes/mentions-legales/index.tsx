@@ -18,7 +18,7 @@ export const Route = createFileRoute("/mentions-legales/")({
 function LegalNoticesPage() {
   return (
     <Hero title={["Mentions", "légales"]}>
-      <HeroContent className="z-10 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
+      <HeroContent className="z-10 items-start border bg-white p-10 text-start text-pretty shadow-2xl">
         <section>
           <h2 className="mb-3 text-2xl font-bold">Édition du site</h2>
           <p>
@@ -29,11 +29,11 @@ function LegalNoticesPage() {
             <br />
             97427 Étang-Salé — La Réunion, France
             <br />
-            <a className="underline hover:text-primary" href="mailto:contact@elianacorre.com">
+            <a className="hover:text-primary underline" href="mailto:contact@elianacorre.com">
               contact@elianacorre.com
             </a>
             <br />
-            <a className="underline hover:text-primary" href="tel:+262692904762">
+            <a className="hover:text-primary underline" href="tel:+262692904762">
               +262 (0)692 90 47 62
             </a>
           </address>
@@ -49,7 +49,7 @@ function LegalNoticesPage() {
             <br />
             San Francisco, CA 94107 — États-Unis
             <br />
-            <a className="underline hover:text-primary" href="https://www.cloudflare.com">
+            <a className="hover:text-primary underline" href="https://www.cloudflare.com">
               www.cloudflare.com
             </a>
           </address>
@@ -76,7 +76,7 @@ function LegalNoticesPage() {
           <p>
             Les informations relatives aux données traitées, aux finalités, aux durées de conservation et à l’exercice de vos droits sont
             présentées dans la{" "}
-            <Link className="underline hover:text-primary" to="/confidentialite">
+            <Link className="hover:text-primary underline" to="/confidentialite">
               politique de confidentialité
             </Link>
             .
@@ -91,7 +91,7 @@ function LegalNoticesPage() {
 
 function SiteLink() {
   return (
-    <a className="font-bold text-primary" href="https://elianacorre.com">
+    <a className="text-primary font-bold" href="https://elianacorre.com">
       elianacorre.com
     </a>
   );

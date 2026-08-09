@@ -12,11 +12,11 @@ function Toaster({ ...props }: ToasterProps) {
       theme={theme}
       className="toaster group"
       icons={{
-        error: <span className="size-4 icon-[lucide--octagon-x]" />,
-        info: <span className="size-4 icon-[lucide--info]" />,
-        loading: <span className="size-4 animate-spin icon-[lucide--loader-2]" />,
-        success: <span className="size-4 icon-[lucide--circle-check]" />,
-        warning: <span className="size-4 icon-[lucide--triangle-alert]" />,
+        error: <span className="icon-[lucide--octagon-x] size-4" />,
+        info: <span className="icon-[lucide--info] size-4" />,
+        loading: <span className="icon-[lucide--loader-2] size-4 animate-spin" />,
+        success: <span className="icon-[lucide--circle-check] size-4" />,
+        warning: <span className="icon-[lucide--triangle-alert] size-4" />,
       }}
       style={
         {

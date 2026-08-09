@@ -23,10 +23,10 @@ export const Route = createFileRoute("/contact/")({
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const PAGE = {
-  alert: cva("max-w-lg bg-primary/10 border-none px-3 py-2"),
-  alertDescription: cva("text-xs text-pretty text-foreground"),
+  alert: cva("bg-primary/10 max-w-lg border-none px-3 py-2"),
+  alertDescription: cva("text-foreground text-xs text-pretty"),
   alertLink: cva("underline"),
-  card: cva("bg-primary/40 ring-0 w-full max-w-lg"),
+  card: cva("bg-primary/40 w-full max-w-lg ring-0"),
   content: cva("items-center lg:items-start"),
 };
 

@@ -66,12 +66,12 @@ function AdminPrivacyPage() {
   return (
     <section className="flex flex-col gap-8">
       <header>
-        <h1 className="font-extrabold text-3xl text-foreground">Demandes de confidentialité</h1>
+        <h1 className="text-foreground text-3xl font-extrabold">Demandes de confidentialité</h1>
         <p className="text-muted-foreground text-sm">Recherche exacte par adresse canonique. Aucune opération groupée n’est disponible.</p>
       </header>
 
       <PrivacySection title="Portabilité globale de la newsletter">
-        <p className="mb-4 text-muted-foreground text-sm">
+        <p className="text-muted-foreground mb-4 text-sm">
           Exporte l’état fournisseur-indépendant des personnes, consentements, éligibilités, accès e-book et suppressions. Aucun jeton actif
           ni journal technique court n’est inclus.
         </p>
@@ -114,7 +114,7 @@ function AdminPrivacyPage() {
                   Profils en attente : {run.anonymizedPendingProfiles} · anciens abonnés : {run.anonymizedFormerProfiles} · journaux :{" "}
                   {run.deletedTechnicalLogs} · téléchargements : {run.deletedDownloads}
                 </span>
-                <span className="break-all text-muted-foreground">Workflow : {run.workflowId ?? "—"}</span>
+                <span className="text-muted-foreground break-all">Workflow : {run.workflowId ?? "—"}</span>
               </li>
             ))}
           </ul>
@@ -122,13 +122,13 @@ function AdminPrivacyPage() {
       </PrivacySection>
 
       <form
-        className="flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-end"
+        className="bg-card flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
           setSearchedEmail(emailInput);
         }}
       >
-        <label className="flex flex-1 flex-col gap-2 font-medium text-sm" htmlFor="privacy-email">
+        <label className="flex flex-1 flex-col gap-2 text-sm font-medium" htmlFor="privacy-email">
           Adresse e-mail de la personne vérifiée
           <Input
             required
@@ -145,7 +145,7 @@ function AdminPrivacyPage() {
 
       {searchedEmail && subject === undefined && <p className="text-muted-foreground text-sm">Recherche en cours…</p>}
       {searchedEmail && subject === null && (
-        <p className="rounded-2xl border p-4 text-muted-foreground text-sm">Aucune donnée connue pour cette adresse.</p>
+        <p className="text-muted-foreground rounded-2xl border p-4 text-sm">Aucune donnée connue pour cette adresse.</p>
       )}
       {searchedEmail && subject && <PrivacySubjectView key={searchedEmail} email={searchedEmail} subject={subject} />}
     </section>
@@ -263,7 +263,7 @@ function AuditSection({ subject }: { subject: PrivacySubject }) {
                 {audit.kind === "verification" ? ` · ${audit.requestKind} · ${audit.method}` : ""}
               </span>
               <span>{audit.outcome}</span>
-              <span className="break-all text-muted-foreground">Admin : {audit.performedBy}</span>
+              <span className="text-muted-foreground break-all">Admin : {audit.performedBy}</span>
             </li>
           ))}
         </ul>
@@ -291,7 +291,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
 
   return (
     <PrivacySection title="Vérification d’identité">
-      <p className="mb-4 text-muted-foreground text-sm">
+      <p className="text-muted-foreground mb-4 text-sm">
         Enregistrez uniquement la catégorie de méthode et son résultat, jamais les preuves.
       </p>
       {subject.privacyState.grants.length > 0 && (
@@ -421,7 +421,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
 
   return (
     <PrivacySection title="Opérations confirmées">
-      <p className="mb-4 text-muted-foreground text-sm">
+      <p className="text-muted-foreground mb-4 text-sm">
         Chaque opération exige une vérification correspondante, indépendante, confirmée et à usage unique.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -530,8 +530,8 @@ function PrivacySection({ children, title }: { children: ReactNode; title: strin
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="font-medium text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className="mt-1 break-all text-sm">{value}</dd>
+      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</dt>
+      <dd className="mt-1 text-sm break-all">{value}</dd>
     </div>
   );
 }
