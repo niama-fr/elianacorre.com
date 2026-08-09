@@ -79,6 +79,21 @@ If a commit changes after criteria were reviewed, re-evaluate affected criteria 
 11. Approved merges deploy both applications automatically to persistent staging.
 12. Production releases promote the latest successful staging commit through a separate SemVer workflow dispatch and protected environment approval.
 
+## Grégory-directed package updates
+
+Grégory may update package manifests and the lockfile on any active issue branch when he sees fit. Once Grégory has made or confirmed that choice, the updates are authorized maintenance within that issue and pull request: they do not require a separate Linear issue, do not count as unapproved scope expansion, and must not be reported as a warning merely because they are adjacent to the issue's primary outcome.
+
+Codex still reviews the resulting versions and lockfile as part of the same final diff. It raises only a concrete concern, such as a failed check, incompatible runtime or peer requirement, required migration, security or licensing problem, unintended package removal, or behavior that conflicts with the active issue. The presence or number of intentional version changes is not itself a concern.
+
+Human-reproducible procedure from the repository root:
+
+1. Grégory chooses the packages and runs the appropriate Bun update command on the active issue branch.
+2. Review every changed package manifest and the `bun.lock` summary; confirm no package was unintentionally added or removed.
+3. Run `bun install --frozen-lockfile` and the complete suite in `verification.md` against the final combined diff.
+4. Mention the package refresh in the pull-request outcome or verification evidence so reviewers know it was deliberate.
+
+Expected result: the issue's primary work and Grégory's chosen dependency refresh ship through one reviewed commit history and one pull request. If an update causes a failure, restore the last working manifest constraints and regenerate `bun.lock` with Bun, or add a corrective commit; never hand-edit lockfile resolutions. Package registry credentials and private tokens remain in the package manager or environment and must not be committed or pasted into issue or pull-request text. Update this section whenever package ownership or the preferred Bun workflow changes.
+
 ## Preferred human loop
 
 The day-to-day manual workflow is:
