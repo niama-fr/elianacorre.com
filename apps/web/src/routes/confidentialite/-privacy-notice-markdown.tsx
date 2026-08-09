@@ -6,7 +6,7 @@ const transformSafeUrl: UrlTransform = (url) => (SAFE_URL.test(url) ? url : unde
 
 const MARKDOWN_COMPONENTS: Components = {
   a: ({ children, node: _node, ...props }) => (
-    <a {...props} className="underline hover:text-primary">
+    <a {...props} className="hover:text-primary underline">
       {children}
     </a>
   ),

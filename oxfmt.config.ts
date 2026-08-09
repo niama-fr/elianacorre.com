@@ -11,4 +11,5 @@ export default defineConfig({
     "skills-lock.json",
   ],
   printWidth: 140,
+  sortTailwindcss: { functions: ["clsx", "cva", "tw", "twMerge", "cn", "twJoin", "tv"], preserveWhitespace: true },
 });

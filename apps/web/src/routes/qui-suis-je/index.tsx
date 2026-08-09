@@ -30,7 +30,7 @@ export const Route = createFileRoute("/qui-suis-je/")({
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const PAGE = {
   aside: cva("flex basis-1/2 lg:translate-x-8"),
-  heroContent: cva("text-base text-justify text-pretty sm:text-lg lg:text-justify"),
+  heroContent: cva("text-justify text-base text-pretty sm:text-lg lg:text-justify"),
   main: cva("basis-1/2"),
 };
 

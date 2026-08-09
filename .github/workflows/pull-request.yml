@@ -75,3 +75,5 @@ jobs:
           VITE_CONVEX_SITE_URL: https://build-only.convex.site
           VITE_CONVEX_URL: https://build-only.convex.cloud
         run: bun run build
+      - name: Report independent client JavaScript totals
+        run: bun run delivery:report

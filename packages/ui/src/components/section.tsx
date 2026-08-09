@@ -8,48 +8,38 @@ import { GridBackground } from "./grid-background";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const SECTION = {
-  base: cva("group/section relative data-[intent=primary]:bg-primary/40 data-[intent=secondary]:bg-accent"),
-  container: cva(
-    `container relative mx-auto flex flex-col items-center gap-8 px-4 py-8 
+  base: cva("group/section data-[intent=primary]:bg-primary/40 data-[intent=secondary]:bg-accent relative"),
+  container: cva(`relative container mx-auto flex flex-col items-center gap-8 px-4 py-8 
     sm:px-8 
-    lg:flex-row lg:items-start`
-  ),
-  content: cva(
-    `flex flex-col gap-8 font-light text-pretty text-justify
+    lg:flex-row lg:items-start`),
+  content: cva(`flex flex-col gap-8 text-justify font-light text-pretty
     sm:text-lg
-    2xl:text-xl`
-  ),
+    2xl:text-xl`),
   figure: cva(
     `relative hidden aspect-square w-full flex-none rounded-2xl border-12 border-white bg-neutral-200 shadow-2xl outline-1 outline-neutral-200
-    group-data-reverse/section:lg:-translate-x-8 group-data-reverse/section:lg:-rotate-6 group-data-reverse/section:lg:hover:-rotate-8
-    md:border-16
-    lg:flex lg:w-md lg:translate-x-8 lg:rotate-6 lg:hover:rotate-8 lg:transition-transform
+    md:border-16 lg:flex lg:w-md
+    lg:translate-x-8
+    lg:rotate-6 lg:transition-transform group-data-reverse/section:lg:-translate-x-8 group-data-reverse/section:lg:-rotate-6 lg:hover:rotate-8 group-data-reverse/section:lg:hover:-rotate-8
     xl:w-xl
     2xl:w-2xl`
   ),
   image: cva("size-full object-cover"),
-  main: cva(
-    `flex flex-col items-center gap-8 w-full
-    lg:items-start`
-  ),
-  title: cva(
-    `group/title flex flex-col items-center font-extrabold text-4xl mb-4
+  main: cva(`flex w-full flex-col items-center gap-8
+    lg:items-start`),
+  title: cva(`group/title mb-4 flex flex-col items-center text-4xl font-extrabold
     sm:text-6xl 
     md:data-[direction=row]:flex-row md:data-[direction=row]:gap-3
     lg:items-start 
-    2xl:text-7xl`
-  ),
+    2xl:text-7xl`),
   titleRow: cva("relative -mr-5 w-fit pr-5"),
-  titleRowEffect: cva(`pointer-events-none absolute inset-0 z-0 flex items-start opacity-0 scale-95 
-    transition duration-500 ease-out origin-top-left
-    group-data-visible/title:opacity-100 group-data-visible/title:scale-100`),
-  titleRowPointer: cva("size-5 text-primary group-data-[intent=secondary]/title:text-secondary"),
+  titleRowEffect: cva(`pointer-events-none absolute inset-0 z-0 flex origin-top-left scale-95 items-start 
+    opacity-0 transition duration-500 ease-out
+    group-data-visible/title:scale-100 group-data-visible/title:opacity-100`),
+  titleRowPointer: cva("text-primary group-data-[intent=secondary]/title:text-secondary size-5"),
   titleRowPointerWrapper: cva("pointer-events-none -mb-5 -rotate-90 self-end opacity-100 duration-1000 ease-in-out"),
-  titleRowRectangle: cva(
-    `size-0 translate-y-1 -rotate-2 rounded-2xl bg-primary group-data-[intent=secondary]/title:bg-secondary
-    group-data-visible/title:size-full
-    transition-all duration-2000 ease-in-out`
-  ),
+  titleRowRectangle: cva(`bg-primary group-data-[intent=secondary]/title:bg-secondary size-0 translate-y-1 -rotate-2 rounded-2xl
+    transition-all
+    duration-2000 ease-in-out group-data-visible/title:size-full`),
   titleRowText: cva("relative z-10"),
 };
 

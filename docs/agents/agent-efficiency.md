@@ -12,6 +12,8 @@ Read-only inspection and low-cost focused checks required to implement or diagno
 
 An explicit request such as “finish delivery autonomously” may authorize the named sequence of routine operations for one issue. Codex still identifies the sequence, its external effects, approval gates, and estimated consumption before starting. Authorization for one issue, phase, operation, or turn does not carry into another.
 
+Grégory-directed package updates are the standing exception documented in `delivery-workflow.md`. Grégory may include them on any active issue branch at his discretion. Once he has made or confirmed that choice, Codex treats them as authorized maintenance within the current issue, does not require a separate issue or scope approval, and does not warn merely because the versions are unrelated to the primary change. Codex still reports concrete compatibility, security, licensing, migration, lockfile-integrity, or verification problems when evidence supports one.
+
 ## Consumption preview
 
 Before asking Grégory to perform or delegate an operation, Codex gives a best-effort qualitative estimate:

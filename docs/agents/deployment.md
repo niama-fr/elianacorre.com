@@ -296,3 +296,5 @@ To recover from an incorrect authenticated origin, restore the previous `APP_SIT
 ## Human verification
 
 After every merge, verify the staging Actions run and both staging hosts. Before production, confirm the exact staging commit was reviewed. After release or rollback, verify the workflow summary, GitHub Release or rollback tag, both Worker URLs, authentication, and critical forms.
+
+For changes affecting JavaScript delivery, hydration, caching, CSP, redirects, or authentication, use the complete manual two-host staging checklist in [`delivery-budgets.md`](delivery-budgets.md).

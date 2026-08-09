@@ -24,9 +24,9 @@
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
-    "better-auth": "~1.6.25",
+    "better-auth": "~1.6.26",
     "convex": "1.43.0",
-    "convex-helpers": "^0.1.121",
+    "convex-helpers": "^0.1.122",
     "standardwebhooks": "^1.0.0",
     "typescript": "^7.0.2"
   },
@@ -34,9 +34,9 @@
     "@convex-dev/aggregate": "0.2.2",
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "convex-test": "^0.0.55",
-    "vite": "^8.2.0",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10",
     "zod": "^4.4.3"
   }

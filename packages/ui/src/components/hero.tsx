@@ -10,24 +10,24 @@ export const HERO = {
   md:border-16 
   lg:-mr-20 lg:flex lg:w-md lg:rotate-6 lg:transition-transform lg:hover:rotate-8 
   xl:mr-0 xl:w-xl 2xl:w-2xl`),
-  base: cva(`container relative z-10 mx-auto flex flex-col items-center gap-8 px-4 py-8 
+  base: cva(`relative z-10 container mx-auto flex flex-col items-center gap-8 px-4 py-8 
   sm:px-8 lg:flex-row lg:items-start xl:items-center`),
-  content: cva(`text-balance text-center font-light text-lg flex flex-col gap-4
-  data-pretty:border-dashed data-pretty:border-3 data-pretty:border-primary data-pretty:rounded-2xl data-pretty:p-6 data-pretty:bg-white 
+  content: cva(`data-pretty:border-primary flex flex-col gap-4 text-center text-lg font-light
+  text-balance data-pretty:rounded-2xl data-pretty:border-3 data-pretty:border-dashed data-pretty:bg-white data-pretty:p-6 
   sm:text-xl 
   lg:text-start 
   2xl:text-2xl`),
   img: cva("size-full object-cover"),
   main: cva(`flex flex-col items-center gap-8 
   lg:items-start`),
-  title: cva(`flex flex-col items-center font-black text-[42px] leading-none tracking-tight
+  title: cva(`flex flex-col items-center text-[42px] leading-none font-black tracking-tight
   sm:text-7xl 
   lg:items-start 
   2xl:text-8xl`),
-  titleRow: cva("flex items-center gap-1 whitespace-nowrap text-primary"),
+  titleRow: cva("text-primary flex items-center gap-1 whitespace-nowrap"),
   titleRowContent: cva(`max-w-full overflow-hidden leading-tight transition-all delay-1000 duration-[2s] ease-linear
   starting:max-w-0`),
-  titleRowCursor: cva(`h-10 w-1 animate-blink rounded-sm bg-primary 
+  titleRowCursor: cva(`animate-blink bg-primary h-10 w-1 rounded-sm 
   sm:h-16`),
 };
 

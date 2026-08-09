@@ -33,7 +33,7 @@ function SignInPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-svh">
+    <div className="flex min-h-svh items-center justify-center">
       <Button
         disabled={isSigningIn}
         onClick={() => {

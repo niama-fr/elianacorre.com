@@ -22,7 +22,7 @@ function PrivacyPolicyPage() {
   const { privacyNotice } = RootRoute.useLoaderData();
   return (
     <Hero title={["Politique de", "confidentialité"]}>
-      <HeroContent className="z-10 items-start text-pretty border bg-white p-10 text-start shadow-2xl">
+      <HeroContent className="z-10 items-start border bg-white p-10 text-start text-pretty shadow-2xl">
         <PrivacyNoticeMarkdown content={privacyNotice.content} />
       </HeroContent>
     </Hero>

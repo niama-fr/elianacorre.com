@@ -15,7 +15,7 @@ import { cva } from "class-variance-authority";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const ADMIN = {
   actions: cva("flex items-center gap-2"),
-  header: cva("flex h-16 shrink-0 justify-between items-center gap-2"),
+  header: cva("flex h-16 shrink-0 items-center justify-between gap-2"),
   inset: cva("p-4"),
   signout: cva("icon-[lucide--log-out]"),
 };

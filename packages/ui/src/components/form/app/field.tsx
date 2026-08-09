@@ -5,8 +5,8 @@ import { cva } from "class-variance-authority";
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {
   error: cva(
-    `flex origin-top items-center gap-2 overflow-hidden rounded-md bg-destructive px-2 text-destructive-foreground 
-    transition-[max-height] duration-150 ease-in before:icon-[lucide--circle-alert] before:size-4 before:shrink-0 before:content-['']`,
+    `bg-destructive text-destructive-foreground before:icon-[lucide--circle-alert] flex origin-top items-center gap-2 overflow-hidden rounded-md 
+    px-2 transition-[max-height] duration-150 ease-in before:size-4 before:shrink-0 before:content-['']`,
     { variants: { isInvalid: { false: "max-h-0", true: "max-h-10" } } }
   ),
   field: cva("gap-2"),

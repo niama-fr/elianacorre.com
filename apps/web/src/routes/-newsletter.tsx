@@ -19,16 +19,16 @@ export const getNewsletterHashNavigation = (inView: boolean) => ({
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const NEWSLETTER = {
   alert: cva("bg-secondary/30 border-none px-3 py-2"),
-  alertDescription: cva("text-xs text-pretty text-foreground"),
+  alertDescription: cva("text-foreground text-xs text-pretty"),
   alertLink: cva("underline"),
-  badge: cva("text-white px-2 font-medium bg-secondary rounded-2xl"),
+  badge: cva("bg-secondary rounded-2xl px-2 font-medium text-white"),
   content: cva(`text-center
   sm:text-justify
   md:flex-row 
   xl:gap-24 
   2xl:gap-40`),
   form: cva("flex-1"),
-  main: cva("flex-1 flex flex-col gap-4"),
+  main: cva("flex flex-1 flex-col gap-4"),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------
