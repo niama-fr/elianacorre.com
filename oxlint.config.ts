@@ -26,7 +26,10 @@ export default defineConfig({
             ],
             patterns: [
               { group: ["../**"], message: "Use the @ alias; parent imports can cross the application boundary." },
-              { group: ["@convex-dev/better-auth/*", "better-auth/*"], message: "Better Auth belongs to apps/app." },
+              {
+                group: ["@better-auth/*", "@convex-dev/better-auth/*", "better-auth/*"],
+                message: "Better Auth belongs to apps/app.",
+              },
               {
                 group: ["@convex-dev/react-query/*", "@tanstack/react-query/*", "convex/react*"],
                 message: "Authenticated reactive data clients belong to apps/app.",
