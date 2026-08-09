@@ -8,6 +8,7 @@ Run these commands from the repository root before opening or merging a pull req
 | `bun run typecheck` | Both React applications and first-party domain, backend, and UI packages |
 | `bun run check` | Ultracite policy through Oxfmt formatting and Oxlint static-analysis rules |
 | `bun run build` | Both production React clients, TanStack Start servers, and Cloudflare Worker bundles |
+| `bun run delivery:report` | Independent total emitted client JavaScript file count plus raw, gzip, and Brotli sizes for `apps/web` and `apps/app` after a build |
 
 ## Test scope
 
@@ -20,6 +21,10 @@ Domain tests verify contact validation independently from persistence. Backend c
 ## Type-check scope
 
 React application type checking follows the independent TanStack route graphs from `apps/web/src/router.tsx` and `apps/app/src/router.tsx`. Domain schemas, Convex functions and tests, and shared React UI are checked through their workspace scripts.
+
+## Delivery checks
+
+See [`delivery-budgets.md`](delivery-budgets.md) for the public import boundary, production reporting inputs and limitations, the two-host staging checklist, maintenance, and recovery. Pull-request CI prints the independent client-size report after both applications build.
 
 ## Static-quality scope
 

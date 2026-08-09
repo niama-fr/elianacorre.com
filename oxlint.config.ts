@@ -12,6 +12,45 @@ export default defineConfig({
   },
   overrides: [
     {
+      files: ["apps/web/**/*.{ts,tsx}"],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              { message: "Better Auth belongs to apps/app.", name: "@convex-dev/better-auth" },
+              { message: "Reactive Convex Query belongs to apps/app.", name: "@convex-dev/react-query" },
+              { message: "TanStack Query belongs to apps/app.", name: "@tanstack/react-query" },
+              { message: "Better Auth belongs to apps/app.", name: "better-auth" },
+              { message: "Reactive Convex clients belong to apps/app.", name: "convex/react" },
+            ],
+            patterns: [
+              { group: ["../**"], message: "Use the @ alias; parent imports can cross the application boundary." },
+              { group: ["@convex-dev/better-auth/*", "better-auth/*"], message: "Better Auth belongs to apps/app." },
+              {
+                group: ["@convex-dev/react-query/*", "@tanstack/react-query/*", "convex/react*"],
+                message: "Authenticated reactive data clients belong to apps/app.",
+              },
+              {
+                group: [
+                  "@ec/app",
+                  "@ec/app/*",
+                  "apps/app",
+                  "apps/app/*",
+                  "@/routes/admin",
+                  "@/routes/admin/*",
+                  "@/routes/members",
+                  "@/routes/members/*",
+                  "@/routes/_authenticated*",
+                ],
+                message: "Authenticated, administration, and member implementation belongs to apps/app.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
       // Convex mutations sometimes must serially invalidate related capabilities in one transaction.
       files: ["packages/backend/**/*.ts"],
       rules: {
