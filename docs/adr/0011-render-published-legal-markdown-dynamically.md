@@ -39,7 +39,7 @@ Linear owns the delivery task, Git owns approved legal copy and this decision, C
 1. From the repository root, run `git pull --ff-only origin main` and confirm the legal-copy commit is present with `git log -1 --oneline`. The checkout must be clean and current.
 2. For staging, open GitHub **Actions → Deploy staging**, select the workflow run for that merge, and wait for its `bunx convex run seed:init` step to succeed. A changed canonical notice creates one published `privacyNotice` record; unchanged content creates none.
 3. For a local development deployment only, run `cd packages/backend` followed by `bunx convex run seed:init`. The selected Convex deployment comes from the existing local Convex configuration.
-4. For production, follow the protected SemVer promotion procedure in [`docs/agents/deployment.md`](../agents/deployment.md). The approved workflow runs the same `seed:init` mutation; do not run it manually against production.
+4. For production, follow the protected SemVer promotion procedure in [`docs/runbooks/deployment.md`](../runbooks/deployment.md). The approved workflow runs the same `seed:init` mutation; do not run it manually against production.
 
 ### Verification
 
@@ -47,7 +47,7 @@ In the target Convex dashboard, inspect **Data → legalTexts** and confirm the 
 
 ### Recovery and rollback
 
-If the seed fails, the previous active privacy notice remains authoritative: correct the code and rerun the workflow. If invalidation fails after publication, verify the shared secret on both systems and rerun `cache:revalidatePrivacyNotice`; the existing TTL/SWR bound remains active meanwhile. If incorrect content becomes active, restore the last approved content in a new issue and pull request, then deploy normally; the idempotent seed publishes that content as a new version. Use the protected rollback workflow from `docs/agents/deployment.md` only when the application deployment itself must also be reverted. Never delete or edit historical production legal records.
+If the seed fails, the previous active privacy notice remains authoritative: correct the code and rerun the workflow. If invalidation fails after publication, verify the shared secret on both systems and rerun `cache:revalidatePrivacyNotice`; the existing TTL/SWR bound remains active meanwhile. If incorrect content becomes active, restore the last approved content in a new issue and pull request, then deploy normally; the idempotent seed publishes that content as a new version. Use the protected rollback workflow from `docs/runbooks/deployment.md` only when the application deployment itself must also be reverted. Never delete or edit historical production legal records.
 
 ### Automation mapping and maintenance
 

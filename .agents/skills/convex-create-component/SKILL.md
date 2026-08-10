@@ -11,6 +11,16 @@ description:
 Create reusable Convex components with clear boundaries and a small app-facing
 API.
 
+## Repository deployment boundary
+
+Component authoring and verification are local by default.
+
+When Convex runtime or codegen validation is required, prefer a local anonymous deployment:
+
+`CONVEX_AGENT_MODE=anonymous npx convex dev --once`
+
+Do not push to or mutate a remote dev, preview, or production Convex deployment unless explicitly delegated. Before any such operation, follow `convex-deploy-guard`.
+
 ## When to Use
 
 - Creating a new Convex component in an existing app
@@ -50,8 +60,7 @@ API.
    `ctx.runQuery`, `ctx.runMutation`, or `ctx.runAction`.
 9. If React clients, HTTP callers, or public APIs need access, create wrapper
    functions in the app instead of exposing component functions directly.
-10. Run `npx convex dev` and fix codegen, type, or boundary issues before
-    finishing.
+10. Run local component validation and fix codegen, type, schema, or boundary issues before finishing. Prefer `CONVEX_AGENT_MODE=anonymous npx convex dev --once`. Remote Convex validation requires explicit delegation and `convex-deploy-guard`.
 
 ## Choose the Shape
 
@@ -285,11 +294,13 @@ class-based client wrappers, see `references/advanced-patterns.md`.
 
 ## Validation
 
-Try validation in this order:
+Try local validation in this order:
 
 1. `npx convex codegen --component-dir convex/components/<name>`
 2. `npx convex codegen`
-3. `npx convex dev`
+3. `CONVEX_AGENT_MODE=anonymous npx convex dev --once`
+
+If a command would target a configured remote deployment rather than local anonymous Convex, stop unless that remote operation was explicitly delegated and has passed `convex-deploy-guard`.
 
 Important:
 
@@ -322,4 +333,4 @@ Official docs:
 - [ ] Auth, env access, and HTTP routes stay in the app
 - [ ] Parent app IDs cross the boundary as `v.string()`
 - [ ] Public functions have `args` and `returns` validators
-- [ ] Ran `npx convex dev` and fixed codegen or type issues
+- [ ] Completed local Convex/codegen verification and fixed relevant errors
