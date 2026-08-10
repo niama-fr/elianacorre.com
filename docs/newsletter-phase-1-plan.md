@@ -162,7 +162,7 @@ The concrete delivery mechanism must account for the final file size. Convex HTT
 
 ## Privacy and retention
 
-The executable retention, portability-export, verification, recovery, and security procedure is documented in [`docs/agents/newsletter-retention-portability.md`](agents/newsletter-retention-portability.md).
+The executable retention, portability-export, verification, recovery, and security procedure is documented in [`docs/runbooks/newsletter-retention-portability.md`](runbooks/newsletter-retention-portability.md).
 
 - Newsletter consent is separate from contact requests, authentication, purchases, and delivery eligibility.
 - Contact-form submissions never imply newsletter subscription.
@@ -178,7 +178,7 @@ The executable retention, portability-export, verification, recovery, and securi
 
 Privacy requests arrive at `contact@elianacorre.com`. After identity verification, an administrator can separately inspect or export, rectify the optional first name, unsubscribe, restrict, object, or erase. Each administrative action is confirmed and audited; bulk deletion is excluded.
 
-The manual identity-verification procedure is documented in [`docs/agents/privacy-request-identity-verification.md`](agents/privacy-request-identity-verification.md).
+The manual identity-verification procedure is documented in [`docs/runbooks/privacy-request-identity-verification.md`](runbooks/privacy-request-identity-verification.md).
 
 International transfers are not prohibited, but Convex, Loops, Cloudflare, Better Auth dependencies, and relevant subprocessors must be recorded with their contracts and transfer mechanisms in the project's privacy documentation and processing register.
 

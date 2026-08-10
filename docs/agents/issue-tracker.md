@@ -12,15 +12,9 @@ Use the Linear integration available to the agent for issue and project operatio
 
 - Read the complete issue, comments, relations, and project context before implementation.
 - Create actionable work in the `elianacorre.com` Linear project unless the work belongs to another explicit Niama project.
-- Record acceptance criteria as checkboxes and list blocking issues explicitly.
-- Treat acceptance criteria as transition gates:
-  - Codex checks objective technical criteria after verification and before moving an issue to `In Review`.
-  - Criteria requiring human judgment remain unchecked with an issue comment naming the owner and expected validation.
-  - Missing implementation blocks `In Review`; pending named human validation does not.
-  - All criteria must be checked or explicitly revised before `Done`.
-- Keep issue status current as work moves through the delivery workflow.
-- Add the pull request and material verification evidence to the issue.
-- Mark an issue `Done` only after its approved pull request is merged and required follow-up work is complete.
+- Record acceptance criteria as checkboxes.
+- Represent dependencies with native Linear `blocks` / `blocked by` relations whenever possible. The issue body may explain dependencies but is not their authoritative representation.
+- Follow `docs/workflows/delivery.md` for readiness, status transitions, verification evidence, pull requests, review, and completion rules.
 - Do not create or use GitHub Issues for this repository. GitHub Issues are disabled intentionally.
 
 ## Creating an issue manually
@@ -32,7 +26,7 @@ Use the Niama team template **Elianacorre.com delivery issue** from the Linear i
 3. Select **Template → Elianacorre.com delivery issue**.
 4. Set the project to `elianacorre.com`.
 5. Replace every placeholder and delete sections that genuinely do not apply.
-6. Keep the issue in `Backlog` until it meets all Ready criteria in `docs/agents/delivery-workflow.md`.
+6. Keep the issue in `Backlog` until it meets all Ready criteria in `docs/workflows/delivery.md`.
 
 The template is guidance, not proof that an issue is Ready. Before moving it to `Ready`, confirm the outcome is independently verifiable, acceptance criteria are observable, dependencies and exclusions are explicit, and verification can be performed by someone other than the author.
 
@@ -79,4 +73,4 @@ Create a Linear issue in the appropriate project.
 
 Fetch the Linear issue, including comments and relations.
 
-See `docs/agents/delivery-workflow.md` for readiness, WIP, branch, pull request, review, and merge rules.
+See `docs/workflows/delivery.md` for readiness, WIP, branch, pull request, review, and merge rules.
