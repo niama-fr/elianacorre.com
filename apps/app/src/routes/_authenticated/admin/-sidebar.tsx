@@ -21,12 +21,12 @@ export const ADMIN = {
 };
 
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
-export function AppSidebar({ logoImg }: { logoImg: Images["Entity"] }) {
+export function AdminSidebar({ logoImg }: { logoImg: Images["Entity"] }) {
   const data = {
     navMain: linkOptions([
-      { title: "Ebooks", to: "/ebooks" },
-      { title: "Opérations e-mail", to: "/email-operations" },
-      { title: "Confidentialité", to: "/privacy" },
+      { title: "Ebooks", to: "/admin/ebooks" },
+      { title: "Opérations e-mail", to: "/admin/email-operations" },
+      { title: "Confidentialité", to: "/admin/privacy" },
     ]),
   };
 

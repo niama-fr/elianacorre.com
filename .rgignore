@@ -1,0 +1,13 @@
+# Generated Convex code
+
+packages/backend/convex/_generated/
+
+# Generated TanStack Router trees
+
+apps/app/src/routeTree.gen.ts
+apps/web/src/routeTree.gen.ts
+
+# Generated Cloudflare Worker types
+
+apps/app/worker-configuration.d.ts
+apps/web/worker-configuration.d.ts

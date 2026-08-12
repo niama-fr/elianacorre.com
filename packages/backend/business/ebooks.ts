@@ -1,5 +1,5 @@
 import RateLimiter, { MINUTE } from "@convex-dev/rate-limiter";
-import type { AdminMutationCtx } from "@ec/backend/convex/zod";
+import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
 import { env, type MutationCtx, type QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { createCapabilityToken, verifyCapabilityToken } from "@ec/domain/helpers/capabilities";
@@ -36,7 +36,7 @@ export async function issueReplacementEbookDownload(ctx: MutationCtx, opts: Omit
 }
 
 // PUBLISH ---------------------------------------------------------------------------------------------------------------------------------
-export async function publishEbook(ctx: AdminMutationCtx, id: Id<"ebooks">, { now }: WithNow) {
+export async function publishEbook(ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, { now }: WithNow) {
   const doc = await requireEbook(ctx, id);
   if (doc.status === "published") return id;
 

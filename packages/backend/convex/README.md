@@ -1,85 +1,168 @@
-# Welcome to your Convex functions directory!
+# Backend architecture
 
-Write your Convex functions here. See https://docs.convex.dev/functions for more.
+This directory contains the Convex-facing entry points for the Eliana Corré backend.
 
-A query function that takes two arguments looks like:
+The backend intentionally separates **entry points**, **business policy**, and **data access**. See `docs/adr/0010-separate-convex-entry-points-business-policy-and-data-access.md`.
+
+## Architecture
+
+```text
+client / HTTP / cron
+        │
+        ▼
+packages/backend/convex/
+        │
+        │ validation
+        │ authorization
+        │ public/internal API boundary
+        ▼
+packages/backend/business/
+        │
+        │ application policy
+        │ lifecycle decisions
+        │ cross-record orchestration
+        ▼
+packages/backend/data/
+        │
+        │ focused table reads/writes
+        │ index usage
+        │ persistence invariants
+        ▼
+      Convex
+```
+
+### `convex/`
+
+Owns Convex entry points and framework integration.
+
+Examples:
+
+- public and authenticated queries/mutations;
+- internal functions;
+- HTTP routes;
+- cron and workflow entry points;
+- argument validation;
+- authorization boundaries;
+- schema and Convex configuration.
+
+Keep application policy out of entry-point handlers when it can live behind a business function.
+
+A typical entry point should look conceptually like:
 
 ```ts
-// convex/myFunctions.ts
-import { query } from "./_generated/server";
-import { v } from "convex/values";
-
-export const myQueryFunction = query({
-  // Validators for arguments.
-  args: {
-    first: v.number(),
-    second: v.string(),
-  },
-
-  // Function implementation.
+export const subscribe = zMutation({
+  args: zNewsSubscriptionUpsert,
   handler: async (ctx, args) => {
-    // Read the database as many times as you need here.
-    // See https://docs.convex.dev/database/reading-data.
-    const documents = await ctx.db.query("tablename").collect();
-
-    // Arguments passed from the client are properties of the args object.
-    console.log(args.first, args.second);
-
-    // Write arbitrary JavaScript here: filter, aggregate, build derived data,
-    // remove non-public properties, or create new objects.
-    return documents;
+    await subscribeToNewsletter(ctx, { now: Date.now(), ...args });
   },
 });
 ```
 
-Using this query function in a React component looks like:
+### `../business/`
 
-```ts
-const data = useQuery(api.myFunctions.myQueryFunction, {
-  first: 10,
-  second: "hello",
-});
+Owns application behavior and policy.
+
+Examples:
+
+- newsletter lifecycle decisions;
+- privacy-request behavior;
+- e-book access rules;
+- retention policy;
+- Loops delivery intent and orchestration.
+
+Business modules may compose multiple data modules and other business modules.
+
+Cross-record decisions and lifecycle transitions belong here rather than in `convex/` or `data/`.
+
+### `../data/`
+
+Owns focused persistence operations.
+
+Examples:
+
+- lookup by table index;
+- get/require helpers;
+- create, patch, and delete operations;
+- pagination and bounded reads;
+- single-record persistence invariants.
+
+Data modules must not import business modules or Convex entry-point modules.
+
+Avoid moving business decisions into data helpers merely to reduce call-site code.
+
+## Finding the implementation for a feature
+
+Start from the public or internal API used by the caller, then follow the dependency direction:
+
+```text
+convex/<feature>.ts
+        ↓
+business/<feature>.ts
+        ↓
+data/<table>.ts
 ```
 
-A mutation function looks like:
+Not every feature maps one-to-one to those filenames. A business workflow may legitimately coordinate several tables or another business module.
 
-```ts
-// convex/myFunctions.ts
-import { mutation } from "./_generated/server";
-import { v } from "convex/values";
+Use `CONTEXT.md` for canonical domain terminology and read relevant ADRs when a change touches an established architectural decision.
 
-export const myMutationFunction = mutation({
-  // Validators for arguments.
-  args: {
-    first: v.string(),
-    second: v.string(),
-  },
+## Tests
 
-  // Function implementation.
-  handler: async (ctx, args) => {
-    // Insert or modify documents in the database here.
-    // Mutations can also read from the database like queries.
-    // See https://docs.convex.dev/database/writing-data.
-    const message = { body: args.first, author: args.second };
-    const id = await ctx.db.insert("messages", message);
+Backend behavior is primarily exercised through tests next to the Convex entry points:
 
-    // Optionally, return a value from your mutation.
-    return await ctx.db.get("messages", id);
-  },
-});
+```text
+convex/*.test.ts
 ```
 
-Using this mutation function in a React component looks like:
+Prefer tests through durable public/internal interfaces when possible rather than coupling tests to individual data helpers.
 
-```ts
-const mutation = useMutation(api.myFunctions.myMutationFunction);
-function handleButtonPress() {
-  // fire and forget, the most common way to use mutations
-  mutation({ first: "Hello!", second: "me" });
-  // OR
-  // use the result once the mutation has completed
-  mutation({ first: "Hello!", second: "me" }).then((result) => console.log(result));
-}
+Shared test infrastructure lives in files such as:
+
+```text
+convex/test.auth.ts
+convex/test.env.ts
+convex/test.setup.ts
 ```
 
-Use the Convex CLI to push your functions to a deployment. See everything the Convex CLI can do by running `npx convex -h` in your project root directory. To learn more, launch the docs with `npx convex docs`.
+## Generated files
+
+Do not manually edit:
+
+```text
+convex/_generated/
+```
+
+These files are generated by Convex.
+
+Generated files may be excluded from normal repository searches. Inspect them directly only when generated API or type information is relevant to the task.
+
+## Verification
+
+Use the repository verification guidance in:
+
+```text
+docs/runbooks/verification.md
+```
+
+During implementation, prefer focused tests and focused type checking.
+
+When Convex runtime or schema validation is required, local anonymous Convex is the default agent verification path.
+
+Remote Convex dev, preview, or production mutations require explicit delegation and must follow the repository's `convex-deploy-guard` policy.
+
+## Delivery boundaries
+
+Implementation authority does not automatically authorize:
+
+- remote Convex mutations;
+- commits or pushes;
+- pull-request creation;
+- Linear mutations;
+- deployment or merge.
+
+See:
+
+```text
+docs/agents/collaboration.md
+docs/workflows/delivery.md
+```

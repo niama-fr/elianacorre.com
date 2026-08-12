@@ -1,5 +1,5 @@
 import { internal } from "@ec/backend/api";
-import type { AdminMutationCtx } from "@ec/backend/convex/zod";
+import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
 import type { QueryCtx } from "@ec/backend/server";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 
@@ -72,12 +72,12 @@ export async function inspectPrivacySubject(ctx: QueryCtx, email: string) {
 }
 
 // PROCESS ACCESS --------------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyAccess(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacyAccess(ctx: AuthenticatedMutationCtx, email: string) {
   return await processDataRetrieval(ctx, email, "access");
 }
 
 // PROCESS ERASURE -------------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyErasure(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacyErasure(ctx: AuthenticatedMutationCtx, email: string) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "erasure" });
   const profile = await getProfileByEmail(ctx, email);
   if (profile && profile.role !== "contact") return await rejectRequest(ctx, { email, kind: "erasure", verificationAuditId });
@@ -89,12 +89,12 @@ export async function processPrivacyErasure(ctx: AdminMutationCtx, email: string
 }
 
 // PROCESS EXPORT --------------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyExport(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacyExport(ctx: AuthenticatedMutationCtx, email: string) {
   return await processDataRetrieval(ctx, email, "export");
 }
 
 // PROCESS OBJECTION -----------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyObjection(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacyObjection(ctx: AuthenticatedMutationCtx, email: string) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "objection" });
   const profileId = await getProfileIdByEmail(ctx, email);
   await ensureNewsSuppression(ctx, email);
@@ -108,7 +108,10 @@ export async function processPrivacyObjection(ctx: AdminMutationCtx, email: stri
 }
 
 // PROCESS RECTIFICATION -------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyRectification(ctx: AdminMutationCtx, { email, firstName }: { email: string; firstName?: string }) {
+export async function processPrivacyRectification(
+  ctx: AuthenticatedMutationCtx,
+  { email, firstName }: { email: string; firstName?: string }
+) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "rectification" });
   const profileId = await getProfileIdByEmail(ctx, email);
   if (profileId) await patchProfile(ctx, profileId, { firstName });
@@ -117,7 +120,7 @@ export async function processPrivacyRectification(ctx: AdminMutationCtx, { email
 }
 
 // PROCESS SUPPRESSION REMOVAL -------------------------------------------------------------------------------------------------------------
-export async function processPrivacySuppressionRemoval(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacySuppressionRemoval(ctx: AuthenticatedMutationCtx, email: string) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "suppressionRemoval" });
   const deleted = await deleteNewsSuppressionByEmail(ctx, email);
   const { outcome } = await recordRequest(ctx, { email, isCompleted: deleted, kind: "suppressionRemoval", verificationAuditId });
@@ -125,7 +128,7 @@ export async function processPrivacySuppressionRemoval(ctx: AdminMutationCtx, em
 }
 
 // PROCESS UNSUBSCRIPTION ------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyUnsubscription(ctx: AdminMutationCtx, email: string) {
+export async function processPrivacyUnsubscription(ctx: AuthenticatedMutationCtx, email: string) {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: "unsubscription" });
   const profileId = await getProfileIdByEmail(ctx, email);
   if (!profileId) return await rejectRequest(ctx, { email, kind: "unsubscription", verificationAuditId });
@@ -138,7 +141,7 @@ export async function processPrivacyUnsubscription(ctx: AdminMutationCtx, email:
 }
 
 // PROCESS VERIFICATION --------------------------------------------------------------------------------------------------------------------
-export async function processPrivacyVerification(ctx: AdminMutationCtx, { outcome, ...create }: ProcessVerificationOpts) {
+export async function processPrivacyVerification(ctx: AuthenticatedMutationCtx, { outcome, ...create }: ProcessVerificationOpts) {
   const verificationAuditId = await createPrivacyAuditVerification(ctx, { ...create, outcome, performedBy: ctx.profile._id });
   if (outcome === "completed") {
     const expiresAt = Date.now() + PRIVACY_GRANT_TTL_MS;
@@ -156,7 +159,7 @@ export async function processPrivacyVerification(ctx: AdminMutationCtx, { outcom
 type ProcessVerificationOpts = Omit<PrivacyAudits["VerificationCreate"], "kind" | "performedBy">;
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
-async function processDataRetrieval(ctx: AdminMutationCtx, email: string, kind: "access" | "export") {
+async function processDataRetrieval(ctx: AuthenticatedMutationCtx, email: string, kind: "access" | "export") {
   const verificationAuditId = await consumePrivacyGrant(ctx, { email, now: Date.now(), requestKind: kind });
   const data = await inspectPrivacySubject(ctx, email);
   const isKnownSubject =
@@ -168,17 +171,17 @@ async function processDataRetrieval(ctx: AdminMutationCtx, email: string, kind: 
   return { data: isKnownSubject ? data : null, outcome };
 }
 
-async function recordRequest(ctx: AdminMutationCtx, { isCompleted, ...create }: RecordRequestOpts) {
+async function recordRequest(ctx: AuthenticatedMutationCtx, { isCompleted, ...create }: RecordRequestOpts) {
   const outcome: PrivacyAudits["Outcome"] = isCompleted ? "completed" : "rejected";
   return { outcome, privacyAuditId: await createPrivacyAuditRequest(ctx, { ...create, outcome, performedBy: ctx.profile._id }) };
 }
 type RecordRequestOpts = Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy"> & { isCompleted: boolean };
 
-async function completeRequest(ctx: AdminMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
+async function completeRequest(ctx: AuthenticatedMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
   return await recordRequest(ctx, { ...create, isCompleted: true });
 }
 
-async function rejectRequest(ctx: AdminMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
+async function rejectRequest(ctx: AuthenticatedMutationCtx, create: Omit<PrivacyAudits["RequestCreate"], "outcome" | "performedBy">) {
   const { outcome } = await recordRequest(ctx, { ...create, isCompleted: false });
   return { outcome };
 }
