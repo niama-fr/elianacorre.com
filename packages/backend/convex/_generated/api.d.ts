@@ -18,6 +18,7 @@ import type * as legalTexts from "../legalTexts.js";
 import type * as loops from "../loops.js";
 import type * as newsletter from "../newsletter.js";
 import type * as privacy from "../privacy.js";
+import type * as profiles from "../profiles.js";
 import type * as retention from "../retention.js";
 import type * as seed from "../seed.js";
 import type * as workflow from "../workflow.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   loops: typeof loops;
   newsletter: typeof newsletter;
   privacy: typeof privacy;
+  profiles: typeof profiles;
   retention: typeof retention;
   seed: typeof seed;
   workflow: typeof workflow;

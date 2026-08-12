@@ -1,4 +1,4 @@
-import type { AdminMutationCtx } from "@ec/backend/convex/zod";
+import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
 import type { QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { Ebooks } from "@ec/domain/schemas/ebooks";
@@ -43,7 +43,7 @@ export const listPublishedEbooks = async (ctx: QueryCtx) =>
     .collect();
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createEbook = async (ctx: AdminMutationCtx, { now, ...payload }: WithNow<Ebooks["Create"]>) => {
+export const createEbook = async (ctx: AuthenticatedMutationCtx, { now, ...payload }: WithNow<Ebooks["Create"]>) => {
   const storageDoc = await ctx.db.system.get("_storage", payload.storageId);
   const parsed = zStoragePdfDoc.safeParse(storageDoc);
 
@@ -62,15 +62,15 @@ export const createEbook = async (ctx: AdminMutationCtx, { now, ...payload }: Wi
 };
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchEbook = async (ctx: AdminMutationCtx, id: Id<"ebooks">, patch: Partial<Ebooks["Fields"]>) => {
+export const patchEbook = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, patch: Partial<Ebooks["Fields"]>) => {
   await ctx.db.patch("ebooks", id, patch);
 };
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markEbookArchived = async (ctx: AdminMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
+export const markEbookArchived = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
   await patchEbook(ctx, id, { status: "archived", updatedAt: now });
 };
 
-export const markEbookPublished = async (ctx: AdminMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
+export const markEbookPublished = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
   await patchEbook(ctx, id, { publishedAt: now, publishedBy: ctx.profile._id, status: "published", updatedAt: now });
 };

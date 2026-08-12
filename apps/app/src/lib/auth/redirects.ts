@@ -1,14 +1,32 @@
-const DEFAULT_AUTH_REDIRECT = "/";
-const AUTH_REDIRECT_ORIGIN = "https://authenticated.invalid";
+import type { Profiles } from "@ec/domain/schemas/profiles";
+import { z } from "@ec/validation/zod";
+import { linkOptions } from "@tanstack/react-router";
 
-export const getSafeAuthRedirect = (value: unknown): string => {
-  if (typeof value !== "string" || !value.startsWith("/")) return DEFAULT_AUTH_REDIRECT;
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
+const AUTH_REDIRECT_BASE = "https://authenticated.invalid";
 
-  try {
-    const redirect = new URL(value, AUTH_REDIRECT_ORIGIN);
-    if (redirect.origin !== AUTH_REDIRECT_ORIGIN) return DEFAULT_AUTH_REDIRECT;
+const AUTHENTICATED_LANDINGS = {
+  admin: linkOptions({ to: "/admin/ebooks" }),
+  contact: linkOptions({ to: "/acces-refuse" }),
+  member: linkOptions({ to: "/" }),
+} satisfies Record<Profiles["Role"], object>;
+
+// SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
+const zAuthRedirect = z
+  .string()
+  .startsWith("/")
+  .transform((value, ctx) => {
+    const redirect = URL.parse(value, AUTH_REDIRECT_BASE);
+    if (redirect?.origin !== AUTH_REDIRECT_BASE) {
+      ctx.issues.push({ code: "custom", input: value, message: "Invalid auth redirect" });
+      return z.NEVER;
+    }
     return `${redirect.pathname}${redirect.search}${redirect.hash}`;
-  } catch {
-    return DEFAULT_AUTH_REDIRECT;
-  }
-};
+  })
+  // oxlint-disable-next-line promise/prefer-await-to-then
+  .catch("/");
+
+// ROUTES ----------------------------------------------------------------------------------------------------------------------------------
+export const getAuthenticatedLanding = ({ role }: Pick<Profiles["Entity"], "role">) => AUTHENTICATED_LANDINGS[role];
+
+export const getSafeAuthRedirect = (value: unknown): string => zAuthRedirect.parse(value);

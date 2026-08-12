@@ -18,7 +18,7 @@ import { features, getColumns } from "./ebooks/-table-features";
 const ebooksQuery = convexQuery(api.ebooks.list);
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createFileRoute("/_authenticated/ebooks")({
+export const Route = createFileRoute("/_authenticated/admin/ebooks")({
   component: EbooksPage,
   loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(ebooksQuery),
 });
