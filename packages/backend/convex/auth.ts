@@ -5,7 +5,7 @@ import { z } from "@ec/validation/zod";
 import { betterAuth } from "better-auth/minimal";
 import { ConvexError } from "convex/values";
 
-import { createIdentity, getIdentityByAdapterId, getIdentityByProfileId } from "../data/identities";
+import { createIdentity, getIdentityByProfileId } from "../data/identities";
 import { createMemberProfile, getProfileByEmail } from "../data/profiles";
 import { components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
@@ -15,8 +15,6 @@ import authConfig from "./auth.config";
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
 const zHttpUrlObject = z.url({ protocol: /^https?$/u }).transform((value) => new URL(value));
 const AUTH_PLACEHOLDER_EMAIL_DOMAIN = "auth.invalid";
-
-const zBetterAuthUser = z.object({ _id: z.string(), email: z.string() });
 
 export const zBaseUrl = zHttpUrlObject
   .refine((url) => url.href === `${url.origin}/`, "APP_SITE_URL must be an HTTP(S) origin without a path, query, hash, or credentials")
@@ -33,19 +31,10 @@ const authFunctions: AuthFunctions = internal.auth;
 export const authComponent = createClient<DataModel>(components.betterAuth, {
   authFunctions,
   triggers: {
-    account: {
-      onCreate: async (ctx, { providerId, userId }) => {
-        const identityByAdapterId = await getIdentityByAdapterId(ctx, userId);
-        if (identityByAdapterId) return;
-
-        const user = zBetterAuthUser.parse(
-          await ctx.runQuery(components.betterAuth.adapter.findOne, {
-            model: "user",
-            where: [{ field: "_id", value: userId }],
-          })
-        );
+    user: {
+      onCreate: async (ctx, user) => {
         const emailParsed = zCanonicalEmail.safeParse(user.email);
-        const adminProfile = providerId === "google" && emailParsed.success ? await getProfileByEmail(ctx, emailParsed.data) : undefined;
+        const adminProfile = emailParsed.success ? await getProfileByEmail(ctx, emailParsed.data) : undefined;
         const profileId = adminProfile?.role === "admin" ? adminProfile._id : await createMemberProfile(ctx);
 
         if (adminProfile?.role === "admin") {
@@ -53,7 +42,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           if (existingAdminIdentity) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
         }
 
-        await createIdentity(ctx, { adapterId: userId, profileId });
+        await createIdentity(ctx, { adapterId: user._id, profileId });
       },
     },
   },

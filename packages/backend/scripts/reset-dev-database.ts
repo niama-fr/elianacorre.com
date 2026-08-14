@@ -1,14 +1,23 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import path from "node:path";
+import { styleText } from "node:util";
+
+import { intro, log, note, outro, progress, spinner } from "@clack/prompts";
+import { $ } from "bun";
 
 // CONSTS -----------------------------------------------------------------------------------------------------------------------------------
 
 const DEPLOYMENT = "dev" as const;
-const BACKEND_DIR = resolve(import.meta.dir, "..");
+const BACKEND_DIR = path.resolve(import.meta.dir, "..");
 
 const CONVEX_TRANSIENT_OUTPUT = /^Attempting reconnect in \d+ms$/u;
 const CONVEX_TABLE_NAME = /^[A-Za-z0-9][A-Za-z0-9_]*$/u;
+const DEFAULT_TERMINAL_COLUMNS = 80;
+const DEFAULT_PROGRESS_SIZE = 40;
+const PROGRESS_RESERVED_COLUMNS = 8;
+
+const styleProgressFrame = (frame: string): string => styleText("magenta", frame);
 
 const SCOPES = [
   {
@@ -60,11 +69,6 @@ type ResetPreparation = {
   canceledWorkflows: number;
 };
 
-type StorageBatchResult = {
-  deleted: number;
-  done: boolean;
-};
-
 type ScopePlan = {
   component?: string;
   label: string;
@@ -83,30 +87,25 @@ async function runCommand(
     cwd?: string;
   } = {}
 ): Promise<CommandResult> {
-  const child = Bun.spawn(command, {
-    cwd,
-    env: {
+  const output = await $`${[...command]}`
+    .cwd(cwd)
+    .env({
       ...process.env,
       NO_COLOR: "1",
-    },
-    stderr: "pipe",
-    stdout: "pipe",
-  });
+    })
+    .nothrow()
+    .quiet();
 
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ]);
-
-  if (exitCode !== 0 && !allowFailure)
-    throw new Error([`Command failed: ${command.join(" ")}`, stdout.trim(), stderr.trim()].filter(Boolean).join("\n"));
-
-  return {
-    exitCode,
-    stderr,
-    stdout,
+  const result = {
+    exitCode: output.exitCode,
+    stderr: output.stderr.toString(),
+    stdout: output.stdout.toString(),
   };
+
+  if (result.exitCode !== 0 && !allowFailure)
+    throw new Error([`Command failed: ${command.join(" ")}`, result.stdout.trim(), result.stderr.trim()].filter(Boolean).join("\n"));
+
+  return result;
 }
 
 async function runConvex(
@@ -127,23 +126,27 @@ function cleanConvexStdout(stdout: string): string {
     .join("\n");
 }
 
-function parseJson<T>(stdout: string): T {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseJson(stdout: string): unknown {
   const text = cleanConvexStdout(stdout).trim();
 
   if (!text) throw new Error("Convex returned an empty response");
 
   const lines = text.split(/\r?\n/u);
 
-  for (let start = 0; start < lines.length; start++) {
+  for (let start = 0; start < lines.length; start += 1) {
     const firstLine = lines[start]?.trimStart();
 
     if (firstLine === undefined || (!firstLine.startsWith("{") && !firstLine.startsWith("["))) continue;
 
-    for (let end = lines.length; end > start; end--) {
+    for (let end = lines.length; end > start; end -= 1) {
       const candidate = lines.slice(start, end).join("\n").trim();
 
       try {
-        return JSON.parse(candidate) as T;
+        return JSON.parse(candidate) as unknown;
       } catch {
         // Continue looking for the JSON payload.
       }
@@ -153,16 +156,16 @@ function parseJson<T>(stdout: string): T {
   throw new Error(`Could not parse Convex output as JSON:\n${text}`);
 }
 
-function parseJsonArray<T>(stdout: string): T[] {
+function parseJsonArray(stdout: string): unknown[] {
   const text = cleanConvexStdout(stdout).trim();
 
   if (!text) return [];
 
-  const parsed = parseJson<unknown>(text);
+  const parsed = parseJson(text);
 
   if (!Array.isArray(parsed)) throw new Error(`Expected Convex to return a JSON array:\n${text}`);
 
-  return parsed as T[];
+  return parsed;
 }
 
 function parseTableNames(stdout: string): string[] {
@@ -214,17 +217,13 @@ async function listOneDocument(table: string, component?: string): Promise<unkno
 
   const { stdout } = await runConvex(args);
 
-  return parseJsonArray<unknown>(stdout);
+  return parseJsonArray(stdout);
 }
 
 // PREFLIGHT --------------------------------------------------------------------------------------------------------------------------------
 
-async function assertZipAvailable(): Promise<void> {
-  const result = await runCommand(["zip", "-v"], {
-    allowFailure: true,
-  });
-
-  if (result.exitCode !== 0) throw new Error('The "zip" command is required by the Convex dev reset script.');
+function assertZipAvailable(): void {
+  if (Bun.which("zip") === null) throw new Error('The "zip" command is required by the Convex dev reset script.');
 }
 
 async function assertComponentHasNoStorage(component: string): Promise<void> {
@@ -242,7 +241,7 @@ async function assertComponentHasNoStorage(component: string): Promise<void> {
     );
   }
 
-  const files = parseJsonArray<unknown>(result.stdout);
+  const files = parseJsonArray(result.stdout);
 
   if (files.length > 0)
     throw new Error(
@@ -281,23 +280,23 @@ async function buildPlan(): Promise<ScopePlan[]> {
 async function createEmptySnapshot(temporaryDirectory: string, plan: ScopePlan, index: number): Promise<string | null> {
   if (plan.tables.length === 0) return null;
 
-  const snapshotDirectory = join(temporaryDirectory, `snapshot-${index}`);
+  const snapshotDirectory = path.join(temporaryDirectory, `snapshot-${index}`);
 
   await mkdir(snapshotDirectory, {
     recursive: true,
   });
 
   for (const table of plan.tables) {
-    const tableDirectory = join(snapshotDirectory, table);
+    const tableDirectory = path.join(snapshotDirectory, table);
 
     await mkdir(tableDirectory, {
       recursive: true,
     });
 
-    await writeFile(join(tableDirectory, "documents.jsonl"), "");
+    await writeFile(path.join(tableDirectory, "documents.jsonl"), "");
   }
 
-  const snapshotPath = join(temporaryDirectory, `snapshot-${index}.zip`);
+  const snapshotPath = path.join(temporaryDirectory, `snapshot-${index}.zip`);
 
   await runCommand(["zip", "-q", "-r", snapshotPath, "."], {
     cwd: snapshotDirectory,
@@ -311,7 +310,15 @@ async function createEmptySnapshot(temporaryDirectory: string, plan: ScopePlan, 
 async function prepareRuntime(): Promise<ResetPreparation> {
   const { stdout } = await runConvex(["run", "--deployment", DEPLOYMENT, "--push", "dev:prepareReset", "{}"]);
 
-  return parseJson<ResetPreparation>(stdout);
+  const result = parseJson(stdout);
+
+  if (!isRecord(result) || typeof result.canceledScheduledFunctions !== "number" || typeof result.canceledWorkflows !== "number")
+    throw new Error("Convex returned an invalid reset preparation payload");
+
+  return {
+    canceledScheduledFunctions: result.canceledScheduledFunctions,
+    canceledWorkflows: result.canceledWorkflows,
+  };
 }
 
 async function deleteRootStorage(): Promise<number> {
@@ -320,7 +327,10 @@ async function deleteRootStorage(): Promise<number> {
   for (;;) {
     const { stdout } = await runConvex(["run", "--deployment", DEPLOYMENT, "dev:deleteStorageBatch", "{}"]);
 
-    const result = parseJson<StorageBatchResult>(stdout);
+    const result = parseJson(stdout);
+
+    if (!isRecord(result) || typeof result.deleted !== "number" || typeof result.done !== "boolean")
+      throw new Error("Convex returned an invalid storage deletion payload");
 
     deleted += result.deleted;
 
@@ -338,13 +348,54 @@ async function clearScope(snapshotPath: string, plan: ScopePlan): Promise<void> 
   await runConvex(args);
 }
 
+// OUTPUT -----------------------------------------------------------------------------------------------------------------------------------
+
+function getProgressSize(messages: readonly string[]): number {
+  const terminalColumns = process.stdout.columns ?? DEFAULT_TERMINAL_COLUMNS;
+  // oxlint-disable-next-line unicorn/no-array-reduce
+  const longestMessageLength = messages.reduce((longest, message) => Math.max(longest, message.length), 0);
+
+  return Math.max(1, Math.min(DEFAULT_PROGRESS_SIZE, terminalColumns - longestMessageLength - PROGRESS_RESERVED_COLUMNS));
+}
+
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function runWithSpinner<T>({
+  failureMessage,
+  operation,
+  startMessage,
+  successMessage,
+}: {
+  failureMessage: string;
+  operation: () => Promise<T>;
+  startMessage: string;
+  successMessage: (result: T) => string;
+}): Promise<T> {
+  const indicator = spinner({ styleFrame: styleProgressFrame });
+
+  indicator.start(startMessage);
+
+  try {
+    const result = await operation();
+
+    indicator.stop(successMessage(result));
+
+    return result;
+  } catch (error) {
+    indicator.error(failureMessage);
+    throw error;
+  }
+}
+
 // MAIN -------------------------------------------------------------------------------------------------------------------------------------
 
-async function main() {
-  console.log("Resetting Convex personal dev deployment...");
-  console.log("Target: --deployment dev\n");
+async function main(): Promise<void> {
+  intro("Reset Convex dev database");
+  note("Deployment: personal dev (--deployment dev)\nMode: destructive and non-interactive", "Target");
 
-  await assertZipAvailable();
+  assertZipAvailable();
 
   /*
    * Every stateful component mounted by convex.config.ts, including nested
@@ -354,63 +405,112 @@ async function main() {
    * table empty regardless, and individual remote inspections dominate the
    * execution time.
    */
-  console.log("Preflight");
+  const [plans, rootStorage] = await runWithSpinner({
+    failureMessage: "Preflight failed",
+    operation: async () => await Promise.all([buildPlan(), listOneDocument("_storage")]),
+    startMessage: "Inspecting configured database scopes",
+    successMessage: ([resolvedPlans]) => {
+      const tableCount = resolvedPlans.reduce((total, plan) => total + plan.tables.length, 0);
 
-  const [plans, rootStorage] = await Promise.all([buildPlan(), listOneDocument("_storage")]);
+      return `Discovered ${resolvedPlans.length} database scope(s) and ${tableCount} table(s)`;
+    },
+  });
 
-  const tableCount = plans.reduce((total, plan) => total + plan.tables.length, 0);
+  if (rootStorage.length > 0) log.warn("Application storage contains file(s) that will be deleted last");
+  else log.info("Application storage is already empty");
 
-  console.log(`✓ ${plans.length} database scope(s) discovered`);
-  console.log(`✓ ${tableCount} table(s) discovered`);
-  console.log(rootStorage.length > 0 ? "! application storage contains file(s)" : "- application storage empty");
-
-  const temporaryDirectory = await mkdtemp(join(tmpdir(), "elianacorre-convex-reset-"));
+  const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "elianacorre-convex-reset-"));
 
   try {
-    const snapshots = await Promise.all(
-      plans.map(async (plan, index) => ({
-        path: await createEmptySnapshot(temporaryDirectory, plan, index),
-        plan,
-      }))
-    );
+    const snapshots = await runWithSpinner({
+      failureMessage: "Could not prepare empty snapshots",
+      operation: async () =>
+        await Promise.all(
+          plans.map(async (plan, index) => ({
+            path: await createEmptySnapshot(temporaryDirectory, plan, index),
+            plan,
+          }))
+        ),
+      startMessage: "Preparing empty Convex snapshots",
+      successMessage: (resolvedSnapshots) => {
+        const snapshotCount = resolvedSnapshots.filter((snapshot) => snapshot.path !== null).length;
 
-    console.log("\nReset");
+        return `Prepared ${snapshotCount} empty snapshot(s)`;
+      },
+    });
 
-    const preparation = await prepareRuntime();
+    const preparation = await runWithSpinner({
+      failureMessage: "Could not prepare the Convex runtime for reset",
+      operation: prepareRuntime,
+      startMessage: "Canceling active workflows and scheduled functions",
+      successMessage: (result) =>
+        `Canceled ${result.canceledWorkflows} workflow(s) and ${result.canceledScheduledFunctions} scheduled function(s)`,
+    });
 
-    console.log(`✓ canceled ${preparation.canceledWorkflows} active workflow(s)`);
-    console.log(`✓ canceled ${preparation.canceledScheduledFunctions} scheduled function(s)`);
+    const clearableSnapshots = snapshots.filter((snapshot): snapshot is { path: string; plan: ScopePlan } => snapshot.path !== null);
+    const emptyScopes = snapshots.filter((snapshot) => snapshot.path === null);
+
+    for (const snapshot of emptyScopes) log.info(`${snapshot.plan.label}: no tables to clear`);
 
     let clearedTables = 0;
 
-    for (const snapshot of snapshots) {
-      if (snapshot.path === null) {
-        console.log(`- ${snapshot.plan.label}: no tables`);
-        continue;
+    if (clearableSnapshots.length > 0) {
+      const progressMessages = clearableSnapshots.map(
+        (snapshot, index) => `[${index + 1}/${clearableSnapshots.length}] ${snapshot.plan.label}`
+      );
+      const scopeProgress = progress({
+        max: clearableSnapshots.length,
+        size: getProgressSize(progressMessages),
+        styleFrame: styleProgressFrame,
+      });
+
+      scopeProgress.start(progressMessages[0]);
+
+      try {
+        for (const [index, snapshot] of clearableSnapshots.entries()) {
+          const message = progressMessages[index];
+
+          if (message === undefined) throw new Error("Missing database scope progress message");
+          if (index > 0) scopeProgress.message(message);
+
+          await clearScope(snapshot.path, snapshot.plan);
+
+          clearedTables += snapshot.plan.tables.length;
+          scopeProgress.advance();
+        }
+
+        scopeProgress.stop(`Cleared ${clearedTables} table(s) across ${clearableSnapshots.length} scope(s)`);
+      } catch (error) {
+        scopeProgress.error("Database scope reset failed");
+        throw error;
       }
-
-      await clearScope(snapshot.path, snapshot.plan);
-
-      clearedTables += snapshot.plan.tables.length;
-
-      console.log(`✓ ${snapshot.plan.label}: ${snapshot.plan.tables.length} table(s) cleared`);
-    }
+    } else log.info("No database tables require clearing");
 
     /*
      * Root file storage is deleted last so a failed table reset cannot leave
      * surviving application documents pointing at files already removed.
      */
-    const deletedFiles = rootStorage.length > 0 ? await deleteRootStorage() : 0;
+    const deletedFiles =
+      rootStorage.length > 0
+        ? await runWithSpinner({
+            failureMessage: "Could not delete application storage",
+            operation: deleteRootStorage,
+            startMessage: "Deleting application storage",
+            successMessage: (count) => `Deleted ${count} stored file(s)`,
+          })
+        : 0;
 
-    console.log(`✓ ${deletedFiles} stored file(s) deleted`);
+    note(
+      [
+        `${clearedTables} table(s) cleared`,
+        `${deletedFiles} stored file(s) deleted`,
+        `${preparation.canceledWorkflows} active workflow(s) canceled`,
+        `${preparation.canceledScheduledFunctions} scheduled function(s) canceled`,
+      ].join("\n"),
+      "Summary"
+    );
 
-    console.log("\nSummary");
-    console.log(`✓ ${clearedTables} table(s) cleared`);
-    console.log(`✓ ${deletedFiles} stored file(s) deleted`);
-    console.log(`✓ ${preparation.canceledWorkflows} active workflow(s) canceled`);
-    console.log(`✓ ${preparation.canceledScheduledFunctions} scheduled function(s) canceled`);
-
-    console.log("\n✓ Convex dev database reset complete.");
+    outro("Convex dev database reset complete");
   } finally {
     await rm(temporaryDirectory, {
       force: true,
@@ -419,4 +519,9 @@ async function main() {
   }
 }
 
-await main();
+try {
+  await main();
+} catch (error) {
+  log.error(formatError(error));
+  process.exitCode = 1;
+}

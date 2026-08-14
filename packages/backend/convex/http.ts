@@ -58,7 +58,7 @@ http.route({
 });
 
 function redirectToEbookRecovery() {
-  return Response.redirect(new URL("/newsletter/ebook", env.SITE_URL), 302);
+  return Response.redirect(new URL("/newsletter/ebook", env.SITE_URL).href, 302);
 }
 
 export default http;

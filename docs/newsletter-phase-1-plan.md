@@ -88,7 +88,7 @@ Better Auth with Convex authenticates administrators in phase 1:
 - Workspace domain membership alone grants no role;
 - no newsletter subscriber receives an account.
 
-The same identity foundation now supports member social authentication through Google, Facebook/Meta, and Twitter/X. Routine member login does not use magic links, authentication email, or email/password credentials; Better Auth provider accounts link to the application’s canonical Profile.
+The same identity foundation now supports social authentication through Google, Facebook/Meta, and Twitter/X. Routine login does not use magic links, authentication email, or email/password credentials. Better Auth may link several provider Accounts to one Better Auth User; the application maps that User once through an Identity to the canonical Profile.
 
 ### Google and reply routing
 
@@ -147,7 +147,7 @@ Loops failure does not roll back confirmation or access. Convex Workflow retries
 
 ### Future account linking
 
-Creating or authenticating a member Account never implies newsletter consent. Provider email—including hidden, absent, or changing values—is optional contact or verification data rather than the durable identity key; matching or apparently related emails do not automatically merge Accounts or Profiles. Any future flow for explicitly linking another provider or claiming an earlier purchase must prove control through a separately specified flow and retain ownership on the canonical Profile identifier.
+Creating or authenticating a member Account never implies newsletter consent. Better Auth may link provider Accounts to one Better Auth User according to its supported rules, while the application does not merge independently created Better Auth Users or Profiles from matching or apparently related email. Provider email—including hidden, absent, or changing values—is optional contact or verification data rather than the durable identity key. Any future flow for explicitly linking independent Users or claiming an earlier purchase must prove control through a separately specified flow and retain ownership on the canonical Profile identifier.
 
 ## E-book management
 
@@ -230,7 +230,7 @@ Each runbook must name prerequisites, expected results, verification, recovery, 
 - Open tracking is disabled and allowed tracking is disclosed.
 - Detailed operational records expire after 90 days; pending records expire after 30 days.
 - Non-production cannot send to arbitrary real addresses or access production contacts.
-- Only explicitly allowlisted Google identities can administer the system.
+- Only Accounts associated with explicitly provisioned administrator Profiles can administer the system; provider choice and Workspace-domain membership alone grant no role.
 - Administrators can manage e-book publication and individual privacy operations without direct database access.
 - Provider-independent export works without exposing active tokens or sensitive short-lived logs.
 - A verified erasure removes identifying data and e-book access while preserving only legally justified minimal suppression data.

@@ -18,7 +18,7 @@ describe("privacy-notice cache revalidation", () => {
 
     const result = await convexTest(schema, modules).action(internal.cache.revalidatePrivacyNotice, {});
 
-    expect(result).toStrictEqual({ status: "skipped" });
+    expect(result).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

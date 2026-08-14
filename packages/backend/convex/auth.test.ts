@@ -24,11 +24,30 @@ const createBetterAuthUser = async (convex: TestConvex<typeof schema>, email: st
   );
 };
 
-const attachProvider = async (convex: TestConvex<typeof schema>, userId: string, providerId: "facebook" | "google" | "twitter") =>
-  await convex.mutation(internal.auth.onCreate, {
-    doc: { _id: `${providerId}-${userId}`, providerId, userId },
-    model: "account",
-  });
+const synchronizeUser = async (convex: TestConvex<typeof schema>, user: z.infer<typeof zBetterAuthUser>) =>
+  await convex.mutation(internal.auth.onCreate, { doc: user, model: "user" });
+
+const createBetterAuthAccount = async (
+  convex: TestConvex<typeof schema>,
+  userId: string,
+  providerId: "facebook" | "google" | "twitter"
+) => {
+  const now = Date.now();
+  return zBetterAuthAccount.parse(
+    await convex.mutation(components.betterAuth.adapter.create, {
+      input: {
+        data: {
+          accountId: `${providerId}-provider-subject`,
+          createdAt: now,
+          providerId,
+          updatedAt: now,
+          userId,
+        },
+        model: "account",
+      },
+    })
+  );
+};
 
 describe("authentication URL validation", () => {
   it.each([
@@ -59,13 +78,12 @@ describe("authentication URL validation", () => {
 });
 
 describe("authentication identity synchronization", () => {
-  it("creates and idempotently links a member Profile for a Google authentication user", async () => {
+  it("creates one email-independent member Profile and Identity when a Better Auth User is created", async () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const user = await createBetterAuthUser(convex, " AUTH@Example.COM ");
 
-    await attachProvider(convex, user._id, "google");
-    await attachProvider(convex, user._id, "google");
+    await synchronizeUser(convex, user);
 
     const state = await convex.run(async (ctx) => ({
       identities: await ctx.db.query("identities").collect(),
@@ -88,21 +106,8 @@ describe("authentication identity synchronization", () => {
     registerBetterAuth(convex);
     const now = Date.now();
     const user = await createBetterAuthUser(convex, "facebook-member@example.com", "Facebook member", false);
-    const account = zBetterAuthAccount.parse(
-      await convex.mutation(components.betterAuth.adapter.create, {
-        input: {
-          data: {
-            accountId: "facebook-provider-subject",
-            createdAt: now,
-            providerId: "facebook",
-            updatedAt: now,
-            userId: user._id,
-          },
-          model: "account",
-        },
-      })
-    );
-    await convex.mutation(internal.auth.onCreate, { doc: account, model: "account" });
+    await synchronizeUser(convex, user);
+    await createBetterAuthAccount(convex, user._id, "facebook");
     const session = zBetterAuthSession.parse(
       await convex.mutation(components.betterAuth.adapter.create, {
         input: {
@@ -139,7 +144,7 @@ describe("authentication identity synchronization", () => {
     );
     const user = await createBetterAuthUser(convex, "auth@example.com");
 
-    await attachProvider(convex, user._id, "facebook");
+    await synchronizeUser(convex, user);
 
     const state = await convex.run(async (ctx) => ({
       identities: await ctx.db.query("identities").collect(),
@@ -150,31 +155,30 @@ describe("authentication identity synchronization", () => {
     expect(state.identities[0]?.profileId).not.toBe(existingProfileId);
   });
 
-  it("keeps independently authenticated provider Accounts with different emails separate", async () => {
+  it("keeps one application Identity and Profile when multiple provider Accounts belong to one Better Auth User", async () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
-    const googleUser = await createBetterAuthUser(convex, "member@example.com", "Google member");
-    const facebookUser = await createBetterAuthUser(convex, "meta-member@example.com", "Meta member");
+    const user = await createBetterAuthUser(convex, "member@example.com");
 
-    await attachProvider(convex, googleUser._id, "google");
-    await attachProvider(convex, facebookUser._id, "facebook");
+    await synchronizeUser(convex, user);
+    await createBetterAuthAccount(convex, user._id, "google");
+    await createBetterAuthAccount(convex, user._id, "facebook");
 
     const state = await convex.run(async (ctx) => ({
       identities: await ctx.db.query("identities").collect(),
       profiles: await ctx.db.query("profiles").collect(),
     }));
-    expect(state.identities).toHaveLength(2);
-    expect(state.profiles).toHaveLength(2);
+    expect(state.identities).toHaveLength(1);
+    expect(state.profiles).toHaveLength(1);
     expect(state.profiles[0]).not.toHaveProperty("email");
-    expect(state.profiles[1]).not.toHaveProperty("email");
-    expect(state.identities[0]?.profileId).not.toBe(state.identities[1]?.profileId);
+    expect(state.identities[0]).toMatchObject({ adapterId: user._id, profileId: state.profiles[0]?._id });
   });
 
   it("does not move a Profile when the Authentication Provider email changes", async () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const user = await createBetterAuthUser(convex, "original@example.com");
-    await attachProvider(convex, user._id, "twitter");
+    await synchronizeUser(convex, user);
 
     await convex.mutation(internal.auth.onUpdate, {
       model: "user",
@@ -190,19 +194,19 @@ describe("authentication identity synchronization", () => {
     expect(state.identities).toMatchObject([{ adapterId: user._id, profileId: state.profiles[0]?._id }]);
   });
 
-  it("links the existing explicitly provisioned administrator Profile through Google", async () => {
+  it("links a new Better Auth User to an explicitly provisioned administrator Profile by canonical email", async () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const adminProfileId = await convex.run(async (ctx) => await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" }));
     const adminUser = await createBetterAuthUser(convex, "admin@example.com", "Admin");
 
-    await attachProvider(convex, adminUser._id, "google");
+    await synchronizeUser(convex, adminUser);
 
     const identities = await convex.run(async (ctx) => await ctx.db.query("identities").collect());
     expect(identities).toContainEqual(expect.objectContaining({ adapterId: adminUser._id, profileId: adminProfileId }));
   });
 
-  it("rejects a Google administrator association when the Profile already has an authentication identity", async () => {
+  it("rejects administrator association when the Profile already has an authentication identity", async () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const adminProfileId = await convex.run(async (ctx) => {
@@ -212,21 +216,10 @@ describe("authentication identity synchronization", () => {
     });
     const user = await createBetterAuthUser(convex, "admin@example.com", "Other");
 
-    await expect(attachProvider(convex, user._id, "google")).rejects.toThrow("PROFILE_AUTH_IDENTITY_CONFLICT");
+    await expect(synchronizeUser(convex, user)).rejects.toThrow("PROFILE_AUTH_IDENTITY_CONFLICT");
 
     const identities = await convex.run(async (ctx) => await ctx.db.query("identities").collect());
     expect(identities).toStrictEqual([expect.objectContaining({ adapterId: "existing-admin-user", profileId: adminProfileId })]);
-  });
-
-  it("does not associate a non-Google Account with an administrator Profile from email", async () => {
-    const convex = convexTest(schema, modules);
-    registerBetterAuth(convex);
-    const adminProfileId = await convex.run(async (ctx) => await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" }));
-    const user = await createBetterAuthUser(convex, "admin@example.com", "Meta user");
-    await attachProvider(convex, user._id, "facebook");
-
-    const identity = await convex.run(async (ctx) => await ctx.db.query("identities").unique());
-    expect(identity?.profileId).not.toBe(adminProfileId);
   });
 
   it("does not associate a new Account with an existing member Profile from email", async () => {
@@ -236,7 +229,7 @@ describe("authentication identity synchronization", () => {
       async (ctx) => await ctx.db.insert("profiles", { email: "member@example.com", role: "member" })
     );
     const user = await createBetterAuthUser(convex, "member@example.com", "New provider account");
-    await attachProvider(convex, user._id, "twitter");
+    await synchronizeUser(convex, user);
 
     const identity = await convex.run(async (ctx) => await ctx.db.query("identities").unique());
     expect(identity?.profileId).not.toBe(existingProfileId);
@@ -246,7 +239,7 @@ describe("authentication identity synchronization", () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const user = await createBetterAuthUser(convex, getProviderPlaceholderEmail("twitter", "123456"));
-    await attachProvider(convex, user._id, "twitter");
+    await synchronizeUser(convex, user);
 
     const profiles = await convex.run(async (ctx) => await ctx.db.query("profiles").collect());
     expect(profiles).toMatchObject([{ role: "member" }]);

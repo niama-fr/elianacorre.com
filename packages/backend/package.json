@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "@convex-dev/better-auth": "^0.12.5",
     "@convex-dev/rate-limiter": "^0.3.2",
     "@convex-dev/workflow": "^0.4.5",

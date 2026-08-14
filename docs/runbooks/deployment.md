@@ -97,7 +97,7 @@ Outcome: Facebook authenticates members through Better Auth without making a Met
 4. Copy **App ID** and **App Secret** into `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET` in the matching Convex deployment. Treat the App Secret as a secret and never commit or paste it into Linear or a shell command.
 5. Exercise Facebook login from `/connexion`, including an account that does not return email. Better Auth may retain an internal `@auth.invalid` placeholder to satisfy its adapter, but the canonical Profile has no contact email until a separate verified flow supplies one.
 
-Expected evidence is a Facebook session linked through the application Identity to one email-independent Profile, with the safe intended destination preserved. A missing or different Meta email must neither block ownership-safe authentication nor merge another Profile. To recover, restore the prior Meta redirect URI and Convex credentials, redeploy, and repeat the callback; rotate the App Secret immediately if exposed.
+Expected evidence is a Facebook session whose Better Auth User resolves through one application Identity to one email-independent Profile, with the safe intended destination preserved. A missing or different Meta email must neither block ownership-safe authentication nor cause application-level Profile merging. To recover, restore the prior Meta redirect URI and Convex credentials, redeploy, and repeat the callback; rotate the App Secret immediately if exposed.
 
 ### Twitter/X OAuth 2.0
 
@@ -109,7 +109,7 @@ Outcome: X authenticates members through Better Auth’s built-in `twitter` prov
 4. Copy the OAuth 2.0 Client ID and Client Secret into `TWITTER_CLIENT_ID` and `TWITTER_CLIENT_SECRET` in the matching Convex deployment. Never commit or expose the Client Secret.
 5. Exercise “Continue with X” from `/connexion`, including an account whose email is unavailable. The auth-internal placeholder must not become Profile contact data or an ownership key.
 
-Expected evidence is an X session associated with one canonical Profile and a preserved safe destination. Recovery is to restore the prior callback and Convex credentials, regenerate an exposed Client Secret, redeploy, and repeat sign-in. Recheck both provider sections when Better Auth, provider scopes, callback hosts, or provider-account policy changes; code automates the OAuth exchange and Identity creation, while these dashboard steps are the human equivalent.
+Expected evidence is an X session associated with one canonical Profile and a preserved safe destination. Recovery is to restore the prior callback and Convex credentials, regenerate an exposed Client Secret, redeploy, and repeat sign-in. Recheck both provider sections when Better Auth, provider scopes, callback hosts, or provider-account policy changes; code automates the OAuth exchange and the one-time Better Auth User-to-Profile synchronization, while these dashboard steps are the human equivalent.
 
 ## Local development
 
@@ -249,7 +249,7 @@ SITE_URL=https://staging.elianacorre.com
 APP_SITE_URL=https://app.staging.elianacorre.com
 ```
 
-Configure `https://app.staging.elianacorre.com/api/auth/callback/{provider}` for `google`, `facebook`, and `twitter` in each provider’s staging client. After both Workers and hostnames are available, verify public navigation and forms on the public host; then verify all three member sign-ins, existing Google admin sign-in, a safe intended destination, rejection of an unsafe destination, authenticated SSR, client navigation, refresh, mutations, sign-out, and expired-session redirection on the authenticated host. Confirm that matching, hidden, absent, and changed provider emails do not move Profile ownership, that no routine authentication email appears in Loops, and that `POST /api/auth/sign-out` accepts the authenticated host's `Origin` and clears the Better Auth cookies.
+Configure `https://app.staging.elianacorre.com/api/auth/callback/{provider}` for `google`, `facebook`, and `twitter` in each provider’s staging client. After both Workers and hostnames are available, verify public navigation and forms on the public host; then verify all three member sign-ins, provider-independent sign-in for an explicitly provisioned Content Administrator, a safe intended destination, rejection of an unsafe destination, authenticated SSR, client navigation, refresh, mutations, sign-out, and expired-session redirection on the authenticated host. Confirm that Better Auth can attach supported provider Accounts to one User without creating additional application Identities or Profiles; matching, hidden, absent, and changed provider emails do not cause application-level Profile ownership transfer; no routine authentication email appears in Loops; and `POST /api/auth/sign-out` accepts the authenticated host's `Origin` and clears the Better Auth cookies.
 
 ## Production release
 
