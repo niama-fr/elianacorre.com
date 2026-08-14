@@ -7,11 +7,11 @@ This procedure lets an authorized Content Administrator verify that a person mak
 ## Prerequisites
 
 - The request was received at `contact@elianacorre.com`, routed to the approved destination mailbox.
-- The operator is signed in with a Google Workspace Account explicitly authorized as a Content Administrator in Convex.
+- The operator is signed in with an Account associated with an explicitly provisioned Content Administrator Profile in Convex.
 - The request identifies one canonical email address: trimmed and lowercase, without provider-specific rewriting of dots or `+tags`.
 - The production administration area and its privacy-operation audit history are available.
 
-Only authorized Content Administrators may perform this procedure. Access to the Google Workspace domain or mailbox alone is insufficient.
+Only authorized Content Administrators may perform this procedure. Authentication-provider choice and access to the Google Workspace domain or mailbox alone are insufficient.
 
 ## Canonical systems
 

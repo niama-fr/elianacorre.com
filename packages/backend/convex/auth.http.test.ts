@@ -56,9 +56,13 @@ describe("Better Auth HTTP boundary", () => {
   beforeEach(() => {
     vi.stubEnv("APP_SITE_URL", APP_ORIGIN);
     vi.stubEnv("BETTER_AUTH_SECRET", AUTH_SECRET);
+    vi.stubEnv("FACEBOOK_CLIENT_ID", "test-facebook-client-id");
+    vi.stubEnv("FACEBOOK_CLIENT_SECRET", "test-facebook-client-secret");
     vi.stubEnv("GOOGLE_CLIENT_ID", "test-google-client-id");
     vi.stubEnv("GOOGLE_CLIENT_SECRET", "test-google-client-secret");
     vi.stubEnv("SITE_URL", "https://www.example.com");
+    vi.stubEnv("TWITTER_CLIENT_ID", "test-twitter-client-id");
+    vi.stubEnv("TWITTER_CLIENT_SECRET", "test-twitter-client-secret");
   });
 
   afterEach(() => {
@@ -79,16 +83,42 @@ describe("Better Auth HTTP boundary", () => {
     await expect(findSession(backend, session._id)).resolves.toBeNull();
   });
 
-  it("builds the Google callback on the authenticated application origin", async () => {
+  it.each([
+    ["facebook", "https://www.facebook.com", `${APP_ORIGIN}/api/auth/callback/facebook`],
+    ["google", "https://accounts.google.com", `${APP_ORIGIN}/api/auth/callback/google`],
+    ["twitter", "https://x.com", `${APP_ORIGIN}/api/auth/callback/twitter`],
+  ] as const)("builds the %s callback on the authenticated application origin", async (provider, authorizationOrigin, redirectURI) => {
     const response = await createBackend().fetch("/api/auth/sign-in/social", {
-      body: JSON.stringify({ callbackURL: "/ebooks", provider: "google" }),
+      body: JSON.stringify({ callbackURL: "/ebooks", provider }),
       headers: { "Content-Type": "application/json", Origin: APP_ORIGIN },
       method: "POST",
     });
 
     expect(response.status).toBe(200);
     const body = zAuthResponse.parse(await response.json());
-    expect(new URL(body.url).searchParams.get("redirect_uri")).toBe(`${APP_ORIGIN}/api/auth/callback/google`);
+    const authorizationUrl = new URL(body.url);
+    expect(authorizationUrl.origin).toBe(authorizationOrigin);
+    expect(authorizationUrl.searchParams.get("redirect_uri")).toBe(redirectURI);
+  });
+
+  it.each(["facebook", "google", "twitter"] as const)("rejects a cross-origin intended destination for %s", async (provider) => {
+    const response = await createBackend().fetch("/api/auth/sign-in/social", {
+      body: JSON.stringify({ callbackURL: "https://attacker.example", provider }),
+      headers: { "Content-Type": "application/json", Origin: APP_ORIGIN },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("does not expose routine magic-link authentication", async () => {
+    const response = await createBackend().fetch("/api/auth/sign-in/magic-link", {
+      body: JSON.stringify({ email: "member@example.com" }),
+      headers: { "Content-Type": "application/json", Origin: APP_ORIGIN },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(404);
   });
 
   it("accepts a valid session cookie and refreshes a stale active session", async () => {

@@ -22,13 +22,20 @@ import {
 import type { DataModel } from "./dataModel.js";
 
 /**
- * Typesafe environment variables declared in `convex.config.ts`.
+ * Typesafe environment variables.
+ *
+ * This includes platform-provided env vars and any variables declared in
+ * `convex.config.ts`.
  */
 type Env = {
+  readonly CONVEX_CLOUD_URL: string;
+  readonly CONVEX_SITE_URL: string;
   readonly APP_SITE_URL: string;
   readonly BETTER_AUTH_SECRET: string;
   readonly CACHE_REVALIDATION_SECRET: string | undefined;
   readonly CAPABILITY_SIGNING_SECRET: string;
+  readonly FACEBOOK_CLIENT_ID: string;
+  readonly FACEBOOK_CLIENT_SECRET: string;
   readonly GOOGLE_CLIENT_ID: string;
   readonly GOOGLE_CLIENT_SECRET: string;
   readonly LOOPS_API_KEY: string;
@@ -37,6 +44,8 @@ type Env = {
   readonly LOOPS_WEBHOOK_SECRET: string;
   readonly SITE_URL: string;
   readonly SUPPRESSION_HASH_SECRET: string;
+  readonly TWITTER_CLIENT_ID: string;
+  readonly TWITTER_CLIENT_SECRET: string;
   readonly WHITELIST_SEED: string;
 };
 
@@ -115,7 +124,10 @@ export declare const internalAction: ActionBuilder<DataModel, "internal">;
 export declare const httpAction: HttpActionBuilder;
 
 /**
- * Typesafe environment variables declared in `convex.config.ts`.
+ * Typesafe environment variables.
+ *
+ * This includes platform-provided env vars and any variables declared in
+ * `convex.config.ts`.
  */
 export declare const env: Env;
 

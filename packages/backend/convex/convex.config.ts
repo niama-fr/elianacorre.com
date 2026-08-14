@@ -12,6 +12,8 @@ const app = defineApp({
     BETTER_AUTH_SECRET: v.string(),
     CACHE_REVALIDATION_SECRET: v.optional(v.string()),
     CAPABILITY_SIGNING_SECRET: v.string(),
+    FACEBOOK_CLIENT_ID: v.string(),
+    FACEBOOK_CLIENT_SECRET: v.string(),
     GOOGLE_CLIENT_ID: v.string(),
     GOOGLE_CLIENT_SECRET: v.string(),
     LOOPS_API_KEY: v.string(),
@@ -20,6 +22,8 @@ const app = defineApp({
     LOOPS_WEBHOOK_SECRET: v.string(),
     SITE_URL: v.string(),
     SUPPRESSION_HASH_SECRET: v.string(),
+    TWITTER_CLIENT_ID: v.string(),
+    TWITTER_CLIENT_SECRET: v.string(),
     WHITELIST_SEED: v.string(),
   },
 });

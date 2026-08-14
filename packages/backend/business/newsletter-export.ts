@@ -17,7 +17,7 @@ export async function createNewsletterDataExport(ctx: QueryCtx, format: "csv" | 
   const profiles = await takeProfiles(ctx, MAX_EXPORT_RECORDS + 1);
   if (profiles.length > MAX_EXPORT_RECORDS) throw new Error("NEWSLETTER_EXPORT_LIMIT_EXCEEDED");
   for (const profile of profiles) {
-    if (isAnonymizedEmail(profile.email)) continue;
+    if (!profile.email || isAnonymizedEmail(profile.email)) continue;
     const [issuances, subscriptions] = await Promise.all([
       takeEbookIssuances(ctx, MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),
       takeNewsSubscriptions(ctx, MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),

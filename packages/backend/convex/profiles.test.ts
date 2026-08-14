@@ -19,4 +19,11 @@ describe("authenticated Profile", () => {
 
     await expect(convex.query(api.profiles.current)).rejects.toThrow("Unauthenticated");
   });
+
+  it("resolves an authenticated Profile without requiring a verified provider email", async () => {
+    const convex = createBackend();
+    const asIdentity = await createIdentity(convex, "member", { emailVerified: false });
+
+    await expect(asIdentity.query(api.profiles.current)).resolves.toMatchObject({ role: "member" });
+  });
 });

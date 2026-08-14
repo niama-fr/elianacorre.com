@@ -7,7 +7,7 @@ export const zProfileRole = z.literal(["admin", "contact", "member"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zProfileFields = z.object({
-  email: zCanonicalEmail,
+  email: z.optional(zCanonicalEmail),
   firstName: z.optional(z.string()),
   role: zProfileRole,
 });

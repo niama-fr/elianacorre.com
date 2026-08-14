@@ -50,7 +50,7 @@ async function anonymizeNewsletterProfile(
   { anonymousEmail, profileId }: { anonymousEmail: string; profileId: Id<"profiles"> }
 ) {
   const profile = await getProfile(ctx, profileId);
-  if (!profile) return;
+  if (!profile?.email) return;
   const webhooks = await takeLoopsWebhooksByEmail(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile.email);
   requireBoundedRelations(webhooks, MAX_RETENTION_RELATIONS_PER_PROFILE);
   for (const webhook of webhooks) await patchLoopsWebhook(ctx, webhook._id, { email: anonymousEmail });
@@ -144,7 +144,7 @@ async function expireProfiles(ctx: MutationCtx, { cursor, now }: BatchOptions): 
   const result = await paginateProfiles(ctx, { cursor, numItems: PROFILE_RETENTION_BATCH_SIZE });
   const counts = emptyCounts();
   for (const profile of result.page) {
-    if (isAnonymizedEmail(profile.email)) continue;
+    if (!profile.email || isAnonymizedEmail(profile.email)) continue;
 
     const [contactRequests, identity, subscriptions] = await Promise.all([
       takeProfileContactRequests(ctx, MAX_RETENTION_RELATIONS_PER_PROFILE + 1, profile._id),

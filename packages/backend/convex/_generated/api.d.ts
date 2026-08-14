@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as cache from "../cache.js";
 import type * as contactRequests from "../contactRequests.js";
 import type * as crons from "../crons.js";
+import type * as dev from "../dev.js";
 import type * as ebooks from "../ebooks.js";
 import type * as http from "../http.js";
 import type * as legalTexts from "../legalTexts.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   cache: typeof cache;
   contactRequests: typeof contactRequests;
   crons: typeof crons;
+  dev: typeof dev;
   ebooks: typeof ebooks;
   http: typeof http;
   legalTexts: typeof legalTexts;

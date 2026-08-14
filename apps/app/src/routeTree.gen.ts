@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as AuthenticatedMemberRouteImport } from './routes/_authenticated/_member'
 import { Route as AuthenticatedAccesRefuseRouteImport } from './routes/_authenticated/acces-refuse'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ConnexionIndexRouteImport } from './routes/connexion/index'
 import { Route as AuthenticatedMemberIndexRouteImport } from './routes/_authenticated/_member/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminEbooksRouteImport } from './routes/_authenticated/admin/ebooks'
@@ -23,11 +23,6 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConnexionRoute = ConnexionRouteImport.update({
-  id: '/connexion',
-  path: '/connexion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMemberRoute = AuthenticatedMemberRouteImport.update({
@@ -44,6 +39,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ConnexionIndexRoute = ConnexionIndexRouteImport.update({
+  id: '/connexion/',
+  path: '/connexion/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMemberIndexRoute =
   AuthenticatedMemberIndexRouteImport.update({
@@ -82,9 +82,9 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedMemberIndexRoute
-  '/connexion': typeof ConnexionRoute
   '/acces-refuse': typeof AuthenticatedAccesRefuseRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/connexion/': typeof ConnexionIndexRoute
   '/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
   '/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
@@ -93,8 +93,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedMemberIndexRoute
-  '/connexion': typeof ConnexionRoute
   '/acces-refuse': typeof AuthenticatedAccesRefuseRoute
+  '/connexion': typeof ConnexionIndexRoute
   '/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
   '/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
   '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
@@ -104,10 +104,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/connexion': typeof ConnexionRoute
   '/_authenticated/_member': typeof AuthenticatedMemberRouteWithChildren
   '/_authenticated/acces-refuse': typeof AuthenticatedAccesRefuseRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/connexion/': typeof ConnexionIndexRoute
   '/_authenticated/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
   '/_authenticated/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
   '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
@@ -119,9 +119,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/connexion'
     | '/acces-refuse'
     | '/admin'
+    | '/connexion/'
     | '/admin/ebooks'
     | '/admin/email-operations'
     | '/admin/privacy'
@@ -130,8 +130,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/connexion'
     | '/acces-refuse'
+    | '/connexion'
     | '/admin/ebooks'
     | '/admin/email-operations'
     | '/admin/privacy'
@@ -140,10 +140,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
-    | '/connexion'
     | '/_authenticated/_member'
     | '/_authenticated/acces-refuse'
     | '/_authenticated/admin'
+    | '/connexion/'
     | '/_authenticated/admin/ebooks'
     | '/_authenticated/admin/email-operations'
     | '/_authenticated/admin/privacy'
@@ -154,7 +154,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  ConnexionRoute: typeof ConnexionRoute
+  ConnexionIndexRoute: typeof ConnexionIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -165,13 +165,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/connexion': {
-      id: '/connexion'
-      path: '/connexion'
-      fullPath: '/connexion'
-      preLoaderRoute: typeof ConnexionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_member': {
@@ -194,6 +187,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/connexion/': {
+      id: '/connexion/'
+      path: '/connexion'
+      fullPath: '/connexion/'
+      preLoaderRoute: typeof ConnexionIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_member/': {
       id: '/_authenticated/_member/'
@@ -287,7 +287,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  ConnexionRoute: ConnexionRoute,
+  ConnexionIndexRoute: ConnexionIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

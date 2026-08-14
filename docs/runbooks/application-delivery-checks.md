@@ -47,7 +47,7 @@ After GitHub reports one successful staging deployment for the merge commit:
 5. Perform the expiry, stale-revalidation, and privacy-notice purge procedure in `deployment.md`; restore approved staging content afterward.
 6. Inspect cached public, dynamic public, and authenticated HTML CSP report-only headers and browser violations. Unexplained violations fail staging.
 7. Follow cross-application links in both directions and confirm canonical hosts and full-document navigation.
-8. Complete Google sign-in and callback, authenticated SSR, client navigation, refresh, one representative administration mutation, sign-out, and expired-session redirection. Confirm authenticated responses remain no-store and no unexplained hydration warning occurs.
+8. Complete one supported social sign-in and callback for a member and one for an explicitly provisioned Content Administrator, then verify authenticated SSR, client navigation, refresh, one representative administration mutation, sign-out, and expired-session redirection. Confirm authenticated responses remain no-store and no unexplained hydration warning occurs.
 
 Record the staging workflow URL, commit SHA, concise results, and unresolved observations on NIA-47. These checks require Grégory's authenticated browser session and judgment; they are intentionally not automated.
 
