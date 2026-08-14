@@ -170,6 +170,7 @@ async function enqueueTask(ctx: MutationCtx, payload: LoopsTasks["Create"]) {
 }
 
 async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConfirmationEmailOpts) {
+  const email = requireProfileEmail(profile);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       confirmationUrl: getLink({
@@ -179,7 +180,7 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
       }),
       firstName: profile.firstName,
     },
-    email: profile.email,
+    email,
     idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_CONFIRMATION_TRANSACTIONAL_ID,
   });
@@ -187,6 +188,7 @@ async function sendConfirmationEmail(ctx: ActionCtx, { profile, task }: SendConf
 type SendConfirmationEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendConfirmationEmailDoc"] };
 
 async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailOpts) {
+  const email = requireProfileEmail(profile);
   return await loops.sendTransactional(ctx, {
     dataVariables: {
       downloadUrl: getLink({
@@ -196,7 +198,7 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
       }),
       firstName: profile.firstName,
     },
-    email: profile.email,
+    email,
     idempotencyKey: getLoopsTaskDeliveryIdempotencyKey(task),
     transactionalId: env.LOOPS_EBOOK_TRANSACTIONAL_ID,
   });
@@ -204,6 +206,7 @@ async function sendEbookEmail(ctx: ActionCtx, { profile, task }: SendEbookEmailO
 type SendEbookEmailOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SendEbookEmailDoc"] };
 
 async function syncContact(ctx: ActionCtx, { profile: { email, firstName, _id: userId }, task }: SyncContactOpts) {
+  if (!email) throw new Error("Loops task profile email is required");
   return task.subscribed
     ? await loops.addContact(ctx, {
         email,
@@ -216,3 +219,8 @@ async function syncContact(ctx: ActionCtx, { profile: { email, firstName, _id: u
     : await loops.unsubscribeContact(ctx, email);
 }
 type SyncContactOpts = { profile: Profiles["Doc"]; task: LoopsTasks["SyncContactDoc"] };
+
+function requireProfileEmail(profile: Profiles["Doc"]): string {
+  if (!profile.email) throw new Error("Loops task profile email is required");
+  return profile.email;
+}

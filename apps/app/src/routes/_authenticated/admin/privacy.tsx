@@ -171,7 +171,7 @@ function IdentitySection({ subject }: { subject: PrivacySubject }) {
     <PrivacySection title="Identité">
       {subject.profile ? (
         <dl className="grid gap-3 sm:grid-cols-3">
-          <Detail label="E-mail" value={subject.profile.email} />
+          <Detail label="E-mail" value={subject.profile.email ?? "—"} />
           <Detail label="Prénom" value={subject.profile.firstName ?? "—"} />
           <Detail label="Rôle" value={subject.profile.role} />
         </dl>

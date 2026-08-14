@@ -21,7 +21,6 @@ export const zInternalQuery = zCustomQuery(internalQuery, NoOp);
 const resolveAuthenticatedProfile = async (ctx: MutationCtx | QueryCtx): Promise<Profiles["Doc"]> => {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) throw new ConvexError("Unauthenticated");
-  if (!user.emailVerified) throw new ConvexError("Unauthenticated");
   const identity = await getIdentityByAdapterId(ctx, user._id);
   if (!identity) throw new ConvexError("Unauthenticated");
   const profile = await getProfile(ctx, identity.profileId);

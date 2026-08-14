@@ -100,7 +100,7 @@ describe("privacy retention policy", () => {
 
     await convex.run(async (ctx) => {
       const expiredProfile = await ctx.db.get(ids.expiredProfileId);
-      expect(expiredProfile?.email.endsWith("@anonymized.invalid")).toBeTruthy();
+      expect(expiredProfile?.email?.endsWith("@anonymized.invalid")).toBeTruthy();
       await expect(ctx.db.get(ids.retainedProfileId)).resolves.not.toBeNull();
       await expect(ctx.db.get(ids.accountProfileId)).resolves.toMatchObject({ email: "account@example.com" });
       await expect(ctx.db.get(ids.accountConfirmationId)).resolves.toBeNull();
@@ -135,7 +135,7 @@ describe("privacy retention policy", () => {
 
     await convex.run(async (ctx) => {
       const expiredProfile = await ctx.db.get(expiredProfileId);
-      expect(expiredProfile?.email.endsWith("@anonymized.invalid")).toBeTruthy();
+      expect(expiredProfile?.email?.endsWith("@anonymized.invalid")).toBeTruthy();
       expect(expiredProfile).not.toHaveProperty("firstName");
       await expect(ctx.db.get(retainedProfileId)).resolves.toMatchObject({ email: "recent-contact@example.com" });
       await expect(ctx.db.query("contactRequests").collect()).resolves.toHaveLength(1);
@@ -197,7 +197,7 @@ describe("privacy retention policy", () => {
 
     await convex.run(async (ctx) => {
       const profile = await ctx.db.get(profileId);
-      expect(profile?.email.endsWith("@anonymized.invalid")).toBeTruthy();
+      expect(profile?.email?.endsWith("@anonymized.invalid")).toBeTruthy();
       expect(profile?.role).toBe("contact");
       await expect(ctx.db.get(recentProfileId)).resolves.toMatchObject({ email: "recent-former@example.com" });
       await expect(ctx.db.query("ebookIssuances").collect()).resolves.toStrictEqual([]);

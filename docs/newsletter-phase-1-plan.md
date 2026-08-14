@@ -88,7 +88,7 @@ Better Auth with Convex authenticates administrators in phase 1:
 - Workspace domain membership alone grants no role;
 - no newsletter subscriber receives an account.
 
-The same identity foundation may later support verified customer accounts, magic links, and social providers.
+The same identity foundation now supports member social authentication through Google, Facebook/Meta, and Twitter/X. Routine member login does not use magic links, authentication email, or email/password credentials; Better Auth provider accounts link to the application’s canonical Profile.
 
 ### Google and reply routing
 
@@ -147,7 +147,7 @@ Loops failure does not roll back confirmation or access. Convex Workflow retries
 
 ### Future account linking
 
-Creating or authenticating a future customer account never implies newsletter consent. An account can link to an existing subscriber only when the identity provider marks the matching email as verified or an additional verification succeeds.
+Creating or authenticating a member Account never implies newsletter consent. Provider email—including hidden, absent, or changing values—is optional contact or verification data rather than the durable identity key; matching or apparently related emails do not automatically merge Accounts or Profiles. Any future flow for explicitly linking another provider or claiming an earlier purchase must prove control through a separately specified flow and retain ownership on the canonical Profile identifier.
 
 ## E-book management
 

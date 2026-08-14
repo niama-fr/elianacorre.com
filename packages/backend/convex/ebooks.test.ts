@@ -169,10 +169,10 @@ describe("e-book administration", () => {
     await expect(asMember.mutation(api.ebooks.generateUploadUrl, {})).rejects.toThrow("Unauthorized");
   });
 
-  it("rejects an administrator with an unverified email", async () => {
+  it("authorizes an administrator by Profile role without requiring a verified provider email", async () => {
     const convex = createBackend();
     const asUnverifiedAdmin = await createIdentity(convex, "admin", false);
 
-    await expect(asUnverifiedAdmin.query(api.ebooks.list, {})).rejects.toThrow("Unauthenticated");
+    await expect(asUnverifiedAdmin.query(api.ebooks.list, {})).resolves.toStrictEqual([]);
   });
 });

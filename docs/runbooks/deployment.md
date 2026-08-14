@@ -65,12 +65,14 @@ Each deployment declares:
 - `BETTER_AUTH_SECRET`: unique secret generated from at least 32 random bytes.
 - `CACHE_REVALIDATION_SECRET`: one environment-specific secret, generated from at least 32 random bytes and configured identically in the Convex deployment and its matching public Worker; authenticates privacy-notice cache invalidation.
 - `CAPABILITY_SIGNING_SECRET`: unique secret generated from at least 32 random bytes; signs short-lived newsletter confirmation and e-book download URLs.
+- `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET`: the environment-specific Meta App ID and App Secret for Facebook Login.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: non-production credentials for dev and staging; separate credentials for production.
-- `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers.
+- `LOOPS_API_KEY`, `LOOPS_CONFIRMATION_TRANSACTIONAL_ID`, and `LOOPS_EBOOK_TRANSACTIONAL_ID`: environment-specific Loops credentials and published transactional email identifiers. Loops is not part of routine authentication.
 - `LOOPS_WEBHOOK_SECRET`: the environment-specific signing secret shown when configuring the Loops webhook endpoint.
 - `SITE_URL`: exact public application origin with no trailing path; owns public capability and newsletter links.
 - `APP_SITE_URL`: exact authenticated application origin with no trailing path; owns Better Auth callbacks and trusted-origin checks.
 - `SUPPRESSION_HASH_SECRET`: unique secret generated from at least 32 random bytes; creates the irreversible suppression lookup value.
+- `TWITTER_CLIENT_ID` and `TWITTER_CLIENT_SECRET`: the environment-specific OAuth 2.0 Client ID and Client Secret from the X Developer Portal.
 - `WHITELIST_SEED`: JSON array of initial Content Administrator email addresses.
 
 Development and staging use only the separate Loops staging environment. Production uses only the Loops production environment. There is no application-level recipient allowlist; the sole operator uses personal addresses for non-production tests.
@@ -84,6 +86,30 @@ https://app.elianacorre.com/api/auth/callback/google
 ```
 
 Dev and staging use the first two callbacks on one non-production client. Production uses only the final callback on its production client.
+
+### Facebook Login through Meta
+
+Outcome: Facebook authenticates members through Better Auth without making a Meta identifier or email the ownership identity. Prerequisites are access to the environment’s Meta developer app and matching Convex deployment.
+
+1. In **Meta for Developers → My Apps**, create or open the environment-specific app and add **Facebook Login** for Web.
+2. In **Facebook Login → Settings**, add the exact valid OAuth redirect URI: `http://localhost:3003/api/auth/callback/facebook`, `https://app.staging.elianacorre.com/api/auth/callback/facebook`, or `https://app.elianacorre.com/api/auth/callback/facebook` for the matching environment.
+3. Keep Better Auth’s default `email` and `public_profile` permissions. Configure test users while the app is in development mode; complete Meta review and switch the production app live before public launch if Meta requires it.
+4. Copy **App ID** and **App Secret** into `FACEBOOK_CLIENT_ID` and `FACEBOOK_CLIENT_SECRET` in the matching Convex deployment. Treat the App Secret as a secret and never commit or paste it into Linear or a shell command.
+5. Exercise Facebook login from `/connexion`, including an account that does not return email. Better Auth may retain an internal `@auth.invalid` placeholder to satisfy its adapter, but the canonical Profile has no contact email until a separate verified flow supplies one.
+
+Expected evidence is a Facebook session linked through the application Identity to one email-independent Profile, with the safe intended destination preserved. A missing or different Meta email must neither block ownership-safe authentication nor merge another Profile. To recover, restore the prior Meta redirect URI and Convex credentials, redeploy, and repeat the callback; rotate the App Secret immediately if exposed.
+
+### Twitter/X OAuth 2.0
+
+Outcome: X authenticates members through Better Auth’s built-in `twitter` provider without making an X handle, identifier, or email the ownership identity. Prerequisites are access to an X Developer project/app with OAuth 2.0 enabled and the matching Convex deployment.
+
+1. In **X Developer Portal → Projects & Apps → App settings → User authentication settings**, enable OAuth 2.0 and select a Web App client type.
+2. Add the exact callback URI: `http://localhost:3003/api/auth/callback/twitter`, `https://app.staging.elianacorre.com/api/auth/callback/twitter`, or `https://app.elianacorre.com/api/auth/callback/twitter` for the matching environment.
+3. Enable the scopes Better Auth requests: `users.read`, `tweet.read`, `offline.access`, and `users.email`. Set the website URL to the matching authenticated application origin.
+4. Copy the OAuth 2.0 Client ID and Client Secret into `TWITTER_CLIENT_ID` and `TWITTER_CLIENT_SECRET` in the matching Convex deployment. Never commit or expose the Client Secret.
+5. Exercise “Continue with X” from `/connexion`, including an account whose email is unavailable. The auth-internal placeholder must not become Profile contact data or an ownership key.
+
+Expected evidence is an X session associated with one canonical Profile and a preserved safe destination. Recovery is to restore the prior callback and Convex credentials, regenerate an exposed Client Secret, redeploy, and repeat sign-in. Recheck both provider sections when Better Auth, provider scopes, callback hosts, or provider-account policy changes; code automates the OAuth exchange and Identity creation, while these dashboard steps are the human equivalent.
 
 ## Local development
 
@@ -104,7 +130,7 @@ rtk proxy bunx convex env set SITE_URL http://localhost:3002
 rtk proxy bunx convex env set APP_SITE_URL http://localhost:3003
 ```
 
-Put the generated `VITE_CONVEX_URL` and matching `.convex.site` `VITE_CONVEX_SITE_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. Add `http://localhost:3003/api/auth/callback/google` to the non-production Google OAuth client, then run:
+Put the generated `VITE_CONVEX_URL` and matching `.convex.site` `VITE_CONVEX_SITE_URL` in both `apps/web/.env.local` and `apps/app/.env.local`. Add the localhost Google, Facebook, and Twitter callbacks above to their non-production clients. Then run:
 
 ```bash
 rtk proxy bun run dev
@@ -214,7 +240,7 @@ rtk gh variable set STAGING_URL --env staging --body "https://staging.elianacorr
 rtk gh variable set APP_STAGING_URL --env staging --body "https://app.staging.elianacorre.com"
 ```
 
-Set the staging Convex `SITE_URL` to the public staging origin and `APP_SITE_URL` to the authenticated staging origin. Add the exact authenticated origin's Google callback before verifying authentication.
+Set the staging Convex `SITE_URL` to the public staging origin and `APP_SITE_URL` to the authenticated staging origin. Set all Facebook, Google, and Twitter provider variables described above, then configure every exact staging callback before verifying authentication.
 
 In the Convex dashboard, select the production deployment of `elianacorre-com-staging`, open **Settings → Environment Variables**, and set:
 
@@ -223,7 +249,7 @@ SITE_URL=https://staging.elianacorre.com
 APP_SITE_URL=https://app.staging.elianacorre.com
 ```
 
-In Google Cloud Console, add `https://app.staging.elianacorre.com/api/auth/callback/google` to the non-production OAuth client's authorized redirect URIs. After both Workers and hostnames are available, verify public navigation and forms on the public host; then verify sign-in, authenticated SSR, client navigation, refresh, mutations, sign-out, and expired-session redirection on the authenticated host. Confirm that `POST /api/auth/sign-out` accepts the authenticated host's `Origin` and clears the Better Auth cookies.
+Configure `https://app.staging.elianacorre.com/api/auth/callback/{provider}` for `google`, `facebook`, and `twitter` in each provider’s staging client. After both Workers and hostnames are available, verify public navigation and forms on the public host; then verify all three member sign-ins, existing Google admin sign-in, a safe intended destination, rejection of an unsafe destination, authenticated SSR, client navigation, refresh, mutations, sign-out, and expired-session redirection on the authenticated host. Confirm that matching, hidden, absent, and changed provider emails do not move Profile ownership, that no routine authentication email appears in Loops, and that `POST /api/auth/sign-out` accepts the authenticated host's `Origin` and clears the Better Auth cookies.
 
 ## Production release
 
@@ -280,7 +306,7 @@ This keeps the current and previous Workers compatible during deployment and mak
 Moving `elianacorre.com` from the existing project is a separate manual launch operation:
 
 1. Release and verify `v1.0.0` through both production `workers.dev` URLs.
-2. Configure production Convex `SITE_URL` for the apex domain, `APP_SITE_URL` for the authenticated hostname, Google OAuth for the authenticated callback, and both GitHub production URL variables.
+2. Configure production Convex `SITE_URL` for the apex domain, `APP_SITE_URL` for the authenticated hostname, all three social-provider callbacks and credentials, and both GitHub production URL variables.
 3. Detach the apex domain from the old Worker and attach it to `elianacorre-com`.
 4. Attach `app.elianacorre.com` to `app-elianacorre-com`.
 5. Configure a permanent `www.elianacorre.com` redirect to `https://elianacorre.com`.
@@ -289,9 +315,9 @@ Moving `elianacorre.com` from the existing project is a separate manual launch o
 
 Do not move the public domain as part of an ordinary staging or production workflow change.
 
-For production, select the production deployment of `elianacorre-com-b1869` in the Convex dashboard and set `SITE_URL` to `https://elianacorre.com` and `APP_SITE_URL` to `https://app.elianacorre.com`. In the production Google OAuth client, authorize only `https://app.elianacorre.com/api/auth/callback/google`. Confirm both values before approving the protected production deployment.
+For production, select the production deployment of `elianacorre-com-b1869` in the Convex dashboard and set `SITE_URL` to `https://elianacorre.com`, `APP_SITE_URL` to `https://app.elianacorre.com`, and all provider variables described above. Configure only `https://app.elianacorre.com/api/auth/callback/{provider}` in each production provider client, using `google`, `facebook`, or `twitter` as appropriate. Confirm these values before approving the protected production deployment.
 
-To recover from an incorrect authenticated origin, restore the previous `APP_SITE_URL` in the affected Convex deployment and restore the corresponding Google OAuth redirect URI. Redeploy the backend functions, then repeat sign-in and sign-out verification. Never put OAuth credentials or Better Auth secrets in repository files or command arguments.
+To recover from an incorrect authenticated origin, restore the previous `APP_SITE_URL` in the affected Convex deployment and restore all corresponding provider redirect URIs. Redeploy the backend functions, then repeat sign-in and sign-out verification. Never put OAuth credentials, provider client secrets, or Better Auth secrets in repository files or command arguments.
 
 ## Human verification
 

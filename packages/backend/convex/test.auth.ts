@@ -1,7 +1,7 @@
 import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
+import { z } from "@ec/validation/zod";
 import { convexTest, type TestConvex } from "convex-test";
 import { vi } from "vitest";
-import { z } from "zod";
 
 import { components } from "./_generated/api";
 import schema from "./schema";
@@ -20,12 +20,16 @@ export const createBackend = () => {
   return convex;
 };
 
-export const createIdentity = async (convex: TestConvex<typeof schema>, role: "admin" | "member") => {
+export const createIdentity = async (
+  convex: TestConvex<typeof schema>,
+  role: "admin" | "member",
+  { emailVerified = true }: { emailVerified?: boolean } = {}
+) => {
   const now = Date.now();
   const user = zAuthUser.parse(
     await convex.mutation(components.betterAuth.adapter.create, {
       input: {
-        data: { createdAt: now, email: `${role}@example.com`, emailVerified: true, name: role, updatedAt: now },
+        data: { createdAt: now, email: `${role}@example.com`, emailVerified, name: role, updatedAt: now },
         model: "user",
       },
     })

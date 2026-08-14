@@ -4,7 +4,7 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 ## Language
 
-**Profile**: A person known to the platform through one normalized email address and the authoritative source for that person's platform identity fields and role. A Profile has a highest platform role: `contact` for a person without member or administrative access, `member` for a person with qualifying membership or course access, and `admin` for a content administrator. A Profile may exist without an authenticated Account; newsletter activity never demotes an existing role. _Avoid_: User, Account
+**Profile**: The application’s durable identity for one person, addressed by its stable Profile identifier rather than by an email address or Authentication Provider account. A Profile may have current contact fields, has a highest platform role—`contact`, `member`, or `admin`—may exist without an authenticated Account, and is never demoted by newsletter activity. _Avoid_: User, Account, email identity
 
 **Contact Request**: A message deliberately submitted through the site's contact form for a direct response. It belongs to the same Profile used for any other relationship with that email address, but does not create newsletter consent, e-book access, or an authenticated Account. _Avoid_: Newsletter subscription, subscriber
 
@@ -12,9 +12,11 @@ This context covers the people, offers, and access rights managed by the Eliana 
 
 **Former Newsletter Subscriber**: A person whose newsletter consent has ended without an erasure request. Identifying data and welcome e-book access are retained for no more than three years after unsubscription or the last relevant contact, unless another active relationship provides a separate legal basis; expiry occurs without a re-engagement email. _Avoid_: Active subscriber
 
-**Account**: An authenticated identity used by an administrator or member to access protected platform capabilities. An Account is managed by the active Authentication Provider and linked to one Profile; newsletter subscribers and contact-form correspondents do not receive Accounts merely because their email is known. Linking never changes newsletter consent. _Avoid_: Newsletter subscriber
+**Account**: An authentication identity managed by Better Auth and linked to one Profile; it may contain distinct Google, Facebook/Meta, or Twitter/X provider accounts without becoming the owner of roles, purchases, memberships, or entitlements. A new Account created through the member authentication surface provisions a `member` Profile even when that Profile has no entitlement. Newsletter subscribers and contact-form correspondents do not receive Accounts merely because an email is known, and linking never changes newsletter consent. _Avoid_: Profile, Newsletter subscriber, ownership record
 
-**Authentication Provider**: The replaceable system responsible for authentication identities, credentials, external identity assertions, sessions, and account-recovery workflows. It receives only the Profile fields required for authentication and does not own platform roles or person identity. _Avoid_: Profile source, authorization source
+**Authentication Provider**: The replaceable system responsible for authentication identities, credentials, external identity assertions, sessions, and account-recovery workflows. Its provider identifiers and email assertions—including hidden, absent, or changing addresses—are authentication/contact data and do not own platform roles, person identity, purchases, memberships, or entitlements. _Avoid_: Profile source, authorization source, ownership source
+
+**Travel Pack Entitlement**: The application-owned right for one Profile to access one Travel Pack, independent of the Account, social provider, or email currently used to authenticate and contact that person. _Avoid_: Email purchase, provider entitlement, download link
 
 **Email Provider**: The replaceable system responsible for transactional email delivery, campaign operations, and the contact projection needed for sending. It receives only delivery and campaign fields derived from authoritative Profiles, consent, and delivery eligibility; it does not own newsletter consent or person identity. _Avoid_: Consent source, Profile source
 

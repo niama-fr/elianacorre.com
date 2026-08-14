@@ -31,14 +31,18 @@ export const paginateProfiles = async (ctx: QueryCtx, pagination: PaginationOpti
 export const takeProfiles = async (ctx: QueryCtx, limit: number) => await ctx.db.query("profiles").take(limit);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createContactProfile = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) =>
+export const createContactProfile = async (ctx: MutationCtx, create: ContactProfileCreate) =>
   await ctx.db.insert("profiles", { ...create, role: "contact" });
 
+export const createMemberProfile = async (ctx: MutationCtx) => await ctx.db.insert("profiles", { role: "member" });
+
 // ENSURE ----------------------------------------------------------------------------------------------------------------------------------
-export const ensureContactProfileId = async (ctx: MutationCtx, create: Omit<Profiles["Fields"], "role">) => {
+export const ensureContactProfileId = async (ctx: MutationCtx, create: ContactProfileCreate) => {
   const profile = await getProfileByEmail(ctx, create.email);
   return profile?._id ?? (await createContactProfile(ctx, create));
 };
+
+type ContactProfileCreate = Omit<Profiles["Fields"], "email" | "role"> & { email: string };
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
 export const patchProfile = async (ctx: MutationCtx, id: Id<"profiles">, patch: Partial<Profiles["Fields"]>) => {
@@ -65,10 +69,12 @@ export async function deleteProfileWithRelations(ctx: MutationCtx, id: Id<"profi
       .query("loopsTasks")
       .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
       .collect(),
-    ctx.db
-      .query("loopsWebhooks")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .collect(),
+    email
+      ? ctx.db
+          .query("loopsWebhooks")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .collect()
+      : [],
     ctx.db
       .query("newsRestrictions")
       .withIndex("by_profile_id_and_resolved_at", (q) => q.eq("profileId", profileId))

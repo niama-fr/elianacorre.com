@@ -11,6 +11,7 @@
   },
   "scripts": {
     "codegen": "convex codegen",
+    "db:reset:dev": "bun scripts/reset-dev-database.ts",
     "deploy": "convex deploy",
     "deploy:production": "convex deploy --env-file .env.production.local",
     "dev": "convex dev --run seed:init",
@@ -20,13 +21,15 @@
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.5",
     "@convex-dev/rate-limiter": "^0.3.2",
-    "@convex-dev/workflow": "^0.4.4",
+    "@convex-dev/workflow": "^0.4.5",
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
-    "better-auth": "~1.6.26",
-    "convex": "1.43.0",
-    "convex-helpers": "^0.1.122",
+    "@ec/validation": "workspace:*",
+    "better-auth": "~1.6.28",
+    "convex": "1.44.0",
+    "convex-helpers": "^0.1.123",
+    "jose": "^6.2.8",
     "standardwebhooks": "^1.0.0",
     "typescript": "^7.0.2"
   },
