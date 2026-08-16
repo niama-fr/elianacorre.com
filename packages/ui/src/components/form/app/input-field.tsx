@@ -3,13 +3,13 @@ import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 
 import { Field } from "./field";
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
+// COMPONENT -------------------------------------------------------------------------------------------------------------------------------
 export default function InputField(props: InputFieldProps) {
-  const { label, ...rest } = props;
+  const { action, description, label, ...rest } = props;
   const { handleBlur, handleChange, name, state } = useFieldContext<string>();
 
   return (
-    <Field label={label}>
+    <Field action={action} description={description} label={label}>
       {(isInvalid) => (
         <Input
           aria-invalid={isInvalid}
@@ -26,4 +26,4 @@ export default function InputField(props: InputFieldProps) {
     </Field>
   );
 }
-export type InputFieldProps = InputProps & { label: string };
+export type InputFieldProps = InputProps & { action?: React.ReactNode; description?: string; label: string };

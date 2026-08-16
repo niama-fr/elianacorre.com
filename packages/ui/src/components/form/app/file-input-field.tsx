@@ -1,3 +1,4 @@
+import { Button } from "@ec/ui/components/button";
 import type { InputProps } from "@ec/ui/components/input";
 import { Input } from "@ec/ui/components/input";
 import { useFieldContext } from "@ec/ui/hooks/app-form-context";
@@ -5,15 +6,15 @@ import { useRef } from "react";
 
 import { Field } from "./field";
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
+// COMPONENT -------------------------------------------------------------------------------------------------------------------------------
 export default function FileInputField(props: FileInputFieldProps) {
-  const { label, ...rest } = props;
+  const { description, label, removeLabel, ...rest } = props;
   const { handleBlur, handleChange, name, state } = useFieldContext<File | null>();
 
   const ref = useRef<HTMLInputElement>(null);
 
   return (
-    <Field label={label}>
+    <Field description={description} label={label}>
       {(isInvalid) => (
         <>
           <Input
@@ -29,19 +30,21 @@ export default function FileInputField(props: FileInputFieldProps) {
             {...rest}
           />
           {state.value && (
-            <button
+            <Button
+              size="sm"
               type="button"
+              variant="outline"
               onClick={() => {
                 if (ref.current) ref.current.value = "";
                 handleChange(null);
               }}
             >
-              Supprimer le fichier
-            </button>
+              {removeLabel}
+            </Button>
           )}
         </>
       )}
     </Field>
   );
 }
-export type FileInputFieldProps = Omit<InputProps, "type"> & { label: string };
+export type FileInputFieldProps = Omit<InputProps, "type"> & { description?: string; label: string; removeLabel: string };

@@ -28,7 +28,13 @@ This repository uses one shared domain context.
 
 Use `CONTEXT.md` for canonical terminology and read only relevant ADRs under `docs/adr/`. Flag conflicts with an existing ADR instead of silently overriding it.
 
+Before changing domain schemas, DTO projections, Entity hydration, or frontend form schemas, read `docs/schema-types.md`.
+
 See `docs/agents/domain.md`.
+
+## Frontend
+
+Before any frontend work, read and follow the authoritative convention in `docs/frontend.md`.
 
 ## Agent collaboration
 

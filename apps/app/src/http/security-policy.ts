@@ -12,7 +12,7 @@ export const SECURITY_NONCE_CONTEXT_KEY = "securityNonce" as const;
 
 const SONNER_STYLE_SOURCES = [
   "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-  "'sha256-CIxDM5jnsGiKqXs2v7NKCY5MzdR9gu6TtiMJrDw29AY='",
+  "'sha256-StEaX+se6YS7pqjzrzMIA0KaX9zF/8zAhvQXZAe5epY='",
 ];
 
 // APPLY -----------------------------------------------------------------------------------------------------------------------------------

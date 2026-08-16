@@ -1,40 +1,48 @@
-import { FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ec/ui/components/field";
+import { FieldDescription, FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ec/ui/components/field";
 import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 import { cva } from "class-variance-authority";
+
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
+const EMPTY_ERRORS: { message?: string }[] = [];
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {
   error: cva(
-    `bg-destructive text-destructive-foreground before:icon-[lucide--circle-alert] flex origin-top items-center gap-2 overflow-hidden rounded-md 
-    px-2 transition-[max-height] duration-150 ease-in before:size-4 before:shrink-0 before:content-['']`,
-    { variants: { isInvalid: { false: "max-h-0", true: "max-h-10" } } }
+    `bg-destructive text-destructive-foreground before:icon-[lucide--circle-alert] flex origin-top scale-0 items-center gap-2 overflow-hidden
+    rounded-xl px-2 py-1 before:size-4 before:shrink-0 before:content-[''] data-[invalid=true]:scale-100`
   ),
   field: cva("gap-2"),
-  label: cva("sr-only"),
+  header: cva("flex items-center justify-between gap-2"),
 };
-const EMPTY_ERRORS: { message?: string }[] = [];
 
-// FIELD -----------------------------------------------------------------------------------------------------------------------------------
+// COMPONENT ------------------------------------------------------------------------------------------------------------------------------
 export function Field(props: FieldProps) {
-  const { children, label } = props;
+  const { action, children, description, label } = props;
   const { form, name, state } = useFieldContext<string>();
   const isInvalid = (form.state.submissionAttempts > 0 || state.meta.isBlurred) && !state.meta.isValid;
 
   return (
     <FieldNative className={FIELD.field()} data-invalid={isInvalid}>
-      <FieldLabel className={FIELD.label()} htmlFor={name}>
-        {label}
-      </FieldLabel>
+      <div className={FIELD.header()}>
+        <FieldLabel htmlFor={name}>{label}</FieldLabel>
+        {action}
+      </div>
       {children(isInvalid)}
+      {description && <FieldDescription>{description}</FieldDescription>}
       <FieldError errors={state.meta.errors} isInvalid={isInvalid} />
     </FieldNative>
   );
 }
-export type FieldProps = { children: (isInvalid: boolean) => React.ReactNode; label: string };
+export type FieldProps = {
+  action?: React.ReactNode;
+  children: (isInvalid: boolean) => React.ReactNode;
+  description?: string;
+  label: string;
+};
 
-// ERROR -----------------------------------------------------------------------------------------------------------------------------------
+// COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 export function FieldError(props: FieldErrorProps) {
   const { errors, isInvalid } = props;
-  return <FieldErrorNative className={FIELD.error({ isInvalid })} errors={isInvalid ? errors : EMPTY_ERRORS} />;
+  return <FieldErrorNative className={FIELD.error()} data-invalid={isInvalid} errors={isInvalid ? errors : EMPTY_ERRORS} />;
 }
 export type FieldErrorProps = { errors: { message?: string }[]; isInvalid: boolean };

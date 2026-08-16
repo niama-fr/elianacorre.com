@@ -4,6 +4,7 @@ import { createServerEntry } from "@tanstack/react-start/server-entry";
 
 import { applyCachePolicy } from "@/http/cache-policy";
 import { applySecurityPolicy, SECURITY_NONCE_CONTEXT_KEY } from "@/http/security-policy";
+import { paraglideMiddleware } from "@/paraglide/server.js";
 
 // HANDLER ---------------------------------------------------------------------------------------------------------------------------------
 const handler = createStartHandler({
@@ -18,7 +19,7 @@ const handler = createStartHandler({
 export default createServerEntry({
   async fetch(request) {
     try {
-      return applyCachePolicy({ response: await handler(request) });
+      return applyCachePolicy({ response: await paraglideMiddleware(request, async () => await handler(request)) });
     } catch (error) {
       // oxlint-disable-next-line no-console -- Worker failures need structured operational evidence.
       console.error(

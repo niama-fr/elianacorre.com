@@ -7,7 +7,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
 
 // TRANSFORMS ------------------------------------------------------------------------------------------------------------------------------
-export const ebookFromDoc = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Entry"]> => {
+export const ebookDtoFrom = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Dto"]> => {
   const [file, url] = await Promise.all([ctx.db.system.get("_storage", doc.storageId), ctx.storage.getUrl(doc.storageId)]);
   return { ...doc, size: file?.size ?? null, url };
 };
@@ -33,7 +33,7 @@ export const requireEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => {
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
 export const listEbooks = async (ctx: QueryCtx) => {
   const docs = await ctx.db.query("ebooks").withIndex("by_version").order("desc").collect();
-  return await Promise.all(docs.map(async (doc) => await ebookFromDoc(ctx, doc)));
+  return await Promise.all(docs.map(async (doc) => await ebookDtoFrom(ctx, doc)));
 };
 
 export const listPublishedEbooks = async (ctx: QueryCtx) =>

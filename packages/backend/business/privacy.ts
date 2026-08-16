@@ -3,7 +3,7 @@ import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
 import type { QueryCtx } from "@ec/backend/server";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 
-import { ebookIssuanceFromDoc, listEbookIssuancesNewestFirst } from "../data/ebook-issuances";
+import { ebookIssuanceDtoFrom, listEbookIssuancesNewestFirst } from "../data/ebook-issuances";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
 import { getCurrentNewsSubscription, listNewsSubscriptionsNewestFirst, markNewsSubscriptionUnsubscribed } from "../data/news-subscriptions";
 import { deleteNewsSuppressionByEmail, ensureNewsSuppression, getNewsSuppressionByEmail } from "../data/news-suppressions";
@@ -49,7 +49,7 @@ export async function inspectPrivacySubject(ctx: QueryCtx, email: string) {
     listEbookIssuancesNewestFirst(ctx, profile._id),
   ]);
 
-  const issuances = await Promise.all(ebookIssuances.map(async (doc) => await ebookIssuanceFromDoc(ctx, doc)));
+  const issuances = await Promise.all(ebookIssuances.map(async (doc) => await ebookIssuanceDtoFrom(ctx, doc)));
   const currentConsent = consentPeriods.find(({ confirmedAt, unsubscribedAt }) => confirmedAt !== null && unsubscribedAt === null);
 
   let status: "eligible" | "notConsenting" | "restricted" | "suppressed";

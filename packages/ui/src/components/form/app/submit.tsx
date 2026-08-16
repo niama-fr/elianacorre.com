@@ -11,7 +11,7 @@ export const SUBMIT = {
   main: cva("flex items-center gap-1"),
 };
 
-// MAIN ------------------------------------------------------------------------------------------------------------------------------------
+// COMPONENT -------------------------------------------------------------------------------------------------------------------------------
 export default function Submit(props: SubmitProps) {
   const { className, icon, label, ...rest } = props;
   const form = useFormContext();

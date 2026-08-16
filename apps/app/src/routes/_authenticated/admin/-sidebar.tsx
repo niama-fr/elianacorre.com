@@ -12,42 +12,39 @@ import {
 import { Link, linkOptions } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
+import * as m from "@/paraglide/messages";
+
+// DISPLAY ---------------------------------------------------------------------------------------------------------------------------------
+const nav = linkOptions([
+  { title: m.cute_badgers_end(), to: "/admin/packs" },
+  { title: "Ebooks", to: "/admin/ebooks" },
+  { title: "Opérations e-mail", to: "/admin/email-operations" },
+  { title: "Confidentialité", to: "/admin/privacy" },
+]);
+
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-export const ADMIN = {
-  actions: cva("flex items-center gap-2"),
-  header: cva("flex h-16 shrink-0 items-center justify-between gap-2"),
-  inset: cva("p-4"),
-  signout: cva("icon-[lucide--log-out]"),
+export const ADMIN_SIDEBAR = {
+  header: cva("font-heading h-auto gap-2 text-3xl"),
+  logoWrapper: cva("size-12 rounded-md bg-white"),
 };
 
 // LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 export function AdminSidebar({ logoImg }: { logoImg: Images["Entity"] }) {
-  const data = {
-    navMain: linkOptions([
-      { title: "Ebooks", to: "/admin/ebooks" },
-      { title: "Opérations e-mail", to: "/admin/email-operations" },
-      { title: "Confidentialité", to: "/admin/privacy" },
-    ]),
-  };
-
   return (
-    <Sidebar variant="floating">
+    <Sidebar variant="inset">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
-              <div className="aspect-square size-16">
+            <SidebarMenuButton className={ADMIN_SIDEBAR.header()}>
+              <div className={ADMIN_SIDEBAR.logoWrapper()}>
                 <Image
-                  alt={logoImg.alt}
+                  {...logoImg}
                   background="transparent"
                   breakpoints={[80, 96, 160, 192, 320]}
-                  height={logoImg.height}
                   sizes="(min-width: 768px) 160px, (min-width: 640px) 96px, 80px"
-                  src={logoImg.src}
-                  width={logoImg.width}
                 />
               </div>
-              <span>Tableau de bord</span>
+              <span>{m.hot_shoes_divide()}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -55,9 +52,9 @@ export function AdminSidebar({ logoImg }: { logoImg: Images["Entity"] }) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.navMain.map(({ title, ...link }) => (
-              <SidebarMenuItem key={title}>
-                <SidebarMenuButton render={<Link {...link} />}>{title}</SidebarMenuButton>
+            {nav.map(({ title, ...link }) => (
+              <SidebarMenuItem key={link.to}>
+                <Link {...link}>{({ isActive }) => <SidebarMenuButton isActive={isActive}>{title}</SidebarMenuButton>}</Link>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>

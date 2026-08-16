@@ -29,7 +29,7 @@ const FAILURE_LABELS = {
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 const failedTasksQuery = convexQuery(api.loops.listFailedTasks, {});
 
-export const Route = createFileRoute("/_authenticated/admin/email-operations")({
+export const Route = createFileRoute("/_authenticated/admin/email-operations/")({
   component: EmailOperationsPage,
   loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(failedTasksQuery),
 });

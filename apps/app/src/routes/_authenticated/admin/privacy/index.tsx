@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 const retentionRunsQuery = convexQuery(api.retention.listRecentRuns, {});
 
-export const Route = createFileRoute("/_authenticated/admin/privacy")({
+export const Route = createFileRoute("/_authenticated/admin/privacy/")({
   component: AdminPrivacyPage,
   loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(retentionRunsQuery),
 });

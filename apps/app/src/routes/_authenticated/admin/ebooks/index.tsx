@@ -2,23 +2,41 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
 import type { Id } from "@ec/backend/types";
 import { formatSize } from "@ec/domain/helpers/ebooks";
-import { zEbookCreateValues, type Ebooks } from "@ec/domain/schemas/ebooks";
+import { MAX_SIZE, PDF_ACCEPTED_TYPES } from "@ec/domain/helpers/storage";
 import { Alert } from "@ec/ui/components/alert";
 import { Item, ItemHeader, ItemTitle, ItemContent } from "@ec/ui/components/item";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
 import { useAppForm } from "@ec/ui/hooks/app-form";
+import { z } from "@ec/validation/zod";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTable, FlexRender } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 import { toast } from "sonner";
 
-import { features, getColumns } from "./ebooks/-table-features";
+import * as m from "@/paraglide/messages";
 
+import { features, getColumns } from "./-table-features";
+
+// SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
+export const zEbookCreateValues = z.object({
+  file: z
+    .file({ error: m.dull_things_work() })
+    .max(MAX_SIZE, { error: m.tiny_mugs_study() })
+    .mime([...PDF_ACCEPTED_TYPES], { error: m.dull_things_work() })
+    .nullable()
+    .refine((file) => file !== null, { error: m.dull_things_work() }),
+  title: z.string().trim().min(1, { error: m.wide_berries_stop() }),
+});
+
+export type EbookCreateDefaultValues = z.input<typeof zEbookCreateValues>;
+
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const ebooksQuery = convexQuery(api.ebooks.list);
+const ebookCreateDefaultValues: EbookCreateDefaultValues = { file: null, title: "" };
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
-export const Route = createFileRoute("/_authenticated/admin/ebooks")({
+export const Route = createFileRoute("/_authenticated/admin/ebooks/")({
   component: EbooksPage,
   loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(ebooksQuery),
 });
@@ -97,8 +115,7 @@ function EbookForm() {
   const create = useMutation({ mutationFn: useConvexMutation(api.ebooks.create) });
 
   const form = useAppForm({
-    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
-    defaultValues: { file: null, title: "" } as Ebooks["CreateDefaultValues"],
+    defaultValues: ebookCreateDefaultValues,
     onSubmit: async ({ value: { file, title } }) => {
       if (file === null) return;
 
@@ -136,7 +153,7 @@ function EbookForm() {
               {(f) => <f.InputField label="Titre" type="text" />}
             </form.AppField>
             <form.AppField name="file" validators={{ onChange: zEbookCreateValues.shape.file }}>
-              {(f) => <f.FileInputField label="Fichier" accept="application/pdf,.pdf" />}
+              {(f) => <f.FileInputField label="Fichier" removeLabel="Supprimer le fichier" accept="application/pdf,.pdf" />}
             </form.AppField>
             <form.Submit label="Enregistrer le brouillon" icon="icon-[tabler--circle-plus]" />
           </form.AppForm>

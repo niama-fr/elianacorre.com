@@ -16,10 +16,12 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as ConnexionIndexRouteImport } from './routes/connexion/index'
 import { Route as AuthenticatedMemberIndexRouteImport } from './routes/_authenticated/_member/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedAdminEbooksRouteImport } from './routes/_authenticated/admin/ebooks'
-import { Route as AuthenticatedAdminEmailOperationsRouteImport } from './routes/_authenticated/admin/email-operations'
-import { Route as AuthenticatedAdminPrivacyRouteImport } from './routes/_authenticated/admin/privacy'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AuthenticatedAdminEbooksIndexRouteImport } from './routes/_authenticated/admin/ebooks/index'
+import { Route as AuthenticatedAdminEmailOperationsIndexRouteImport } from './routes/_authenticated/admin/email-operations/index'
+import { Route as AuthenticatedAdminPacksIndexRouteImport } from './routes/_authenticated/admin/packs/index'
+import { Route as AuthenticatedAdminPacksPackIdRouteImport } from './routes/_authenticated/admin/packs/$packId'
+import { Route as AuthenticatedAdminPrivacyIndexRouteImport } from './routes/_authenticated/admin/privacy/index'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -56,50 +58,66 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminEbooksRoute =
-  AuthenticatedAdminEbooksRouteImport.update({
-    id: '/ebooks',
-    path: '/ebooks',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminEmailOperationsRoute =
-  AuthenticatedAdminEmailOperationsRouteImport.update({
-    id: '/email-operations',
-    path: '/email-operations',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPrivacyRoute =
-  AuthenticatedAdminPrivacyRouteImport.update({
-    id: '/privacy',
-    path: '/privacy',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminEbooksIndexRoute =
+  AuthenticatedAdminEbooksIndexRouteImport.update({
+    id: '/ebooks/',
+    path: '/ebooks/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminEmailOperationsIndexRoute =
+  AuthenticatedAdminEmailOperationsIndexRouteImport.update({
+    id: '/email-operations/',
+    path: '/email-operations/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPacksIndexRoute =
+  AuthenticatedAdminPacksIndexRouteImport.update({
+    id: '/packs/',
+    path: '/packs/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPacksPackIdRoute =
+  AuthenticatedAdminPacksPackIdRouteImport.update({
+    id: '/packs/$packId',
+    path: '/packs/$packId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPrivacyIndexRoute =
+  AuthenticatedAdminPrivacyIndexRouteImport.update({
+    id: '/privacy/',
+    path: '/privacy/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedMemberIndexRoute
   '/acces-refuse': typeof AuthenticatedAccesRefuseRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/connexion/': typeof ConnexionIndexRoute
-  '/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
-  '/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
-  '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/packs/$packId': typeof AuthenticatedAdminPacksPackIdRoute
+  '/admin/ebooks/': typeof AuthenticatedAdminEbooksIndexRoute
+  '/admin/email-operations/': typeof AuthenticatedAdminEmailOperationsIndexRoute
+  '/admin/packs/': typeof AuthenticatedAdminPacksIndexRoute
+  '/admin/privacy/': typeof AuthenticatedAdminPrivacyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedMemberIndexRoute
   '/acces-refuse': typeof AuthenticatedAccesRefuseRoute
   '/connexion': typeof ConnexionIndexRoute
-  '/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
-  '/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
-  '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/packs/$packId': typeof AuthenticatedAdminPacksPackIdRoute
+  '/admin/ebooks': typeof AuthenticatedAdminEbooksIndexRoute
+  '/admin/email-operations': typeof AuthenticatedAdminEmailOperationsIndexRoute
+  '/admin/packs': typeof AuthenticatedAdminPacksIndexRoute
+  '/admin/privacy': typeof AuthenticatedAdminPrivacyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -108,12 +126,14 @@ export interface FileRoutesById {
   '/_authenticated/acces-refuse': typeof AuthenticatedAccesRefuseRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/connexion/': typeof ConnexionIndexRoute
-  '/_authenticated/admin/ebooks': typeof AuthenticatedAdminEbooksRoute
-  '/_authenticated/admin/email-operations': typeof AuthenticatedAdminEmailOperationsRoute
-  '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authenticated/_member/': typeof AuthenticatedMemberIndexRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/packs/$packId': typeof AuthenticatedAdminPacksPackIdRoute
+  '/_authenticated/admin/ebooks/': typeof AuthenticatedAdminEbooksIndexRoute
+  '/_authenticated/admin/email-operations/': typeof AuthenticatedAdminEmailOperationsIndexRoute
+  '/_authenticated/admin/packs/': typeof AuthenticatedAdminPacksIndexRoute
+  '/_authenticated/admin/privacy/': typeof AuthenticatedAdminPrivacyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -122,21 +142,25 @@ export interface FileRouteTypes {
     | '/acces-refuse'
     | '/admin'
     | '/connexion/'
-    | '/admin/ebooks'
-    | '/admin/email-operations'
-    | '/admin/privacy'
     | '/api/auth/$'
     | '/admin/'
+    | '/admin/packs/$packId'
+    | '/admin/ebooks/'
+    | '/admin/email-operations/'
+    | '/admin/packs/'
+    | '/admin/privacy/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/acces-refuse'
     | '/connexion'
-    | '/admin/ebooks'
-    | '/admin/email-operations'
-    | '/admin/privacy'
     | '/api/auth/$'
     | '/admin'
+    | '/admin/packs/$packId'
+    | '/admin/ebooks'
+    | '/admin/email-operations'
+    | '/admin/packs'
+    | '/admin/privacy'
   id:
     | '__root__'
     | '/_authenticated'
@@ -144,12 +168,14 @@ export interface FileRouteTypes {
     | '/_authenticated/acces-refuse'
     | '/_authenticated/admin'
     | '/connexion/'
-    | '/_authenticated/admin/ebooks'
-    | '/_authenticated/admin/email-operations'
-    | '/_authenticated/admin/privacy'
     | '/api/auth/$'
     | '/_authenticated/_member/'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/packs/$packId'
+    | '/_authenticated/admin/ebooks/'
+    | '/_authenticated/admin/email-operations/'
+    | '/_authenticated/admin/packs/'
+    | '/_authenticated/admin/privacy/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -209,33 +235,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/ebooks': {
-      id: '/_authenticated/admin/ebooks'
-      path: '/ebooks'
-      fullPath: '/admin/ebooks'
-      preLoaderRoute: typeof AuthenticatedAdminEbooksRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/email-operations': {
-      id: '/_authenticated/admin/email-operations'
-      path: '/email-operations'
-      fullPath: '/admin/email-operations'
-      preLoaderRoute: typeof AuthenticatedAdminEmailOperationsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/privacy': {
-      id: '/_authenticated/admin/privacy'
-      path: '/privacy'
-      fullPath: '/admin/privacy'
-      preLoaderRoute: typeof AuthenticatedAdminPrivacyRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/ebooks/': {
+      id: '/_authenticated/admin/ebooks/'
+      path: '/ebooks'
+      fullPath: '/admin/ebooks/'
+      preLoaderRoute: typeof AuthenticatedAdminEbooksIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/email-operations/': {
+      id: '/_authenticated/admin/email-operations/'
+      path: '/email-operations'
+      fullPath: '/admin/email-operations/'
+      preLoaderRoute: typeof AuthenticatedAdminEmailOperationsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/packs/': {
+      id: '/_authenticated/admin/packs/'
+      path: '/packs'
+      fullPath: '/admin/packs/'
+      preLoaderRoute: typeof AuthenticatedAdminPacksIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/packs/$packId': {
+      id: '/_authenticated/admin/packs/$packId'
+      path: '/packs/$packId'
+      fullPath: '/admin/packs/$packId'
+      preLoaderRoute: typeof AuthenticatedAdminPacksPackIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/privacy/': {
+      id: '/_authenticated/admin/privacy/'
+      path: '/privacy'
+      fullPath: '/admin/privacy/'
+      preLoaderRoute: typeof AuthenticatedAdminPrivacyIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
@@ -252,18 +292,22 @@ const AuthenticatedMemberRouteWithChildren =
   AuthenticatedMemberRoute._addFileChildren(AuthenticatedMemberRouteChildren)
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminEbooksRoute: typeof AuthenticatedAdminEbooksRoute
-  AuthenticatedAdminEmailOperationsRoute: typeof AuthenticatedAdminEmailOperationsRoute
-  AuthenticatedAdminPrivacyRoute: typeof AuthenticatedAdminPrivacyRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminPacksPackIdRoute: typeof AuthenticatedAdminPacksPackIdRoute
+  AuthenticatedAdminEbooksIndexRoute: typeof AuthenticatedAdminEbooksIndexRoute
+  AuthenticatedAdminEmailOperationsIndexRoute: typeof AuthenticatedAdminEmailOperationsIndexRoute
+  AuthenticatedAdminPacksIndexRoute: typeof AuthenticatedAdminPacksIndexRoute
+  AuthenticatedAdminPrivacyIndexRoute: typeof AuthenticatedAdminPrivacyIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminEbooksRoute: AuthenticatedAdminEbooksRoute,
-  AuthenticatedAdminEmailOperationsRoute:
-    AuthenticatedAdminEmailOperationsRoute,
-  AuthenticatedAdminPrivacyRoute: AuthenticatedAdminPrivacyRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminPacksPackIdRoute: AuthenticatedAdminPacksPackIdRoute,
+  AuthenticatedAdminEbooksIndexRoute: AuthenticatedAdminEbooksIndexRoute,
+  AuthenticatedAdminEmailOperationsIndexRoute:
+    AuthenticatedAdminEmailOperationsIndexRoute,
+  AuthenticatedAdminPacksIndexRoute: AuthenticatedAdminPacksIndexRoute,
+  AuthenticatedAdminPrivacyIndexRoute: AuthenticatedAdminPrivacyIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

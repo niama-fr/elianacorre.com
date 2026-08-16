@@ -14,7 +14,7 @@
     "@unpic/placeholder": "^0.1.2",
     "convex": "1.44.0",
     "convex-helpers": "^0.1.123",
-    "jose": "^6.2.8",
+    "jose": "^6.2.9",
     "zod": "^4.4.3"
   },
   "devDependencies": {

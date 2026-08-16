@@ -27,10 +27,10 @@
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
     "@ec/validation": "workspace:*",
-    "better-auth": "~1.6.28",
+    "better-auth": "~1.6.29",
     "convex": "1.44.0",
     "convex-helpers": "^0.1.123",
-    "jose": "^6.2.8",
+    "jose": "^6.2.9",
     "standardwebhooks": "^1.0.0",
     "typescript": "^7.0.2"
   },
