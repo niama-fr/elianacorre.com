@@ -64,6 +64,10 @@ export async function updateTravelPackDraft(ctx: AuthenticatedMutationCtx, opts:
 
   if (current.status !== "draft") throw new ConvexError(TRAVEL_PACK_ERROR.notEditable);
 
+  if ((payload.coverFileName === null) !== (payload.coverStorageId === null)) throw new ConvexError(TRAVEL_PACK_ERROR.coverInvalid);
+
+  if ((payload.pdfFileName === null) !== (payload.pdfStorageId === null)) throw new ConvexError(TRAVEL_PACK_ERROR.pdfInvalid);
+
   if (payload.coverStorageId) {
     const doc = await getStorageDoc(ctx, payload.coverStorageId);
     if (!zStorageImageDoc.safeParse(doc).success) throw new ConvexError(TRAVEL_PACK_ERROR.coverInvalid);

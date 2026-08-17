@@ -296,4 +296,54 @@ describe("Travel Pack administration", () => {
 
     expect(updated.description).toBe(description);
   });
+
+  it("rejects mismatched cover metadata", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+
+    const travelPackId = await createDraft(asAdmin, "Bali");
+    const pack = await getPack(asAdmin, travelPackId);
+
+    await expect(
+      asAdmin.mutation(
+        api.travelPacks.update,
+        updateFrom(pack, {
+          coverFileName: "cover.webp",
+          coverStorageId: null,
+        })
+      )
+    ).resolves.toStrictEqual({
+      error: TRAVEL_PACK_ERROR.coverInvalid,
+    });
+
+    await expect(getPack(asAdmin, travelPackId)).resolves.toMatchObject({
+      coverFileName: null,
+      coverStorageId: null,
+    });
+  });
+
+  it("rejects mismatched PDF metadata", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+
+    const travelPackId = await createDraft(asAdmin, "Bali");
+    const pack = await getPack(asAdmin, travelPackId);
+
+    await expect(
+      asAdmin.mutation(
+        api.travelPacks.update,
+        updateFrom(pack, {
+          pdfFileName: "pack.pdf",
+          pdfStorageId: null,
+        })
+      )
+    ).resolves.toStrictEqual({
+      error: TRAVEL_PACK_ERROR.pdfInvalid,
+    });
+
+    await expect(getPack(asAdmin, travelPackId)).resolves.toMatchObject({
+      pdfFileName: null,
+      pdfStorageId: null,
+    });
+  });
 });

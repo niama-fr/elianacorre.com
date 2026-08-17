@@ -1,11 +1,5 @@
 import { convexErrorDataFrom } from "@ec/domain/helpers/errors";
-import {
-  TRAVEL_PACK_ERROR,
-  zTravelPackCreate,
-  zTravelPackError,
-  zTravelPackTitle,
-  zTravelPackUpdate,
-} from "@ec/domain/schemas/travel-packs";
+import { zTravelPackCreate, zTravelPackError, zTravelPackTitle, zTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
 import { zPaginationOptions } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 
@@ -52,12 +46,7 @@ export const create = zAdminMutation({
 });
 
 export const update = zAdminMutation({
-  args: zTravelPackUpdate.superRefine((value, ctx) => {
-    if ((value.coverFileName === null) !== (value.coverStorageId === null))
-      ctx.addIssue({ code: "custom", message: TRAVEL_PACK_ERROR.coverInvalid, path: ["coverStorageId"] });
-    if ((value.pdfFileName === null) !== (value.pdfStorageId === null))
-      ctx.addIssue({ code: "custom", message: TRAVEL_PACK_ERROR.pdfInvalid, path: ["pdfStorageId"] });
-  }),
+  args: zTravelPackUpdate,
   handler: async (ctx, args) => {
     try {
       const slug = await updateTravelPackDraft(ctx, { ...args, now: Date.now() });

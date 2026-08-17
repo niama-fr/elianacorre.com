@@ -73,9 +73,9 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
         ]);
         const result = await update.mutateAsync({
           _id: travelPackId,
-          coverFileName: cover ? cover.name : null,
+          coverFileName: cover?.name ?? data.coverFileName,
           coverStorageId,
-          pdfFileName: pdf ? pdf.name : null,
+          pdfFileName: pdf?.name ?? data.pdfFileName,
           pdfStorageId,
           ...patch,
         });
@@ -134,6 +134,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                   <InputGroupAddon align="inline-end">
                     <InputGroupButton
                       aria-label={m.chunky_blue_cheetah_launch()}
+                      disabled={data.status !== "draft"}
                       title={m.chunky_blue_cheetah_launch()}
                       size="icon-xs"
                       onClick={() => {
