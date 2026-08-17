@@ -1,8 +1,9 @@
-import { Field, FieldError, FieldLabel } from "@ec/ui/components/form/web/field";
 import type { InputProps } from "@ec/ui/components/input";
 import { Input } from "@ec/ui/components/input";
-import { useFieldContext } from "@ec/ui/hooks/web-form-context";
 import { cva } from "class-variance-authority";
+
+import { useFieldContext } from "./context";
+import { Field, FieldError, FieldLabel } from "./field";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const INPUT_FIELD = {
@@ -10,7 +11,7 @@ export const INPUT_FIELD = {
     group-data-[intent=secondary]/form:focus-visible:border-secondary group-data-[intent=secondary]/form:focus-visible:ring-secondary 
     group-data-[intent=secondary]/form:focus-visible:aria-invalid:border-destructive group-data-[intent=secondary]/form:focus-visible:aria-invalid:ring-destructive
     aria-invalid:border-destructive aria-invalid:ring-destructive
-    bg-white focus-visible:ring-[2px] aria-invalid:ring-[2px]`),
+    bg-white focus-visible:ring-2 aria-invalid:ring-2`),
 };
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------

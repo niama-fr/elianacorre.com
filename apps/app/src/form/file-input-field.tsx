@@ -1,9 +1,9 @@
 import { Button } from "@ec/ui/components/button";
 import type { InputProps } from "@ec/ui/components/input";
 import { Input } from "@ec/ui/components/input";
-import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 import { useRef } from "react";
 
+import { useFieldContext } from "./context";
 import { Field } from "./field";
 
 // COMPONENT -------------------------------------------------------------------------------------------------------------------------------

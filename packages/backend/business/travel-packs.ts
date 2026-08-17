@@ -3,12 +3,13 @@ import type { QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { slugify, suffixSlug } from "@ec/domain/helpers/slugs";
 import { zStorageImageDoc, zStoragePdfDoc } from "@ec/domain/schemas/storage";
-import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
 import type { WithNow } from "@ec/domain/schemas/utils";
+import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
 
 import { deleteStorage, getStorageDoc, getStorageUrl } from "../data/storage";
-import { getTravelPackBySlug, createTravelPack, patchTravelPack, requireTravelPack, takeTravelPacks } from "../data/travel-packs";
+import { createTravelPack, getTravelPackBySlug, paginateTravelPacks, patchTravelPack, requireTravelPack } from "../data/travel-packs";
 
 // DTO -------------------------------------------------------------------------------------------------------------------------------------
 export async function travelPackDtoFrom(ctx: QueryCtx, doc: TravelPacks["Doc"]): Promise<TravelPacks["Dto"]> {
@@ -24,9 +25,9 @@ export async function requireTravelPackDto(ctx: QueryCtx, id: Id<"travelPacks">)
   return await travelPackDtoFrom(ctx, await requireTravelPack(ctx, id));
 }
 
-export async function takeTravelPackDtos(ctx: QueryCtx, limit: number) {
-  const docs = await takeTravelPacks(ctx, limit);
-  return await Promise.all(docs.map(async (doc) => await travelPackDtoFrom(ctx, doc)));
+export async function paginateTravelPackDtos(ctx: QueryCtx, pagination: PaginationOptions) {
+  const result = await paginateTravelPacks(ctx, pagination);
+  return { ...result, page: await Promise.all(result.page.map(async (doc) => await travelPackDtoFrom(ctx, doc))) };
 }
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
@@ -57,55 +58,35 @@ export async function suggestTravelPackSlug(ctx: QueryCtx, title: string, curren
 }
 
 // UPDATE ----------------------------------------------------------------------------------------------------------------------------------
-export async function updateTravelPackDraft(
-  ctx: AuthenticatedMutationCtx,
-  id: Id<"travelPacks">,
-  { cover, now, pdf, ...metadata }: WithNow<TravelPacks["Update"]>
-) {
-  const current = await requireTravelPack(ctx, id);
+export async function updateTravelPackDraft(ctx: AuthenticatedMutationCtx, opts: WithNow<TravelPacks["Update"]>) {
+  const { now, _id, ...payload } = opts;
+  const current = await requireTravelPack(ctx, _id);
 
   if (current.status !== "draft") throw new ConvexError("TRAVEL_PACK_NOT_EDITABLE");
 
-  const slug = requireValidSlug(metadata.slug);
-  const existing = await getTravelPackBySlug(ctx, slug);
-
-  if (existing && existing._id !== id) throw new ConvexError("TRAVEL_PACK_SLUG_TAKEN");
-
-  if (cover) {
-    const doc = await getStorageDoc(ctx, cover.coverStorageId);
+  if (payload.coverStorageId) {
+    const doc = await getStorageDoc(ctx, payload.coverStorageId);
     if (!zStorageImageDoc.safeParse(doc).success) throw new ConvexError("INVALID_TRAVEL_PACK_COVER");
   }
 
-  if (pdf) {
-    const doc = await getStorageDoc(ctx, pdf.pdfStorageId);
+  if (payload.pdfStorageId) {
+    const doc = await getStorageDoc(ctx, payload.pdfStorageId);
     if (!zStoragePdfDoc.safeParse(doc).success) throw new ConvexError("INVALID_TRAVEL_PACK_PDF");
   }
 
-  await patchTravelPack(ctx, id, {
-    ...metadata,
-    ...cover,
-    ...pdf,
-    slug,
-    updatedAt: now,
-    updatedBy: ctx.profile._id,
-  });
+  await patchTravelPack(ctx, _id, { ...payload, updatedAt: now, updatedBy: ctx.profile._id });
 
-  if (cover && current.coverStorageId && current.coverStorageId !== cover.coverStorageId) await deleteStorage(ctx, current.coverStorageId);
+  if (payload.coverStorageId && current.coverStorageId && current.coverStorageId !== payload.coverStorageId)
+    await deleteStorage(ctx, current.coverStorageId);
 
-  if (pdf && current.pdfStorageId && current.pdfStorageId !== pdf.pdfStorageId) await deleteStorage(ctx, current.pdfStorageId);
+  if (payload.pdfStorageId && current.pdfStorageId && current.pdfStorageId !== payload.pdfStorageId)
+    await deleteStorage(ctx, current.pdfStorageId);
 }
 
 // INTERNAL -------------------------------------------------------------------------------------------------------------------------------
-function requireValidSlug(value: string) {
-  const slug = slugify(value);
-
-  if (!slug) throw new ConvexError("INVALID_TRAVEL_PACK_SLUG");
-
-  return slug;
-}
-
 async function resolveUniqueTravelPackSlug(ctx: QueryCtx, value: string, currentId?: Id<"travelPacks">) {
-  const base = requireValidSlug(value);
+  const base = slugify(value);
+  if (base === "") throw new ConvexError(TRAVEL_PACK_ERROR.slugInvalid);
   let sequence = 1;
 
   while (true) {

@@ -2,16 +2,15 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
 import type { Id } from "@ec/backend/types";
 import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
-import { Button } from "@ec/ui/components/button";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@ec/ui/components/item";
-import { useAppForm } from "@ec/ui/hooks/app-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 import { toast } from "sonner";
 
-import { type TravelPackUpdateDefaultValues, zTravelPackUpdateValues } from "@/features/travel-packs/schemas";
+import { type TravelPackUpdateValues, zTravelPackUpdateValues } from "@/features/travel-packs/schemas";
 import { TravelPackStatusBadge } from "@/features/travel-packs/status-badge";
+import { useAppForm } from "@/form/hook";
 import * as m from "@/paraglide/messages";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/admin/packs/$packId")({
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-const TRAVEL_PACK_DETAIL_PAGE = {
+const PAGE = {
   form: cva("flex w-full flex-col items-end gap-4"),
   item: cva("border-border rounded-none border border-dashed"),
   root: cva("flex flex-col gap-8"),
@@ -36,8 +35,8 @@ function TravelPackDetailPage() {
   const { data } = useSuspenseQuery(convexQuery(api.travelPacks.get, { travelPackId: id }));
 
   return (
-    <section className={TRAVEL_PACK_DETAIL_PAGE.root()}>
-      <h1 className={TRAVEL_PACK_DETAIL_PAGE.srOnly()}>{data.title}</h1>
+    <section className={PAGE.root()}>
+      <h1 className={PAGE.srOnly()}>{data.title}</h1>
       <TravelPackStatusBadge status={data.status} />
       <TravelPackUpdateForm data={data} travelPackId={id} />
     </section>
@@ -46,10 +45,11 @@ function TravelPackDetailPage() {
 
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps) {
-  const generateUploadUrl = useConvexMutation(api.travelPacks.generateUploadUrl);
+  const generateUploadUrl = useConvexMutation(api.storage.generateUploadUrl);
   const update = useMutation({ mutationFn: useConvexMutation(api.travelPacks.update) });
   const queryClient = useQueryClient();
-  const defaultValues: TravelPackUpdateDefaultValues = {
+
+  const defaultValues: TravelPackUpdateValues = {
     cover: null,
     description: data.description,
     destination: data.destination,
@@ -59,32 +59,26 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
     title: data.title,
     youtubeUrl: data.youtubeUrl ?? "",
   };
+
   const form = useAppForm({
     defaultValues,
-    onSubmit: async ({ value }) => {
-      const { cover, description, destination, excerpt, pdf, slug, title, youtubeUrl } = zTravelPackUpdateValues.parse(value);
+    onSubmit: async ({ value: { cover, pdf, ...patch } }) => {
       try {
         const [coverStorageId, pdfStorageId] = await Promise.all([
           cover ? uploadFile(cover, async () => await generateUploadUrl({})) : null,
           pdf ? uploadFile(pdf, async () => await generateUploadUrl({})) : null,
         ]);
         const result = await update.mutateAsync({
-          patch: {
-            cover: cover && coverStorageId ? { coverFileName: cover.name, coverStorageId } : null,
-            description,
-            destination,
-            excerpt,
-            pdf: pdf && pdfStorageId ? { pdfFileName: pdf.name, pdfStorageId } : null,
-            slug,
-            title,
-            youtubeUrl,
-          },
-          travelPackId,
+          _id: travelPackId,
+          coverFileName: cover ? cover.name : null,
+          coverStorageId,
+          pdfFileName: pdf ? pdf.name : null,
+          pdfStorageId,
+          ...patch,
         });
         if (result.error) throw new Error(result.error);
         form.setFieldValue("cover", null);
         form.setFieldValue("pdf", null);
-        form.setFieldValue("slug", slug);
         toast.success(m.great_dancers_stare());
       } catch (error) {
         toast.error(error instanceof Error && error.message === "TRAVEL_PACK_SLUG_TAKEN" ? m.hip_crabs_lie() : m.fancy_comics_double());
@@ -94,20 +88,21 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
 
   const regenerateSlug = async () => {
     try {
-      await regenerateSlugFromTitle({
-        setSlug: (slug) => {
-          form.setFieldValue("slug", slug);
-        },
-        suggestSlug: async (title) => await queryClient.fetchQuery(convexQuery(api.travelPacks.suggestSlug, { title, travelPackId })),
-        title: form.getFieldValue("title"),
-      });
+      const slug = await queryClient.fetchQuery(
+        convexQuery(api.travelPacks.suggestSlug, {
+          title: form.getFieldValue("title"),
+          travelPackId,
+        })
+      );
+
+      form.setFieldValue("slug", slug);
     } catch {
       toast.error(m.frank_socks_hide());
     }
   };
 
   return (
-    <Item className={TRAVEL_PACK_DETAIL_PAGE.item()}>
+    <Item className={PAGE.item()}>
       <ItemHeader>
         <ItemTitle>{m.ripe_lands_fall()}</ItemTitle>
       </ItemHeader>
@@ -119,7 +114,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
           })}
         </ItemDescription>
         <form
-          className={TRAVEL_PACK_DETAIL_PAGE.form()}
+          className={PAGE.form()}
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
@@ -129,27 +124,16 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
         >
           <form.AppForm>
             <form.AppField name="title" validators={{ onChange: zTravelPackUpdateValues.shape.title }}>
-              {(field) => <field.InputField label={m.strong_aliens_flash()} type="text" />}
+              {(f) => <f.InputField label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
             <form.AppField name="slug" validators={{ onChange: zTravelPackUpdateValues.shape.slug }}>
-              {(field) => (
-                <field.InputField
-                  action={
-                    <Button
-                      disabled={data.status !== "draft"}
-                      size="xs"
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        // oxlint-disable-next-line eslint/no-void -- event handlers cannot return promises.
-                        void regenerateSlug();
-                      }}
-                    >
-                      {m.goofy_bananas_call()}
-                    </Button>
-                  }
-                  disabled={data.status !== "draft"}
+              {(f) => (
+                <f.InputGroupField
+                  disabled
                   label={m.nice_bats_travel()}
+                  onClick={() => {
+                    void regenerateSlug();
+                  }}
                   type="text"
                 />
               )}
@@ -198,13 +182,6 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
 type TravelPackUpdateFormProps = { data: TravelPacks["Dto"]; travelPackId: Id<"travelPacks"> };
 
 // HELPERS ----------------------------------------------------------------------------------------------------------------------------------
-async function regenerateSlugFromTitle({ setSlug, suggestSlug, title }: RegenerateSlugFromTitleOpts) {
-  const slug = await suggestSlug(title);
-  setSlug(slug);
-  return slug;
-}
-type RegenerateSlugFromTitleOpts = { setSlug: (slug: string) => void; suggestSlug: (title: string) => Promise<string>; title: string };
-
 async function uploadFile(file: File, generateUploadUrl: () => Promise<string>) {
   const uploadUrl = await generateUploadUrl();
   const response = await fetch(uploadUrl, { body: file, headers: { "Content-Type": file.type }, method: "POST" });

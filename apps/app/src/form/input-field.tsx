@@ -1,6 +1,6 @@
 import { Input, type InputProps } from "@ec/ui/components/input";
-import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 
+import { useFieldContext } from "./context";
 import { Field } from "./field";
 
 // COMPONENT -------------------------------------------------------------------------------------------------------------------------------

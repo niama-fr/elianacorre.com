@@ -22,6 +22,7 @@ import type * as privacy from "../privacy.js";
 import type * as profiles from "../profiles.js";
 import type * as retention from "../retention.js";
 import type * as seed from "../seed.js";
+import type * as storage from "../storage.js";
 import type * as travelPacks from "../travelPacks.js";
 import type * as workflow from "../workflow.js";
 import type * as zod from "../zod.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   retention: typeof retention;
   seed: typeof seed;
+  storage: typeof storage;
   travelPacks: typeof travelPacks;
   workflow: typeof workflow;
   zod: typeof zod;

@@ -1,8 +1,9 @@
 import { Button, type ButtonProps } from "@ec/ui/components/button";
 import { LoadingSwap } from "@ec/ui/components/loading-swap";
-import { useFormContext } from "@ec/ui/hooks/app-form-context";
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
+
+import { useFormContext } from "./context";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const SUBMIT = {

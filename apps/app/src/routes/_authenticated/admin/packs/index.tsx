@@ -1,31 +1,30 @@
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
-import type { Id } from "@ec/backend/types";
-import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
 import { Alert } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
-import { useAppForm } from "@ec/ui/hooks/app-form";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FlexRender, useTable } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
+import { usePaginatedQuery } from "convex/react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { zTravelPackCreateValues } from "@/features/travel-packs/schemas";
+import { useAppForm } from "@/form/hook";
 import * as m from "@/paraglide/messages";
 
 import { features, getColumns } from "./-table-features";
 
-const travelPacksQuery = convexQuery(api.travelPacks.list);
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const searchSchema = z.object({ create: z.boolean().optional() });
+const PAGE_SIZE = 25;
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/admin/packs/")({
   component: TravelPacksPage,
-  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(travelPacksQuery),
   validateSearch: searchSchema,
 });
 
@@ -57,8 +56,8 @@ function TravelPacksPage() {
 
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 export function TravelPackTable() {
-  const { data } = useSuspenseQuery(travelPacksQuery);
-  const table = useTable({ columns: getColumns(), data, features });
+  const { loadMore, results, status } = usePaginatedQuery(api.travelPacks.list, {}, { initialNumItems: PAGE_SIZE });
+  const table = useTable({ columns: getColumns(), data: results, features });
   const { rows } = table.getRowModel();
   const columnCount = table.getAllLeafColumns().length;
 
@@ -95,6 +94,17 @@ export function TravelPackTable() {
           )}
         </TableBody>
       </Table>
+      {status === "CanLoadMore" && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            loadMore(PAGE_SIZE);
+          }}
+        >
+          {m.warm_taxis_smile()}
+        </Button>
+      )}
     </div>
   );
 }
@@ -103,44 +113,28 @@ function TravelPackCreateDialogRoute() {
   const { create } = Route.useSearch();
   const navigate = useNavigate();
   const createDraft = useMutation({ mutationFn: useConvexMutation(api.travelPacks.create) });
-  return (
-    <TravelPackCreateDialog
-      createDraft={async (input) => await createDraft.mutateAsync(input)}
-      open={create === true}
-      onClose={() => {
-        void navigate({ replace: true, search: {}, to: "/admin/packs" });
-      }}
-      onCreated={async (packId) => {
-        await navigate({ params: { packId }, to: "/admin/packs/$packId" });
-      }}
-    />
-  );
-}
 
-export function TravelPackCreateDialog({ createDraft, onClose, onCreated, open }: TravelPackCreateDialogProps) {
   const form = useAppForm({
     defaultValues: { title: "" },
     onSubmit: async ({ value }) => {
-      const title = zTravelPackCreateValues.shape.title.parse(value.title);
       try {
-        const result = await createDraft({ title });
+        const result = await createDraft.mutateAsync(value);
         if (result.error) throw new Error(result.error);
-        if (!result.data) throw new Error("TRAVEL_PACK_CREATE_FAILED");
         form.reset();
-        await onCreated(result.data);
-      } catch (error) {
-        toast.error(error instanceof Error && error.message === "TRAVEL_PACK_SLUG_TAKEN" ? m.hip_crabs_lie() : m.polite_stars_spend());
+        await navigate({ params: { packId: result.data }, to: "/admin/packs/$packId" });
+      } catch {
+        toast.error(m.polite_stars_spend());
       }
     },
   });
 
   return (
     <Dialog
-      open={open}
+      open={create}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
           form.reset();
-          onClose();
+          void navigate({ replace: true, search: {}, to: "/admin/packs" });
         }
       }}
     >
@@ -171,11 +165,3 @@ export function TravelPackCreateDialog({ createDraft, onClose, onCreated, open }
     </Dialog>
   );
 }
-type TravelPackCreateDialogProps = {
-  createDraft: (
-    input: TravelPacks["Create"]
-  ) => Promise<{ data: Id<"travelPacks">; error?: undefined } | { data?: undefined; error: string }>;
-  onClose: () => void;
-  onCreated: (packId: Id<"travelPacks">) => Promise<void>;
-  open: boolean;
-};

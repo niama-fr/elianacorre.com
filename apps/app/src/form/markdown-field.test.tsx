@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { useAppForm } from "@ec/ui/hooks/app-form";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+
+import { useAppForm } from "./hook";
 
 function MarkdownForm() {
   const form = useAppForm({ defaultValues: { description: "**Brut**" } });

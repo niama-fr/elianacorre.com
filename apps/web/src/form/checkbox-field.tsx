@@ -1,14 +1,15 @@
 import { Checkbox } from "@ec/ui/components/checkbox";
-import { Field, FieldLabel } from "@ec/ui/components/form/web/field";
-import { useFieldContext } from "@ec/ui/hooks/web-form-context";
 import { cva } from "class-variance-authority";
+
+import { useFieldContext } from "./context";
+import { Field, FieldLabel } from "./field";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const CHECKBOX_FIELD = {
   checkbox: cva(`aria-invalid:ring-destructive
   group-data-[intent=secondary]/form:data-checked:border-secondary group-data-[intent=secondary]/form:data-checked:bg-secondary
   group-data-[intent=secondary]/form:data-checked:text-secondary-foreground bg-white 
-  aria-invalid:ring-[2px] `),
+  aria-invalid:ring-2`),
 };
 
 // ROOT ------------------------------------------------------------------------------------------------------------------------------------

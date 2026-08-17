@@ -1,6 +1,8 @@
 import { FieldDescription, FieldError as FieldErrorNative, FieldLabel, Field as FieldNative } from "@ec/ui/components/field";
-import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 import { cva } from "class-variance-authority";
+
+import { useFieldContext } from "./context";
+import { validationMessage } from "./validation";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const EMPTY_ERRORS: { message?: string }[] = [];
@@ -43,6 +45,9 @@ export type FieldProps = {
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 export function FieldError(props: FieldErrorProps) {
   const { errors, isInvalid } = props;
-  return <FieldErrorNative className={FIELD.error()} data-invalid={isInvalid} errors={isInvalid ? errors : EMPTY_ERRORS} />;
+  const displayErrors = isInvalid
+    ? errors.map((error) => ({ ...error, message: error.message === undefined ? undefined : validationMessage(error.message) }))
+    : EMPTY_ERRORS;
+  return <FieldErrorNative className={FIELD.error()} data-invalid={isInvalid} errors={displayErrors} />;
 }
 export type FieldErrorProps = { errors: { message?: string }[]; isInvalid: boolean };

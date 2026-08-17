@@ -1,7 +1,7 @@
 import { Textarea } from "@ec/ui/components/textarea";
-import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 import type { ComponentProps } from "react";
 
+import { useFieldContext } from "./context";
 import { Field } from "./field";
 
 // COMPONENT -------------------------------------------------------------------------------------------------------------------------------

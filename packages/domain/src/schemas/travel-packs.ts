@@ -1,4 +1,3 @@
-import { slugify } from "@ec/domain/helpers/slugs";
 import { zDocCommon } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 import { z } from "zod";
@@ -6,17 +5,34 @@ import { z } from "zod";
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 export const zTravelPackStatus = z.literal(["archived", "draft", "published"]);
 
+// ERRORS ----------------------------------------------------------------------------------------------------------------------------------
+export const TRAVEL_PACK_ERROR = {
+  coverInvalid: "TRAVEL_PACK_COVER_INVALID",
+  createFailed: "TRAVEL_PACK_CREATE_FAILED",
+  notEditable: "TRAVEL_PACK_NOT_EDITABLE",
+  pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
+  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
+  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
+  slugTaken: "TRAVEL_PACK_SLUG_TAKEN",
+  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
+  unknown: "TRAVEL_PACK_UNKNOWN",
+  updateInvalid: "TRAVEL_PACK_UPDATE_INVALID",
+  youtubeUrlInvalid: "TRAVEL_PACK_YOUTUBE_URL_INVALID",
+} as const;
+
+export const zTravelPackError = z.enum(TRAVEL_PACK_ERROR);
+
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
-const zTravelPackFileName = z.string().trim().min(1);
+const zTravelPackFileName = z.string().min(1);
 
 export const zTravelPackDescription = z.string();
 export const zTravelPackDestination = z.string().trim();
 export const zTravelPackExcerpt = z.string().trim();
-export const zTravelPackTitle = z.string().trim().min(1, { error: "TRAVEL_PACK_TITLE_REQUIRED" });
+export const zTravelPackTitle = z.string().trim().min(1, { error: TRAVEL_PACK_ERROR.titleRequired });
 
 export const zTravelPackYoutubeUrl = z
   .url({
-    error: "TRAVEL_PACK_YOUTUBE_URL_INVALID",
+    error: TRAVEL_PACK_ERROR.youtubeUrlInvalid,
     hostname: /^(?:www\.)?(?:youtube\.com|youtu\.be)$/u,
     protocol: /^https?$/u,
   })
@@ -24,10 +40,8 @@ export const zTravelPackYoutubeUrl = z
 
 export const zTravelPackSlug = z
   .string()
-  .min(1, { error: "TRAVEL_PACK_SLUG_REQUIRED" })
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, { error: "TRAVEL_PACK_SLUG_INVALID" });
-
-export const zTravelPackSlugInput = z.string().transform(slugify).pipe(zTravelPackSlug);
+  .min(1, { error: TRAVEL_PACK_ERROR.slugRequired })
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, { error: TRAVEL_PACK_ERROR.slugInvalid });
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const zTravelPackFields = z.object({
@@ -60,14 +74,15 @@ export const zTravelPackDto = z.object({
 export const zTravelPack = zTravelPackDto;
 
 // PAYLOADS --------------------------------------------------------------------------------------------------------------------------------
-const zTravelPackCover = z.object({ coverFileName: zTravelPackFileName, coverStorageId: zid("_storage") });
-const zTravelPackPdf = z.object({ pdfFileName: zTravelPackFileName, pdfStorageId: zid("_storage") });
-
 export const zTravelPackCreate = zTravelPackFields.pick({ title: true });
 
-export const zTravelPackUpdate = zTravelPackFields
-  .pick({ description: true, destination: true, excerpt: true, title: true, youtubeUrl: true })
-  .extend({ cover: zTravelPackCover.nullable(), pdf: zTravelPackPdf.nullable(), slug: zTravelPackSlugInput });
+export const zTravelPackUpdate = zTravelPackDoc.omit({
+  _creationTime: true,
+  createdBy: true,
+  status: true,
+  updatedAt: true,
+  updatedBy: true,
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type TravelPacks = {
@@ -75,6 +90,7 @@ export type TravelPacks = {
   Doc: z.infer<typeof zTravelPackDoc>;
   Dto: z.infer<typeof zTravelPackDto>;
   Entity: z.infer<typeof zTravelPack>;
+  Error: z.infer<typeof zTravelPackError>;
   Fields: z.infer<typeof zTravelPackFields>;
   Status: z.infer<typeof zTravelPackStatus>;
   Update: z.infer<typeof zTravelPackUpdate>;

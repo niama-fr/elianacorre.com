@@ -22,7 +22,10 @@ export default defineSchema({
   contactRequests: defineTable(zodOutputToConvex(zContactRequestFields)).index("by_profile_id", ["profileId"]),
   ebookDownloads: defineTable(zodOutputToConvex(zEbookDownloadFields)).index("by_ebook_issuance_id", ["ebookIssuanceId"]),
   ebookIssuances: defineTable(zodOutputToConvex(zEbookIssuanceFields)).index("by_profile_id", ["profileId"]),
-  ebooks: defineTable(zodOutputToConvex(zEbookFields)).index("by_status", ["status"]).index("by_version", ["version"]),
+  ebooks: defineTable(zodOutputToConvex(zEbookFields))
+    .index("by_status", ["status"])
+    .index("by_storage_id", ["storageId"])
+    .index("by_version", ["version"]),
   identities: defineTable(zodOutputToConvex(zIdentityFields))
     .index("by_profile_id_and_adapter", ["profileId", "adapter"])
     .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
@@ -52,5 +55,9 @@ export default defineSchema({
   ]),
   profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
   retentionRuns: defineTable(zodOutputToConvex(zRetentionRunFields)),
-  travelPacks: defineTable(zodOutputToConvex(zTravelPackFields)).index("by_slug", ["slug"]).index("by_updated_at", ["updatedAt"]),
+  travelPacks: defineTable(zodOutputToConvex(zTravelPackFields))
+    .index("by_cover_storage_id", ["coverStorageId"])
+    .index("by_pdf_storage_id", ["pdfStorageId"])
+    .index("by_slug", ["slug"])
+    .index("by_updated_at", ["updatedAt"]),
 });

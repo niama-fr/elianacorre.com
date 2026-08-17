@@ -2,11 +2,11 @@ import { zEbookRecoveryRequestValues } from "@ec/domain/schemas/ebook-recoveries
 import { Alert, AlertDescription } from "@ec/ui/components/alert";
 import { Btn } from "@ec/ui/components/btn";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ec/ui/components/dialog";
-import { useAppForm } from "@ec/ui/hooks/web-form";
 import { cva } from "class-variance-authority";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { useAppForm } from "@/form/hook";
 import { requestEbookRecovery } from "@/lib/ebooks/ebooks.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

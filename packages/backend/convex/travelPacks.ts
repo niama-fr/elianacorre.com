@@ -1,34 +1,26 @@
-import { isConvexErrorCode } from "@ec/domain/helpers/errors";
-import { zTravelPackCreate, zTravelPackTitle, zTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
+import { convexErrorDataFrom } from "@ec/domain/helpers/errors";
+import { zTravelPackCreate, zTravelPackError, zTravelPackTitle, zTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
+import { zPaginationOptions } from "@ec/domain/schemas/utils";
 import { zid } from "convex-helpers/server/zod4";
 
 import {
   createTravelPackDraft,
+  paginateTravelPackDtos,
   requireTravelPackDto,
   suggestTravelPackSlug,
-  takeTravelPackDtos,
   updateTravelPackDraft,
 } from "../business/travel-packs";
 import { zAdminMutation, zAdminQuery } from "./zod";
 
-const TRAVEL_PACK_INPUT_ERRORS = [
-  "INVALID_TRAVEL_PACK_COVER",
-  "INVALID_TRAVEL_PACK_PDF",
-  "INVALID_TRAVEL_PACK_SLUG",
-  "TRAVEL_PACK_SLUG_TAKEN",
-] as const;
-
-type TravelPackInputError = (typeof TRAVEL_PACK_INPUT_ERRORS)[number];
-
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const list = zAdminQuery({
-  args: {},
-  handler: async (ctx) => await takeTravelPackDtos(ctx, 100),
-});
-
 export const get = zAdminQuery({
   args: { travelPackId: zid("travelPacks") },
   handler: async (ctx, { travelPackId }) => await requireTravelPackDto(ctx, travelPackId),
+});
+
+export const list = zAdminQuery({
+  args: { paginationOpts: zPaginationOptions },
+  handler: async (ctx, { paginationOpts }) => await paginateTravelPackDtos(ctx, paginationOpts),
 });
 
 export const suggestSlug = zAdminQuery({
@@ -44,38 +36,25 @@ export const create = zAdminMutation({
   args: zTravelPackCreate,
   handler: async (ctx, args) => {
     try {
-      return {
-        data: await createTravelPackDraft(ctx, { ...args, now: Date.now() }),
-      };
+      return { data: await createTravelPackDraft(ctx, { ...args, now: Date.now() }) };
     } catch (error) {
-      if (!isTravelPackInputError(error)) throw error;
-      return { error: error.data };
+      const code = convexErrorDataFrom(error, zTravelPackError);
+      if (!code) throw error;
+      return { error: code };
     }
   },
-});
-
-export const generateUploadUrl = zAdminMutation({
-  args: {},
-  handler: async (ctx) => await ctx.storage.generateUploadUrl(),
 });
 
 export const update = zAdminMutation({
-  args: {
-    patch: zTravelPackUpdate,
-    travelPackId: zid("travelPacks"),
-  },
-  handler: async (ctx, { patch, travelPackId }) => {
+  args: zTravelPackUpdate,
+  handler: async (ctx, args) => {
     try {
-      await updateTravelPackDraft(ctx, travelPackId, { ...patch, now: Date.now() });
-      return {};
+      await updateTravelPackDraft(ctx, { ...args, now: Date.now() });
+      return { data: { title: args.title } };
     } catch (error) {
-      if (!isTravelPackInputError(error)) throw error;
-      return { error: error.data };
+      const code = convexErrorDataFrom(error, zTravelPackError);
+      if (!code) throw error;
+      return { error: code };
     }
   },
 });
-
-// INTERNAL -------------------------------------------------------------------------------------------------------------------------------
-function isTravelPackInputError(error: unknown): error is { data: TravelPackInputError } {
-  return TRAVEL_PACK_INPUT_ERRORS.some((code) => isConvexErrorCode(error, code));
-}

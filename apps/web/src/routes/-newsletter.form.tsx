@@ -1,6 +1,5 @@
 import type { Id } from "@ec/backend/types";
 import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
-import { useAppForm } from "@ec/ui/hooks/web-form";
 import { cn } from "@ec/ui/lib/utils";
 import { mergeForm, useTransform } from "@tanstack/react-form-start";
 import confetti from "canvas-confetti";
@@ -8,6 +7,7 @@ import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
+import { useAppForm } from "@/form/hook";
 import type { ServerFormState } from "@/lib/form/form.functions";
 import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
 import { submitNewsletterSubscribeForm, subscribeToNewsletter } from "@/lib/newsletter/newsletter.functions";

@@ -28,11 +28,6 @@ export const create = zAdminMutation({
   },
 });
 
-export const generateUploadUrl = zAdminMutation({
-  args: {},
-  handler: async (ctx) => await ctx.storage.generateUploadUrl(),
-});
-
 export const publish = zAdminMutation({
   args: { ebookId: zid("ebooks") },
   handler: async (ctx, { ebookId }) => await publishEbook(ctx, ebookId, { now: Date.now() }),

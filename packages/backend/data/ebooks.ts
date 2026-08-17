@@ -15,6 +15,12 @@ export const ebookDtoFrom = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<E
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => await ctx.db.get("ebooks", id);
 
+export const getEbookByStorageId = async (ctx: QueryCtx, storageId: Id<"_storage">) =>
+  await ctx.db
+    .query("ebooks")
+    .withIndex("by_storage_id", (q) => q.eq("storageId", storageId))
+    .first();
+
 export const getLatestEbook = async (ctx: QueryCtx) => await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
 
 export const getPublishedEbook = async (ctx: QueryCtx) =>

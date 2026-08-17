@@ -59,5 +59,7 @@
   "cold_cats_live": "Utilisez uniquement des minuscules, chiffres et tirets",
   "eighty_olives_visit": "Le slug est requis",
   "wide_berries_stop": "Le titre est requis",
-  "funky_brooms_lay": "L’URL YouTube est invalide"
+  "funky_brooms_lay": "L’URL YouTube est invalide",
+  "plain_apples_rest": "Cette valeur est invalide.",
+  "warm_taxis_smile": "Afficher plus de carnets"
 }

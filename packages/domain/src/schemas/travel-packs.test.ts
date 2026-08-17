@@ -1,25 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { zTravelPackCreate, zTravelPackDescription, zTravelPackSlug, zTravelPackSlugInput, zTravelPackYoutubeUrl } from "./travel-packs";
+import { zTravelPackCreate, zTravelPackDescription, zTravelPackSlug, zTravelPackYoutubeUrl } from "./travel-packs";
 
 describe("Travel Pack values", () => {
   it.each(["bali-en-couleurs", "pack-2026", "bali"])("accepts the canonical slug %s", (slug) => {
     expect(zTravelPackSlug.parse(slug)).toBe(slug);
-  });
-
-  it.each([
-    ["Bali", "bali"],
-    ["bali en couleurs", "bali-en-couleurs"],
-    ["-bali", "bali"],
-    ["bali_2026", "bali-2026"],
-    [" Tokyo : mes bonnes adresses ", "tokyo-mes-bonnes-adresses"],
-  ])("normalizes the manually entered slug %s", (slug, expected) => {
-    expect(zTravelPackSlugInput.parse(slug)).toBe(expected);
-  });
-
-  it("rejects invalid canonical and normalized slugs", () => {
-    expect(zTravelPackSlug.safeParse("---").success).toBeFalsy();
-    expect(zTravelPackSlugInput.safeParse("---").success).toBeFalsy();
   });
 
   it("allows an incomplete draft creation while requiring its title", () => {

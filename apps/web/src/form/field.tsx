@@ -1,8 +1,9 @@
 import type { FieldProps as FieldNativeProps } from "@ec/ui/components/field";
 import { FieldError as FieldErrorNative, FieldLabel as FieldLabelNative, Field as FieldNative } from "@ec/ui/components/field";
-import { useFieldContext } from "@ec/ui/hooks/web-form-context";
 import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
+
+import { useFieldContext } from "./context";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {

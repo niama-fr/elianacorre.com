@@ -1,6 +1,7 @@
-import { Field, FieldError, FieldLabel } from "@ec/ui/components/form/web/field";
 import { Textarea } from "@ec/ui/components/textarea";
-import { useFieldContext } from "@ec/ui/hooks/web-form-context";
+
+import { useFieldContext } from "./context";
+import { Field, FieldError, FieldLabel } from "./field";
 
 // MAIN ------------------------------------------------------------------------------------------------------------------------------------
 export default function TextareaField({ label }: TextareaFieldProps) {

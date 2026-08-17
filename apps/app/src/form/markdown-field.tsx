@@ -1,10 +1,10 @@
 import { MarkdownContent } from "@ec/ui/components/markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ec/ui/components/tabs";
 import { Textarea } from "@ec/ui/components/textarea";
-import { useFieldContext } from "@ec/ui/hooks/app-form-context";
 import { cva } from "class-variance-authority";
 import type { ComponentProps } from "react";
 
+import { useFieldContext } from "./context";
 import { Field } from "./field";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
