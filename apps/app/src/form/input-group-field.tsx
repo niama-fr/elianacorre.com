@@ -6,7 +6,7 @@ import { Field } from "./field";
 
 // COMPONENT -------------------------------------------------------------------------------------------------------------------------------
 export default function InputGroupField(props: InputGroupFieldProps) {
-  const { description, label, onClick, ...rest } = props;
+  const { actionLabel, description, label, onClick, ...rest } = props;
   const { handleBlur, handleChange, name, state } = useFieldContext<string>();
 
   return (
@@ -25,7 +25,7 @@ export default function InputGroupField(props: InputGroupFieldProps) {
             {...rest}
           />
           <InputGroupAddon align="inline-end">
-            <InputGroupButton aria-label="Copy" title="Copy" size="icon-xs" onClick={onClick}>
+            <InputGroupButton aria-label={actionLabel} title={actionLabel} size="icon-xs" onClick={onClick}>
               <span className="icon-[tabler--refresh] size-4" />
             </InputGroupButton>
           </InputGroupAddon>
@@ -34,4 +34,4 @@ export default function InputGroupField(props: InputGroupFieldProps) {
     </Field>
   );
 }
-export type InputGroupFieldProps = InputProps & { description?: string; label: string; onClick: () => void };
+export type InputGroupFieldProps = InputProps & { actionLabel: string; description?: string; label: string; onClick: () => void };

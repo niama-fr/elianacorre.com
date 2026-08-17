@@ -85,4 +85,33 @@ describe("storage", () => {
       await expect(ctx.db.system.get("_storage", recentOrphan)).resolves.not.toBeNull();
     });
   });
+
+  it("continues purging across multiple storage batches", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW - ORPHAN_STORAGE_GRACE_MS - 1);
+
+    const convex = convexTest(schema, modules);
+
+    await convex.run(async (ctx) => {
+      for (let index = 0; index < 51; index += 1) await ctx.storage.store(new Blob([`orphan-${index}`]));
+    });
+
+    vi.setSystemTime(NOW);
+
+    const firstBatch = await convex.mutation(internal.storage.purgeOrphans, {
+      before: null,
+      cursor: null,
+    });
+
+    expect(firstBatch).toMatchObject({
+      deleted: 50,
+      done: false,
+    });
+
+    await convex.finishAllScheduledFunctions(vi.runAllTimers);
+
+    const remaining = await convex.run(async (ctx) => await ctx.db.system.query("_storage").collect());
+
+    expect(remaining).toHaveLength(0);
+  });
 });

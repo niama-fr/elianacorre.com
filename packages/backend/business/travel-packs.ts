@@ -62,25 +62,29 @@ export async function updateTravelPackDraft(ctx: AuthenticatedMutationCtx, opts:
   const { now, _id, ...payload } = opts;
   const current = await requireTravelPack(ctx, _id);
 
-  if (current.status !== "draft") throw new ConvexError("TRAVEL_PACK_NOT_EDITABLE");
+  if (current.status !== "draft") throw new ConvexError(TRAVEL_PACK_ERROR.notEditable);
 
   if (payload.coverStorageId) {
     const doc = await getStorageDoc(ctx, payload.coverStorageId);
-    if (!zStorageImageDoc.safeParse(doc).success) throw new ConvexError("INVALID_TRAVEL_PACK_COVER");
+    if (!zStorageImageDoc.safeParse(doc).success) throw new ConvexError(TRAVEL_PACK_ERROR.coverInvalid);
   }
 
   if (payload.pdfStorageId) {
     const doc = await getStorageDoc(ctx, payload.pdfStorageId);
-    if (!zStoragePdfDoc.safeParse(doc).success) throw new ConvexError("INVALID_TRAVEL_PACK_PDF");
+    if (!zStoragePdfDoc.safeParse(doc).success) throw new ConvexError(TRAVEL_PACK_ERROR.pdfInvalid);
   }
 
-  await patchTravelPack(ctx, _id, { ...payload, updatedAt: now, updatedBy: ctx.profile._id });
+  const slug = await resolveUniqueTravelPackSlug(ctx, payload.slug, _id);
+
+  await patchTravelPack(ctx, _id, { ...payload, slug, updatedAt: now, updatedBy: ctx.profile._id });
 
   if (payload.coverStorageId && current.coverStorageId && current.coverStorageId !== payload.coverStorageId)
     await deleteStorage(ctx, current.coverStorageId);
 
   if (payload.pdfStorageId && current.pdfStorageId && current.pdfStorageId !== payload.pdfStorageId)
     await deleteStorage(ctx, current.pdfStorageId);
+
+  return slug;
 }
 
 // INTERNAL -------------------------------------------------------------------------------------------------------------------------------

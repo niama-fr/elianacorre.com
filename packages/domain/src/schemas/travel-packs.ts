@@ -8,15 +8,12 @@ export const zTravelPackStatus = z.literal(["archived", "draft", "published"]);
 // ERRORS ----------------------------------------------------------------------------------------------------------------------------------
 export const TRAVEL_PACK_ERROR = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
-  createFailed: "TRAVEL_PACK_CREATE_FAILED",
   notEditable: "TRAVEL_PACK_NOT_EDITABLE",
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
   slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
   slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
-  slugTaken: "TRAVEL_PACK_SLUG_TAKEN",
   titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
   unknown: "TRAVEL_PACK_UNKNOWN",
-  updateInvalid: "TRAVEL_PACK_UPDATE_INVALID",
   youtubeUrlInvalid: "TRAVEL_PACK_YOUTUBE_URL_INVALID",
 } as const;
 

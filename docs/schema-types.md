@@ -76,22 +76,77 @@ Use Convex `_creationTime` unless a distinct business creation timestamp exists.
 
 ## Validation and localization
 
-Shared domain schemas express semantic constraints without localized UI copy or Paraglide imports:
+Shared domain schemas may expose stable validation error identifiers when application code needs to distinguish validation failures independently from presentation copy. Validation identifiers belong to the domain and must never contain localized or user-facing text.
+
+Define one canonical error vocabulary per feature instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
 
 ```ts
-export const zTravelPackTitle = z.string().trim().min(1);
+export const TRAVEL_PACK_ERROR = {
+  coverInvalid: "TRAVEL_PACK_COVER_INVALID",
+  pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
+  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
+  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
+  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
+} as const;
+
+export const zTravelPackTitle = z.string().trim().min(1, {
+  error: TRAVEL_PACK_ERROR.titleRequired,
+});
 ```
 
-Generic Zod issues (`too_small`, `too_big`, `invalid_type`, `invalid_format`) carry ordinary validation meaning. Use stable semantic codes such as `slug_duplicate` or `travel_pack_not_publishable` only when a business failure cannot be inferred from those issues. Frontends map issues and business codes to Paraglide copy.
+If runtime validation of an error identifier is useful, derive a Zod schema from the same canonical vocabulary rather than maintaining a second list:
 
-The dependency direction is:
+```ts
+export const zTravelPackError = z.enum(TRAVEL_PACK_ERROR);
+export type TravelPackError = z.infer<typeof zTravelPackError>;
+```
+
+Do not create operation-specific error arrays or schemas merely to document which exceptions a function may throw. Ordinary TypeScript `throw` is not typed, so such declarations can silently drift from the implementation. Introduce narrower error schemas only when they validate a genuine runtime boundary.
+
+Not every Zod issue needs a custom domain identifier. Use a stable identifier when the application needs specific copy, the failure crosses package boundaries, multiple consumers need to recognize it, or it represents a meaningful domain/application condition. Generic Zod issues may remain generic when no application-specific distinction is required.
+
+### Application localization
+
+Domain error identifiers remain independent from translated application copy. A frontend feature owns the mapping from its domain validation identifiers to Paraglide message functions in `features/<feature>/validation.ts`:
+
+```ts
+import { TRAVEL_PACK_ERROR } from "@ec/domain/schemas/travel-packs";
+
+import * as m from "@/paraglide/messages";
+
+export const TRAVEL_PACK_VALIDATION_MESSAGES = {
+  [TRAVEL_PACK_ERROR.slugInvalid]: m.some_slug_invalid_message,
+  [TRAVEL_PACK_ERROR.slugRequired]: m.some_slug_required_message,
+  [TRAVEL_PACK_ERROR.titleRequired]: m.some_title_required_message,
+} as const;
+```
+
+The application form layer resolves validation identifiers before rendering field errors:
+
+```text
+domain error identifier
+        ↓
+domain / feature schema
+        ↓
+Zod issue
+        ↓
+TanStack Form
+        ↓
+application validation resolver
+        ↓
+Paraglide message
+        ↓
+FieldError
+```
+
+The dependency direction remains:
 
 ```text
 frontend → @ec/domain
 frontend → Paraglide
 ```
 
-`@ec/domain` remains reusable by backend, frontend, tests, and other applications without depending on a UI locale.
+Never put Paraglide imports or localized copy in `@ec/domain`, duplicate domain error identifiers in frontend schemas, use Paraglide message IDs as domain error identifiers, or render raw identifiers such as `TRAVEL_PACK_TITLE_REQUIRED` directly to users.
 
 ## Frontend form schemas
 
@@ -107,7 +162,9 @@ storageId + original fileName
 domain/backend Create contract
 ```
 
-A frontend-only schema may use Paraglide for user-facing validation messages. Prefer reusing canonical field schemas and translating structured issues when that preserves behavior without duplicating constraints.
+Frontend-only schemas must not embed Paraglide copy in Zod issues. Reuse canonical domain identifiers where the constraint is domain-owned; when a validation exists only for a browser/form representation, define an application validation identifier and map it to Paraglide copy through the same feature `validation.ts` boundary. Prefer reusing canonical field schemas without duplicating constraints.
+
+When a frontend form schema transforms browser input into a domain representation, such as `""` to `null`, submission must use the parsed schema output before crossing the backend boundary. TanStack Form validation does not imply that the stored form value has been replaced by the schema's transformed output.
 
 ## Validation infrastructure
 

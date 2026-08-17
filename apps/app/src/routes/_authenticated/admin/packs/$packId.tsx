@@ -3,8 +3,8 @@ import { api } from "@ec/backend/api";
 import type { Id } from "@ec/backend/types";
 import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@ec/ui/components/item";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useRouteContext, useRouter } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 import { toast } from "sonner";
 
@@ -47,7 +47,8 @@ function TravelPackDetailPage() {
 function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps) {
   const generateUploadUrl = useConvexMutation(api.storage.generateUploadUrl);
   const update = useMutation({ mutationFn: useConvexMutation(api.travelPacks.update) });
-  const queryClient = useQueryClient();
+  const { convexQueryClient } = useRouteContext({ from: "__root__" });
+  const router = useRouter();
 
   const defaultValues: TravelPackUpdateValues = {
     cover: null,
@@ -62,8 +63,9 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
 
   const form = useAppForm({
     defaultValues,
-    onSubmit: async ({ value: { cover, pdf, ...patch } }) => {
+    onSubmit: async ({ value }) => {
       try {
+        const { cover, pdf, ...patch } = zTravelPackUpdateValues.parse(value);
         const [coverStorageId, pdfStorageId] = await Promise.all([
           cover ? uploadFile(cover, async () => await generateUploadUrl({})) : null,
           pdf ? uploadFile(pdf, async () => await generateUploadUrl({})) : null,
@@ -77,8 +79,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
           ...patch,
         });
         if (result.error) throw new Error(result.error);
+        form.setFieldValue("slug", result.data.slug);
         form.setFieldValue("cover", null);
         form.setFieldValue("pdf", null);
+        await router.invalidate();
         toast.success(m.great_dancers_stare());
       } catch (error) {
         toast.error(error instanceof Error && error.message === "TRAVEL_PACK_SLUG_TAKEN" ? m.hip_crabs_lie() : m.fancy_comics_double());
@@ -88,13 +92,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
 
   const regenerateSlug = async () => {
     try {
-      const slug = await queryClient.fetchQuery(
-        convexQuery(api.travelPacks.suggestSlug, {
-          title: form.getFieldValue("title"),
-          travelPackId,
-        })
-      );
-
+      const slug = await convexQueryClient.convexClient.query(api.travelPacks.suggestSlug, {
+        title: form.getFieldValue("title"),
+        travelPackId,
+      });
       form.setFieldValue("slug", slug);
     } catch {
       toast.error(m.frank_socks_hide());
@@ -129,6 +130,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
             <form.AppField name="slug" validators={{ onChange: zTravelPackUpdateValues.shape.slug }}>
               {(f) => (
                 <f.InputGroupField
+                  actionLabel="Régénérer"
                   disabled
                   label={m.nice_bats_travel()}
                   onClick={() => {

@@ -8,10 +8,7 @@ const INTERNAL_ERROR_PATTERN = /^[A-Z][A-Z0-9_]+$/u;
 const validationMessages = {
   [TRAVEL_PACK_ERROR.coverInvalid]: m.dull_things_work,
   [TRAVEL_PACK_ERROR.notEditable]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.updateInvalid]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.createFailed]: m.dull_things_work,
   [TRAVEL_PACK_ERROR.unknown]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.slugTaken]: m.dull_things_work,
   [TRAVEL_PACK_ERROR.pdfInvalid]: m.dull_things_work,
   [TRAVEL_PACK_ERROR.slugInvalid]: m.cold_cats_live,
   [TRAVEL_PACK_ERROR.slugRequired]: m.eighty_olives_visit,

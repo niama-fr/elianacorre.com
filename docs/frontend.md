@@ -248,17 +248,17 @@ The example demonstrates file topology only; feature-specific domain behavior re
 
 ## Responsibility model
 
-| Concern                                  | Owner                                           |
-| ---------------------------------------- | ----------------------------------------------- |
-| Stable application/domain values         | Canonical English values in the domain model    |
-| Intentional user-facing application copy | Paraglide messages                              |
-| Domain value representation              | `DISPLAY`                                       |
-| Component visuals                        | `STYLES` and CVA                                |
-| Existing state exposed for styling       | Semantic `data-*` attributes                    |
-| Forms                                    | TanStack Form                                   |
-| Operational data tables                  | TanStack Table                                  |
-| Navigation and active state              | TanStack Router                                 |
-| Reusable controls and field behavior     | Generic, domain-independent `@ec/ui` components |
+| Concern                                  | Owner                                            |
+| ---------------------------------------- | ------------------------------------------------ |
+| Stable application/domain values         | Canonical English values in the domain model     |
+| Intentional user-facing application copy | Paraglide messages                               |
+| Domain value representation              | `DISPLAY`                                        |
+| Component visuals                        | `STYLES` and CVA                                 |
+| Existing state exposed for styling       | Semantic `data-*` attributes                     |
+| Forms                                    | App-local TanStack Form integration (`src/form`) |
+| Operational data tables                  | TanStack Table                                   |
+| Navigation and active state              | TanStack Router                                  |
+| Reusable controls and field behavior     | Generic, domain-independent `@ec/ui` primitives  |
 
 JSX primarily expresses semantic structure, composition, data flow, interaction, accessibility, and meaningful state. Keep repeated copy, domain-display decisions, and component-owned Tailwind classes at their respective boundaries. Editorial content such as a Travel Pack title, excerpt, or description remains application data rather than interface copy.
 
@@ -270,7 +270,10 @@ The frontend is feature-oriented: generic UI primitives are separate from busine
 
 ```text
 @ec/ui
-    ↓ generic primitives
+    ↓ cross-application, domain-agnostic primitives
+
+apps/<app>/src/form
+    ↓ application-specific TanStack Form integration
 
 features/<domain>/components
     ↓ reusable business/domain UI
@@ -305,7 +308,9 @@ A feature component follows the canonical file structure: optional `CONSTS`, `DI
 
 ### Level 3 — generic `@ec/ui` primitives
 
-`@ec/ui` owns reusable domain-agnostic primitives such as `Badge`, `Button`, `Dialog`, `Drawer`, `Sheet`, table primitives, generic form fields, `MarkdownField`, `Tooltip`, and `Breadcrumb`. These components may own generic interaction, accessibility, visual state, semantic data attributes, and reusable styling.
+`@ec/ui` owns reusable cross-application, domain-agnostic primitives such as `Badge`, `Button`, `Dialog`, `Drawer`, `Sheet`, table primitives, `Input`, `Textarea`, `Field`, `Tooltip`, and `Breadcrumb`. These components may own generic interaction, accessibility, visual state, semantic data attributes, and reusable styling.
+
+Application-specific TanStack Form contexts, hooks, registered fields, submit controls, and validation resolution do **not** belong in `@ec/ui`. They live in the consuming application's `src/form` directory and compose `@ec/ui` primitives. A controlled editor primitive may be promoted to `@ec/ui` when it is genuinely reused across applications; a TanStack Form-aware field adapter remains app-local.
 
 Application terminology, domain enum values, business workflows, feature routes, and feature-specific messages stay outside `@ec/ui`. For example, `Badge` belongs in `@ec/ui`; the mapping from `TravelPackStatus` to a translated label rendered inside that badge belongs in the Travel Pack feature.
 
@@ -322,8 +327,11 @@ Used only in this file?
 Reusable and understands one business/domain feature?
 → Place it under features/<domain>/components.
 
-Reusable and completely domain-agnostic?
+Reusable across applications and completely domain-agnostic?
 → Place it in @ec/ui.
+
+Application-wide TanStack Form integration?
+→ Place it in that application's `src/form`.
 
 The same domain-aware component is genuinely shared across application/package boundaries?
 → Consider promotion to a shared domain package.
@@ -381,11 +389,50 @@ Keep meaning and visuals separate: a status `DISPLAY` mapping owns its translate
 
 ## Forms and reusable controls
 
-Use the repository's TanStack Form hooks and registered custom fields for application forms. Reusable controls belong in `@ec/ui`, retain the shared label, description, error, accessibility, and interaction behavior, and accept application-specific copy through generic props. Prefer an existing shadcn/Base UI primitive from `@ec/ui` before adding feature-local control behavior.
+Use TanStack Form for application forms. Each application owns its TanStack Form integration under `apps/<app>/src/form`: form/context hooks, registered field adapters, submit controls, application validation resolution, and other cross-feature form behavior belong there rather than in `@ec/ui`.
 
-Markdown editing uses the generic native-textarea field and `@tanstack/markdown` preview renderer. Form state and persistence always hold raw Markdown; generated HTML is presentation output only.
+`@ec/ui` remains the home of reusable cross-application presentation and interaction primitives. App-local form fields compose those primitives. Feature-specific forms and schemas remain with their feature.
 
-Canonical business/data schemas belong in `@ec/domain`; the complete representation and transform convention lives in [`schema-types.md`](schema-types.md). Reuse a domain schema when form and boundary representations match. A frontend feature owns schemas introduced specifically for browser `File` values, temporary empty or partial inputs, UI-only fields, form defaults, or editing-only validation. Derive form `Values` and `DefaultValues` beside that frontend schema, where localized validation may use Paraglide. Keep `@ec/validation` focused on generic Zod infrastructure rather than feature forms.
+```text
+@ec/ui
+→ generic Input / Textarea / Field / Button / editor primitives
+
+apps/<app>/src/form
+→ TanStack Form contexts, hooks, registered fields, FieldError resolution
+
+features/<feature>
+→ feature form schemas, validation mappings, domain-specific form behavior
+```
+
+Prefer an existing shadcn/Base UI primitive from `@ec/ui` before adding feature-local control behavior. Extract a new `@ec/ui` control only when its API is domain-agnostic and it has genuine cross-application reuse or clear primitive-level ownership; do not move app-specific form adapters into the shared package merely for symmetry.
+
+Markdown editing uses the native-textarea editing model and `@tanstack/markdown` for preview rendering. Form state and persistence always hold raw Markdown; generated HTML is presentation output only. A TanStack Form-aware Markdown field belongs in the application's form layer unless a lower-level controlled editor is genuinely shared.
+
+Canonical business/data schemas belong in `@ec/domain`; the complete representation and transform convention lives in [`schema-types.md`](schema-types.md). Reuse a domain schema when form and boundary representations match. A frontend feature owns schemas introduced specifically for browser `File` values, temporary empty or partial inputs, UI-only fields, form defaults, or editing-only validation. Derive form `Values` and `DefaultValues` beside that frontend schema. Keep `@ec/validation` focused on generic Zod infrastructure rather than feature forms.
+
+### Form validation messages
+
+Application forms may consume domain validation identifiers, but they must never render those identifiers directly.
+
+Feature directories own the mapping from their domain validation identifiers to Paraglide message functions in `features/<feature>/validation.ts`. The application-wide form layer resolves those identifiers when rendering `FieldError`.
+
+```text
+@ec/domain
+→ validation identifiers and canonical schemas
+
+features/<feature>/validation.ts
+→ identifier → Paraglide message mapping
+
+apps/<app>/src/form
+→ application-wide validation resolution and field rendering
+
+Paraglide
+→ user-facing copy
+```
+
+Domain validation identifiers are stable programmatic values, not user-facing strings. Paraglide owns the localized copy. Do not import Paraglide from `@ec/domain`, duplicate validation identifiers in feature schemas, use message IDs as domain error codes, or let a raw identifier fall through to `FieldError`.
+
+When a frontend form schema intentionally transforms its browser representation into a domain representation—for example `""` to `null` for an optional URL—submission must use the parsed output before crossing the backend boundary. Field validation alone does not imply that TanStack Form has replaced its stored value with the schema's transformed output.
 
 ## Operational tables
 
