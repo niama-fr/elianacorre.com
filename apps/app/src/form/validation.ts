@@ -1,20 +1,10 @@
-import { TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
-
+import { travelPacksValidation } from "@/features/travel-packs/validation";
 import * as m from "@/paraglide/messages";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const INTERNAL_ERROR_PATTERN = /^[A-Z][A-Z0-9_]+$/u;
 
-const validationMessages = {
-  [TRAVEL_PACK_ERROR.coverInvalid]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.notEditable]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.unknown]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.pdfInvalid]: m.dull_things_work,
-  [TRAVEL_PACK_ERROR.slugInvalid]: m.cold_cats_live,
-  [TRAVEL_PACK_ERROR.slugRequired]: m.eighty_olives_visit,
-  [TRAVEL_PACK_ERROR.titleRequired]: m.wide_berries_stop,
-  [TRAVEL_PACK_ERROR.youtubeUrlInvalid]: m.funky_brooms_lay,
-} satisfies Record<TravelPacks["Error"], () => string>;
+const validationMessages = { ...travelPacksValidation } as const;
 
 export function validationMessage(error: string) {
   const message = validationMessages[error as keyof typeof validationMessages];

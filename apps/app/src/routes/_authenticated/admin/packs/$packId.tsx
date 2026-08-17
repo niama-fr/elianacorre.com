@@ -2,6 +2,7 @@ import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
 import type { Id } from "@ec/backend/types";
 import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
+import { InputGroupAddon, InputGroupButton } from "@ec/ui/components/input-group";
 import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@ec/ui/components/item";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouteContext, useRouter } from "@tanstack/react-router";
@@ -67,8 +68,8 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
       try {
         const { cover, pdf, ...patch } = zTravelPackUpdateValues.parse(value);
         const [coverStorageId, pdfStorageId] = await Promise.all([
-          cover ? uploadFile(cover, async () => await generateUploadUrl({})) : null,
-          pdf ? uploadFile(pdf, async () => await generateUploadUrl({})) : null,
+          cover ? uploadFile(cover, async () => await generateUploadUrl({})) : data.coverStorageId,
+          pdf ? uploadFile(pdf, async () => await generateUploadUrl({})) : data.pdfStorageId,
         ]);
         const result = await update.mutateAsync({
           _id: travelPackId,
@@ -84,8 +85,8 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
         form.setFieldValue("pdf", null);
         await router.invalidate();
         toast.success(m.great_dancers_stare());
-      } catch (error) {
-        toast.error(error instanceof Error && error.message === "TRAVEL_PACK_SLUG_TAKEN" ? m.hip_crabs_lie() : m.fancy_comics_double());
+      } catch {
+        toast.error(m.fancy_comics_double());
       }
     },
   });
@@ -129,15 +130,20 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
             </form.AppField>
             <form.AppField name="slug" validators={{ onChange: zTravelPackUpdateValues.shape.slug }}>
               {(f) => (
-                <f.InputGroupField
-                  actionLabel="Régénérer"
-                  disabled
-                  label={m.nice_bats_travel()}
-                  onClick={() => {
-                    void regenerateSlug();
-                  }}
-                  type="text"
-                />
+                <f.InputGroupField readOnly label={m.nice_bats_travel()} type="text">
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
+                      aria-label={m.chunky_blue_cheetah_launch()}
+                      title={m.chunky_blue_cheetah_launch()}
+                      size="icon-xs"
+                      onClick={() => {
+                        void regenerateSlug();
+                      }}
+                    >
+                      <span className="icon-[tabler--refresh] size-4" />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </f.InputGroupField>
               )}
             </form.AppField>
             <form.AppField name="destination" validators={{ onChange: zTravelPackUpdateValues.shape.destination }}>

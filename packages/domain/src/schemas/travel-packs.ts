@@ -8,8 +8,12 @@ export const zTravelPackStatus = z.literal(["archived", "draft", "published"]);
 // ERRORS ----------------------------------------------------------------------------------------------------------------------------------
 export const TRAVEL_PACK_ERROR = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
+  coverMimeTypeInvalid: "TRAVEL_PACK_COVER_MIME_TYPE_INVALID",
+  coverSizeInvalid: "TRAVEL_PACK_COVER_SIZE_INVALID",
   notEditable: "TRAVEL_PACK_NOT_EDITABLE",
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
+  pdfMimeTypeInvalid: "TRAVEL_PACK_PDF_MIME_TYPE_INVALID",
+  pdfSizeInvalid: "TRAVEL_PACK_PDF_SIZE_INVALID",
   slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
   slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
   titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",

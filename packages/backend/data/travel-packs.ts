@@ -1,7 +1,7 @@
 import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
 import type { QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
-import type { TravelPacks } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
 import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
 
@@ -28,7 +28,7 @@ export const getTravelPackBySlug = async (ctx: QueryCtx, slug: string) =>
 
 export const requireTravelPack = async (ctx: QueryCtx, id: Id<"travelPacks">) => {
   const doc = await getTravelPack(ctx, id);
-  if (!doc) throw new ConvexError("UNKNOWN_TRAVEL_PACK");
+  if (!doc) throw new ConvexError(TRAVEL_PACK_ERROR.unknown);
   return doc;
 };
 

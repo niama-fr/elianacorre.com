@@ -1,8 +1,6 @@
 import { IMAGE_ACCEPTED_TYPES, MAX_SIZE, PDF_ACCEPTED_TYPES } from "@ec/domain/helpers/storage";
-import { zTravelPackUpdate, zTravelPackYoutubeUrl } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ERROR, zTravelPackUpdate, zTravelPackYoutubeUrl } from "@ec/domain/schemas/travel-packs";
 import { z } from "zod";
-
-import * as m from "@/paraglide/messages";
 
 // UPDATE ----------------------------------------------------------------------------------------------------------------------------------
 export const zTravelPackUpdateValues = zTravelPackUpdate
@@ -10,13 +8,13 @@ export const zTravelPackUpdateValues = zTravelPackUpdate
   .extend({
     cover: z
       .file()
-      .max(MAX_SIZE, { error: m.fifty_hoops_show() })
-      .mime([...IMAGE_ACCEPTED_TYPES], { error: m.spicy_brooms_rule() })
+      .max(MAX_SIZE, { error: TRAVEL_PACK_ERROR.coverSizeInvalid })
+      .mime([...IMAGE_ACCEPTED_TYPES], { error: TRAVEL_PACK_ERROR.coverMimeTypeInvalid })
       .nullable(),
     pdf: z
       .file()
-      .max(MAX_SIZE, { error: m.tiny_mugs_study() })
-      .mime([...PDF_ACCEPTED_TYPES], { error: m.dull_things_work() })
+      .max(MAX_SIZE, { error: TRAVEL_PACK_ERROR.pdfSizeInvalid })
+      .mime([...PDF_ACCEPTED_TYPES], { error: TRAVEL_PACK_ERROR.pdfMimeTypeInvalid })
       .nullable(),
     youtubeUrl: z
       .string()
@@ -27,5 +25,3 @@ export type TravelPackUpdateValues = z.input<typeof zTravelPackUpdateValues>;
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const zTravelPackCreateValues = zTravelPackUpdateValues.pick({ title: true });
-
-// TYPES -----------------------------------------------------------------------------------------------------------------------------------

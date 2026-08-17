@@ -8,7 +8,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
 
-import { deleteStorage, getStorageDoc, getStorageUrl } from "../data/storage";
+import { getStorageDoc, getStorageUrl } from "../data/storage";
 import { createTravelPack, getTravelPackBySlug, paginateTravelPacks, patchTravelPack, requireTravelPack } from "../data/travel-packs";
 
 // DTO -------------------------------------------------------------------------------------------------------------------------------------
@@ -77,12 +77,6 @@ export async function updateTravelPackDraft(ctx: AuthenticatedMutationCtx, opts:
   const slug = await resolveUniqueTravelPackSlug(ctx, payload.slug, _id);
 
   await patchTravelPack(ctx, _id, { ...payload, slug, updatedAt: now, updatedBy: ctx.profile._id });
-
-  if (payload.coverStorageId && current.coverStorageId && current.coverStorageId !== payload.coverStorageId)
-    await deleteStorage(ctx, current.coverStorageId);
-
-  if (payload.pdfStorageId && current.pdfStorageId && current.pdfStorageId !== payload.pdfStorageId)
-    await deleteStorage(ctx, current.pdfStorageId);
 
   return slug;
 }

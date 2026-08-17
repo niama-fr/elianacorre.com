@@ -1,12 +1,12 @@
 import type { InputProps } from "@ec/ui/components/input";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@ec/ui/components/input-group";
+import { InputGroup, InputGroupInput } from "@ec/ui/components/input-group";
 
 import { useFieldContext } from "./context";
 import { Field } from "./field";
 
 // COMPONENT -------------------------------------------------------------------------------------------------------------------------------
 export default function InputGroupField(props: InputGroupFieldProps) {
-  const { actionLabel, description, label, onClick, ...rest } = props;
+  const { children, description, label, ...rest } = props;
   const { handleBlur, handleChange, name, state } = useFieldContext<string>();
 
   return (
@@ -24,14 +24,10 @@ export default function InputGroupField(props: InputGroupFieldProps) {
             value={state.value}
             {...rest}
           />
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton aria-label={actionLabel} title={actionLabel} size="icon-xs" onClick={onClick}>
-              <span className="icon-[tabler--refresh] size-4" />
-            </InputGroupButton>
-          </InputGroupAddon>
+          {children}
         </InputGroup>
       )}
     </Field>
   );
 }
-export type InputGroupFieldProps = InputProps & { actionLabel: string; description?: string; label: string; onClick: () => void };
+export type InputGroupFieldProps = InputProps & { description?: string; label: string };
