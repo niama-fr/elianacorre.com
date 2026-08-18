@@ -1,6 +1,6 @@
 import { IMAGE_ACCEPTED_TYPES, MAX_SIZE, PDF_ACCEPTED_TYPES } from "@ec/domain/helpers/storage";
 import { TRAVEL_PACK_ERROR, zTravelPackUpdate, zTravelPackYoutubeUrl } from "@ec/domain/schemas/travel-packs";
-import { z } from "zod";
+import { z } from "@ec/validation/zod";
 
 // UPDATE ----------------------------------------------------------------------------------------------------------------------------------
 export const zTravelPackUpdateValues = zTravelPackUpdate
