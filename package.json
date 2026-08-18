@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo build",
-    "check": "oxfmt --check . && oxlint .",
+    "check": "bun --cwd apps/app run paraglide:compile && oxfmt --check . && oxlint .",
     "delivery:report": "bun run scripts/report-client-javascript.ts",
     "dev": "turbo dev",
     "fix": "oxfmt --write . && oxlint --fix .",
