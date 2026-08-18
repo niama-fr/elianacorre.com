@@ -4,13 +4,13 @@ import { Alert } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
+import { z } from "@ec/validation/zod";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FlexRender, useTable } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 import { usePaginatedQuery } from "convex/react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { zTravelPackCreateValues } from "@/features/travel-packs/schemas";
 import { useAppForm } from "@/form/hook";
