@@ -1,8 +1,6 @@
 import { readImageBySlug } from "@ec/domain/helpers/images";
 import { hasAdminAccess } from "@ec/domain/helpers/profiles";
-import { Button } from "@ec/ui/components/button";
-import { ModeToggle } from "@ec/ui/components/mode-toggle";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@ec/ui/components/sidebar";
+import { SidebarInset, SidebarProvider } from "@ec/ui/components/sidebar";
 import { Toaster } from "@ec/ui/components/sonner";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
@@ -11,6 +9,8 @@ import { toast } from "sonner";
 
 import { signOutAndReload } from "@/lib/auth/client";
 import { getAuthenticatedLanding } from "@/lib/auth/redirects";
+import * as m from "@/paraglide/messages";
+import { AdminHeader } from "@/routes/_authenticated/admin/-header";
 import { AdminSidebar } from "@/routes/_authenticated/admin/-sidebar";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
@@ -22,14 +22,13 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
-export const ADMIN = {
-  actions: cva("flex items-center gap-2"),
-  header: cva("flex h-16 shrink-0 items-center justify-between gap-2"),
-  inset: cva("p-4"),
-  signout: cva("icon-[lucide--log-out]"),
+const LAYOUT = {
+  content: cva("min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4"),
+  root: cva("h-svh min-h-0 overflow-hidden"),
+  shell: cva("min-h-0 overflow-hidden"),
 };
 
-// DOCUMENT --------------------------------------------------------------------------------------------------------------------------------
+// LAYOUT ----------------------------------------------------------------------------------------------------------------------------------
 function AdminLayout() {
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -39,32 +38,23 @@ function AdminLayout() {
       await signOutAndReload();
     } catch {
       setIsSigningOut(false);
-      toast.error("La déconnexion a échoué. Réessayez.");
+      toast.error(m.metal_brooms_shop());
     }
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className={LAYOUT.root()}>
       <AdminSidebar logoImg={readImageBySlug("logo")} />
-      <SidebarInset className={ADMIN.inset()}>
-        <header className={ADMIN.header()}>
-          <SidebarTrigger />
-          <div className={ADMIN.actions()}>
-            <Button
-              aria-label="Se déconnecter"
-              disabled={isSigningOut}
-              size="icon"
-              title="Se déconnecter"
-              onClick={() => {
-                void handleSignOut();
-              }}
-            >
-              <span className={ADMIN.signout()} />
-            </Button>
-            <ModeToggle />
-          </div>
-        </header>
-        <Outlet />
+      <SidebarInset className={LAYOUT.shell()} data-slot="admin-shell">
+        <AdminHeader
+          isSigningOut={isSigningOut}
+          onSignOut={() => {
+            void handleSignOut();
+          }}
+        />
+        <div className={LAYOUT.content()} data-slot="admin-content">
+          <Outlet />
+        </div>
       </SidebarInset>
       <Toaster />
     </SidebarProvider>

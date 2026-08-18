@@ -7,13 +7,19 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
 
 // TRANSFORMS ------------------------------------------------------------------------------------------------------------------------------
-export const ebookFromDoc = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Entry"]> => {
+export const ebookDtoFrom = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Dto"]> => {
   const [file, url] = await Promise.all([ctx.db.system.get("_storage", doc.storageId), ctx.storage.getUrl(doc.storageId)]);
   return { ...doc, size: file?.size ?? null, url };
 };
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => await ctx.db.get("ebooks", id);
+
+export const getEbookByStorageId = async (ctx: QueryCtx, storageId: Id<"_storage">) =>
+  await ctx.db
+    .query("ebooks")
+    .withIndex("by_storage_id", (q) => q.eq("storageId", storageId))
+    .first();
 
 export const getLatestEbook = async (ctx: QueryCtx) => await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
 
@@ -33,7 +39,7 @@ export const requireEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => {
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
 export const listEbooks = async (ctx: QueryCtx) => {
   const docs = await ctx.db.query("ebooks").withIndex("by_version").order("desc").collect();
-  return await Promise.all(docs.map(async (doc) => await ebookFromDoc(ctx, doc)));
+  return await Promise.all(docs.map(async (doc) => await ebookDtoFrom(ctx, doc)));
 };
 
 export const listPublishedEbooks = async (ctx: QueryCtx) =>

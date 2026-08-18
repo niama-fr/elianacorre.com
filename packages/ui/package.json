@@ -11,12 +11,14 @@
     "./providers/*": "./src/providers/*.ts"
   },
   "scripts": {
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@ec/domain": "workspace:*",
     "@fontsource-variable/inter": "^5.3.0",
+    "@tanstack/markdown": "0.0.13",
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-store": "^0.11.1",
     "@unpic/core": "^1.0.3",
@@ -35,15 +37,18 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@turbo/gen": "^2.10.9",
+    "@testing-library/react": "^16.3.2",
+    "@turbo/gen": "^2.10.10",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.101.4",
-    "@tanstack/react-router": "^1.170.27"
+    "@tanstack/react-router": "^1.170.29"
   }
 }

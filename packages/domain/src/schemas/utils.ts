@@ -10,6 +10,16 @@ export const zConfirmedEmailPayload = z.object({ confirmed: z.literal(true), ema
 export const zDocRef = <T extends string>(tableName: T) => z.object({ _id: zid(tableName) });
 export const zStorageRef = z.object({ storageId: zid("_storage") });
 
+// PAGINATION ------------------------------------------------------------------------------------------------------------------------------
+export const zPaginationOptions = z.object({
+  cursor: z.string().nullable(),
+  endCursor: z.string().nullable().optional(),
+  id: z.number().optional(),
+  maximumBytesRead: z.number().optional(),
+  maximumRowsRead: z.number().optional(),
+  numItems: z.number(),
+});
+
 // COMMON ----------------------------------------------------------------------------------------------------------------------------------
 export const zDocCommon = <T extends string>(tableName: T) =>
   z.object({

@@ -166,7 +166,7 @@ describe("e-book administration", () => {
     const asMember = await createIdentity(convex, "member");
 
     await expect(asMember.query(api.ebooks.list, {})).rejects.toThrow("Unauthorized");
-    await expect(asMember.mutation(api.ebooks.generateUploadUrl, {})).rejects.toThrow("Unauthorized");
+    await expect(asMember.mutation(api.storage.generateUploadUrl, {})).rejects.toThrow("Unauthorized");
   });
 
   it("authorizes an administrator by Profile role without requiring a verified provider email", async () => {

@@ -1,10 +1,10 @@
 import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
-import { useAppForm } from "@ec/ui/hooks/web-form";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
+import { useAppForm } from "@/form/hook";
 import { createContactRequest } from "@/lib/contact-requests/contact-requests.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

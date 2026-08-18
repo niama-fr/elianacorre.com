@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth/client";
+import * as m from "@/paraglide/messages";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const FORM = {
@@ -35,8 +36,8 @@ export function SigninForm() {
     <div className={FORM.base()}>
       <FieldGroup>
         <div className={FORM.heading()}>
-          <h1 className="text-2xl font-bold">Votre espace Membre</h1>
-          <p className="text-muted-foreground text-sm text-balance">Connectez-vous pour accéder à votre espace</p>
+          <h1 className="text-2xl font-bold">{m.giant_drab_baboon_fond()}</h1>
+          <p className="text-muted-foreground text-sm text-balance">{m.just_lucky_leopard_fetch()}</p>
         </div>
         <div className="flex flex-col gap-2">
           <Button

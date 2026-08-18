@@ -1,3 +1,9 @@
 {
-  "recommendations": ["github.vscode-github-actions", "github.vscode-pull-request-github", "linear.linear-open-issue", "oxc.oxc-vscode"]
+  "recommendations": [
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "inlang.vs-code-extension",
+    "linear.linear-open-issue",
+    "oxc.oxc-vscode"
+  ]
 }

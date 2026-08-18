@@ -2,12 +2,12 @@ import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { EbookIssuances } from "@ec/domain/schemas/ebook-issuances";
 
-import { ebookFromDoc, requireEbook } from "./ebooks";
+import { ebookDtoFrom, requireEbook } from "./ebooks";
 
 // TRANSFORMS ------------------------------------------------------------------------------------------------------------------------------
-export const ebookIssuanceFromDoc = async (ctx: QueryCtx, doc: EbookIssuances["Doc"]): Promise<EbookIssuances["Entry"]> => ({
+export const ebookIssuanceDtoFrom = async (ctx: QueryCtx, doc: EbookIssuances["Doc"]): Promise<EbookIssuances["Dto"]> => ({
   ...doc,
-  ebook: await ebookFromDoc(ctx, await requireEbook(ctx, doc.ebookId)),
+  ebook: await ebookDtoFrom(ctx, await requireEbook(ctx, doc.ebookId)),
 });
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
