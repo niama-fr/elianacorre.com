@@ -2,7 +2,6 @@ import { zContactRequestFields } from "@ec/domain/schemas/contact-requests";
 import { zEbookDownloadFields } from "@ec/domain/schemas/ebook-downloads";
 import { zEbookIssuanceFields } from "@ec/domain/schemas/ebook-issuances";
 import { zEbookFields } from "@ec/domain/schemas/ebooks";
-import { zIdentityFields } from "@ec/domain/schemas/identities";
 import { zLegalTextFields } from "@ec/domain/schemas/legal-texts";
 import { zLoopsTaskFields } from "@ec/domain/schemas/loops-tasks";
 import { zLoopsWebhookFields } from "@ec/domain/schemas/loops-webhooks";
@@ -12,11 +11,11 @@ import { zNewsSubscriptionFields } from "@ec/domain/schemas/news-subscriptions";
 import { zNewsSuppressionFields } from "@ec/domain/schemas/news-suppressions";
 import { zPrivacyAuditFields } from "@ec/domain/schemas/privacy-audits";
 import { zPrivacyGrantFields } from "@ec/domain/schemas/privacy-grants";
-import { zProfileFields } from "@ec/domain/schemas/profiles";
 import { zRetentionRunFields } from "@ec/domain/schemas/retention-runs";
-import { zTravelPackFields } from "@ec/domain/schemas/travel-packs";
 import { zodOutputToConvex } from "convex-helpers/server/zod4";
 import { defineSchema, defineTable } from "convex/server";
+
+import { IdentitiesTable, ProfilesTable, TravelPacksTable } from "../runtime/database";
 
 export default defineSchema({
   contactRequests: defineTable(zodOutputToConvex(zContactRequestFields)).index("by_profile_id", ["profileId"]),
@@ -26,9 +25,7 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_storage_id", ["storageId"])
     .index("by_version", ["version"]),
-  identities: defineTable(zodOutputToConvex(zIdentityFields))
-    .index("by_profile_id_and_adapter", ["profileId", "adapter"])
-    .index("by_adapter_and_adapter_id", ["adapter", "adapterId"]),
+  identities: IdentitiesTable.tableDefinition,
   legalTexts: defineTable(zodOutputToConvex(zLegalTextFields)).index("by_kind_and_published_at", ["kind", "publishedAt"]),
   loopsTasks: defineTable(zodOutputToConvex(zLoopsTaskFields))
     .index("by_ebook_download_id", ["ebookDownloadId"])
@@ -53,11 +50,7 @@ export default defineSchema({
     "subjectHash",
     "requestKind",
   ]),
-  profiles: defineTable(zodOutputToConvex(zProfileFields)).index("by_email", ["email"]).index("by_role", ["role"]),
+  profiles: ProfilesTable.tableDefinition,
   retentionRuns: defineTable(zodOutputToConvex(zRetentionRunFields)),
-  travelPacks: defineTable(zodOutputToConvex(zTravelPackFields))
-    .index("by_cover_storage_id", ["coverStorageId"])
-    .index("by_pdf_storage_id", ["pdfStorageId"])
-    .index("by_slug", ["slug"])
-    .index("by_updated_at", ["updatedAt"]),
+  travelPacks: TravelPacksTable.tableDefinition,
 });

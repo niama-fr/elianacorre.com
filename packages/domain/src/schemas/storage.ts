@@ -1,3 +1,4 @@
+import { Schema as S } from "effect";
 import z from "zod";
 
 import { IMAGE_ACCEPTED_TYPES, MAX_SIZE, PDF_ACCEPTED_TYPES } from "../helpers/storage";
@@ -17,6 +18,10 @@ export const zStorageFields = z.object({
 export const zStorageDoc = z.object({ ...zDocCommon("_storage").shape, ...zStorageFields.shape });
 export const zStoragePdfDoc = z.object({ ...zStorageDoc.shape, contentType: zStorageContentTypePdf });
 export const zStorageImageDoc = z.object({ ...zStorageDoc.shape, contentType: zStorageContentTypeImage });
+
+// Travel Pack storage validation. The shared Zod schemas remain for unmigrated consumers.
+export const sStorageContentTypePdf = S.Literals(PDF_ACCEPTED_TYPES);
+export const sStorageContentTypeImage = S.Literals(IMAGE_ACCEPTED_TYPES);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Storage = {

@@ -1,13 +1,22 @@
 import { internal } from "@ec/backend/api";
+import { Effect as E, Layer as L } from "effect";
 import z from "zod";
 
 import { ORPHAN_STORAGE_GRACE_MS, purgeOrphanStorageBatch } from "../business/storage";
-import { zAdminMutation, zInternalMutation } from "./zod";
+import { CurrentAdmin, currentAdminLayer } from "../runtime/current-profile";
+import { StorageWriter, storageWriterLayer } from "../runtime/storage";
+import { generateUploadUrl as generateUploadUrlDefinition } from "../runtime/storage-contract";
+import { mutation } from "./_generated/server";
+import { zInternalMutation } from "./zod";
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
-export const generateUploadUrl = zAdminMutation({
-  args: {},
-  handler: async (ctx) => await ctx.storage.generateUploadUrl(),
+export const generateUploadUrl = generateUploadUrlDefinition.register(mutation, {
+  handler: E.fn(function* () {
+    yield* CurrentAdmin;
+    const storage = yield* StorageWriter;
+    return yield* storage.generateUploadUrl;
+  }),
+  layer: (ctx) => L.merge(currentAdminLayer(ctx), storageWriterLayer(ctx)),
 });
 
 // INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 {
-  "name": "@ec/domain",
+  "name": "@niama/effex",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./*": "./src/*.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -12,15 +12,13 @@
   },
   "dependencies": {
     "@confect/core": "10.0.0-next.15",
-    "@ec/validation": "workspace:*",
-    "@unpic/placeholder": "^0.1.2",
+    "@confect/server": "10.0.0-next.15",
     "convex": "1.44.0",
-    "convex-helpers": "^0.1.123",
-    "effect": "4.0.0-rc.110",
-    "jose": "^6.2.9",
-    "zod": "^4.4.3"
+    "effect": "4.0.0-rc.110"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   }
 }

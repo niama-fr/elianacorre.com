@@ -1,5 +1,4 @@
-import z from "zod";
+import { Schema as S } from "effect";
 
 // ADAPTERS --------------------------------------------------------------------------------------------------------------------------------
-export const zAuthAdapter = z.literal(["better-auth"]);
-export const authAdapterSet = zAuthAdapter.values;
+export const sAuthAdapter = S.Literal("better-auth");

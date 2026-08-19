@@ -80,6 +80,7 @@ export default defineConfig({
         varsIgnorePattern: "^_",
       },
     ],
+    "func-names": ["error", "always", { generators: "never" }],
     "func-style": "off",
     "import/consistent-type-specifier-style": "off",
     "no-console": "error",

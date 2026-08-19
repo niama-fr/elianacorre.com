@@ -4,28 +4,27 @@ import { Alert } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
-import { z } from "@ec/validation/zod";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FlexRender, useTable } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 import { usePaginatedQuery } from "convex/react";
+import { Schema as S } from "effect";
 import { toast } from "sonner";
 
-import { zTravelPackCreateValues } from "@/features/travel-packs/schemas";
+import { sTravelPackCreateValues, sTravelPackSearch } from "@/features/travel-packs/schemas";
 import { useAppForm } from "@/form/hook";
 import * as m from "@/paraglide/messages";
 
 import { features, getColumns } from "./-table-features";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-const searchSchema = z.object({ create: z.boolean().optional() });
 const PAGE_SIZE = 25;
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/admin/packs/")({
   component: TravelPacksPage,
-  validateSearch: searchSchema,
+  validateSearch: S.toStandardSchemaV1(sTravelPackSearch),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -119,7 +118,7 @@ function TravelPackCreateDialogRoute() {
     onSubmit: async ({ value }) => {
       try {
         const result = await createDraft.mutateAsync(value);
-        if (result.error) throw new Error(result.error);
+        if ("error" in result) throw new Error(result.error);
         form.reset();
         await navigate({ params: { packId: result.data }, to: "/admin/packs/$packId" });
       } catch {
@@ -152,7 +151,7 @@ function TravelPackCreateDialogRoute() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: zTravelPackCreateValues.shape.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackCreateValues.fields.title) }}>
               {(field) => <field.InputField autoFocus label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
             <DialogFooter>

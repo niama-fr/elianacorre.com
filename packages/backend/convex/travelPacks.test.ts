@@ -1,8 +1,16 @@
+import { Ref } from "@confect/core";
 import type { Id } from "@ec/backend/types";
 import { TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
 import type { TestConvex } from "convex-test";
 import { describe, expect, it } from "vitest";
 
+import {
+  createTravelPack,
+  getTravelPack,
+  listTravelPacks,
+  suggestTravelPackSlug,
+  updateTravelPack,
+} from "../runtime/travel-packs-contract";
 import { api } from "./_generated/api";
 import type schema from "./schema";
 import { createBackend, createIdentity } from "./test.auth";
@@ -12,7 +20,7 @@ type AdminBackend = Awaited<ReturnType<typeof createIdentity>>;
 const createDraft = async (asAdmin: AdminBackend, title: string) => {
   const result = await asAdmin.mutation(api.travelPacks.create, { title });
 
-  if (result.data === undefined) throw new Error(`Travel Pack creation failed: ${result.error}`);
+  if ("error" in result) throw new Error(`Travel Pack creation failed: ${result.error}`);
 
   return result.data;
 };
@@ -46,6 +54,25 @@ const storeFile = async (convex: TestConvex<typeof schema>, contents: string, co
   });
 
 describe("Travel Pack administration", () => {
+  it("derives native function identities and typed refs from the same descriptors", () => {
+    expect([
+      Ref.getConvexFunctionName(createTravelPack.ref),
+      Ref.getConvexFunctionName(getTravelPack.ref),
+      Ref.getConvexFunctionName(listTravelPacks.ref),
+      Ref.getConvexFunctionName(suggestTravelPackSlug.ref),
+      Ref.getConvexFunctionName(updateTravelPack.ref),
+    ]).toStrictEqual(["travelPacks:create", "travelPacks:get", "travelPacks:list", "travelPacks:suggestSlug", "travelPacks:update"]);
+  });
+
+  it("preserves unauthenticated and non-admin authorization", async () => {
+    const convex = createBackend();
+    const asMember = await createIdentity(convex, "member");
+
+    await expect(convex.mutation(api.travelPacks.create, { title: "Bali" })).rejects.toThrow("Unauthenticated");
+    await expect(asMember.mutation(api.travelPacks.create, { title: "Bali" })).rejects.toThrow("Unauthorized");
+    await expect(asMember.mutation(api.storage.generateUploadUrl, {})).rejects.toThrow("Unauthorized");
+  });
+
   it("generates deterministic unique slugs for colliding draft titles", async () => {
     const convex = createBackend();
     const asAdmin = await createIdentity(convex, "admin");
@@ -60,6 +87,17 @@ describe("Travel Pack administration", () => {
     await expect(getPack(asAdmin, secondId)).resolves.toMatchObject({
       slug: "bali-2",
     });
+  });
+
+  it("returns enriched DTOs through indexed updated-at pagination", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createDraft(asAdmin, "Bali");
+
+    const page = await asAdmin.query(api.travelPacks.list, { paginationOpts: { cursor: null, numItems: 10 } });
+
+    expect(page.page).toHaveLength(1);
+    expect(page.page[0]).toMatchObject({ coverUrl: null, pdfSize: null, pdfUrl: null, slug: "bali" });
   });
 
   it("suggests a unique regenerated slug without conflicting with another Travel Pack", async () => {
@@ -92,7 +130,7 @@ describe("Travel Pack administration", () => {
       })
     );
 
-    expect(result.error).toBeUndefined();
+    expect("error" in result).toBeFalsy();
 
     await expect(getPack(asAdmin, tokyoId)).resolves.toMatchObject({
       slug: "bali-2",
@@ -117,6 +155,17 @@ describe("Travel Pack administration", () => {
       slug: "bali",
       title: "Le guide complet de Bali",
     });
+  });
+
+  it("allows an administrator to set a valid draft slug explicitly", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const travelPackId = await createDraft(asAdmin, "Bali");
+    const pack = await getPack(asAdmin, travelPackId);
+
+    await asAdmin.mutation(api.travelPacks.update, updateFrom(pack, { slug: "bali-secret" }));
+
+    await expect(getPack(asAdmin, travelPackId)).resolves.toMatchObject({ slug: "bali-secret" });
   });
 
   it("rejects edits outside draft status", async () => {

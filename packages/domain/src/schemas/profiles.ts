@@ -1,20 +1,27 @@
+import { SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
 import { z } from "zod";
 
-import { zCanonicalEmail, zDocCommon } from "./utils";
+import { zCanonicalEmail } from "./utils";
 
 // ROLE ------------------------------------------------------------------------------------------------------------------------------------
-export const zProfileRole = z.literal(["admin", "contact", "member"]);
+export const sProfileRole = S.Literals(["admin", "contact", "member"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zProfileFields = z.object({
-  email: z.optional(zCanonicalEmail),
-  firstName: z.optional(z.string()),
-  role: zProfileRole,
+export const sProfileFields = S.Struct({
+  email: S.optionalKey(S.String),
+  firstName: S.optionalKey(S.String),
+  role: sProfileRole,
 });
-export const zProfileDoc = z.object({ ...zDocCommon("profiles").shape, ...zProfileFields.shape });
+export const sProfilePatch = S.Struct({
+  email: S.optionalKey(S.String),
+  firstName: S.optionalKey(S.String),
+  role: S.optionalKey(sProfileRole),
+});
+export const sProfileDoc = sProfileFields.pipe(S.fieldsAssign(SystemFields.SystemFields("profiles").fields));
 
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zProfile = zProfileDoc;
+export const sProfile = sProfileDoc;
 
 // SEED ------------------------------------------------------------------------------------------------------------------------------------
 export const zProfileAdminsSeed = z
@@ -32,8 +39,8 @@ export const zProfileAdminsSeed = z
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Profiles = {
-  Doc: z.infer<typeof zProfileDoc>;
-  Entity: z.infer<typeof zProfile>;
-  Fields: z.infer<typeof zProfileFields>;
-  Role: z.infer<typeof zProfileRole>;
+  Doc: typeof sProfileDoc.Type;
+  Entity: typeof sProfile.Type;
+  Fields: typeof sProfileFields.Type;
+  Role: typeof sProfileRole.Type;
 };

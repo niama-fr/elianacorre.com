@@ -3,6 +3,29 @@ import type { Id } from "@ec/backend/types";
 import type { Profiles } from "@ec/domain/schemas/profiles";
 import type { PaginationOptions } from "convex/server";
 import { ConvexError } from "convex/values";
+import { Effect as E } from "effect";
+
+import { db } from "../runtime/database";
+
+// EFFECT GET ------------------------------------------------------------------------------------------------------------------------------
+export const findProfile = E.fn("findProfile")(function* (id: Id<"profiles">) {
+  const reader = yield* db.Reader;
+  return yield* reader.get("profiles", id);
+});
+
+export const findProfileByEmail = E.fn("findProfileByEmail")(function* (email: string) {
+  const reader = yield* db.Reader;
+  return yield* reader
+    .query("profiles")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .unique();
+});
+
+// EFFECT CREATE ---------------------------------------------------------------------------------------------------------------------------
+export const insertMemberProfile = E.gen(function* () {
+  const writer = yield* db.Writer;
+  return yield* writer.insert("profiles", { role: "member" });
+});
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getProfile = async (ctx: QueryCtx, id: Id<"profiles">) => await ctx.db.get("profiles", id);

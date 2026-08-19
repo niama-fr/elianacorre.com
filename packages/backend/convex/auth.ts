@@ -1,12 +1,14 @@
 import { type AuthFunctions, createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
-import { zCanonicalEmail } from "@ec/domain/schemas/utils";
+import { sCanonicalEmail } from "@ec/domain/schemas/utils";
 import { z } from "@ec/validation/zod";
 import { betterAuth } from "better-auth/minimal";
 import { ConvexError } from "convex/values";
+import { Effect as E, Option, Schema as S } from "effect";
 
-import { createIdentity, getIdentityByProfileId } from "../data/identities";
-import { createMemberProfile, getProfileByEmail } from "../data/profiles";
+import { findIdentityByProfileId, insertIdentity } from "../data/identities";
+import { findProfileByEmail, insertMemberProfile } from "../data/profiles";
+import { mutationLayer } from "../runtime/database";
 import { components, internal } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { env } from "./_generated/server";
@@ -33,16 +35,21 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, user) => {
-        const emailParsed = zCanonicalEmail.safeParse(user.email);
-        const adminProfile = emailParsed.success ? await getProfileByEmail(ctx, emailParsed.data) : undefined;
-        const profileId = adminProfile?.role === "admin" ? adminProfile._id : await createMemberProfile(ctx);
+        await E.runPromise(
+          E.gen(function* () {
+            const canonicalEmail = yield* S.decodeEffect(sCanonicalEmail)(user.email).pipe(E.option);
+            const matchingProfile = Option.isSome(canonicalEmail) ? yield* findProfileByEmail(canonicalEmail.value) : Option.none();
+            const adminProfile = matchingProfile.pipe(Option.filter((profile) => profile.role === "admin"));
+            const profileId = Option.isSome(adminProfile) ? adminProfile.value._id : yield* insertMemberProfile;
 
-        if (adminProfile?.role === "admin") {
-          const existingAdminIdentity = await getIdentityByProfileId(ctx, adminProfile._id);
-          if (existingAdminIdentity) throw new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT");
-        }
+            if (Option.isSome(adminProfile)) {
+              const existingAdminIdentity = yield* findIdentityByProfileId(adminProfile.value._id);
+              if (Option.isSome(existingAdminIdentity)) return yield* E.die(new ConvexError("PROFILE_AUTH_IDENTITY_CONFLICT"));
+            }
 
-        await createIdentity(ctx, { adapterId: user._id, profileId });
+            yield* insertIdentity({ adapterId: user._id, profileId });
+          }).pipe(E.provide(mutationLayer(ctx.db)))
+        );
       },
     },
   },

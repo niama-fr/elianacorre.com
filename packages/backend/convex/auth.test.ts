@@ -198,7 +198,7 @@ describe("authentication identity synchronization", () => {
     const convex = convexTest(schema, modules);
     registerBetterAuth(convex);
     const adminProfileId = await convex.run(async (ctx) => await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" }));
-    const adminUser = await createBetterAuthUser(convex, "admin@example.com", "Admin");
+    const adminUser = await createBetterAuthUser(convex, " ADMIN@Example.COM ", "Admin");
 
     await synchronizeUser(convex, adminUser);
 

@@ -36,6 +36,7 @@
     "better-auth": "~1.6.29",
     "class-variance-authority": "^0.7.1",
     "convex": "1.44.0",
+    "effect": "4.0.0-rc.110",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "sonner": "^2.0.7",

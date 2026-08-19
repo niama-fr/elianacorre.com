@@ -2,12 +2,11 @@ import type { Profiles } from "@ec/domain/schemas/profiles";
 import { customCtx, NoOp } from "convex-helpers/server/customFunctions";
 import { zCustomAction, zCustomMutation, zCustomQuery } from "convex-helpers/server/zod4";
 import { ConvexError } from "convex/values";
+import { Effect as E, Result } from "effect";
 
-import { getIdentityByAdapterId } from "../data/identities";
-import { getProfile } from "../data/profiles";
+import { CurrentAdmin, CurrentProfile, currentAdminLayer, currentProfileLayer } from "../runtime/current-profile";
 import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import { action, internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
-import { authComponent } from "./auth";
 
 // ZOD -------------------------------------------------------------------------------------------------------------------------------------
 export const zAction = zCustomAction(action, NoOp);
@@ -18,15 +17,18 @@ export const zInternalMutation = zCustomMutation(internalMutation, NoOp);
 export const zInternalQuery = zCustomQuery(internalQuery, NoOp);
 
 // AUTHENTICATED ---------------------------------------------------------------------------------------------------------------------------
-const resolveAuthenticatedProfile = async (ctx: MutationCtx | QueryCtx): Promise<Profiles["Doc"]> => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) throw new ConvexError("Unauthenticated");
-  const identity = await getIdentityByAdapterId(ctx, user._id);
-  if (!identity) throw new ConvexError("Unauthenticated");
-  const profile = await getProfile(ctx, identity.profileId);
-  if (!profile) throw new ConvexError("Unauthenticated");
-  return profile;
-};
+const runCapability = async <A, Error extends { readonly message: string }>(effect: E.Effect<A, Error>) =>
+  await E.runPromise(E.result(effect)).then(
+    Result.match({
+      onFailure: (error) => {
+        throw new ConvexError(error.message);
+      },
+      onSuccess: (value) => value,
+    })
+  );
+
+const resolveAuthenticatedProfile = async (ctx: MutationCtx | QueryCtx) =>
+  await runCapability(CurrentProfile.pipe(E.provide(currentProfileLayer(ctx))));
 
 export const authenticatedCtx = customCtx<MutationCtx | QueryCtx, { profile: Profiles["Doc"] }>(async (ctx) => ({
   profile: await resolveAuthenticatedProfile(ctx),
@@ -37,8 +39,7 @@ export const zAuthenticatedQuery = zCustomQuery(query, authenticatedCtx);
 
 // ADMIN -----------------------------------------------------------------------------------------------------------------------------------
 export const adminCtx = customCtx<MutationCtx | QueryCtx, { profile: Profiles["Doc"] }>(async (ctx) => {
-  const profile = await resolveAuthenticatedProfile(ctx);
-  if (profile.role !== "admin") throw new ConvexError("Unauthorized");
+  const profile = await runCapability(CurrentAdmin.pipe(E.provide(currentAdminLayer(ctx))));
   return { profile };
 });
 

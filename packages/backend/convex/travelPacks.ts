@@ -1,7 +1,4 @@
-import { convexErrorDataFrom } from "@ec/domain/helpers/errors";
-import { zTravelPackCreate, zTravelPackError, zTravelPackTitle, zTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
-import { zPaginationOptions } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
+import { Effect as E, Layer as L } from "effect";
 
 import {
   createTravelPackDraft,
@@ -10,51 +7,62 @@ import {
   suggestTravelPackSlug,
   updateTravelPackDraft,
 } from "../business/travel-packs";
-import { zAdminMutation, zAdminQuery } from "./zod";
+import { CurrentAdmin, currentAdminLayer } from "../runtime/current-profile";
+import { mutationLayer, queryLayer } from "../runtime/database";
+import { storageReaderLayer } from "../runtime/storage";
+import {
+  createTravelPack,
+  getTravelPack,
+  listTravelPacks,
+  suggestTravelPackSlug as suggestTravelPackSlugDefinition,
+  updateTravelPack,
+} from "../runtime/travel-packs-contract";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
+
+const adminQueryLayer = (ctx: QueryCtx) => L.mergeAll(currentAdminLayer(ctx), queryLayer(ctx.db), storageReaderLayer(ctx));
+const adminMutationLayer = (ctx: MutationCtx) => L.mergeAll(currentAdminLayer(ctx), mutationLayer(ctx.db), storageReaderLayer(ctx));
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const get = zAdminQuery({
-  args: { travelPackId: zid("travelPacks") },
-  handler: async (ctx, { travelPackId }) => await requireTravelPackDto(ctx, travelPackId),
+export const get = getTravelPack.register(query, {
+  handler: E.fn(function* ({ travelPackId }) {
+    yield* CurrentAdmin;
+    return yield* requireTravelPackDto(travelPackId);
+  }),
+  layer: adminQueryLayer,
 });
 
-export const list = zAdminQuery({
-  args: { paginationOpts: zPaginationOptions },
-  handler: async (ctx, { paginationOpts }) => await paginateTravelPackDtos(ctx, paginationOpts),
+export const list = listTravelPacks.register(query, {
+  handler: E.fn(function* ({ paginationOpts }) {
+    yield* CurrentAdmin;
+    return yield* paginateTravelPackDtos(paginationOpts);
+  }),
+  layer: adminQueryLayer,
 });
 
-export const suggestSlug = zAdminQuery({
-  args: {
-    title: zTravelPackTitle,
-    travelPackId: zid("travelPacks").nullable(),
-  },
-  handler: async (ctx, { title, travelPackId }) => await suggestTravelPackSlug(ctx, title, travelPackId ?? undefined),
+export const suggestSlug = suggestTravelPackSlugDefinition.register(query, {
+  handler: E.fn(function* ({ title, travelPackId }) {
+    yield* CurrentAdmin;
+    return yield* suggestTravelPackSlug(title, travelPackId ?? undefined);
+  }),
+  layer: adminQueryLayer,
 });
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
-export const create = zAdminMutation({
-  args: zTravelPackCreate,
-  handler: async (ctx, args) => {
-    try {
-      return { data: await createTravelPackDraft(ctx, { ...args, now: Date.now() }) };
-    } catch (error) {
-      const code = convexErrorDataFrom(error, zTravelPackError);
-      if (!code) throw error;
-      return { error: code };
-    }
-  },
+export const create = createTravelPack.register(mutation, {
+  handler: ({ title }) =>
+    createTravelPackDraft(title, Date.now()).pipe(
+      E.map((data) => ({ data }) as const),
+      E.catchTag("TravelPackFailure", ({ code }) => E.succeed({ error: code } as const))
+    ),
+  layer: adminMutationLayer,
 });
 
-export const update = zAdminMutation({
-  args: zTravelPackUpdate,
-  handler: async (ctx, args) => {
-    try {
-      const slug = await updateTravelPackDraft(ctx, { ...args, now: Date.now() });
-      return { data: { slug } };
-    } catch (error) {
-      const code = convexErrorDataFrom(error, zTravelPackError);
-      if (!code) throw error;
-      return { error: code };
-    }
-  },
+export const update = updateTravelPack.register(mutation, {
+  handler: (args) =>
+    updateTravelPackDraft(args, Date.now()).pipe(
+      E.map((slug) => ({ data: { slug } }) as const),
+      E.catchTag("TravelPackFailure", ({ code }) => E.succeed({ error: code } as const))
+    ),
+  layer: adminMutationLayer,
 });
