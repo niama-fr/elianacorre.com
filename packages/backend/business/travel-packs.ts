@@ -1,22 +1,18 @@
 import type { Id } from "@ec/backend/types";
+import { TravelPackFailure } from "@ec/domain/errors/travel-packs";
 import { slugify, suffixSlug } from "@ec/domain/helpers/slugs";
 import { sStorageContentTypeImage, sStorageContentTypePdf } from "@ec/domain/schemas/storage";
-import { sTravelPackDto, sTravelPackFailure, TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
+import { sTravelPackDto, TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
 import type { PaginationOptions } from "convex/server";
-import { Effect as E, Option, Schema as S } from "effect";
+import { Effect as E, Option as O, Schema as S } from "effect";
 
-import { findStorageDoc, findStorageUrl } from "../data/storage";
-import { findTravelPack, findTravelPackBySlug, findTravelPacksPage, insertTravelPack, updateTravelPackFields } from "../data/travel-packs";
+import { getStorageDoc, getStorageUrl } from "../data/storage";
+import { createTravelPack, getTravelPackBySlug, paginateTravelPacks, patchTravelPack, requireTravelPack } from "../data/travel-packs";
 import { CurrentAdmin } from "../runtime/current-profile";
 
-const fail = (code: TravelPacks["Error"]) => new sTravelPackFailure({ code });
+const fail = (code: TravelPacks["Error"]) => new TravelPackFailure({ code });
 
-const requireTravelPack = E.fn("requireTravelPack")(function* (id: Id<"travelPacks">) {
-  const doc = yield* findTravelPack(id);
-  if (Option.isNone(doc)) return yield* fail(TRAVEL_PACK_ERROR.unknown);
-  return doc.value;
-});
-
+// SLUG ------------------------------------------------------------------------------------------------------------------------------------
 const resolveUniqueTravelPackSlug = E.fn("resolveUniqueTravelPackSlug")(function* (value: string, currentId?: Id<"travelPacks">) {
   const base = slugify(value);
   if (base === "") return yield* fail(TRAVEL_PACK_ERROR.slugInvalid);
@@ -24,8 +20,8 @@ const resolveUniqueTravelPackSlug = E.fn("resolveUniqueTravelPackSlug")(function
 
   while (true) {
     const candidate = suffixSlug(base, sequence);
-    const existing = yield* findTravelPackBySlug(candidate);
-    if (Option.isNone(existing) || existing.value._id === currentId) return candidate;
+    const existing = yield* getTravelPackBySlug(candidate);
+    if (O.isNone(existing) || existing.value._id === currentId) return candidate;
     sequence += 1;
   }
 });
@@ -34,29 +30,34 @@ const resolveUniqueTravelPackSlug = E.fn("resolveUniqueTravelPackSlug")(function
 export const travelPackDtoFrom = E.fn("travelPackDtoFrom")(function* (doc: TravelPacks["Doc"]) {
   const [coverUrl, pdf, pdfUrl] = yield* E.all(
     [
-      doc.coverStorageId ? findStorageUrl(doc.coverStorageId) : E.succeed(null),
-      doc.pdfStorageId ? findStorageDoc(doc.pdfStorageId) : E.succeed(null),
-      doc.pdfStorageId ? findStorageUrl(doc.pdfStorageId) : E.succeed(null),
+      doc.coverStorageId ? getStorageUrl(doc.coverStorageId) : E.succeed(O.none()),
+      doc.pdfStorageId ? getStorageDoc(doc.pdfStorageId) : E.succeed(O.none()),
+      doc.pdfStorageId ? getStorageUrl(doc.pdfStorageId) : E.succeed(O.none()),
     ],
     { concurrency: "unbounded" }
   );
-  return yield* S.decodeEffect(sTravelPackDto)({ ...doc, coverUrl, pdfSize: pdf?.size ?? null, pdfUrl }).pipe(E.orDie);
+  return yield* S.decodeEffect(sTravelPackDto)({
+    ...doc,
+    coverUrl: O.isSome(coverUrl) ? coverUrl.value.href : null,
+    pdfSize: O.isSome(pdf) ? pdf.value.size : null,
+    pdfUrl: O.isSome(pdfUrl) ? pdfUrl.value.href : null,
+  }).pipe(E.orDie);
 });
 
 export const requireTravelPackDto = (id: Id<"travelPacks">) => E.flatMap(requireTravelPack(id), travelPackDtoFrom);
 
-export const paginateTravelPackDtos = E.fn("paginateTravelPackDtos")(function* (pagination: PaginationOptions) {
-  const result = yield* findTravelPacksPage(pagination);
+export const paginateTravelPackDtos = E.fn(function* (pagination: PaginationOptions) {
+  const result = yield* paginateTravelPacks(pagination);
   const page = yield* E.forEach(result.page, travelPackDtoFrom, { concurrency: "unbounded" });
   return { ...result, page };
 });
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createTravelPackDraft = E.fn("createTravelPackDraft")(function* (title: string, now: number) {
+export const createTravelPackDraft = E.fn(function* (title: string, now: number) {
   const profile = yield* CurrentAdmin;
   const slug = yield* resolveUniqueTravelPackSlug(title);
 
-  return yield* insertTravelPack({
+  return yield* createTravelPack({
     coverFileName: null,
     coverStorageId: null,
     createdBy: profile._id,
@@ -75,7 +76,7 @@ export const createTravelPackDraft = E.fn("createTravelPackDraft")(function* (ti
 });
 
 // UPDATE ----------------------------------------------------------------------------------------------------------------------------------
-export const updateTravelPackDraft = E.fn("updateTravelPackDraft")(function* (opts: TravelPacks["Update"], now: number) {
+export const updateTravelPackDraft = E.fn(function* (opts: TravelPacks["Update"], now: number) {
   const profile = yield* CurrentAdmin;
   const { _id, ...payload } = opts;
   const current = yield* requireTravelPack(_id);
@@ -85,17 +86,19 @@ export const updateTravelPackDraft = E.fn("updateTravelPackDraft")(function* (op
   if ((payload.pdfFileName === null) !== (payload.pdfStorageId === null)) return yield* fail(TRAVEL_PACK_ERROR.pdfInvalid);
 
   if (payload.coverStorageId) {
-    const doc = yield* findStorageDoc(payload.coverStorageId);
-    if (!doc?.contentType || !S.is(sStorageContentTypeImage)(doc.contentType)) return yield* fail(TRAVEL_PACK_ERROR.coverInvalid);
+    const doc = yield* getStorageDoc(payload.coverStorageId);
+    if (O.isNone(doc) || !doc.value.contentType || !S.is(sStorageContentTypeImage)(doc.value.contentType))
+      return yield* fail(TRAVEL_PACK_ERROR.coverInvalid);
   }
 
   if (payload.pdfStorageId) {
-    const doc = yield* findStorageDoc(payload.pdfStorageId);
-    if (!doc?.contentType || !S.is(sStorageContentTypePdf)(doc.contentType)) return yield* fail(TRAVEL_PACK_ERROR.pdfInvalid);
+    const doc = yield* getStorageDoc(payload.pdfStorageId);
+    if (O.isNone(doc) || !doc.value.contentType || !S.is(sStorageContentTypePdf)(doc.value.contentType))
+      return yield* fail(TRAVEL_PACK_ERROR.pdfInvalid);
   }
 
   const slug = yield* resolveUniqueTravelPackSlug(payload.slug, _id);
-  yield* updateTravelPackFields(_id, { ...payload, slug, updatedAt: now, updatedBy: profile._id });
+  yield* patchTravelPack(_id, { ...payload, slug, updatedAt: now, updatedBy: profile._id });
   return slug;
 });
 

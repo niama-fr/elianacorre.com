@@ -1,4 +1,4 @@
-import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
+import { sContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
 import { useRef } from "react";
@@ -50,13 +50,13 @@ export function ContactForm() {
       }}
     >
       <form.AppForm>
-        <form.AppField name="firstName" validators={{ onChange: zContactRequestCreateValues.shape.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: sContactRequestCreateValues.fields.firstName }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: zContactRequestCreateValues.shape.email }}>
+        <form.AppField name="email" validators={{ onChange: sContactRequestCreateValues.fields.email }}>
           {(f) => <f.InputField label="Courriel" type="email" />}
         </form.AppField>
-        <form.AppField name="message" validators={{ onChange: zContactRequestCreateValues.shape.message }}>
+        <form.AppField name="message" validators={{ onChange: sContactRequestCreateValues.fields.message }}>
           {(f) => <f.TextareaField label="Message" />}
         </form.AppField>
         <form.Submit ref={submitRef} icon="icon-[tabler--send-2]" className={FORM.submit()} />

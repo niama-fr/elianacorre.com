@@ -1,33 +1,49 @@
-import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { PaginationOptions } from "convex/server";
 import { Effect as E } from "effect";
 
-import { StorageReader } from "../runtime/storage";
-
-export const findStorageDoc = E.fn("findStorageDoc")(function* (id: Id<"_storage">) {
-  const storage = yield* StorageReader;
-  return yield* storage.getDoc(id);
-});
-export const findStorageUrl = E.fn("findStorageUrl")(function* (id: Id<"_storage">) {
-  const storage = yield* StorageReader;
-  return yield* storage.getUrl(id);
-});
+import { DatabaseReader, StorageActionWriter, StorageReader, StorageWriter } from "../confect/_generated/services";
+import { dieOnDecodeError, optionByBlob, optionById } from "./confect";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getStorageDoc = async (ctx: QueryCtx, id: Id<"_storage">) => await ctx.db.system.get("_storage", id);
+export const getStorageBlob = E.fn(function* (id: Id<"_storage">) {
+  const storage = yield* StorageActionWriter;
+  return yield* storage.get(id).pipe(optionByBlob);
+});
 
-export const getStorageUrl = async (ctx: QueryCtx, id: Id<"_storage">) => await ctx.storage.getUrl(id);
+export const getStorageDoc = E.fn(function* (id: Id<"_storage">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("_storage").get(id).pipe(optionById);
+});
+
+export const getStorageUrl = E.fn(function* (id: Id<"_storage">) {
+  const storage = yield* StorageReader;
+  return yield* storage.getUrl(id).pipe(optionByBlob);
+});
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const paginateStorageBefore = async (ctx: QueryCtx, pagination: PaginationOptions, before: number) =>
-  await ctx.db.system
-    .query("_storage")
-    .withIndex("by_creation_time", (q) => q.lt("_creationTime", before))
-    .order("asc")
-    .paginate(pagination);
+export const paginateStorageBefore = E.fn(function* (pagination: PaginationOptions, before: number) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("_storage")
+    .index("by_creation_time", (q) => q.lt("_creationTime", before), "asc")
+    .paginate(pagination)
+    .pipe(dieOnDecodeError);
+});
+
+export const takeStorage = E.fn(function* (limit: number) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("_storage").index("by_creation_time", "desc").take(limit).pipe(dieOnDecodeError);
+});
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
-export const deleteStorage = async (ctx: MutationCtx, id: Id<"_storage">) => {
-  await ctx.storage.delete(id);
-};
+export const deleteStorage = E.fn(function* (id: Id<"_storage">) {
+  const storage = yield* StorageWriter;
+  return yield* storage.delete(id);
+});
+
+// GENERATE --------------------------------------------------------------------------------------------------------------------------------
+export const generateStorageUploadUrl = E.fn(function* () {
+  const storage = yield* StorageWriter;
+  return yield* storage.generateUploadUrl;
+});

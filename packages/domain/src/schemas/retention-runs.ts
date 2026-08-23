@@ -1,38 +1,47 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import z from "zod";
+import { SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
+import { z } from "zod";
 
 // FAILURE PHASE ---------------------------------------------------------------------------------------------------------------------------
 export const retentionRunFailurePhases = ["downloads", "profiles", "tasks", "webhooks"] as const;
-export const zRetentionRunFailurePhase = z.literal(retentionRunFailurePhases);
+
+export const sRetentionRunFailurePhase = S.Literals(retentionRunFailurePhases);
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
 const statuses = ["completed", "failed", "running"] as const;
-export const zRetentionRunStatus = z.literal(statuses);
+
+export const sRetentionRunStatus = S.Literals(statuses);
 
 // COUNTS ----------------------------------------------------------------------------------------------------------------------------------
-export const zRetentionRunCounts = z.object({
-  anonymizedFormerProfiles: z.number(),
-  anonymizedPendingProfiles: z.number(),
-  deletedDownloads: z.number(),
-  deletedTechnicalLogs: z.number(),
+export const sRetentionRunCounts = S.Struct({
+  anonymizedFormerProfiles: S.Finite,
+  anonymizedPendingProfiles: S.Finite,
+  deletedDownloads: S.Finite,
+  deletedTechnicalLogs: S.Finite,
 });
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zRetentionRunFields = z.object({
-  ...zRetentionRunCounts.shape,
-  failedAt: z.number().nullable(),
-  failurePhase: zRetentionRunFailurePhase.nullable(),
-  finishedAt: z.number().nullable(),
-  status: zRetentionRunStatus,
-  workflowId: z.string().nullable(),
-});
-export const zRetentionRunDoc = z.object({ ...zDocCommon("retentionRuns").shape, ...zRetentionRunFields.shape });
+export const sRetentionRunFields = sRetentionRunCounts.pipe(
+  S.fieldsAssign({
+    failedAt: S.NullOr(S.Finite),
+    failurePhase: S.NullOr(sRetentionRunFailurePhase),
+    finishedAt: S.NullOr(S.Finite),
+    status: sRetentionRunStatus,
+    workflowId: S.NullOr(S.String),
+  })
+);
+
+export const sRetentionRunDoc = sRetentionRunFields.pipe(S.fieldsAssign(SystemFields.SystemFields("retentionRuns").fields));
+
+// LEGACY ----------------------------------------------------------------------------------------------------------------------------------
+// Temporary while convex/retention.ts still uses Zod function arguments.
+export const zRetentionRunFailurePhase = z.literal(retentionRunFailurePhases);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type RetentionRuns = {
-  Counts: z.infer<typeof zRetentionRunCounts>;
-  Doc: z.infer<typeof zRetentionRunDoc>;
-  FailurePhase: z.infer<typeof zRetentionRunFailurePhase>;
-  Fields: z.infer<typeof zRetentionRunFields>;
-  Status: z.infer<typeof zRetentionRunStatus>;
+  Counts: typeof sRetentionRunCounts.Type;
+  Doc: typeof sRetentionRunDoc.Type;
+  FailurePhase: typeof sRetentionRunFailurePhase.Type;
+  Fields: typeof sRetentionRunFields.Type;
+  Status: typeof sRetentionRunStatus.Type;
 };

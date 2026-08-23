@@ -1,46 +1,34 @@
-import { api } from "@ec/backend/api";
-import { createConvexHttpClient } from "@ec/backend/client";
-import { zNewsSubscriptionUpsertValues, type NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
-import { z } from "@ec/validation/zod";
-import { createServerValidate, ServerValidateError } from "@tanstack/react-form-start";
+import { sNewsletterConfirmArgs } from "@ec/backend/specs/newsletter";
+import { sNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
+import { ServerValidateError } from "@tanstack/react-form-start";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
+import { Effect as E } from "effect";
 
-import { publicEnv } from "@/config/env";
-import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
+import { HttpClientLive } from "@/lib/confect/http-client";
 
-import { executeNewsletterSubscribe } from "./newsletter.server";
+import { executeNewsletterConfirm, executeNewsletterSubscribe, executeNewsletterSubscribeForm } from "./newsletter.server";
 
 // CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
 export const confirmNewsletter = createServerFn({ method: "POST" })
-  .validator(z.object({ token: z.string() }))
-  .handler(async ({ data }) => {
-    const convex = createConvexHttpClient(publicEnv.VITE_CONVEX_URL);
-    return await convex.mutation(api.newsletter.confirm, data);
-  });
+  .validator(sNewsletterConfirmArgs)
+  .handler(async ({ data }) => await E.runPromise(executeNewsletterConfirm(data).pipe(E.provide(HttpClientLive))));
 
 // SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
-const validateNewsletterSubscribeForm = createServerValidate({
-  ...newsletterFormOptions,
-  onServerValidate: zNewsSubscriptionUpsertValues,
-});
-
 export const subscribeToNewsletter = createServerFn({ method: "POST" })
-  .validator(zNewsSubscriptionUpsertValues)
-  .handler(async ({ data }) => await executeNewsletterSubscribe(data));
+  .validator(sNewsSubscriptionUpsertValues)
+  .handler(async ({ data }) => await E.runPromise(executeNewsletterSubscribe(data).pipe(E.provide(HttpClientLive))));
 
 export const submitNewsletterSubscribeForm = createServerFn({ method: "POST" })
   .validator((data: unknown) => {
     if (!(data instanceof FormData)) throw new Error("Invalid newsletter form data");
     return data;
   })
-  .handler(async ({ data }) => {
-    try {
-      const values = (await validateNewsletterSubscribeForm(data, { booleans: ["consent"] })) as NewsSubscriptions["UpsertValues"];
-      await executeNewsletterSubscribe(values);
-      return new Response(null, { headers: { Location: getRequestHeader("referer") ?? "/" }, status: 303 });
-    } catch (error) {
-      if (error instanceof ServerValidateError) return error.response;
-      throw error;
-    }
-  });
+  .handler(
+    async ({ data }) =>
+      await E.runPromise(
+        executeNewsletterSubscribeForm(data).pipe(
+          E.catch((error) => (error instanceof ServerValidateError ? E.succeed(error.response) : E.fail(error))),
+          E.provide(HttpClientLive)
+        )
+      )
+  );

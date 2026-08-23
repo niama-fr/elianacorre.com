@@ -1,31 +1,45 @@
-import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { NewsConfirmations } from "@ec/domain/schemas/news-confirmations";
+import { Effect as E } from "effect";
+
+import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
+import { dieOnDecodeError, dieOnEncodeError, optionById } from "./confect";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getNewsConfirmation = async (ctx: QueryCtx, id: Id<"newsConfirmations">) => await ctx.db.get("newsConfirmations", id);
+export const getNewsConfirmation = E.fn(function* (id: Id<"newsConfirmations">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("newsConfirmations").get(id).pipe(optionById);
+});
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listNewsConfirmationsBySubscriptionId = async (ctx: QueryCtx, id: Id<"newsSubscriptions">) =>
-  await ctx.db
-    .query("newsConfirmations")
-    .withIndex("by_subscription_id", (q) => q.eq("subscriptionId", id))
-    .collect();
+export const listNewsConfirmationsBySubscriptionId = E.fn(function* (id: Id<"newsSubscriptions">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("newsConfirmations")
+    .index("by_subscription_id", (q) => q.eq("subscriptionId", id))
+    .collect()
+    .pipe(dieOnDecodeError);
+});
 
-export const takeNewsConfirmationsBySubscriptionId = async (ctx: QueryCtx, limit: number, subscriptionId: Id<"newsSubscriptions">) =>
-  await ctx.db
-    .query("newsConfirmations")
-    .withIndex("by_subscription_id", (q) => q.eq("subscriptionId", subscriptionId))
-    .take(limit);
+export const takeNewsConfirmationsBySubscriptionId = E.fn(function* (limit: number, subscriptionId: Id<"newsSubscriptions">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("newsConfirmations")
+    .index("by_subscription_id", (q) => q.eq("subscriptionId", subscriptionId))
+    .take(limit)
+    .pipe(dieOnDecodeError);
+});
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
-export const deleteNewsConfirmation = async (ctx: MutationCtx, id: Id<"newsConfirmations">) => {
-  await ctx.db.delete("newsConfirmations", id);
-};
+export const deleteNewsConfirmation = E.fn(function* (id: Id<"newsConfirmations">) {
+  const writer = yield* DatabaseWriter;
+  yield* writer.table("newsConfirmations").delete(id);
+});
 
 // REPLACE ---------------------------------------------------------------------------------------------------------------------------------
-export const replaceNewsConfirmationForSubscription = async (ctx: MutationCtx, payload: NewsConfirmations["Create"]) => {
-  const existingConfirmations = await listNewsConfirmationsBySubscriptionId(ctx, payload.subscriptionId);
-  for (const { _id } of existingConfirmations) await deleteNewsConfirmation(ctx, _id);
-  return await ctx.db.insert("newsConfirmations", payload);
-};
+export const replaceNewsConfirmationForSubscription = E.fn(function* (payload: NewsConfirmations["Create"]) {
+  const writer = yield* DatabaseWriter;
+  const existingConfirmations = yield* listNewsConfirmationsBySubscriptionId(payload.subscriptionId);
+  for (const { _id } of existingConfirmations) yield* deleteNewsConfirmation(_id);
+  return yield* writer.table("newsConfirmations").insert(payload).pipe(dieOnEncodeError);
+});

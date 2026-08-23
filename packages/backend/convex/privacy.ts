@@ -1,79 +1,12 @@
-import { zPrivacyAuditVerificationCreate } from "@ec/domain/schemas/privacy-audits";
-import { zCanonicalEmail, zConfirmedEmailPayload } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import registeredFunctions from "../confect/_generated/registeredFunctions/privacy";
 
-import {
-  inspectPrivacySubject,
-  processPrivacyAccess,
-  processPrivacyErasure,
-  processPrivacyExport,
-  processPrivacyObjection,
-  processPrivacyRectification,
-  processPrivacySuppressionRemoval,
-  processPrivacyUnsubscription,
-  processPrivacyVerification,
-} from "../business/privacy";
-import { deletePrivacyGrant } from "../data/privacy-grants";
-import { zAdminMutation, zAdminQuery, zInternalMutation } from "./zod";
-
-// QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const inspectSubject = zAdminQuery({
-  args: { email: zCanonicalEmail },
-  handler: async (ctx, { email }) => await inspectPrivacySubject(ctx, email),
-});
-
-// MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
-export const fulfillAccessRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacyAccess(ctx, email),
-});
-
-export const fulfillErasureRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacyErasure(ctx, email),
-});
-
-export const fulfillExportRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacyExport(ctx, email),
-});
-
-export const fulfillObjectionRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacyObjection(ctx, email),
-});
-
-export const fulfillRectificationRequest = zAdminMutation({
-  args: z.object({
-    ...zConfirmedEmailPayload.shape,
-    firstName: z
-      .string()
-      .trim()
-      .transform((value) => (value === "" ? undefined : value)),
-  }),
-  handler: async (ctx, { email, firstName }) => await processPrivacyRectification(ctx, { email, firstName }),
-});
-
-export const fulfillSuppressionRemovalRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacySuppressionRemoval(ctx, email),
-});
-
-export const fulfillUnsubscriptionRequest = zAdminMutation({
-  args: zConfirmedEmailPayload,
-  handler: async (ctx, { email }) => await processPrivacyUnsubscription(ctx, email),
-});
-
-export const recordVerification = zAdminMutation({
-  args: zPrivacyAuditVerificationCreate.omit({ performedBy: true }),
-  handler: async (ctx, payload) => await processPrivacyVerification(ctx, payload),
-});
-
-// INTERNAL MUTATIONS ----------------------------------------------------------------------------------------------------------------------
-export const expireGrant = zInternalMutation({
-  args: { privacyGrantId: zid("privacyGrants") },
-  handler: async (ctx, { privacyGrantId }) => {
-    await deletePrivacyGrant(ctx, privacyGrantId);
-  },
-});
+export const expireGrant = registeredFunctions.expireGrant;
+export const fulfillAccessRequest = registeredFunctions.fulfillAccessRequest;
+export const fulfillErasureRequest = registeredFunctions.fulfillErasureRequest;
+export const fulfillExportRequest = registeredFunctions.fulfillExportRequest;
+export const fulfillObjectionRequest = registeredFunctions.fulfillObjectionRequest;
+export const fulfillRectificationRequest = registeredFunctions.fulfillRectificationRequest;
+export const fulfillSuppressionRemovalRequest = registeredFunctions.fulfillSuppressionRemovalRequest;
+export const fulfillUnsubscriptionRequest = registeredFunctions.fulfillUnsubscriptionRequest;
+export const inspectSubject = registeredFunctions.inspectSubject;
+export const recordVerification = registeredFunctions.recordVerification;

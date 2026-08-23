@@ -1,10 +1,11 @@
-import { api } from "@ec/backend/api";
-import { createConvexHttpClient } from "@ec/backend/client";
 import { createServerFn } from "@tanstack/react-start";
+import { Effect as E } from "effect";
 
-import { publicEnv } from "@/config/env";
+import { HttpClientLive } from "@/lib/confect/http-client";
 
-export const requireActivePrivacyNotice = createServerFn({ method: "GET" }).handler(async () => {
-  const convex = createConvexHttpClient(publicEnv.VITE_CONVEX_URL);
-  return await convex.query(api.legalTexts.requireActivePrivacyNotice);
-});
+import { executeLegalTextsRequireActivePrivacyNotice } from "./legal-texts.server";
+
+// REQUIRE ACTIVE PRIVACY NOTICE -----------------------------------------------------------------------------------------------------------
+export const requireActivePrivacyNotice = createServerFn({ method: "GET" }).handler(
+  async () => await E.runPromise(executeLegalTextsRequireActivePrivacyNotice().pipe(E.provide(HttpClientLive)))
+);

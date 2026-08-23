@@ -1,52 +1,57 @@
-import { zCanonicalEmail, zCanonicalEmailValue, zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { sCanonicalEmail, sCanonicalEmailValue, sOptionalTrim } from "@ec/domain/schemas/utils";
+import { Effect as E, Schema as S, Struct } from "effect";
+
+// PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
+const sLegalTextId = GenericId.GenericId("legalTexts");
+const sProfileId = GenericId.GenericId("profiles");
 
 // CONFIRMED FROM --------------------------------------------------------------------------------------------------------------------------
-const confirmedFrom = ["email", "loops"] as const;
-export const zNewsSubscriptionConfirmedFrom = z.literal(confirmedFrom);
+export const sNewsSubscriptionConfirmedFrom = S.Literals(["email", "loops"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSubscriptionFields = z.object({
-  confirmedAt: z.number().nullable(),
-  confirmedFrom: zNewsSubscriptionConfirmedFrom.nullable(),
-  privacyNoticeId: zid("legalTexts"),
-  profileId: zid("profiles"),
-  requestedAt: z.number(),
-  unsubscribedAt: z.number().nullable(),
+export const sNewsSubscriptionFields = S.Struct({
+  confirmedAt: S.NullOr(S.Finite),
+  confirmedFrom: S.NullOr(sNewsSubscriptionConfirmedFrom),
+  privacyNoticeId: sLegalTextId,
+  profileId: sProfileId,
+  requestedAt: S.Finite,
+  unsubscribedAt: S.NullOr(S.Finite),
 });
-export const zNewsSubscriptionDoc = z.object({ ...zDocCommon("newsSubscriptions").shape, ...zNewsSubscriptionFields.shape });
 
-// VALUES ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSubscriptionUpsertValues = z.object({
-  consent: z.boolean().refine((value) => value, "Vous devez accepter de recevoir la lettre"),
-  email: zCanonicalEmailValue,
-  firstName: z.string().trim(),
-  privacyNoticeId: zid("legalTexts"),
-  website: z.string().trim(),
-});
+export const sNewsSubscriptionDoc = sNewsSubscriptionFields.pipe(S.fieldsAssign(SystemFields.SystemFields("newsSubscriptions").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSubscriptionCreate = zNewsSubscriptionFields.pick({ privacyNoticeId: true, profileId: true, requestedAt: true });
+export const sNewsSubscriptionCreate = sNewsSubscriptionFields.mapFields(Struct.pick(["privacyNoticeId", "profileId", "requestedAt"]));
 
-export const zNewsSubscriptionUpsert = z.object({
-  consent: z.boolean().refine((value) => value),
-  email: zCanonicalEmail,
-  firstName: z
-    .string()
-    .trim()
-    .transform((value) => (value === "" ? undefined : value)),
-  privacyNoticeId: zid("legalTexts"),
-  requestIp: z.string().trim().min(1),
-  website: z.string().trim().default(""),
+// UPSERT ----------------------------------------------------------------------------------------------------------------------------------
+export const sNewsSubscriptionUpsertValues = S.toStandardSchemaV1(
+  S.Struct({
+    consent: S.toStandardSchemaV1(
+      S.Boolean.check(S.makeFilter((value) => value, { message: "Vous devez accepter de recevoir la lettre" }))
+    ),
+    email: S.toStandardSchemaV1(sCanonicalEmailValue),
+    firstName: S.toStandardSchemaV1(S.Trim),
+    privacyNoticeId: S.toStandardSchemaV1(sLegalTextId),
+    website: S.toStandardSchemaV1(S.Trim),
+  })
+);
+
+export const sNewsSubscriptionUpsert = S.Struct({
+  consent: S.Boolean.check(S.makeFilter((value): value is true => value)),
+  email: sCanonicalEmail,
+  firstName: sOptionalTrim,
+  privacyNoticeId: sLegalTextId,
+  requestIp: S.Trim.check(S.isNonEmpty()),
+  website: S.Trim.pipe(S.withDecodingDefault(E.succeed(""))),
 });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsSubscriptions = {
-  ConfirmedFrom: z.infer<typeof zNewsSubscriptionConfirmedFrom>;
-  Create: z.infer<typeof zNewsSubscriptionCreate>;
-  Doc: z.infer<typeof zNewsSubscriptionDoc>;
-  Fields: z.infer<typeof zNewsSubscriptionFields>;
-  Upsert: z.infer<typeof zNewsSubscriptionUpsert>;
-  UpsertValues: z.infer<typeof zNewsSubscriptionUpsertValues>;
+  ConfirmedFrom: typeof sNewsSubscriptionConfirmedFrom.Type;
+  Create: typeof sNewsSubscriptionCreate.Type;
+  Doc: typeof sNewsSubscriptionDoc.Type;
+  Fields: typeof sNewsSubscriptionFields.Type;
+  Upsert: typeof sNewsSubscriptionUpsert.Type;
+  UpsertValues: typeof sNewsSubscriptionUpsertValues.Type;
 };

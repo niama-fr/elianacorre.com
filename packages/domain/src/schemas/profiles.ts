@@ -1,8 +1,7 @@
 import { SystemFields } from "@confect/core";
 import { Schema as S } from "effect";
-import { z } from "zod";
 
-import { zCanonicalEmail } from "./utils";
+import { sCanonicalEmail } from "./utils";
 
 // ROLE ------------------------------------------------------------------------------------------------------------------------------------
 export const sProfileRole = S.Literals(["admin", "contact", "member"]);
@@ -23,22 +22,15 @@ export const sProfileDoc = sProfileFields.pipe(S.fieldsAssign(SystemFields.Syste
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
 export const sProfile = sProfileDoc;
 
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sProfileCreate = sProfileFields.mapFields(({ email, firstName }) => ({ email: S.requiredKey(email), firstName }));
+
 // SEED ------------------------------------------------------------------------------------------------------------------------------------
-export const zProfileAdminsSeed = z
-  .string()
-  .trim()
-  .transform((input, { issues }): unknown => {
-    try {
-      return JSON.parse(input);
-    } catch {
-      issues.push({ code: "custom", input, message: "Invalid JSON" });
-      return z.NEVER;
-    }
-  })
-  .pipe(zCanonicalEmail.array().min(1));
+export const sProfileAdminsSeed = S.fromJsonString(S.Array(sCanonicalEmail).check(S.isMinLength(1)));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Profiles = {
+  Create: typeof sProfileCreate.Type;
   Doc: typeof sProfileDoc.Type;
   Entity: typeof sProfile.Type;
   Fields: typeof sProfileFields.Type;

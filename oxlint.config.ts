@@ -4,9 +4,23 @@ import react from "ultracite/oxlint/react";
 import tanstack from "ultracite/oxlint/tanstack";
 import vitest from "ultracite/oxlint/vitest";
 
+const vitestTestsOnly = {
+  ...vitest,
+  overrides: vitest.overrides?.map((override) => ({
+    ...override,
+    files: ["**/*.test.{ts,tsx,js,jsx}", "**/__tests__/**/*.{ts,tsx,js,jsx}"],
+  })),
+};
+
 export default defineConfig({
-  extends: [core, react, tanstack, vitest],
-  ignorePatterns: [...(core.ignorePatterns ?? []), ".agents/**", "apps/web/src/routeTree.gen.ts", "packages/backend/convex/_generated/**"],
+  extends: [core, react, tanstack, vitestTestsOnly],
+  ignorePatterns: [
+    ...(core.ignorePatterns ?? []),
+    ".agents/**",
+    "apps/web/src/routeTree.gen.ts",
+    "packages/backend/confect/_generated/**",
+    "packages/backend/convex/**",
+  ],
   options: {
     typeAware: true,
   },
@@ -54,16 +68,16 @@ export default defineConfig({
       },
     },
     {
-      // Convex mutations sometimes must serially invalidate related capabilities in one transaction.
-      files: ["packages/backend/**/*.ts"],
+      files: ["packages/backend/**/*.ts", "packages/domain/**/*.ts"],
+      jsPlugins: ["oxlint-plugin-effect/plugin"],
       rules: {
+        // ...effect,
+        "max-classes-per-file": "off",
         "no-await-in-loop": "off",
-      },
-    },
-    {
-      files: ["packages/backend/convex/**/*.ts"],
-      rules: {
+        "no-use-before-define": "off",
         "unicorn/filename-case": "off",
+        "unicorn/no-array-method-this-argument": "off",
+        "unicorn/throw-new-error": "off",
       },
     },
   ],

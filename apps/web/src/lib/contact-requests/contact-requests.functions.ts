@@ -1,14 +1,12 @@
-import { api } from "@ec/backend/api";
-import { createConvexHttpClient } from "@ec/backend/client";
-import { zContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
+import { sContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import { createServerFn } from "@tanstack/react-start";
+import { Effect as E } from "effect";
 
-import { publicEnv } from "@/config/env";
+import { HttpClientLive } from "@/lib/confect/http-client";
 
-// CONTACT ---------------------------------------------------------------------------------------------------------------------------------
+import { executeContactRequestsCreate } from "./contact-requests.server";
+
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const createContactRequest = createServerFn({ method: "POST" })
-  .validator(zContactRequestCreateValues)
-  .handler(async ({ data }) => {
-    const convex = createConvexHttpClient(publicEnv.VITE_CONVEX_URL);
-    return await convex.mutation(api.contactRequests.create, data);
-  });
+  .validator(sContactRequestCreateValues)
+  .handler(async ({ data }) => await E.runPromise(executeContactRequestsCreate(data).pipe(E.provide(HttpClientLive))));

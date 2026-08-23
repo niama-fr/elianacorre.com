@@ -1,7 +1,7 @@
-import type { MutationCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { NewsRestrictions } from "@ec/domain/schemas/news-restrictions";
 import type { WithNow } from "@ec/domain/schemas/utils";
+import { Effect as E, Option as O } from "effect";
 
 import {
   createProviderNewsRestriction,
@@ -12,37 +12,35 @@ import {
 } from "../data/news-restrictions";
 
 // APPLY PROVIDER RESTRICTION --------------------------------------------------------------------------------------------------------------
-export async function applyEmailDeliveryRestriction(ctx: MutationCtx, { occurredAt, profileId, reason }: ApplyRestrictionOpts) {
-  const current = await getActiveNewsRestriction(ctx, profileId);
-  if (current === null) {
-    const latest = await getLatestNewsRestriction(ctx, profileId);
-    if (latest !== null && latest.resolvedAt !== null && occurredAt <= latest.resolvedAt) return latest._id;
-    return await createProviderNewsRestriction(ctx, { lastOccurredAt: occurredAt, profileId, reason });
+export const applyEmailDeliveryRestriction = E.fn(function* ({ occurredAt, profileId, reason }: ApplyRestrictionOpts) {
+  const current = yield* getActiveNewsRestriction(profileId);
+  if (O.isNone(current)) {
+    const latest = yield* getLatestNewsRestriction(profileId);
+    if (O.isSome(latest) && latest.value.resolvedAt !== null && occurredAt <= latest.value.resolvedAt) return latest.value._id;
+    return yield* createProviderNewsRestriction({ lastOccurredAt: occurredAt, profileId, reason });
   }
-
-  const nextReason = reason === "spamComplaint" ? reason : current.reason;
-  const isNewer = occurredAt > current.lastOccurredAt;
-  const upgradesReason = nextReason !== current.reason;
-  if (!isNewer && !upgradesReason) return current._id;
-
-  await patchNewsRestriction(ctx, current._id, {
-    lastOccurredAt: Math.max(current.lastOccurredAt, occurredAt),
+  const nextReason = reason === "spamComplaint" ? reason : current.value.reason;
+  const isNewer = occurredAt > current.value.lastOccurredAt;
+  const upgradesReason = nextReason !== current.value.reason;
+  if (!isNewer && !upgradesReason) return current.value._id;
+  yield* patchNewsRestriction(current.value._id, {
+    lastOccurredAt: Math.max(current.value.lastOccurredAt, occurredAt),
     reason: nextReason,
     restrictedBy: "provider",
-    version: current.version + 1,
+    version: current.value.version + 1,
   });
-  return current._id;
-}
+
+  return current.value._id;
+});
 type ApplyRestrictionOpts = { occurredAt: number; profileId: Id<"profiles">; reason: NewsRestrictions["Reason"] };
 
 // RESOLVE BY CONFIRMATION -----------------------------------------------------------------------------------------------------------------
-export async function resolveEmailDeliveryRestrictionByConfirmation(ctx: MutationCtx, opts: ResolveByConfirmationOpts) {
+export const resolveEmailDeliveryRestrictionByConfirmation = E.fn(function* (opts: ResolveByConfirmationOpts) {
   const { now, restrictionId, restrictionVersion } = opts;
-  const restriction = await getNewsRestriction(ctx, restrictionId);
-  if (!restriction || restriction.resolvedAt !== null) return false;
-  if (restrictionVersion !== undefined && restriction.version !== restrictionVersion) return false;
-
-  await patchNewsRestriction(ctx, restrictionId, { resolvedAt: now, resolvedBy: "confirmation" });
+  const restriction = yield* getNewsRestriction(restrictionId);
+  if (O.isNone(restriction) || restriction.value.resolvedAt !== null) return false;
+  if (restrictionVersion !== undefined && restriction.value.version !== restrictionVersion) return false;
+  yield* patchNewsRestriction(restrictionId, { resolvedAt: now, resolvedBy: "confirmation" });
   return true;
-}
+});
 type ResolveByConfirmationOpts = WithNow<{ restrictionVersion?: number; restrictionId: Id<"newsRestrictions"> }>;

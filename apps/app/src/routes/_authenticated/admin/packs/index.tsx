@@ -1,5 +1,7 @@
+import { PaginatedQueryResult } from "@confect/react";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
+import refs from "@ec/backend/refs";
 import { Alert } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
@@ -8,12 +10,12 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FlexRender, useTable } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
-import { usePaginatedQuery } from "convex/react";
 import { Schema as S } from "effect";
 import { toast } from "sonner";
 
 import { sTravelPackCreateValues, sTravelPackSearch } from "@/features/travel-packs/schemas";
 import { useAppForm } from "@/form/hook";
+import { usePaginatedQuery } from "@/lib/confect/helpers";
 import * as m from "@/paraglide/messages";
 
 import { features, getColumns } from "./-table-features";
@@ -55,8 +57,8 @@ function TravelPacksPage() {
 
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 export function TravelPackTable() {
-  const { loadMore, results, status } = usePaginatedQuery(api.travelPacks.list, {}, { initialNumItems: PAGE_SIZE });
-  const table = useTable({ columns: getColumns(), data: results, features });
+  const query = usePaginatedQuery(refs.public.travelPacks.list, {}, { initialNumItems: PAGE_SIZE });
+  const table = useTable({ columns: getColumns(), data: query.results, features });
   const { rows } = table.getRowModel();
   const columnCount = table.getAllLeafColumns().length;
 
@@ -93,12 +95,12 @@ export function TravelPackTable() {
           )}
         </TableBody>
       </Table>
-      {status === "CanLoadMore" && (
+      {PaginatedQueryResult.isCanLoadMore(query) && (
         <Button
           type="button"
           variant="ghost"
           onClick={() => {
-            loadMore(PAGE_SIZE);
+            query.loadMore(PAGE_SIZE);
           }}
         >
           {m.warm_taxis_smile()}

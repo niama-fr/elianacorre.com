@@ -1,21 +1,23 @@
-import { zCanonicalEmail, zCanonicalEmailValue } from "@ec/domain/schemas/utils";
-import z from "zod";
+import { sCanonicalEmail, sCanonicalEmailValue } from "@ec/domain/schemas/utils";
+import { Effect as E, Schema as S } from "effect";
 
 // VALUES ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookRecoveryRequestValues = z.object({
-  email: zCanonicalEmailValue,
-  website: z.string().trim(),
-});
+export const sEbookRecoveryRequestValues = S.toStandardSchemaV1(
+  S.Struct({
+    email: S.toStandardSchemaV1(sCanonicalEmailValue),
+    website: S.toStandardSchemaV1(S.Trim),
+  })
+);
 
 // REQUEST ---------------------------------------------------------------------------------------------------------------------------------
-export const zEbookRecoveryRequest = z.object({
-  email: zCanonicalEmail,
-  requestIp: z.string().trim().min(1),
-  website: z.string().trim().default(""),
+export const sEbookRecoveryRequest = S.Struct({
+  email: sCanonicalEmail,
+  requestIp: S.Trim.check(S.isNonEmpty()),
+  website: S.Trim.pipe(S.withDecodingDefault(E.succeed(""))),
 });
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type EbookRecoveries = {
-  Request: z.infer<typeof zEbookRecoveryRequest>;
-  RequestValues: z.infer<typeof zEbookRecoveryRequestValues>;
+  Request: typeof sEbookRecoveryRequest.Type;
+  RequestValues: typeof sEbookRecoveryRequestValues.Type;
 };

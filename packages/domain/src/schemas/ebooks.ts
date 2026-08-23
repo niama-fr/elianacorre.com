@@ -1,43 +1,52 @@
-import { zDocCommon, zStorageRef } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import { z } from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S, Struct } from "effect";
+
+// PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
+const sProfileId = GenericId.GenericId("profiles");
+const sStorageId = GenericId.GenericId("_storage");
+
+const sEbookTitle = S.Trim.check(S.isMinLength(1));
+
+const sEbookUrl = S.String.check(S.makeFilter((value) => URL.canParse(value)));
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookStatus = z.literal(["archived", "draft", "published"]);
+export const sEbookStatus = S.Literals(["archived", "draft", "published"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookFields = z.object({
-  ...zStorageRef.shape,
-  fileName: z.string(),
-  publishedAt: z.nullable(z.number()),
-  publishedBy: z.nullable(zid("profiles")),
-  status: zEbookStatus,
-  title: z.string().trim().min(1),
-  updatedAt: z.number(),
-  uploadedBy: zid("profiles"),
-  version: z.number(),
+export const sEbookFields = S.Struct({
+  fileName: S.String,
+  publishedAt: S.NullOr(S.Finite),
+  publishedBy: S.NullOr(sProfileId),
+  status: sEbookStatus,
+  storageId: sStorageId,
+  title: sEbookTitle,
+  updatedAt: S.Finite,
+  uploadedBy: sProfileId,
+  version: S.Finite,
 });
-export const zEbookDoc = z.object({ ...zDocCommon("ebooks").shape, ...zEbookFields.shape });
+
+export const sEbookDoc = sEbookFields.pipe(S.fieldsAssign(SystemFields.SystemFields("ebooks").fields));
 
 // DTO -------------------------------------------------------------------------------------------------------------------------------------
-export const zEbookDto = z.object({
-  ...zEbookDoc.omit({ storageId: true }).shape,
-  size: z.int().nonnegative().nullable(),
-  url: z.url().nullable(),
-});
+export const sEbookDto = sEbookDoc.mapFields(Struct.omit(["storageId"])).pipe(
+  S.fieldsAssign({
+    size: S.NullOr(S.Natural),
+    url: S.NullOr(sEbookUrl),
+  })
+);
 
 // ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbook = zEbookDto;
+export const sEbook = sEbookDto;
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookCreate = zEbookFields.pick({ fileName: true, storageId: true, title: true });
+export const sEbookCreate = sEbookFields.mapFields(Struct.pick(["fileName", "storageId", "title"]));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Ebooks = {
-  Create: z.infer<typeof zEbookCreate>;
-  Doc: z.infer<typeof zEbookDoc>;
-  Dto: z.infer<typeof zEbookDto>;
-  Entity: z.infer<typeof zEbook>;
-  Fields: z.infer<typeof zEbookFields>;
-  Status: z.infer<typeof zEbookStatus>;
+  Create: typeof sEbookCreate.Type;
+  Doc: typeof sEbookDoc.Type;
+  Dto: typeof sEbookDto.Type;
+  Entity: typeof sEbook.Type;
+  Fields: typeof sEbookFields.Type;
+  Status: typeof sEbookStatus.Type;
 };

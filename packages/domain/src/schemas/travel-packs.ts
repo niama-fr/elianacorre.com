@@ -22,10 +22,6 @@ export const TRAVEL_PACK_ERROR = {
 } as const;
 
 export const sTravelPackError = S.Literals(Object.values(TRAVEL_PACK_ERROR));
-export const sTravelPackFailure = S.TaggedError<{
-  readonly _tag: "TravelPackFailure";
-  readonly code: typeof sTravelPackError.Type;
-}>()("TravelPackFailure", { code: sTravelPackError });
 
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sTravelPackFileName = S.String.check(S.isMinLength(1));
@@ -122,7 +118,6 @@ export type TravelPacks = {
   Dto: typeof sTravelPackDto.Type;
   Entity: typeof sTravelPack.Type;
   Error: typeof sTravelPackError.Type;
-  Failure: typeof sTravelPackFailure.Type;
   Fields: typeof sTravelPackFields.Type;
   Status: typeof sTravelPackStatus.Type;
   Update: typeof sTravelPackUpdate.Type;

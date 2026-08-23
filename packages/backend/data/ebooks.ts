@@ -1,82 +1,100 @@
-import type { AuthenticatedMutationCtx } from "@ec/backend/convex/zod";
-import type { QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
+import { EbookNotFound } from "@ec/domain/errors/ebooks";
+import { MAX_SIZE } from "@ec/domain/helpers/storage";
 import type { Ebooks } from "@ec/domain/schemas/ebooks";
-import { zStoragePdfDoc } from "@ec/domain/schemas/storage";
 import type { WithNow } from "@ec/domain/schemas/utils";
-import { ConvexError } from "convex/values";
+import { Effect as E, Option as O } from "effect";
+
+import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
+import { CurrentAdmin } from "../runtime/current-profile";
+import { dieOnPatchError, dieOnDecodeError, dieOnEncodeError, optionById, optionByIndex } from "./confect";
+import { getStorageDoc, getStorageUrl } from "./storage";
 
 // TRANSFORMS ------------------------------------------------------------------------------------------------------------------------------
-export const ebookDtoFrom = async (ctx: QueryCtx, doc: Ebooks["Doc"]): Promise<Ebooks["Dto"]> => {
-  const [file, url] = await Promise.all([ctx.db.system.get("_storage", doc.storageId), ctx.storage.getUrl(doc.storageId)]);
-  return { ...doc, size: file?.size ?? null, url };
-};
+export const ebookDtoFrom = E.fn(function* (doc: Ebooks["Doc"]) {
+  const file = yield* getStorageDoc(doc.storageId);
+  const url = yield* getStorageUrl(doc.storageId);
+  return { ...doc, size: O.isSome(file) ? file.value.size : null, url: O.isSome(url) ? url.value.href : null };
+});
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => await ctx.db.get("ebooks", id);
+export const getEbook = E.fn(function* (id: Id<"ebooks">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("ebooks").get(id).pipe(optionById);
+});
 
-export const getEbookByStorageId = async (ctx: QueryCtx, storageId: Id<"_storage">) =>
-  await ctx.db
-    .query("ebooks")
-    .withIndex("by_storage_id", (q) => q.eq("storageId", storageId))
-    .first();
+export const getEbookByStorageId = E.fn(function* (storageId: Id<"_storage">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("ebooks")
+    .index("by_storage_id", (query) => query.eq("storageId", storageId))
+    .first()
+    .pipe(dieOnDecodeError);
+});
 
-export const getLatestEbook = async (ctx: QueryCtx) => await ctx.db.query("ebooks").withIndex("by_version").order("desc").first();
+export const getLatestEbook = E.fn(function* () {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("ebooks").index("by_version", "desc").first().pipe(dieOnDecodeError);
+});
 
-export const getPublishedEbook = async (ctx: QueryCtx) =>
-  await ctx.db
-    .query("ebooks")
-    .withIndex("by_status", (q) => q.eq("status", "published"))
-    .unique();
+export const getPublishedEbook = E.fn(function* () {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("ebooks").get("by_status", "published").pipe(optionByIndex);
+});
 
 // REQUIRE ---------------------------------------------------------------------------------------------------------------------------------
-export const requireEbook = async (ctx: QueryCtx, id: Id<"ebooks">) => {
-  const doc = await ctx.db.get("ebooks", id);
-  if (!doc) throw new ConvexError("UNKNOWN_EBOOK");
-  return doc;
-};
+export const requireEbook = E.fn(function* (id: Id<"ebooks">) {
+  return yield* O.match(yield* getEbook(id), { onNone: () => new EbookNotFound(), onSome: E.succeed });
+});
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listEbooks = async (ctx: QueryCtx) => {
-  const docs = await ctx.db.query("ebooks").withIndex("by_version").order("desc").collect();
-  return await Promise.all(docs.map(async (doc) => await ebookDtoFrom(ctx, doc)));
-};
+export const listEbooks = E.fn(function* () {
+  const reader = yield* DatabaseReader;
+  const docs = yield* reader.table("ebooks").index("by_version", "desc").collect().pipe(dieOnDecodeError);
+  return yield* E.forEach(docs, ebookDtoFrom);
+});
 
-export const listPublishedEbooks = async (ctx: QueryCtx) =>
-  await ctx.db
-    .query("ebooks")
-    .withIndex("by_status", (q) => q.eq("status", "published"))
-    .collect();
+export const listPublishedEbooks = E.fn(function* () {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("ebooks")
+    .index("by_status", (query) => query.eq("status", "published"))
+    .collect()
+    .pipe(dieOnDecodeError);
+});
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createEbook = async (ctx: AuthenticatedMutationCtx, { now, ...payload }: WithNow<Ebooks["Create"]>) => {
-  const storageDoc = await ctx.db.system.get("_storage", payload.storageId);
-  const parsed = zStoragePdfDoc.safeParse(storageDoc);
+export const createEbook = E.fn(function* ({ now, ...create }: WithNow<Ebooks["Create"]>) {
+  const storageDoc = yield* getStorageDoc(create.storageId);
 
-  if (!parsed.success) throw new ConvexError("INVALID_STORAGE_DOC");
+  if (O.isNone(storageDoc) || storageDoc.value.contentType !== "application/pdf" || storageDoc.value.size > MAX_SIZE)
+    return { error: "INVALID_STORAGE_DOC" as const };
 
-  const latest = await getLatestEbook(ctx);
-  return await ctx.db.insert("ebooks", {
-    ...payload,
-    publishedAt: null,
-    publishedBy: null,
-    status: "draft",
-    updatedAt: now,
-    uploadedBy: ctx.profile._id,
-    version: (latest?.version ?? 0) + 1,
-  });
-};
+  const { _id: uploadedBy } = yield* CurrentAdmin;
+  const writer = yield* DatabaseWriter;
+  const latest = yield* getLatestEbook();
+
+  const version = O.match(latest, { onNone: () => 1, onSome: (value) => value.version + 1 });
+  const data = yield* writer
+    .table("ebooks")
+    .insert({ ...create, publishedAt: null, publishedBy: null, status: "draft", updatedAt: now, uploadedBy, version })
+    .pipe(dieOnEncodeError);
+
+  return { data };
+});
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchEbook = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, patch: Partial<Ebooks["Fields"]>) => {
-  await ctx.db.patch("ebooks", id, patch);
-};
+export const patchEbook = E.fn(function* (id: Id<"ebooks">, patch: Partial<Ebooks["Fields"]>) {
+  const writer = yield* DatabaseWriter;
+  return yield* writer.table("ebooks").patch(id, patch).pipe(dieOnPatchError);
+});
 
 // MARK ------------------------------------------------------------------------------------------------------------------------------------
-export const markEbookArchived = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
-  await patchEbook(ctx, id, { status: "archived", updatedAt: now });
-};
+export const markEbookArchived = E.fn(function* (id: Id<"ebooks">, { now }: WithNow) {
+  return yield* patchEbook(id, { status: "archived", updatedAt: now });
+});
 
-export const markEbookPublished = async (ctx: AuthenticatedMutationCtx, id: Id<"ebooks">, { now }: WithNow) => {
-  await patchEbook(ctx, id, { publishedAt: now, publishedBy: ctx.profile._id, status: "published", updatedAt: now });
-};
+export const markEbookPublished = E.fn(function* (id: Id<"ebooks">, { now, publishedBy }: MarkEbookPublishedOpts) {
+  return yield* patchEbook(id, { publishedAt: now, publishedBy, status: "published", updatedAt: now });
+});
+type MarkEbookPublishedOpts = WithNow<{ publishedBy: Id<"profiles"> }>;

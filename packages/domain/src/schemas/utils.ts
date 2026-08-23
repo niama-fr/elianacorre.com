@@ -1,33 +1,31 @@
 import { zid } from "convex-helpers/server/zod4";
-import { Schema as S, SchemaGetter } from "effect";
+import { Schema as S, SchemaTransformation as ST } from "effect";
 import { z } from "zod";
 
-// EMAILS ----------------------------------------------------------------------------------------------------------------------------------
-export const zCanonicalEmail = z.string().trim().toLowerCase().pipe(z.email());
-export const zCanonicalEmailValue = z.string().trim().toLowerCase().pipe(z.email("Ce courriel est invalide"));
-export const zConfirmedEmailPayload = z.object({ confirmed: z.literal(true), email: zCanonicalEmail });
-
-const sCanonicalEmailValue = S.String.check(S.isLowercased(), S.isPattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/u));
-export const sCanonicalEmail = S.Trim.pipe(
-  S.decodeTo(sCanonicalEmailValue, {
-    decode: SchemaGetter.transform((email) => email.toLowerCase()),
-    encode: SchemaGetter.transform((email) => email),
-  })
+// STRINGS ---------------------------------------------------------------------------------------------------------------------------------
+export const sOptionalTrim = S.Trim.pipe(
+  S.decodeTo(S.UndefinedOr(S.Trimmed), ST.transform({ decode: (s) => (s === "" ? undefined : s), encode: (s) => s ?? "" }))
 );
+
+// EMAILS ----------------------------------------------------------------------------------------------------------------------------------
+const EMAIL_PATTERN = /^(?!\.)(?!.*\.\.)(?<local>[A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@(?<domain>[A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/u;
+
+export const sCanonicalEmailValue = S.Trim.pipe(S.decode(ST.toLowerCase())).check(
+  S.isPattern(EMAIL_PATTERN, { message: "Ce courriel est invalide" })
+);
+
+export const sCanonicalEmail = S.Trim.pipe(S.decode(ST.toLowerCase())).check(S.isPattern(EMAIL_PATTERN));
+
+export const sConfirmedEmailPayload = S.Struct({
+  confirmed: S.Literal(true),
+  email: sCanonicalEmail,
+});
 
 // REFS ------------------------------------------------------------------------------------------------------------------------------------
 export const zDocRef = <T extends string>(tableName: T) => z.object({ _id: zid(tableName) });
 export const zStorageRef = z.object({ storageId: zid("_storage") });
 
 // PAGINATION ------------------------------------------------------------------------------------------------------------------------------
-export const zPaginationOptions = z.object({
-  cursor: z.string().nullable(),
-  endCursor: z.string().nullable().optional(),
-  id: z.number().optional(),
-  maximumBytesRead: z.number().optional(),
-  maximumRowsRead: z.number().optional(),
-  numItems: z.number(),
-});
 export const sPaginationOptions = S.Struct({
   cursor: S.NullOr(S.String),
   endCursor: S.optionalKey(S.NullOr(S.String)),

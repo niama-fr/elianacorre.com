@@ -1,5 +1,5 @@
 import type { Id } from "@ec/backend/types";
-import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
+import { sNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
 import { cn } from "@ec/ui/lib/utils";
 import { mergeForm, useTransform } from "@tanstack/react-form-start";
 import confetti from "canvas-confetti";
@@ -72,20 +72,20 @@ export function NewsletterForm({ className, formState, privacyNoticeId }: Newsle
             </div>
           )}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.email }}>
+        <form.AppField name="email" validators={{ onChange: sNewsSubscriptionUpsertValues.fields.email }}>
           {(f) => <f.InputField label="Adresse e-mail" type="email" />}
         </form.AppField>
-        <form.AppField name="firstName" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: sNewsSubscriptionUpsertValues.fields.firstName }}>
           {(f) => <f.InputField label="Prénom (facultatif)" type="text" />}
         </form.AppField>
-        <form.AppField name="website" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.website }}>
+        <form.AppField name="website" validators={{ onChange: sNewsSubscriptionUpsertValues.fields.website }}>
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />
             </div>
           )}
         </form.AppField>
-        <form.AppField name="consent" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.consent }}>
+        <form.AppField name="consent" validators={{ onChange: sNewsSubscriptionUpsertValues.fields.consent }}>
           {(f) => (
             <f.CheckboxField label="Je souhaite recevoir par e-mail la gazette itinérante. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre." />
           )}

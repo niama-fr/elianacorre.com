@@ -1,15 +1,12 @@
-import { api } from "@ec/backend/api";
-import { createConvexHttpClient } from "@ec/backend/client";
-import { zEbookRecoveryRequestValues } from "@ec/domain/schemas/ebook-recoveries";
+import { sEbookRecoveryRequestValues } from "@ec/domain/schemas/ebook-recoveries";
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestIP } from "@tanstack/react-start/server";
+import { Effect as E } from "effect";
 
-import { publicEnv } from "@/config/env";
+import { HttpClientLive } from "@/lib/confect/http-client";
 
-// REQUEST EBOOK RECOVERY ------------------------------------------------------------------------------------------------------------------
+import { executeEbooksRequestRecovery } from "./ebooks.server";
+
+// REQUEST RECOVERY ------------------------------------------------------------------------------------------------------------------------
 export const requestEbookRecovery = createServerFn({ method: "POST" })
-  .validator(zEbookRecoveryRequestValues)
-  .handler(async ({ data }) => {
-    const convex = createConvexHttpClient(publicEnv.VITE_CONVEX_URL);
-    return await convex.mutation(api.ebooks.requestRecovery, { ...data, requestIp: getRequestIP({ xForwardedFor: true }) ?? "unknown" });
-  });
+  .validator(sEbookRecoveryRequestValues)
+  .handler(async ({ data }) => await E.runPromise(executeEbooksRequestRecovery(data).pipe(E.provide(HttpClientLive))));

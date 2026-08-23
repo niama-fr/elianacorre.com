@@ -1,38 +1,32 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
+
+// PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
+const sProfileId = GenericId.GenericId("profiles");
 
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
-export const zLegalTextKind = z.literal("privacyNotice");
+export const sLegalTextKind = S.Literal("privacyNotice");
+
+// CONTENT ---------------------------------------------------------------------------------------------------------------------------------
+// Nonblank CommonMark Markdown; raw HTML is not part of the supported rendering contract.
+export const sMarkdownContent = S.Trim.check(S.isMinLength(1));
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zMarkdownContent = z
-  .string()
-  .trim()
-  .min(1)
-  .describe("Nonblank CommonMark Markdown; raw HTML is not part of the supported rendering contract");
-
-export const zLegalTextFields = z.object({
-  content: zMarkdownContent,
-  kind: zLegalTextKind,
-  publishedAt: z.number(),
-  publishedBy: zid("profiles"),
+export const sLegalTextFields = S.Struct({
+  content: sMarkdownContent,
+  kind: sLegalTextKind,
+  publishedAt: S.Finite,
+  publishedBy: sProfileId,
 });
-export const zLegalTextDoc = z.object({ ...zDocCommon("legalTexts").shape, ...zLegalTextFields.shape });
 
-export const zLegalTextEntry = zLegalTextDoc;
-
-// ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zLegalText = zLegalTextEntry;
+export const sLegalTextDoc = sLegalTextFields.pipe(S.fieldsAssign(SystemFields.SystemFields("legalTexts").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zLegalTextCreate = zLegalTextFields;
+export const sLegalTextCreate = sLegalTextFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type LegalTexts = {
-  Create: z.infer<typeof zLegalTextCreate>;
-  Doc: z.infer<typeof zLegalTextDoc>;
-  Entity: z.infer<typeof zLegalText>;
-  Entry: z.infer<typeof zLegalTextEntry>;
-  Fields: z.infer<typeof zLegalTextFields>;
+  Create: typeof sLegalTextCreate.Type;
+  Doc: typeof sLegalTextDoc.Type;
+  Fields: typeof sLegalTextFields.Type;
 };

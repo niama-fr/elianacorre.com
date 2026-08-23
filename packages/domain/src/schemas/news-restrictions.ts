@@ -1,36 +1,39 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S, Struct } from "effect";
 
-// ENUMS -----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsRestrictionReason = z.literal(["permanentBounce", "spamComplaint"]);
-export const zNewsRestrictionResolvedBy = z.literal(["admin", "confirmation"]);
-export const zNewsRestrictionRestrictedBy = z.literal(["admin", "provider"]);
+// PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
+const sProfileId = GenericId.GenericId("profiles");
+
+// REASON ----------------------------------------------------------------------------------------------------------------------------------
+export const sNewsRestrictionReason = S.Literals(["permanentBounce", "spamComplaint"]);
+
+// RESOLVED BY -----------------------------------------------------------------------------------------------------------------------------
+export const sNewsRestrictionResolvedBy = S.Literals(["admin", "confirmation"]);
+
+// RESTRICTED BY ---------------------------------------------------------------------------------------------------------------------------
+export const sNewsRestrictionRestrictedBy = S.Literals(["admin", "provider"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsRestrictionFields = z.object({
-  lastOccurredAt: z.number(),
-  profileId: zid("profiles"),
-  reason: zNewsRestrictionReason,
-  resolvedAt: z.number().nullable(),
-  resolvedBy: zNewsRestrictionResolvedBy.nullable(),
-  restrictedAt: z.number(),
-  restrictedBy: zNewsRestrictionRestrictedBy,
-  version: z.number(),
+export const sNewsRestrictionFields = S.Struct({
+  lastOccurredAt: S.Finite,
+  profileId: sProfileId,
+  reason: sNewsRestrictionReason,
+  resolvedAt: S.NullOr(S.Finite),
+  resolvedBy: S.NullOr(sNewsRestrictionResolvedBy),
+  restrictedAt: S.Finite,
+  restrictedBy: sNewsRestrictionRestrictedBy,
+  version: S.Finite,
 });
-export const zNewsRestrictionDoc = z.object({ ...zDocCommon("newsRestrictions").shape, ...zNewsRestrictionFields.shape });
+
+export const sNewsRestrictionDoc = sNewsRestrictionFields.pipe(S.fieldsAssign(SystemFields.SystemFields("newsRestrictions").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsRestrictionCreate = zNewsRestrictionFields.pick({
-  lastOccurredAt: true,
-  profileId: true,
-  reason: true,
-});
+export const sNewsRestrictionCreate = sNewsRestrictionFields.mapFields(Struct.pick(["lastOccurredAt", "profileId", "reason"]));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsRestrictions = {
-  Create: z.infer<typeof zNewsRestrictionCreate>;
-  Doc: z.infer<typeof zNewsRestrictionDoc>;
-  Fields: z.infer<typeof zNewsRestrictionFields>;
-  Reason: z.infer<typeof zNewsRestrictionReason>;
+  Create: typeof sNewsRestrictionCreate.Type;
+  Doc: typeof sNewsRestrictionDoc.Type;
+  Fields: typeof sNewsRestrictionFields.Type;
+  Reason: typeof sNewsRestrictionReason.Type;
 };

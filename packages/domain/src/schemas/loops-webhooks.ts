@@ -1,45 +1,63 @@
-import { zCanonicalEmail, zDocCommon } from "@ec/domain/schemas/utils";
-import z from "zod";
+import { SystemFields } from "@confect/core";
+import { sCanonicalEmail } from "@ec/domain/schemas/utils";
+import { Schema as S, SchemaTransformation as ST } from "effect";
 
-// NAME ------------------------------------------------------------------------------------------------------------------------------------
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const kinds = ["email.hardBounced", "email.resubscribed", "email.spamReported", "email.unsubscribed"] as const;
-export const zLoopsWebhookKind = z.literal(kinds);
+
+// KIND ------------------------------------------------------------------------------------------------------------------------------------
+export const sLoopsWebhookKind = S.Literals(kinds);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zLoopsWebhookFields = z.object({
-  email: zCanonicalEmail,
-  kind: zLoopsWebhookKind,
-  messageId: z.string(),
-  occurredAt: z.number(),
-  webhookId: z.string(),
+export const sLoopsWebhookFields = S.Struct({
+  email: sCanonicalEmail,
+  kind: sLoopsWebhookKind,
+  messageId: S.String,
+  occurredAt: S.Finite,
+  webhookId: S.String,
 });
-export const zLoopsWebhookDoc = z.object({ ...zDocCommon("loopsWebhooks").shape, ...zLoopsWebhookFields.shape });
+
+export const sLoopsWebhookDoc = sLoopsWebhookFields.pipe(S.fieldsAssign(SystemFields.SystemFields("loopsWebhooks").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zLoopsWebhookValues = z
-  .object({
-    contactIdentity: z.object({ email: z.email() }),
-    email: z.object({ id: z.string() }),
-    eventName: zLoopsWebhookKind,
-    eventTime: z.number(),
-    webhookId: z.string(),
-    webhookSchemaVersion: z.literal("1.0.0"),
-  })
-  .transform(({ contactIdentity: { email }, email: { id: messageId }, eventName: kind, eventTime, webhookId }) => ({
-    email,
-    kind,
-    messageId,
-    occurredAt: eventTime * 1000,
-    webhookId,
-  }));
+export const sLoopsWebhookCreate = sLoopsWebhookFields;
 
-export const zLoopsWebhookCreate = zLoopsWebhookFields;
+// VALUES ----------------------------------------------------------------------------------------------------------------------------------
+export const sLoopsWebhookValues = S.Struct({
+  contactIdentity: S.Struct({ email: sCanonicalEmail }),
+  email: S.Struct({ id: S.String }),
+  eventName: sLoopsWebhookKind,
+  eventTime: S.Finite,
+  webhookId: S.String,
+  webhookSchemaVersion: S.Literal("1.0.0"),
+}).pipe(
+  S.decodeTo(
+    S.Struct({ email: sCanonicalEmail, kind: sLoopsWebhookKind, messageId: S.String, occurredAt: S.Finite, webhookId: S.String }),
+    ST.transform({
+      decode: ({ contactIdentity: { email }, email: { id: messageId }, eventName: kind, eventTime, webhookId }) => ({
+        email,
+        kind,
+        messageId,
+        occurredAt: eventTime * 1000,
+        webhookId,
+      }),
+      encode: ({ email, kind, messageId, occurredAt, webhookId }) => ({
+        contactIdentity: { email },
+        email: { id: messageId },
+        eventName: kind,
+        eventTime: occurredAt / 1000,
+        webhookId,
+        webhookSchemaVersion: "1.0.0" as const,
+      }),
+    })
+  )
+);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type LoopsWebhooks = {
-  Create: z.infer<typeof zLoopsWebhookCreate>;
-  Doc: z.infer<typeof zLoopsWebhookDoc>;
-  Fields: z.infer<typeof zLoopsWebhookFields>;
-  Kind: z.infer<typeof zLoopsWebhookKind>;
-  Values: z.infer<typeof zLoopsWebhookValues>;
+  Create: typeof sLoopsWebhookCreate.Type;
+  Doc: typeof sLoopsWebhookDoc.Type;
+  Fields: typeof sLoopsWebhookFields.Type;
+  Kind: typeof sLoopsWebhookKind.Type;
+  Values: typeof sLoopsWebhookValues.Type;
 };

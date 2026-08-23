@@ -1,5 +1,5 @@
-import type { QueryCtx } from "@ec/backend/server";
 import { isAnonymizedEmail } from "@ec/domain/helpers/newsletter";
+import { Effect as E, Option as O } from "effect";
 
 import { takeEbookIssuances } from "../data/ebook-issuances";
 import { getActiveNewsRestriction } from "../data/news-restrictions";
@@ -12,24 +12,20 @@ const MAX_EXPORT_RECORDS = 5000;
 const MAX_EXPORT_RELATIONS_PER_PROFILE = 20;
 
 // CREATE DATA -----------------------------------------------------------------------------------------------------------------------------
-export async function createNewsletterDataExport(ctx: QueryCtx, format: "csv" | "json") {
+export const createNewsletterDataExport = E.fn(function* (format: "csv" | "json") {
   const people = [];
-  const profiles = await takeProfiles(ctx, MAX_EXPORT_RECORDS + 1);
+  const profiles = yield* takeProfiles(MAX_EXPORT_RECORDS + 1);
   if (profiles.length > MAX_EXPORT_RECORDS) throw new Error("NEWSLETTER_EXPORT_LIMIT_EXCEEDED");
   for (const profile of profiles) {
     if (!profile.email || isAnonymizedEmail(profile.email)) continue;
-    const [issuances, subscriptions] = await Promise.all([
-      takeEbookIssuances(ctx, MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),
-      takeNewsSubscriptions(ctx, MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),
+    const [issuances, subscriptions] = yield* E.all([
+      takeEbookIssuances(MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),
+      takeNewsSubscriptions(MAX_EXPORT_RELATIONS_PER_PROFILE + 1, profile._id),
     ]);
-
     requireBoundedRelations(subscriptions);
     requireBoundedRelations(issuances);
-    const [restriction, suppression] = await Promise.all([
-      getActiveNewsRestriction(ctx, profile._id),
-      getNewsSuppressionByEmail(ctx, profile.email),
-    ]);
-    if (subscriptions.length === 0 && issuances.length === 0 && !restriction && !suppression) continue;
+    const [restriction, suppression] = yield* E.all([getActiveNewsRestriction(profile._id), getNewsSuppressionByEmail(profile.email)]);
+    if (subscriptions.length === 0 && issuances.length === 0 && O.isNone(restriction) && O.isNone(suppression)) continue;
     const hasCurrentConsent = subscriptions.some(({ confirmedAt, unsubscribedAt }) => confirmedAt !== null && unsubscribedAt === null);
     const consentPeriods = subscriptions.map(({ confirmedAt, privacyNoticeId, requestedAt, unsubscribedAt }) => ({
       confirmedAt,
@@ -43,18 +39,17 @@ export async function createNewsletterDataExport(ctx: QueryCtx, format: "csv" | 
       email: profile.email,
       firstName: profile.firstName ?? null,
       newsletterEligibility: {
-        eligible: hasCurrentConsent && !restriction && !suppression,
-        restricted: !!restriction,
-        suppressed: !!suppression,
+        eligible: hasCurrentConsent && O.isNone(restriction) && O.isNone(suppression),
+        restricted: O.isSome(restriction),
+        suppressed: O.isSome(suppression),
       },
     });
   }
-  const suppressionDocs = await takeNewsSuppressions(ctx, MAX_EXPORT_RECORDS + 1);
+  const suppressionDocs = yield* takeNewsSuppressions(MAX_EXPORT_RECORDS + 1);
   if (suppressionDocs.length > MAX_EXPORT_RECORDS) throw new Error("NEWSLETTER_EXPORT_LIMIT_EXCEEDED");
   const suppressions = suppressionDocs.map(({ canonicalEmailHash }) => ({ canonicalEmailHash }));
   const payload = { exportedAt: Date.now(), people, suppressions, version: 1 };
-  if (format === "json") return { content: JSON.stringify(payload, null, 2), contentType: "application/json" };
-
+  if (format === "json") return { content: JSON.stringify(payload, null, 2), contentType: "application/json" as const };
   const personRows = people.map((person) =>
     [
       "person",
@@ -77,9 +72,9 @@ export async function createNewsletterDataExport(ctx: QueryCtx, format: "csv" | 
       ...personRows,
       ...suppressionRows,
     ].join("\n"),
-    contentType: "text/csv",
+    contentType: "text/csv" as const,
   };
-}
+});
 
 // INTERNAL --------------------------------------------------------------------------------------------------------------------------------
 function escapeCsv(value: boolean | number | string | null) {

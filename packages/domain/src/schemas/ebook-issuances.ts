@@ -1,32 +1,31 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
 
-import { zEbookDto } from "./ebooks";
+import { sEbookDto } from "./ebooks";
 
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
-const kinds = ["initial", "replacement"] as const;
-export const zEbookIssuanceKind = z.literal(kinds);
+export const sEbookIssuanceKind = S.Literals(["initial", "replacement"]);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookIssuanceFields = z.object({
-  ebookId: zid("ebooks"),
-  kind: zEbookIssuanceKind,
-  profileId: zid("profiles"),
+export const sEbookIssuanceFields = S.Struct({
+  ebookId: GenericId.GenericId("ebooks"),
+  kind: sEbookIssuanceKind,
+  profileId: GenericId.GenericId("profiles"),
 });
-export const zEbookIssuanceDoc = z.object({ ...zDocCommon("ebookIssuances").shape, ...zEbookIssuanceFields.shape });
+
+export const sEbookIssuanceDoc = sEbookIssuanceFields.pipe(S.fieldsAssign(SystemFields.SystemFields("ebookIssuances").fields));
 
 // DTO -------------------------------------------------------------------------------------------------------------------------------------
-export const zEbookIssuanceDto = z.object({ ...zEbookIssuanceDoc.shape, ebook: zEbookDto });
+export const sEbookIssuanceDto = sEbookIssuanceDoc.pipe(S.fieldsAssign({ ebook: sEbookDto }));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookIssuanceCreate = zEbookIssuanceFields;
+export const sEbookIssuanceCreate = sEbookIssuanceFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type EbookIssuances = {
-  Create: z.infer<typeof zEbookIssuanceCreate>;
-  Doc: z.infer<typeof zEbookIssuanceDoc>;
-  Dto: z.infer<typeof zEbookIssuanceDto>;
-  Fields: z.infer<typeof zEbookIssuanceFields>;
-  Kind: z.infer<typeof zEbookIssuanceKind>;
+  Create: typeof sEbookIssuanceCreate.Type;
+  Doc: typeof sEbookIssuanceDoc.Type;
+  Dto: typeof sEbookIssuanceDto.Type;
+  Fields: typeof sEbookIssuanceFields.Type;
+  Kind: typeof sEbookIssuanceKind.Type;
 };
