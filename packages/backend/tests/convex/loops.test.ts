@@ -82,7 +82,94 @@ const inspectPrivacySubject = async (convex: QueryCaller, args: Ref.Args<typeof 
   );
 
 describe("Loops delivery administration", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("uses the transactional template assigned to each email kind", async () => {
+    vi.stubEnv("CAPABILITY_SIGNING_SECRET", CAPABILITY_SECRET);
+    vi.stubEnv("LOOPS_API_KEY", "test-loops-api-key");
+    vi.stubEnv("LOOPS_CONFIRMATION_TRANSACTIONAL_ID", "confirmation-template");
+    vi.stubEnv("LOOPS_EBOOK_TRANSACTIONAL_ID", "ebook-template");
+    vi.stubEnv("SITE_URL", "https://example.com");
+    const requests: { transactionalId: string }[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<(...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>>(async (_input, init) => {
+        if (typeof init?.body !== "string") throw new Error("Expected a JSON request body");
+        requests.push(JSON.parse(init.body) as { transactionalId: string });
+        return await Promise.resolve(Response.json({ messageId: `message-${requests.length}` }));
+      })
+    );
+    const convex = createBackend();
+    const { confirmationTaskId, ebookTaskId } = await convex.run(async (ctx) => {
+      const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", firstName: "Reader", role: "contact" });
+      const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
+      const privacyNoticeId = await ctx.db.insert("legalTexts", {
+        content: "Privacy",
+        kind: "privacyNotice",
+        publishedAt: 1,
+        publishedBy: adminId,
+      });
+      const subscriptionId = await ctx.db.insert("newsSubscriptions", {
+        confirmedAt: null,
+        confirmedFrom: null,
+        privacyNoticeId,
+        profileId,
+        requestedAt: 1,
+        unsubscribedAt: null,
+      });
+      const newsConfirmationId = await ctx.db.insert("newsConfirmations", {
+        kind: "subscription",
+        restrictionId: null,
+        restrictionVersion: null,
+        subscriptionId,
+      });
+      const storageId = await ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" }));
+      const ebookId = await ctx.db.insert("ebooks", {
+        fileName: "welcome.pdf",
+        publishedAt: 1,
+        publishedBy: adminId,
+        status: "published",
+        storageId,
+        title: "Welcome",
+        updatedAt: 1,
+        uploadedBy: adminId,
+        version: 1,
+      });
+      const ebookIssuanceId = await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
+      const ebookDownloadId = await ctx.db.insert("ebookDownloads", { ebookIssuanceId });
+      const pending = {
+        acknowledgedAt: null,
+        failure: null,
+        finishedAt: null,
+        replayCount: 0,
+        status: "pending" as const,
+        workflowIds: [],
+      };
+      const insertedConfirmationTaskId = await ctx.db.insert("loopsTasks", {
+        ...pending,
+        idempotencyKey: "confirmation-delivery",
+        kind: "sendConfirmationEmail",
+        newsConfirmationId,
+        profileId,
+      });
+      const insertedEbookTaskId = await ctx.db.insert("loopsTasks", {
+        ...pending,
+        ebookDownloadId,
+        idempotencyKey: "ebook-delivery",
+        kind: "sendEbookEmail",
+        profileId,
+      });
+      return { confirmationTaskId: insertedConfirmationTaskId, ebookTaskId: insertedEbookTaskId };
+    });
+
+    await convex.action(internal.loops.execute, { loopsTaskId: confirmationTaskId });
+    await convex.action(internal.loops.execute, { loopsTaskId: ebookTaskId });
+
+    expect(requests.map(({ transactionalId }) => transactionalId)).toStrictEqual(["confirmation-template", "ebook-template"]);
+  });
 
   it("lets only an administrator inspect and replay a terminal failure without changing its business idempotency key", async () => {
     const convex = createBackend();

@@ -7,8 +7,7 @@
     "./api": "./convex/_generated/api.js",
     "./refs": "./confect/_generated/refs.ts",
     "./server": "./convex/_generated/server.js",
-    "./types": "./convex/_generated/dataModel.d.ts",
-    "./specs/newsletter": "./confect/newsletter.spec.ts"
+    "./types": "./convex/_generated/dataModel.d.ts"
   },
   "scripts": {
     "codegen": "confect codegen && convex codegen",

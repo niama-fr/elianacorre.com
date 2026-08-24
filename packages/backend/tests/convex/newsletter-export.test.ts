@@ -3,8 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../convex/_generated/api";
 import { createBackend, createIdentity } from "./test.auth";
 
-const EXPORTED_AT = Date.UTC(2026, 7, 23);
-
 describe("newsletter portability export", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -16,9 +14,9 @@ describe("newsletter portability export", () => {
     const asAdmin = await createIdentity(convex, "admin");
     const asMember = await createIdentity(convex, "member");
 
-    await expect(convex.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" })).rejects.toThrow("Unauthenticated");
-    await expect(asMember.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "csv" })).rejects.toThrow("Unauthorized");
-    await expect(asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" })).resolves.toMatchObject({
+    await expect(convex.query(api.newsletter.exportData, { format: "json" })).rejects.toThrow("Unauthenticated");
+    await expect(asMember.query(api.newsletter.exportData, { format: "csv" })).rejects.toThrow("Unauthorized");
+    await expect(asAdmin.query(api.newsletter.exportData, { format: "json" })).resolves.toMatchObject({
       contentType: "application/json",
     });
   });
@@ -93,9 +91,10 @@ describe("newsletter portability export", () => {
     });
 
     const result = {
-      csv: await asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "csv" }),
-      json: await asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" }),
+      csv: await asAdmin.query(api.newsletter.exportData, { format: "csv" }),
+      json: await asAdmin.query(api.newsletter.exportData, { format: "json" }),
     };
+    const jsonPayload = JSON.parse(result.json.content) as Record<string, unknown>;
 
     expect({
       csvHasEligibility: result.csv.content.includes('""eligible"":false') && result.csv.content.includes('""restricted"":true'),
@@ -104,6 +103,7 @@ describe("newsletter portability export", () => {
       jsonHasEbookAccess: result.json.content.includes(`"ebookId": "${seeded.ebookId}"`),
       jsonHasEligibility: result.json.content.includes('"eligible": false') && result.json.content.includes('"restricted": true'),
       suppressionIsPortable: [result.csv.content, result.json.content].every((content) => content.includes("minimum-objection-hash")),
+      timestampIsAbsent: !("exportedAt" in jsonPayload),
     }).toStrictEqual({
       csvHasEligibility: true,
       csvHasPersonAndSuppression: true,
@@ -111,6 +111,7 @@ describe("newsletter portability export", () => {
       jsonHasEbookAccess: true,
       jsonHasEligibility: true,
       suppressionIsPortable: true,
+      timestampIsAbsent: true,
     });
     const sensitiveValues = [
       "secret-provider-error",

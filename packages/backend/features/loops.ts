@@ -204,7 +204,7 @@ const sendEbookEmail = E.fn(function* ({ profile, task }: SendEbookEmailOpts) {
   const secret = yield* Config.string("CAPABILITY_SIGNING_SECRET").pipe(E.orDie);
   const token = yield* createCapabilityToken({ capabilityId: task.ebookDownloadId, secret });
   const base = yield* Config.string("SITE_URL").pipe(E.orDie);
-  const transactionalId = yield* Config.string("LOOPS_CONFIRMATION_TRANSACTIONAL_ID").pipe(E.orDie);
+  const transactionalId = yield* Config.string("LOOPS_EBOOK_TRANSACTIONAL_ID").pipe(E.orDie);
   return yield* E.promise(
     async () =>
       await loops.sendTransactional(ctx, {

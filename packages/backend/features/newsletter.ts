@@ -93,7 +93,9 @@ export const subscribeToNewsletter = E.fn("subscribeToNewsletter")(function* (op
     yield* enqueueSendConfirmationEmail({ newsConfirmationId, profileId: profileIdOpt.value });
     return;
   }
-  const profileId = O.isSome(profileIdOpt) ? profileIdOpt.value : yield* createContactProfile({ email, firstName });
+  const profileId = O.isSome(profileIdOpt)
+    ? profileIdOpt.value
+    : yield* createContactProfile({ email, ...(firstName === undefined ? {} : { firstName }) });
   const subscriptionId = O.isSome(subscription)
     ? subscription.value._id
     : yield* createNewsSubscription({ privacyNoticeId: opts.privacyNoticeId, profileId, requestedAt: now });

@@ -300,6 +300,36 @@ describe("e-book administration", () => {
     });
   });
 
+  it("canonicalizes recovery email and defaults an omitted honeypot", async () => {
+    vi.stubEnv("CAPABILITY_SIGNING_SECRET", "test-capability-secret");
+    vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");
+    const convex = createBackend();
+    await createRecoveryFixture(convex);
+
+    await convex.mutation(api.ebooks.requestRecovery, { email: "  Reader@Example.COM " });
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state).toMatchObject({ issuances: [{ kind: "replacement" }], tasks: [{ kind: "sendEbookEmail" }] });
+  });
+
+  it("trims a whitespace-only recovery honeypot at the public boundary", async () => {
+    vi.stubEnv("CAPABILITY_SIGNING_SECRET", "test-capability-secret");
+    vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");
+    const convex = createBackend();
+    await createRecoveryFixture(convex);
+
+    await convex.mutation(api.ebooks.requestRecovery, { email: "reader@example.com", website: "   " });
+
+    const state = await convex.run(async (ctx) => ({
+      issuances: await ctx.db.query("ebookIssuances").collect(),
+      tasks: await ctx.db.query("loopsTasks").collect(),
+    }));
+    expect(state).toMatchObject({ issuances: [{ kind: "replacement" }], tasks: [{ kind: "sendEbookEmail" }] });
+  });
+
   it("enforces email and fallback-IP recovery limits", async () => {
     vi.stubEnv("CAPABILITY_SIGNING_SECRET", "test-capability-secret");
     vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");

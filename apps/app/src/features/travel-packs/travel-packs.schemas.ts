@@ -22,8 +22,8 @@ const fileWith = (acceptedTypes: readonly string[], mimeError: string, sizeError
     S.makeFilter((file) => acceptedTypes.includes(file.type) || mimeError)
   );
 
-// UPDATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackUpdate = S.Struct({
+// UPDATE FORM -----------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackUpdateForm = S.Struct({
   cover: S.NullOr(fileWith(IMAGE_ACCEPTED_TYPES, TRAVEL_PACK_ISSUE.coverMimeTypeInvalid, TRAVEL_PACK_ISSUE.coverSizeInvalid)),
   description: S.String,
   destination: S.Trim,
@@ -33,10 +33,10 @@ export const sTravelPackUpdate = S.Struct({
   title: sTrimRequired,
   youtubeUrl: sTravelPackYoutubeUrlFromForm,
 });
-export type TravelPackUpdateValues = typeof sTravelPackUpdate.Encoded;
+export type TravelPackUpdateFormValues = typeof sTravelPackUpdateForm.Encoded;
 
-// CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackCreate = S.Struct({ title: sTrimRequired });
+// CREATE FORM -----------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackCreateForm = S.Struct({ title: sTrimRequired });
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const sTravelPackSearch = S.Struct({ create: S.optionalKey(S.Boolean) });

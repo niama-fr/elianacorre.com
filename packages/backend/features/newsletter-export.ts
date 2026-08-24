@@ -12,7 +12,7 @@ const MAX_EXPORT_RECORDS = 5000;
 const MAX_EXPORT_RELATIONS_PER_PROFILE = 20;
 
 // CREATE DATA -----------------------------------------------------------------------------------------------------------------------------
-export const createNewsletterDataExport = E.fn(function* (format: "csv" | "json", exportedAt: number) {
+export const createNewsletterDataExport = E.fn(function* (format: "csv" | "json") {
   const people = [];
   const profiles = yield* takeProfiles(MAX_EXPORT_RECORDS + 1);
   if (profiles.length > MAX_EXPORT_RECORDS) throw new Error("NEWSLETTER_EXPORT_LIMIT_EXCEEDED");
@@ -48,7 +48,7 @@ export const createNewsletterDataExport = E.fn(function* (format: "csv" | "json"
   const suppressionDocs = yield* takeNewsSuppressions(MAX_EXPORT_RECORDS + 1);
   if (suppressionDocs.length > MAX_EXPORT_RECORDS) throw new Error("NEWSLETTER_EXPORT_LIMIT_EXCEEDED");
   const suppressions = suppressionDocs.map(({ canonicalEmailHash }) => ({ canonicalEmailHash }));
-  const payload = { exportedAt, people, suppressions, version: 1 };
+  const payload = { people, suppressions, version: 1 };
   if (format === "json") return { content: JSON.stringify(payload, null, 2), contentType: "application/json" as const };
   const personRows = people.map((person) =>
     [

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { requestEbookRecovery } from "@/features/ebooks/ebooks.functions";
-import { sEbookRequestRecovery } from "@/features/ebooks/ebooks.schemas";
+import { sEbookRecoveryForm } from "@/features/ebooks/ebooks.schemas";
 import { useAppForm } from "@/form/hook";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -68,10 +68,10 @@ export function EbookRecoveryFormDialog() {
                 Si vous avez déjà été inscrit·e à ma gazette itinérante, vous pouvez recevoir un nouveau lien vers l’e-book de bienvenue.
               </DialogDescription>
             </DialogHeader>
-            <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sEbookRequestRecovery.fields.email) }}>
+            <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sEbookRecoveryForm.fields.email) }}>
               {(f) => <f.InputField label="Adresse e-mail" type="email" />}
             </form.AppField>
-            <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sEbookRequestRecovery.fields.website) }}>
+            <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sEbookRecoveryForm.fields.website) }}>
               {(f) => (
                 <div aria-hidden="true" className="sr-only">
                   <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />

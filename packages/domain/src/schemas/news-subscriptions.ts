@@ -1,6 +1,5 @@
 import { GenericId, SystemFields } from "@confect/core";
-import { sCanonicalEmail, sTrimOptional } from "@ec/domain/schemas/utils";
-import { Effect as E, Schema as S, Struct } from "effect";
+import { Schema as S, Struct } from "effect";
 
 // ISSUES ------------------------------------------------------------------------------------------------------------------------------
 export const NEWS_SUBSCRIPTION_ISSUE = {
@@ -34,15 +33,6 @@ export const sNewsSubscriptionPatch = sNewsSubscriptionFields
   .mapFields(Struct.pick(["confirmedAt", "confirmedFrom", "privacyNoticeId", "requestedAt", "unsubscribedAt"]))
   .mapFields(Struct.map(S.optionalKey));
 
-// UPSERT ----------------------------------------------------------------------------------------------------------------------------------
-export const sNewsSubscriptionUpsert = S.Struct({
-  consent: S.Boolean.check(S.makeFilter((value): value is true => value)),
-  email: sCanonicalEmail,
-  firstName: sTrimOptional,
-  privacyNoticeId: sLegalTextId,
-  website: S.Trim.pipe(S.withDecodingDefault(E.succeed(""))),
-});
-
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsSubscriptions = {
   ConfirmedFrom: typeof sNewsSubscriptionConfirmedFrom.Type;
@@ -50,5 +40,4 @@ export type NewsSubscriptions = {
   Doc: typeof sNewsSubscriptionDoc.Type;
   Fields: typeof sNewsSubscriptionFields.Type;
   Patch: typeof sNewsSubscriptionPatch.Type;
-  Upsert: typeof sNewsSubscriptionUpsert.Type;
 };

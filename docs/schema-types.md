@@ -92,7 +92,24 @@ function travelPackFrom(dto: TravelPacks["Dto"]): TravelPacks["Entity"] {
 
 ## Domain schema ownership
 
-`@ec/domain` owns canonical business, persistence, and application contracts: field primitives, `Fields`, `Doc`, operation payloads, `Dto`, `Entity`, statuses, and authoritative storage metadata. Centralize these schemas by feature under `packages/domain/src/schemas`.
+`@ec/domain` owns reusable semantic and business invariants, persistence contracts, `Fields`, `Doc`, `Dto`, `Entity`, statuses, authoritative storage metadata, and genuine shared domain commands. Centralize these schemas by feature under `packages/domain/src/schemas`.
+
+The application and backend own their separate untrusted boundaries:
+
+```text
+TanStack feature
+  owns the Form and browser application OUT contract
+
+Confect spec
+  owns the public backend Args and IN contract
+
+@ec/domain
+  owns the semantic field schemas and genuine shared domain contracts used to compose both
+```
+
+An identical object shape does not make two trust boundaries one contract. Do not import Confect specs into frontend code. Do not move a complete Form or API request struct into `@ec/domain` merely to remove structural duplication. Share meaning through schemas such as `sCanonicalEmail`, `sTrimRequired`, `sTrimOptional`, domain IDs, and stable validation issue identifiers. Each untrusted boundary must apply its own trimming, canonicalization, and runtime validation. Frontend validation does not make backend validation redundant because direct Confect callers bypass the form.
+
+A stable command may still belong in `@ec/domain` when it represents one genuine domain contract rather than a browser or transport shape. E-book creation is one example. Its browser form contains a `File`, while the domain and backend create command contains storage metadata and IDs. The domain command remains useful even though the form has a separate schema.
 
 Compose schemas from canonical definitions with `.pick()`, `.omit()`, `.extend()`, or shape composition. Prefer explicit patch contracts when `.partial()` would weaken business semantics.
 
@@ -104,18 +121,20 @@ Use Convex `_creationTime` unless a distinct business creation timestamp exists.
 
 Shared domain schemas may expose stable validation error identifiers when application code needs to distinguish validation failures independently from presentation copy. Validation identifiers belong to the domain and must never contain localized or user-facing text.
 
-Define one canonical error vocabulary per feature instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
+Define one canonical error vocabulary for each meaningful domain or application concern instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
 
 ```ts
+export const VALIDATION_ISSUE = {
+  required: "REQUIRED",
+  slugInvalid: "SLUG_INVALID",
+} as const;
+
 export const TRAVEL_PACK_ISSUE = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
-  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
-  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
-  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
 } as const;
 
-export const sTravelPackTitle = Schema.Trim.check(Schema.isMinLength(1, { message: TRAVEL_PACK_ISSUE.titleRequired }));
+export const sTrimRequired = Schema.Trim.check(Schema.isMinLength(1, { message: VALIDATION_ISSUE.required }));
 ```
 
 If runtime validation of an error identifier is useful, derive an Effect Schema from the same canonical vocabulary rather than maintaining a second list:
@@ -174,9 +193,9 @@ Never put Paraglide imports or localized copy in `@ec/domain`, duplicate domain 
 
 ## Frontend form schemas
 
-Frontend features own schemas whose shape exists because of browser or editing behavior: `File`, temporary empty strings, UI-only or confirmation fields, formatted inputs, partially typed URLs, form-specific null/default semantics, and editing-only cross-field validation.
+Frontend features own the raw Effect Schema for each actual TanStack form. This is the application OUT contract. It includes the complete form object, including ordinary semantic fields and browser-specific values such as `File`, temporary empty strings, UI-only or confirmation fields, formatted inputs, partially typed URLs, form-specific null/default semantics, and editing-only cross-field validation.
 
-Reuse a domain schema directly when its representation is identical. Create a form schema only for a real representation difference, and derive its `Values` and `DefaultValues` types beside that frontend schema. These form-specific types do not belong in a domain feature namespace.
+Compose form fields from domain-owned semantic schemas where their meaning matches. Do not reuse a complete Confect Args schema or promote a form struct into `@ec/domain` solely because another boundary currently has the same fields. Derive form values and default-value types beside the frontend schema. These form-specific types do not belong in a domain feature namespace.
 
 ```text
 browser File
@@ -191,3 +210,5 @@ Frontend-only schemas must not embed Paraglide copy in validation issues. Reuse 
 When a frontend form schema transforms browser input into a domain representation, such as `""` to `null`, submission must use the parsed schema output before crossing the backend boundary. TanStack Form validation does not imply that the stored form value has been replaced by the schema's transformed output.
 
 Standard Schema is an adapter, not a canonical schema representation. Call `Schema.toStandardSchemaV1(...)` only where a consumer requires that protocol.
+
+Use `sFooForm` for the raw Effect Schema owned by an actual form. Use `sFooArgs` for a Confect endpoint argument schema, normally local to its spec. A named Standard Schema adapter uses a name such as `fooValidator`, never an `s` prefix. Do not add `Form` or `Args` to route-search, persistence, DTO, Entity, or other schemas that do not own those boundaries.

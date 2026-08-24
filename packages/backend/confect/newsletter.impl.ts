@@ -10,10 +10,10 @@ import { QueryCtx } from "./_generated/services";
 import spec from "./newsletter.spec";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-const exportData = FunctionImpl.make(databaseSchema, spec, "exportData", ({ exportedAt, format }) =>
+const exportData = FunctionImpl.make(databaseSchema, spec, "exportData", ({ format }) =>
   E.gen(function* () {
     const ctx = yield* QueryCtx;
-    return yield* createNewsletterDataExport(format, exportedAt).pipe(E.provide(currentAdminLayer(ctx)));
+    return yield* createNewsletterDataExport(format).pipe(E.provide(currentAdminLayer(ctx)));
   })
 );
 

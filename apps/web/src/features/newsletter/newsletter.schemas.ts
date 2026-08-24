@@ -6,12 +6,12 @@ import { Schema as S } from "effect";
 // CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
 export const sNewsletterConfirm = S.Struct({ token: S.String });
 
-// CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
-export const sNewsletterSubscribe = S.Struct({
+// SUBSCRIBE FORM --------------------------------------------------------------------------------------------------------------------------
+export const sNewsletterSubscribeForm = S.Struct({
   consent: S.Boolean.check(S.makeFilter((value) => value, { message: NEWS_SUBSCRIPTION_ISSUE.consentRequired })),
   email: sCanonicalEmail,
   firstName: S.Trim,
   privacyNoticeId: GenericId.GenericId("legalTexts"),
   website: S.Trim,
 });
-export type NewsletterSubscribe = typeof sNewsletterSubscribe.Type;
+export type NewsletterSubscribeFormValues = typeof sNewsletterSubscribeForm.Type;

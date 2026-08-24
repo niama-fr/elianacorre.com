@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { toast } from "sonner";
 
 import { createContactRequest } from "@/features/contact-requests/contact-requests.functions";
-import { sContactRequestCreate } from "@/features/contact-requests/contact-requests.schemas";
+import { sContactRequestForm } from "@/features/contact-requests/contact-requests.schemas";
 import { useAppForm } from "@/form/hook";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -51,16 +51,16 @@ export function ContactForm() {
       }}
     >
       <form.AppForm>
-        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.firstName) }}>
+        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sContactRequestForm.fields.firstName) }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.email) }}>
+        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sContactRequestForm.fields.email) }}>
           {(f) => <f.InputField label="Courriel" type="email" />}
         </form.AppField>
-        <form.AppField name="message" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.message) }}>
+        <form.AppField name="message" validators={{ onChange: S.toStandardSchemaV1(sContactRequestForm.fields.message) }}>
           {(f) => <f.TextareaField label="Message" />}
         </form.AppField>
-        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.website) }}>
+        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sContactRequestForm.fields.website) }}>
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />

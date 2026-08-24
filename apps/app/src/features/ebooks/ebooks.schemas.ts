@@ -8,8 +8,8 @@ export const EBOOK_CREATE_ISSUE = {
   fileSizeInvalid: "EBOOK_CREATE_FILE_SIZE_INVALID",
 } as const;
 
-// CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sEbookCreate = S.Struct({
+// CREATE FORM -----------------------------------------------------------------------------------------------------------------------------
+export const sEbookCreateForm = S.Struct({
   file: S.NullOr(
     S.instanceOf(File).check(
       S.makeFilter((file) => file.size <= MAX_SIZE, { message: EBOOK_CREATE_ISSUE.fileSizeInvalid }),
@@ -18,4 +18,4 @@ export const sEbookCreate = S.Struct({
   ).check(S.makeFilter((file): file is File => file !== null, { message: EBOOK_CREATE_ISSUE.fileInvalid })),
   title: sTrimRequired,
 });
-export type EbookCreate = typeof sEbookCreate.Encoded;
+export type EbookCreateFormValues = typeof sEbookCreateForm.Encoded;

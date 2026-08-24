@@ -66,7 +66,7 @@ function AdminPrivacyPage() {
       const ref = refs.public.newsletter.exportData;
 
       const result = await E.runPromise(
-        Ref.runWithCodec(ref, { exportedAt: Date.now(), format }, async (functionReference, encodedArgs): Promise<unknown> => {
+        Ref.runWithCodec(ref, { format }, async (functionReference, encodedArgs): Promise<unknown> => {
           const encodedReturns: unknown = await convex.query(functionReference, encodedArgs as never);
           return encodedReturns;
         })

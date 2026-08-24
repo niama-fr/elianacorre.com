@@ -1,12 +1,18 @@
 import { FunctionSpec, GroupSpec } from "@confect/core";
 import { EbookNotFound } from "@ec/domain/errors/ebooks";
 import { sAuthError } from "@ec/domain/schemas/auth";
-import { sEbookRecoveryRequest } from "@ec/domain/schemas/ebook-recoveries";
 import { sEbookCreate, sEbookDto } from "@ec/domain/schemas/ebooks";
-import { Schema as S } from "effect";
+import { sCanonicalEmail } from "@ec/domain/schemas/utils";
+import { Effect as E, Schema as S } from "effect";
 
 import { Id } from "./_generated/id";
 import ebooks from "./_generated/tables/ebooks";
+
+// SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
+const sRequestRecoveryArgs = S.Struct({
+  email: sCanonicalEmail,
+  website: S.Trim.pipe(S.withDecodingDefault(E.succeed(""))),
+});
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupSpec.make()
@@ -38,7 +44,7 @@ export default GroupSpec.make()
   )
   .addFunction(
     FunctionSpec.publicMutation({
-      args: () => sEbookRecoveryRequest,
+      args: () => sRequestRecoveryArgs,
       name: "requestRecovery",
       returns: () => S.Null,
     })

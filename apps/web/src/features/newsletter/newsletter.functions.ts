@@ -4,7 +4,7 @@ import { Effect as E, Schema as S } from "effect";
 
 import { HttpClientLive } from "@/infra/confect/http-client";
 
-import { sNewsletterConfirm, sNewsletterSubscribe } from "./newsletter.schemas";
+import { sNewsletterConfirm, sNewsletterSubscribeForm } from "./newsletter.schemas";
 import { executeNewsletterConfirm, executeNewsletterSubscribe, executeNewsletterSubscribeForm } from "./newsletter.server";
 
 // CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
@@ -14,7 +14,7 @@ export const confirmNewsletter = createServerFn({ method: "POST" })
 
 // SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
 export const subscribeToNewsletter = createServerFn({ method: "POST" })
-  .validator(S.toStandardSchemaV1(sNewsletterSubscribe))
+  .validator(S.toStandardSchemaV1(sNewsletterSubscribeForm))
   .handler(async ({ data }) => await E.runPromise(executeNewsletterSubscribe(data).pipe(E.provide(HttpClientLive))));
 
 export const submitNewsletterSubscribeForm = createServerFn({ method: "POST" })

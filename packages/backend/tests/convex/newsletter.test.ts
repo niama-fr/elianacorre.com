@@ -4,6 +4,7 @@ import type { Id } from "@ec/backend/types";
 import { PrivacyNoticeNotFound } from "@ec/domain/errors/legal-texts";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
+import { NEWS_SUBSCRIPTION_ISSUE } from "@ec/domain/schemas/news-subscriptions";
 import type { TestConvex } from "convex-test";
 import { Cause as C, Effect as E } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -140,17 +141,54 @@ describe("newsletter", () => {
     const convex = createBackend();
     const privacyNoticeId = await createNewsletterFixture(convex);
 
-    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "  Reader@Example.COM "));
+    await convex.mutation(api.newsletter.subscribe, {
+      consent: true,
+      email: "  Reader@Example.COM ",
+      firstName: "   ",
+      privacyNoticeId,
+    });
+
+    const profile = await convex.run(
+      async (ctx) =>
+        await ctx.db
+          .query("profiles")
+          .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
+          .unique()
+    );
+    expect(profile).toMatchObject({ email: "reader@example.com" });
+    expect(profile?.firstName).toBeUndefined();
+  });
+
+  it("trims a whitespace-only honeypot at the public boundary", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+
+    await convex.mutation(api.newsletter.subscribe, {
+      ...subscriptionRequest(privacyNoticeId),
+      website: "   ",
+    });
+
+    const state = await newsletterState(convex);
+    expect(state.subscriptions).toHaveLength(1);
+    expect(state.confirmations).toHaveLength(1);
+  });
+
+  it("rejects invalid consent and privacy notice IDs at the public boundary", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
 
     await expect(
-      convex.run(
-        async (ctx) =>
-          await ctx.db
-            .query("profiles")
-            .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
-            .unique()
-      )
-    ).resolves.toMatchObject({ email: "reader@example.com" });
+      convex.mutation(api.newsletter.subscribe, {
+        ...subscriptionRequest(privacyNoticeId),
+        consent: false,
+      })
+    ).rejects.toThrow(NEWS_SUBSCRIPTION_ISSUE.consentRequired);
+    await expect(
+      convex.mutation(api.newsletter.subscribe, {
+        ...subscriptionRequest(privacyNoticeId),
+        privacyNoticeId: "not-a-legal-text-id" as Id<"legalTexts">,
+      })
+    ).rejects.toThrow("Validator");
   });
 
   it("silently ignores the honeypot without consuming the request limit", async () => {

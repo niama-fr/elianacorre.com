@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 import { newsletterFormOptions } from "@/features/newsletter/newsletter.form";
 import { submitNewsletterSubscribeForm, subscribeToNewsletter } from "@/features/newsletter/newsletter.functions";
-import { sNewsletterSubscribe } from "@/features/newsletter/newsletter.schemas";
+import { sNewsletterSubscribeForm } from "@/features/newsletter/newsletter.schemas";
 import { useAppForm } from "@/form/hook";
 import type { ServerFormState } from "@/infra/form/form.functions";
 
@@ -73,20 +73,20 @@ export function NewsletterForm({ className, formState, privacyNoticeId }: Newsle
             </div>
           )}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribe.fields.email) }}>
+        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.email) }}>
           {(f) => <f.InputField label="Adresse e-mail" type="email" />}
         </form.AppField>
-        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribe.fields.firstName) }}>
+        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.firstName) }}>
           {(f) => <f.InputField label="Prénom (facultatif)" type="text" />}
         </form.AppField>
-        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribe.fields.website) }}>
+        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.website) }}>
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />
             </div>
           )}
         </form.AppField>
-        <form.AppField name="consent" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribe.fields.consent) }}>
+        <form.AppField name="consent" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.consent) }}>
           {(f) => (
             <f.CheckboxField label="Je souhaite recevoir par e-mail la gazette itinérante. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre." />
           )}
