@@ -2,8 +2,8 @@ import { Alert, AlertDescription, AlertTitle } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { signOutAndReload } from "@/lib/auth/client";
-import { getAuthenticatedLanding } from "@/lib/auth/redirects";
+import { signOutAndReload } from "@/infra/auth/client";
+import { getAuthenticatedLanding } from "@/infra/auth/redirects";
 
 export const Route = createFileRoute("/_authenticated/acces-refuse")({
   beforeLoad: ({ context: { profile } }) => {

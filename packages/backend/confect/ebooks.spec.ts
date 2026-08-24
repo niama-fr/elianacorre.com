@@ -48,6 +48,14 @@ export default GroupSpec.make()
     FunctionSpec.internalQuery({
       args: () => S.Struct({ token: S.String }),
       name: "resolveDownload",
-      returns: () => S.NullOr(ebooks.Doc),
+      returns: () =>
+        S.NullOr(
+          S.Struct({
+            downloadCreatedAt: S.Finite,
+            ebook: ebooks.Doc,
+            latestIssuanceAt: S.Finite,
+            unsubscribedAt: S.NullOr(S.Finite),
+          })
+        ),
     })
   );

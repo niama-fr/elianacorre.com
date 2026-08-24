@@ -15,7 +15,7 @@ describe("newsletter subscription", () => {
         website: "",
       }).pipe(E.flip);
 
-      expect(error.message).toContain("Vous devez accepter de recevoir la lettre");
+      expect(error.message).toContain("NEWS_SUBSCRIPTION_CONSENT_REQUIRED");
     })
   );
 
@@ -26,13 +26,11 @@ describe("newsletter subscription", () => {
         email: "eliana@example.com",
         firstName: "",
         privacyNoticeId: "k170e5dj9c8heby7eah6c4mr6h7a7tw3",
-        requestIp: "127.0.0.1",
         website: "",
       });
 
       expect(result).toMatchObject({
         firstName: undefined,
-        requestIp: "127.0.0.1",
         website: "",
       });
     })
@@ -45,12 +43,10 @@ describe("newsletter subscription", () => {
         email: "eliana@example.com",
         firstName: "Eliana",
         privacyNoticeId: "k170e5dj9c8heby7eah6c4mr6h7a7tw3",
-        requestIp: "127.0.0.1",
         website: "  trap  ",
       });
 
       expect(result).toMatchObject({
-        requestIp: "127.0.0.1",
         website: "trap",
       });
     })

@@ -5,14 +5,14 @@ import { sNewsSubscriptionUpsert } from "@ec/domain/schemas/news-subscriptions";
 import { Schema as S } from "effect";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-export const sNewsletterConfirmArgs = S.toStandardSchemaV1(S.Struct({ token: S.String }));
+export const sNewsletterConfirmArgs = S.Struct({ token: S.String });
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupSpec.make()
   // QUERIES -------------------------------------------------------------------------------------------------------------------------------
   .addFunction(
     FunctionSpec.publicQuery({
-      args: () => S.Struct({ format: S.Literals(["csv", "json"]) }),
+      args: () => S.Struct({ exportedAt: S.Int, format: S.Literals(["csv", "json"]) }),
       error: () => sAuthError,
       name: "exportData",
       returns: () => S.Struct({ content: S.String, contentType: S.Literals(["application/json", "text/csv"]) }),

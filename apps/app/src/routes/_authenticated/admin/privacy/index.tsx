@@ -25,7 +25,7 @@ const retentionRunsQuery = convexQuery(retentionRunsFunctionRef, {});
 
 export const Route = createFileRoute("/_authenticated/admin/privacy/")({
   component: AdminPrivacyPage,
-  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(retentionRunsQuery),
+  loader: async ({ context: { queryClient } }) => await queryClient.query({ ...retentionRunsQuery, staleTime: "static" }),
 });
 
 type PrivacySubject = NonNullable<Ref.Returns<typeof refs.public.privacy.inspectSubject>>;
@@ -51,9 +51,11 @@ function AdminPrivacyPage() {
   const convex = useConvex();
   const [emailInput, setEmailInput] = useState("");
   const [exporting, setExporting] = useState<"csv" | "json">();
+  const [observedAt, setObservedAt] = useState(0);
   const [searchedEmail, setSearchedEmail] = useState<string>();
 
-  const subject = useQuery(refs.public.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
+  const queriedSubject = useQuery(refs.public.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
+  const subject = activePrivacySubject(QueryResult.isSuccess(queriedSubject) ? queriedSubject.value : undefined, observedAt);
 
   const { data: encodedRetentionRuns } = useSuspenseQuery(retentionRunsQuery);
   const retentionRuns = Ref.decodeReturnsSync(retentionRunsRef, encodedRetentionRuns);
@@ -64,7 +66,7 @@ function AdminPrivacyPage() {
       const ref = refs.public.newsletter.exportData;
 
       const result = await E.runPromise(
-        Ref.runWithCodec(ref, { format }, async (functionReference, encodedArgs): Promise<unknown> => {
+        Ref.runWithCodec(ref, { exportedAt: Date.now(), format }, async (functionReference, encodedArgs): Promise<unknown> => {
           const encodedReturns: unknown = await convex.query(functionReference, encodedArgs as never);
           return encodedReturns;
         })
@@ -145,6 +147,7 @@ function AdminPrivacyPage() {
         className="bg-card flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
+          setObservedAt(Date.now());
           setSearchedEmail(emailInput);
         }}
       >
@@ -163,23 +166,34 @@ function AdminPrivacyPage() {
         <Button type="submit">Rechercher</Button>
       </form>
 
-      {searchedEmail && QueryResult.isLoading(subject) && !subject.skipped && (
+      {searchedEmail && QueryResult.isLoading(queriedSubject) && !queriedSubject.skipped && (
         <p className="text-muted-foreground text-sm">Recherche en cours…</p>
       )}
 
-      {searchedEmail && QueryResult.isFailure(subject) && (
+      {searchedEmail && QueryResult.isFailure(queriedSubject) && (
         <p className="text-destructive rounded-2xl border p-4 text-sm">La recherche a échoué.</p>
       )}
 
-      {searchedEmail && QueryResult.isSuccess(subject) && subject.value === null && (
+      {searchedEmail && QueryResult.isSuccess(queriedSubject) && subject === null && (
         <p className="text-muted-foreground rounded-2xl border p-4 text-sm">Aucune donnée connue pour cette adresse.</p>
       )}
 
-      {searchedEmail && QueryResult.isSuccess(subject) && subject.value !== null && (
-        <PrivacySubjectView key={searchedEmail} email={searchedEmail} subject={subject.value} />
+      {searchedEmail && QueryResult.isSuccess(queriedSubject) && subject !== null && subject !== undefined && (
+        <PrivacySubjectView key={searchedEmail} email={searchedEmail} subject={subject} />
       )}
     </section>
   );
+}
+
+function activePrivacySubject(subject: PrivacySubject | null | undefined, observedAt: number): PrivacySubject | null | undefined {
+  if (subject === undefined || subject === null) return subject;
+  return {
+    ...subject,
+    privacyState: {
+      ...subject.privacyState,
+      grants: subject.privacyState.grants.filter(({ expiresAt }) => expiresAt > observedAt),
+    },
+  };
 }
 
 function PrivacySubjectView({ email, subject }: { email: string; subject: PrivacySubject }) {
@@ -442,7 +456,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
 
     try {
       const payload = { confirmed: true as const, email };
-      let outcome: "completed" | "rejected";
+      let outcome: "completed" | "pending" | "rejected";
 
       if (operation === "access") ({ outcome } = await access.mutateAsync(payload));
       else if (operation === "export") {
@@ -456,6 +470,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
       else ({ outcome } = await erase.mutateAsync(payload));
 
       if (outcome === "completed") toast.success("Opération enregistrée.");
+      else if (outcome === "pending") toast.success("L’effacement a été lancé et se poursuivra en arrière-plan.");
       else toast.error("L’opération a été rejetée.");
 
       setOperation(undefined);

@@ -1,15 +1,22 @@
 import { FunctionSpec, GroupSpec } from "@confect/core";
-import { sContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
+import { sCanonicalEmail, sTrimRequired } from "@ec/domain/schemas/utils";
+import { Schema as S } from "effect";
 
-import { Id } from "./_generated/id";
+// SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
+const sCreateArgs = S.Struct({
+  email: sCanonicalEmail,
+  firstName: sTrimRequired,
+  message: sTrimRequired,
+  website: S.Trim,
+});
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupSpec.make()
   // MUTATIONS -----------------------------------------------------------------------------------------------------------------------------
   .addFunction(
     FunctionSpec.publicMutation({
-      args: () => sContactRequestCreateValues,
+      args: () => sCreateArgs,
       name: "create",
-      returns: () => Id("contactRequests"),
+      returns: () => S.Null,
     })
   );

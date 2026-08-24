@@ -3,7 +3,6 @@ import type { WorkflowId } from "@convex-dev/workflow";
 import { getStatus, start } from "@convex-dev/workflow";
 import { Effect as E, Layer as L, Option as O } from "effect";
 
-import { enforcePrivacyRetentionBatch } from "../business/privacy-retention";
 import { internal } from "../convex/_generated/api";
 import {
   createRetentionRun,
@@ -13,7 +12,8 @@ import {
   patchRetentionRun,
   takeRecentRetentionRuns,
 } from "../data/retention-runs";
-import { currentAdminLayer } from "../runtime/current-profile";
+import { enforcePrivacyRetentionBatch } from "../features/privacy-retention";
+import { currentAdminLayer } from "../infra/current-profile";
 import { components } from "./_generated/components";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";

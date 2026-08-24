@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { components, internal } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
-import { getProviderPlaceholderEmail, sBaseUrl } from "../../runtime/better-auth";
+import { getProviderPlaceholderEmail, sBaseUrl } from "../../infra/better-auth";
 import { modules } from "./test.setup";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------

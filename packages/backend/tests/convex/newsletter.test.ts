@@ -1,770 +1,401 @@
 import { Ref } from "@confect/core";
-import refs from "@ec/backend/refs";
+import { RegisteredConvexFunction } from "@confect/server";
+import type { Id } from "@ec/backend/types";
+import { PrivacyNoticeNotFound } from "@ec/domain/errors/legal-texts";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { TestConvex } from "convex-test";
-import { Effect as E } from "effect";
+import { Cause as C, Effect as E } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { internal } from "../../convex/_generated/api";
+import refs from "../../confect/_generated/refs";
+import databaseSchema from "../../confect/_generated/schema";
+import { api, internal } from "../../convex/_generated/api";
 import type schema from "../../convex/schema";
-import { createBackend, createIdentity } from "./test.auth";
+import { confirmNewsletter, isNewsletterConfirmationCurrent } from "../../features/newsletter";
+import { createBackend } from "./test.auth";
 
-// Privacy fulfillment queues Loops work through the shared Workflow component.
 vi.mock(import("@convex-dev/workflow"), async (importOriginal) => {
   const actual = await importOriginal();
   const workflowId = "test-workflow-id" as Awaited<ReturnType<typeof actual.start>>;
   return { ...actual, start: vi.fn<typeof actual.start>().mockResolvedValue(workflowId) } satisfies typeof actual;
 });
 
-type QueryCaller = Pick<TestConvex<typeof schema>, "query">;
-type MutationCaller = Pick<TestConvex<typeof schema>, "mutation">;
+// CONSTS ----------------------------------------------------------------------------------------------------------------------------------
+const NOW = Date.UTC(2026, 7, 23, 12);
+const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
 
-const inspectSubject = async (convex: QueryCaller, args: Ref.Args<typeof refs.public.privacy.inspectSubject>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.inspectSubject, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.query(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
+// HELPERS ---------------------------------------------------------------------------------------------------------------------------------
+type Backend = TestConvex<typeof schema>;
 
-const fulfillAccessRequest = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.privacy.fulfillAccessRequest>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillAccessRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const fulfillErasureRequest = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.privacy.fulfillErasureRequest>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillErasureRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const fulfillExportRequest = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.privacy.fulfillExportRequest>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillExportRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const fulfillObjectionRequest = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.privacy.fulfillObjectionRequest>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillObjectionRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const fulfillRectificationRequest = async (
-  convex: MutationCaller,
-  args: Ref.Args<typeof refs.public.privacy.fulfillRectificationRequest>
-) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillRectificationRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const fulfillSuppressionRemovalRequest = async (
-  convex: MutationCaller,
-  args: Ref.Args<typeof refs.public.privacy.fulfillSuppressionRemovalRequest>
-) =>
-  await E.runPromise(
-    Ref.runWithCodec(
-      refs.public.privacy.fulfillSuppressionRemovalRequest,
-      args,
-      async (functionReference, encodedArgs): Promise<unknown> => {
-        const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-        return encodedReturns;
-      }
-    )
-  );
-
-const fulfillUnsubscriptionRequest = async (
-  convex: MutationCaller,
-  args: Ref.Args<typeof refs.public.privacy.fulfillUnsubscriptionRequest>
-) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.fulfillUnsubscriptionRequest, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const recordVerification = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.privacy.recordVerification>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.privacy.recordVerification, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
-
-const createSubscriber = async (convex: TestConvex<typeof schema>, email = "reader@example.com") =>
+const createNewsletterFixture = async (convex: Backend, { publishedEbook = true } = {}) =>
   await convex.run(async (ctx) => {
-    const admin = await ctx.db
-      .query("profiles")
-      .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
-      .unique();
-    if (admin === null) throw new Error("Admin profile was not found");
-    const profileId = await ctx.db.insert("profiles", { email, firstName: "Before", role: "contact" });
+    const adminId = await ctx.db.insert("profiles", { email: "admin@example.com", role: "admin" });
     const privacyNoticeId = await ctx.db.insert("legalTexts", {
       content: "Privacy",
       kind: "privacyNotice",
-      publishedAt: 1,
-      publishedBy: admin._id,
+      publishedAt: NOW - 1000,
+      publishedBy: adminId,
     });
+    if (publishedEbook) {
+      const storageId = await ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" }));
+      await ctx.db.insert("ebooks", {
+        fileName: "welcome.pdf",
+        publishedAt: NOW - 1000,
+        publishedBy: adminId,
+        status: "published",
+        storageId,
+        title: "Welcome",
+        updatedAt: NOW - 1000,
+        uploadedBy: adminId,
+        version: 1,
+      });
+    }
+    return privacyNoticeId;
+  });
+
+const subscriptionRequest = (privacyNoticeId: Id<"legalTexts">, email = "reader@example.com") => ({
+  consent: true as const,
+  email,
+  firstName: "Reader",
+  privacyNoticeId,
+  website: "",
+});
+
+const subscribeThroughConfectEffect = (convex: Backend, args: Ref.Args<typeof refs.public.newsletter.subscribe>) =>
+  Ref.runWithCodec(refs.public.newsletter.subscribe, args, async (functionReference, encodedArgs): Promise<unknown> => {
+    const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
+    return encodedReturns;
+  });
+
+const newsletterState = async (convex: Backend) =>
+  await convex.run(async (ctx) => ({
+    confirmations: await ctx.db.query("newsConfirmations").collect(),
+    downloads: await ctx.db.query("ebookDownloads").collect(),
+    issuances: await ctx.db.query("ebookIssuances").collect(),
+    profiles: await ctx.db.query("profiles").collect(),
+    restrictions: await ctx.db.query("newsRestrictions").collect(),
+    subscriptions: await ctx.db.query("newsSubscriptions").collect(),
+    tasks: await ctx.db.query("loopsTasks").collect(),
+  }));
+
+const createConfirmedSubscriber = async (
+  convex: Backend,
+  privacyNoticeId: Id<"legalTexts">,
+  { email = "reader@example.com", restriction }: { email?: string; restriction?: "permanentBounce" | "spamComplaint" } = {}
+) =>
+  await convex.run(async (ctx) => {
+    const profileId = await ctx.db.insert("profiles", { email, firstName: "Reader", role: "contact" });
     const subscriptionId = await ctx.db.insert("newsSubscriptions", {
-      confirmedAt: 20,
+      confirmedAt: NOW - 1000,
       confirmedFrom: "email",
       privacyNoticeId,
       profileId,
-      requestedAt: 10,
+      requestedAt: NOW - 2000,
       unsubscribedAt: null,
     });
-    return { profileId, subscriptionId };
+    const restrictionId = restriction
+      ? await ctx.db.insert("newsRestrictions", {
+          lastOccurredAt: NOW - 500,
+          profileId,
+          reason: restriction,
+          resolvedAt: null,
+          resolvedBy: null,
+          restrictedAt: NOW - 500,
+          restrictedBy: "provider",
+          version: 1,
+        })
+      : null;
+    return { profileId, restrictionId, subscriptionId };
   });
 
-const verifyRequest = async (
-  admin: Awaited<ReturnType<typeof createIdentity>>,
-  requestKind: "access" | "erasure" | "export" | "objection" | "rectification" | "suppressionRemoval" | "unsubscription",
-  email = "reader@example.com"
-) =>
-  await recordVerification(admin, {
-    email,
-    method: "emailChallenge",
-    outcome: "completed",
-    requestKind,
-  });
+const confirmationToken = async (confirmationId: Id<"newsConfirmations">) =>
+  await E.runPromise(createCapabilityToken({ capabilityId: confirmationId, secret: "test-capability-secret" }));
 
-describe("privacy administration", () => {
+// TESTS -----------------------------------------------------------------------------------------------------------------------------------
+describe("newsletter", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
-  it("does not expose a person's data to an unauthenticated requester", async () => {
+  it("creates a pending subscription through the public Convex mutation", async () => {
     const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
 
-    await expect(inspectSubject(convex, { email: "reader@example.com" })).rejects.toThrow("Unauthenticated");
-  });
+    await expect(convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId))).resolves.toBeNull();
 
-  it("finds one person by canonical email", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await convex.run(async (ctx) => {
-      await ctx.db.insert("profiles", { email: "reader@example.com", firstName: "Eliana", role: "contact" });
-    });
-
-    const ref = refs.public.privacy.inspectSubject;
-    const encodedReturns: unknown = await asAdmin.query(Ref.getFunctionReference(ref), { email: "  Reader@Example.COM " } as never);
-    const subject = Ref.decodeReturnsSync(ref, encodedReturns);
-
-    expect(subject).toMatchObject({
-      profile: { email: "reader@example.com", firstName: "Eliana", role: "contact" },
-    });
-  });
-
-  it("keeps consent, delivery eligibility, e-book history, and privacy state distinct", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const privacyNoticeId = await convex.run(async (ctx) => {
-      const admin = await ctx.db
-        .query("profiles")
-        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
-        .unique();
-      if (admin === null) throw new Error("Admin profile was not found");
-      const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
-      const insertedPrivacyNoticeId = await ctx.db.insert("legalTexts", {
-        content: "Privacy",
-        kind: "privacyNotice",
-        publishedAt: 1,
-        publishedBy: admin._id,
-      });
-      await ctx.db.insert("newsSubscriptions", {
-        confirmedAt: 20,
-        confirmedFrom: "email",
-        privacyNoticeId: insertedPrivacyNoticeId,
-        profileId,
-        requestedAt: 10,
-        unsubscribedAt: null,
-      });
-      await ctx.db.insert("newsRestrictions", {
-        lastOccurredAt: 30,
-        profileId,
-        reason: "spamComplaint",
-        resolvedAt: null,
-        resolvedBy: null,
-        restrictedAt: 30,
-        restrictedBy: "provider",
-        version: 1,
-      });
-      const storageId = await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
-      const ebookId = await ctx.db.insert("ebooks", {
-        fileName: "ebook.pdf",
-        publishedAt: 5,
-        publishedBy: admin._id,
-        status: "published",
-        storageId,
-        title: "Carnet",
-        updatedAt: 5,
-        uploadedBy: admin._id,
-        version: 1,
-      });
-      await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
-      return insertedPrivacyNoticeId;
-    });
-
-    await expect(inspectSubject(asAdmin, { email: "reader@example.com" })).resolves.toMatchObject({
-      deliveryEligibility: {
-        eligible: false,
-        restriction: { reason: "spamComplaint", restrictedBy: "provider" },
-        status: "restricted",
-      },
-      newsletterConsent: {
-        periods: [{ confirmedAt: 20, privacyNoticeId, requestedAt: 10, unsubscribedAt: null }],
-      },
-      privacyState: { suppressed: false },
-      welcomeEbookAccess: {
-        issuances: [{ ebook: { title: "Carnet", version: 1 }, kind: "initial" }],
-      },
-    });
-  });
-
-  it("returns null for an unknown canonical email", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-
-    await expect(inspectSubject(asAdmin, { email: "missing@example.com" })).resolves.toBeNull();
-  });
-
-  it("finds a retained objection after identifying profile data has been erased", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const canonicalEmailHash = await E.runPromise(
-      hashCanonicalEmail({
-        email: "erased@example.com",
-        secret: "test-suppression-secret",
-      })
-    );
-    await convex.run(async (ctx) => {
-      await ctx.db.insert("newsSuppressions", { canonicalEmailHash });
-    });
-
-    await expect(inspectSubject(asAdmin, { email: "erased@example.com" })).resolves.toStrictEqual({
-      deliveryEligibility: { eligible: false, restriction: null, status: "suppressed" },
-      newsletterConsent: { periods: [] },
-      privacyState: { audits: [], grants: [], suppressed: true },
-      profile: null,
-      welcomeEbookAccess: { issuances: [] },
-    });
-  });
-
-  it("shows the minimal privacy-operation history newest first", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const subjectHash = await E.runPromise(
-      hashCanonicalEmail({
-        email: "reader@example.com",
-        secret: "test-suppression-secret",
-      })
-    );
-    await convex.run(async (ctx) => {
-      const performedBy = await ctx.db
-        .query("profiles")
-        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
-        .unique();
-      if (performedBy === null) throw new Error("Admin profile was not found");
-      await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
-      const accessVerificationAuditId = await ctx.db.insert("privacyAudits", {
-        kind: "verification",
-        method: "emailChallenge",
-        outcome: "completed",
-        performedBy: performedBy._id,
-        requestKind: "access",
-        subjectHash,
-      });
-      await ctx.db.insert("privacyAudits", {
-        kind: "access",
-        outcome: "completed",
-        performedBy: performedBy._id,
-        subjectHash,
-        verificationAuditId: accessVerificationAuditId,
-      });
-      const erasureVerificationAuditId = await ctx.db.insert("privacyAudits", {
-        kind: "verification",
-        method: "emailChallenge",
-        outcome: "completed",
-        performedBy: performedBy._id,
-        requestKind: "erasure",
-        subjectHash,
-      });
-      await ctx.db.insert("privacyAudits", {
-        kind: "erasure",
-        outcome: "rejected",
-        performedBy: performedBy._id,
-        subjectHash,
-        verificationAuditId: erasureVerificationAuditId,
-      });
-    });
-
-    const person = await inspectSubject(asAdmin, { email: "reader@example.com" });
-
-    expect(person?.privacyState.audits.filter(({ kind }) => kind !== "verification")).toMatchObject([
-      { kind: "erasure", outcome: "rejected" },
-      { kind: "access", outcome: "completed" },
+    const state = await newsletterState(convex);
+    expect(state.profiles).toMatchObject([
+      { email: "admin@example.com", role: "admin" },
+      { email: "reader@example.com", firstName: "Reader", role: "contact" },
     ]);
-    expect(person?.privacyState.audits[0]).not.toHaveProperty("subjectHash");
+    expect(state.subscriptions).toMatchObject([{ confirmedAt: null, privacyNoticeId, unsubscribedAt: null }]);
+    expect(state.confirmations).toMatchObject([{ kind: "subscription", restrictionId: null, restrictionVersion: null }]);
+    expect(state.tasks.filter(({ kind }) => kind === "sendConfirmationEmail")).toHaveLength(1);
   });
 
-  it("retains minimal audit history after identifying profile data is erased", async () => {
+  it("canonicalizes the submitted email before lookup and persistence", async () => {
     const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const subjectHash = await E.runPromise(
-      hashCanonicalEmail({
-        email: "erased-without-objection@example.com",
-        secret: "test-suppression-secret",
-      })
-    );
-    await convex.run(async (ctx) => {
-      const performedBy = await ctx.db
-        .query("profiles")
-        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
-        .unique();
-      if (performedBy === null) throw new Error("Admin profile was not found");
-      const verificationAuditId = await ctx.db.insert("privacyAudits", {
-        kind: "verification",
-        method: "emailChallenge",
-        outcome: "completed",
-        performedBy: performedBy._id,
-        requestKind: "erasure",
-        subjectHash,
-      });
-      await ctx.db.insert("privacyAudits", {
-        kind: "erasure",
-        outcome: "completed",
-        performedBy: performedBy._id,
-        subjectHash,
-        verificationAuditId,
-      });
-    });
+    const privacyNoticeId = await createNewsletterFixture(convex);
 
-    await expect(inspectSubject(asAdmin, { email: "erased-without-objection@example.com" })).resolves.toMatchObject({
-      privacyState: {
-        audits: [
-          { kind: "erasure", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "erasure" },
-        ],
-        suppressed: false,
-      },
-      profile: null,
-    });
-  });
-
-  it("rejects an authenticated non-administrator", async () => {
-    const convex = createBackend();
-    const asMember = await createIdentity(convex, "member");
-
-    await expect(inspectSubject(asMember, { email: "reader@example.com" })).rejects.toThrow("Unauthorized");
-  });
-
-  it("requires an explicit confirmation before a privacy mutation", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "  Reader@Example.COM "));
 
     await expect(
-      fulfillRectificationRequest(asAdmin, {
-        // @ts-expect-error -- exercise the runtime confirmation validator.
-        confirmed: false,
-        email: "reader@example.com",
-        firstName: "After",
-      })
-    ).rejects.toThrow("Expected true");
-    await expect(inspectSubject(asAdmin, { email: "reader@example.com" })).resolves.toMatchObject({
-      privacyState: { audits: [] },
-      profile: { firstName: "Before" },
+      convex.run(
+        async (ctx) =>
+          await ctx.db
+            .query("profiles")
+            .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
+            .unique()
+      )
+    ).resolves.toMatchObject({ email: "reader@example.com" });
+  });
+
+  it("silently ignores the honeypot without consuming the request limit", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    const request = subscriptionRequest(privacyNoticeId);
+
+    for (let attempt = 0; attempt < 5; attempt += 1)
+      await convex.mutation(api.newsletter.subscribe, { ...request, website: "https://bot.example" });
+    await convex.mutation(api.newsletter.subscribe, request);
+
+    const state = await newsletterState(convex);
+    expect(state.subscriptions).toHaveLength(1);
+    expect(state.confirmations).toHaveLength(1);
+  });
+
+  it("does not recreate suppressed or permanently bounced contacts", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    const suppressedHash = await E.runPromise(hashCanonicalEmail({ email: "suppressed@example.com", secret: "test-suppression-secret" }));
+    await convex.run(async (ctx) => {
+      await ctx.db.insert("newsSuppressions", { canonicalEmailHash: suppressedHash });
+    });
+    await createConfirmedSubscriber(convex, privacyNoticeId, { email: "bounced@example.com", restriction: "permanentBounce" });
+
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "suppressed@example.com"));
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "bounced@example.com"));
+
+    const state = await newsletterState(convex);
+    expect(state.profiles.some(({ email }) => email === "suppressed@example.com")).toBeFalsy();
+    expect(state.confirmations).toStrictEqual([]);
+    expect(state.issuances).toStrictEqual([]);
+  });
+
+  it("transports PrivacyNoticeNotFound with its own Confect error tag", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await convex.run(async (ctx) => {
+      await ctx.db.delete(privacyNoticeId);
+    });
+
+    const exit = await E.runPromise(E.exit(subscribeThroughConfectEffect(convex, subscriptionRequest(privacyNoticeId))));
+
+    if (exit._tag !== "Failure") throw new Error("Privacy notice lookup unexpectedly succeeded");
+    const reason = exit.cause.reasons.find(C.isFailReason);
+    if (!reason) throw new Error("Privacy notice failure was not transported in the typed error channel");
+    expect(reason.error).toMatchObject({ _tag: "PrivacyNoticeNotFound" });
+    expect(reason.error).toBeInstanceOf(PrivacyNoticeNotFound);
+  });
+
+  it("enforces both email and fallback-IP subscription limits", async () => {
+    const emailLimited = createBackend();
+    const noticeA = await createNewsletterFixture(emailLimited);
+    for (let attempt = 0; attempt < 4; attempt += 1) await emailLimited.mutation(api.newsletter.subscribe, subscriptionRequest(noticeA));
+    const emailLimitedState = await newsletterState(emailLimited);
+    expect(emailLimitedState.tasks.filter(({ kind }) => kind === "sendConfirmationEmail")).toHaveLength(3);
+
+    const ipLimited = createBackend();
+    const noticeB = await createNewsletterFixture(ipLimited);
+    for (const email of ["one@example.com", "two@example.com", "three@example.com", "four@example.com"])
+      await ipLimited.mutation(api.newsletter.subscribe, subscriptionRequest(noticeB, email));
+    const ipLimitedState = await newsletterState(ipLimited);
+    expect(ipLimitedState.subscriptions).toHaveLength(3);
+  });
+
+  it("issues one replacement e-book for repeated confirmed-subscriber requests in the same window", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await createConfirmedSubscriber(convex, privacyNoticeId);
+    const request = subscriptionRequest(privacyNoticeId);
+
+    await convex.mutation(api.newsletter.subscribe, request);
+    await convex.mutation(api.newsletter.subscribe, request);
+
+    const state = await newsletterState(convex);
+    expect(state.issuances).toMatchObject([{ kind: "replacement" }]);
+    expect(state.downloads).toHaveLength(1);
+    expect(state.tasks.filter(({ kind }) => kind === "sendEbookEmail")).toHaveLength(1);
+  });
+
+  it("charges confirmed-subscriber replacement requests to the fallback-IP limit", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await createConfirmedSubscriber(convex, privacyNoticeId);
+    const confirmedRequest = subscriptionRequest(privacyNoticeId);
+    for (let attempt = 0; attempt < 3; attempt += 1) await convex.mutation(api.newsletter.subscribe, confirmedRequest);
+
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "new-reader@example.com"));
+
+    const state = await newsletterState(convex);
+    expect(state).toMatchObject({
+      issuances: [{ kind: "replacement" }],
+      subscriptions: [{ confirmedAt: NOW - 1000 }],
     });
   });
 
-  it("protects every privacy mutation from unauthenticated and non-administrator identities", async () => {
+  it("creates one reactivation confirmation for repeated restricted-subscriber requests", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
     const convex = createBackend();
-    const asMember = await createIdentity(convex, "member");
-    const payload = { confirmed: true as const, email: "reader@example.com" };
-    const unauthenticated = [
-      fulfillAccessRequest(convex, payload),
-      fulfillErasureRequest(convex, payload),
-      fulfillExportRequest(convex, payload),
-      fulfillObjectionRequest(convex, payload),
-      fulfillRectificationRequest(convex, { ...payload, firstName: "After" }),
-      fulfillSuppressionRemovalRequest(convex, payload),
-      fulfillUnsubscriptionRequest(convex, payload),
-      recordVerification(convex, {
-        email: payload.email,
-        method: "emailChallenge",
-        outcome: "completed",
-        requestKind: "access",
-      }),
-    ];
-    const unauthorized = [
-      fulfillAccessRequest(asMember, payload),
-      fulfillErasureRequest(asMember, payload),
-      fulfillExportRequest(asMember, payload),
-      fulfillObjectionRequest(asMember, payload),
-      fulfillRectificationRequest(asMember, { ...payload, firstName: "After" }),
-      fulfillSuppressionRemovalRequest(asMember, payload),
-      fulfillUnsubscriptionRequest(asMember, payload),
-      recordVerification(asMember, {
-        email: payload.email,
-        method: "emailChallenge",
-        outcome: "completed",
-        requestKind: "access",
-      }),
-    ];
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    const { restrictionId } = await createConfirmedSubscriber(convex, privacyNoticeId, { restriction: "spamComplaint" });
+    const request = subscriptionRequest(privacyNoticeId);
 
-    for (const result of unauthenticated) await expect(result).rejects.toThrow("Unauthenticated");
-    for (const result of unauthorized) await expect(result).rejects.toThrow("Unauthorized");
+    await convex.mutation(api.newsletter.subscribe, request);
+    await convex.mutation(api.newsletter.subscribe, request);
+
+    const state = await newsletterState(convex);
+    expect(state.confirmations).toMatchObject([{ kind: "reactivation", restrictionId, restrictionVersion: 1 }]);
+    expect(state.tasks.filter(({ kind }) => kind === "sendConfirmationEmail")).toHaveLength(1);
+    expect(state.issuances).toStrictEqual([]);
   });
 
-  it("records only the verification category, request kind, outcome, and administrator", async () => {
+  it("charges restricted-subscriber reactivation requests to the fallback-IP limit", async () => {
     const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await createConfirmedSubscriber(convex, privacyNoticeId, { restriction: "spamComplaint" });
+    const restrictedRequest = subscriptionRequest(privacyNoticeId);
+    for (let attempt = 0; attempt < 3; attempt += 1) await convex.mutation(api.newsletter.subscribe, restrictedRequest);
 
-    await expect(
-      recordVerification(asAdmin, {
-        email: "reader@example.com",
-        method: "emailChallenge",
-        outcome: "completed",
-        requestKind: "export",
-      })
-    ).resolves.toStrictEqual({ outcome: "completed" });
-    const subject = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    expect(subject?.privacyState.audits).toMatchObject([
-      {
-        kind: "verification",
-        method: "emailChallenge",
-        outcome: "completed",
-        requestKind: "export",
-      },
-    ]);
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId, "new-reader@example.com"));
+
+    const state = await newsletterState(convex);
+    expect(state).toMatchObject({
+      confirmations: [{ kind: "reactivation" }],
+      subscriptions: [{ confirmedAt: NOW - 1000 }],
+    });
   });
 
-  it("records a rejected verification and rejects unsupported outcomes", async () => {
+  it("rotates a pending subscription confirmation and makes the old delivery task harmless", async () => {
     const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const verification = {
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    const request = subscriptionRequest(privacyNoticeId);
+    await convex.mutation(api.newsletter.subscribe, request);
+    const firstState = await newsletterState(convex);
+    const [firstConfirmation] = firstState.confirmations;
+    if (!firstConfirmation) throw new Error("First confirmation was not created");
+
+    await convex.mutation(api.newsletter.subscribe, request);
+    const state = await newsletterState(convex);
+    expect(state.confirmations).toHaveLength(1);
+    expect(state.confirmations[0]?._id).not.toBe(firstConfirmation._id);
+    const staleTask = state.tasks.find(
+      (task) => task.kind === "sendConfirmationEmail" && task.newsConfirmationId === firstConfirmation._id
+    );
+    if (!staleTask) throw new Error("Stale confirmation task was not found");
+    await expect(convex.query(internal.loops.getExecutionPayload, { loopsTaskId: staleTask._id })).resolves.toBeNull();
+  });
+
+  it("confirms a valid subscription once and issues the initial e-book", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId));
+    const pendingState = await newsletterState(convex);
+    const [confirmation] = pendingState.confirmations;
+    if (!confirmation) throw new Error("Confirmation was not created");
+    const token = await confirmationToken(confirmation._id);
+
+    const first = await convex.mutation(api.newsletter.confirm, { token });
+    const second = await convex.mutation(api.newsletter.confirm, { token });
+
+    expect(first).toMatchObject({ confirmed: true });
+    expect(first.downloadToken).toBeTypeOf("string");
+    expect(second).toStrictEqual({ confirmed: false, downloadToken: null });
+    const state = await newsletterState(convex);
+    expect({ confirmations: state.confirmations, issuances: state.issuances, subscriptions: state.subscriptions }).toMatchObject({
+      confirmations: [],
+      issuances: [{ kind: "initial" }],
+      subscriptions: [{ confirmedAt: NOW, confirmedFrom: "email" }],
+    });
+  });
+
+  it("rejects invalid confirmations and treats the expiry boundary as expired", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await expect(convex.mutation(api.newsletter.confirm, { token: "invalid" })).resolves.toStrictEqual({
+      confirmed: false,
+      downloadToken: null,
+    });
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId));
+    const state = await newsletterState(convex);
+    const [confirmation] = state.confirmations;
+    if (!confirmation) throw new Error("Confirmation was not created");
+    const token = await confirmationToken(confirmation._id);
+    expect(isNewsletterConfirmationCurrent(confirmation._creationTime, confirmation._creationTime + CONFIRMATION_TTL_MS - 1)).toBeTruthy();
+    expect(isNewsletterConfirmationCurrent(confirmation._creationTime, confirmation._creationTime + CONFIRMATION_TTL_MS)).toBeFalsy();
+    const expired = await convex.run(
+      async (ctx) =>
+        await E.runPromise(
+          confirmNewsletter({ now: confirmation._creationTime + CONFIRMATION_TTL_MS, token }).pipe(
+            E.provide(RegisteredConvexFunction.mutationLayer(databaseSchema, ctx))
+          )
+        )
+    );
+    expect(expired.confirmed).toBeFalsy();
+  });
+
+  it("reactivates a spam-restricted confirmed subscriber and issues one replacement", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await createConfirmedSubscriber(convex, privacyNoticeId, { restriction: "spamComplaint" });
+    await convex.mutation(api.newsletter.subscribe, subscriptionRequest(privacyNoticeId));
+    const pendingState = await newsletterState(convex);
+    const [confirmation] = pendingState.confirmations;
+    if (!confirmation) throw new Error("Reactivation confirmation was not created");
+    const token = await confirmationToken(confirmation._id);
+
+    await expect(convex.mutation(api.newsletter.confirm, { token })).resolves.toMatchObject({ confirmed: true });
+
+    const state = await newsletterState(convex);
+    expect(state.restrictions).toMatchObject([{ resolvedAt: NOW, resolvedBy: "confirmation" }]);
+    expect(state.issuances).toMatchObject([{ kind: "replacement" }]);
+    expect(state.issuances).toHaveLength(1);
+  });
+
+  it("records unsubscription and permanent bounce through authoritative webhook mutations", async () => {
+    const convex = createBackend();
+    const privacyNoticeId = await createNewsletterFixture(convex);
+    await createConfirmedSubscriber(convex, privacyNoticeId);
+
+    await convex.mutation(internal.loops.processWebhook, {
       email: "reader@example.com",
-      method: "emailChallenge" as const,
-      requestKind: "erasure" as const,
-    };
-
-    await expect(recordVerification(asAdmin, { ...verification, outcome: "rejected" })).resolves.toStrictEqual({
-      outcome: "rejected",
+      kind: "email.unsubscribed",
+      messageId: "unsubscribe-message",
+      occurredAt: NOW,
+      webhookId: "unsubscribe-webhook",
     });
-    await expect(
-      recordVerification(asAdmin, {
-        ...verification,
-        // @ts-expect-error -- exercise the runtime outcome validator.
-        outcome: "pending",
-      })
-    ).rejects.toThrow('Expected "completed" | "rejected"');
-    await expect(inspectSubject(asAdmin, { email: verification.email })).resolves.toMatchObject({
-      privacyState: { audits: [{ kind: "verification", outcome: "rejected", requestKind: "erasure" }] },
-    });
-  });
-
-  it("requires and consumes one matching verification before fulfillment", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    const request = { confirmed: true as const, email: "reader@example.com" };
-
-    await expect(fulfillAccessRequest(asAdmin, request)).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
-    await recordVerification(asAdmin, {
-      email: request.email,
-      method: "emailChallenge",
-      outcome: "completed",
-      requestKind: "access",
-    });
-    await expect(inspectSubject(asAdmin, { email: request.email })).resolves.toMatchObject({
-      privacyState: { grants: [{ requestKind: "access" }] },
-    });
-    await expect(fulfillAccessRequest(asAdmin, request)).resolves.toMatchObject({ outcome: "completed" });
-    await expect(inspectSubject(asAdmin, { email: request.email })).resolves.toMatchObject({
-      privacyState: { grants: [] },
-    });
-    await expect(fulfillAccessRequest(asAdmin, request)).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
-  });
-
-  it("does not authorize a different privacy-request kind", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "access");
-
-    await expect(fulfillExportRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
-    await expect(fulfillAccessRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toMatchObject({
-      outcome: "completed",
-    });
-  });
-
-  it("links the fulfilled request audit to its verification audit", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "access");
-    await fulfillAccessRequest(asAdmin, { confirmed: true, email: "reader@example.com" });
-
-    const subject = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    const verificationAudit = subject?.privacyState.audits.find((audit) => audit.kind === "verification" && audit.requestKind === "access");
-    const requestAudit = subject?.privacyState.audits.find((audit) => audit.kind === "access");
-    if (requestAudit?.kind !== "access") throw new Error("Access audit was not found");
-    expect(requestAudit.verificationAuditId).toBe(verificationAudit?._id);
-  });
-
-  it("revokes an active grant when a later verification is rejected", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "erasure");
-    await recordVerification(asAdmin, {
+    await convex.mutation(internal.loops.processWebhook, {
       email: "reader@example.com",
-      method: "additionalEvidence",
-      outcome: "rejected",
-      requestKind: "erasure",
+      kind: "email.hardBounced",
+      messageId: "bounce-message",
+      occurredAt: NOW + 1,
+      webhookId: "bounce-webhook",
     });
 
-    await expect(fulfillErasureRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).rejects.toThrow(
-      "PRIVACY_GRANT_REQUIRED"
-    );
-  });
-
-  it("rejects an expired privacy grant", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    const now = Date.now();
-    const dateNow = vi.spyOn(Date, "now").mockReturnValue(now);
-    await verifyRequest(asAdmin, "rectification");
-    dateNow.mockReturnValue(now + 30 * 60 * 1000 + 1);
-
-    await expect(
-      fulfillRectificationRequest(asAdmin, {
-        confirmed: true,
-        email: "reader@example.com",
-        firstName: "After",
-      })
-    ).rejects.toThrow("PRIVACY_GRANT_REQUIRED");
-  });
-
-  it("audits confirmed access and export separately", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "access");
-
-    await expect(fulfillAccessRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toMatchObject({
-      data: { profile: { email: "reader@example.com" } },
-      outcome: "completed",
-    });
-    await verifyRequest(asAdmin, "export");
-    await expect(fulfillExportRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toMatchObject({
-      data: { profile: { email: "reader@example.com" } },
-      outcome: "completed",
-    });
-    const person = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    expect(person?.privacyState.audits.filter(({ kind }) => kind !== "verification").map(({ kind }) => kind)).toStrictEqual([
-      "export",
-      "access",
-    ]);
-  });
-
-  it("does not turn rejected access audits into a known person", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await verifyRequest(asAdmin, "access", "unknown@example.com");
-
-    await expect(fulfillAccessRequest(asAdmin, { confirmed: true, email: "unknown@example.com" })).resolves.toStrictEqual({
-      data: null,
-      outcome: "rejected",
-    });
-    await verifyRequest(asAdmin, "access", "unknown@example.com");
-    await expect(fulfillAccessRequest(asAdmin, { confirmed: true, email: "unknown@example.com" })).resolves.toStrictEqual({
-      data: null,
-      outcome: "rejected",
-    });
-  });
-
-  it("rectifies only the optional first name and records the administrator", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "rectification");
-
-    await expect(
-      fulfillRectificationRequest(asAdmin, { confirmed: true, email: "reader@example.com", firstName: "After" })
-    ).resolves.toStrictEqual({ outcome: "completed" });
-    const person = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    expect(person).toMatchObject({
-      privacyState: {
-        audits: [
-          { kind: "rectification", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "rectification" },
-        ],
-      },
-      profile: { email: "reader@example.com", firstName: "After" },
-    });
-    expect(person?.privacyState.audits[0]?.performedBy).toBeDefined();
-  });
-
-  it("unsubscribes without removing Welcome E-book Access", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "unsubscription");
-
-    await expect(fulfillUnsubscriptionRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
-      outcome: "completed",
-    });
-    const person = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    expect(person).toMatchObject({
-      deliveryEligibility: { eligible: false, status: "notConsenting" },
-      privacyState: {
-        audits: [
-          { kind: "unsubscription", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "unsubscription" },
-        ],
-      },
-    });
-    expect(person?.newsletterConsent.periods[0]?.unsubscribedAt).toBeTypeOf("number");
-  });
-
-  it("records and lifts an objection without recreating consent", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createSubscriber(convex);
-    await verifyRequest(asAdmin, "objection");
-
-    await expect(fulfillObjectionRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
-      outcome: "completed",
-    });
-    await verifyRequest(asAdmin, "suppressionRemoval");
-    await expect(fulfillSuppressionRemovalRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
-      outcome: "completed",
-    });
-    const person = await inspectSubject(asAdmin, { email: "reader@example.com" });
-    expect(person).toMatchObject({
-      deliveryEligibility: { eligible: false, status: "notConsenting" },
-      privacyState: {
-        audits: [
-          { kind: "suppressionRemoval", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "suppressionRemoval" },
-          { kind: "objection", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "objection" },
-        ],
-        suppressed: false,
-      },
-    });
-    expect(person?.newsletterConsent.periods[0]?.unsubscribedAt).toBeTypeOf("number");
-  });
-
-  it("erases identifying subscriber data and Welcome E-book Access while retaining the minimal audit", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    const { profileId } = await createSubscriber(convex);
-    await verifyRequest(asAdmin, "erasure");
-    const ebookDownloadId = await convex.run(async (ctx) => {
-      const admin = await ctx.db
-        .query("profiles")
-        .withIndex("by_email", (query) => query.eq("email", "admin@example.com"))
-        .unique();
-      if (admin === null) throw new Error("Admin profile was not found");
-      const storageId = await Promise.resolve(ctx.storage.store(new Blob(["%PDF-1.7"], { type: "application/pdf" })));
-      const ebookId = await ctx.db.insert("ebooks", {
-        fileName: "ebook.pdf",
-        publishedAt: 5,
-        publishedBy: admin._id,
-        status: "published",
-        storageId,
-        title: "Carnet",
-        updatedAt: 5,
-        uploadedBy: admin._id,
-        version: 1,
-      });
-      const ebookIssuanceId = await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
-      return await ctx.db.insert("ebookDownloads", { ebookIssuanceId });
-    });
-    const ebookToken = await E.runPromise(createCapabilityToken({ capabilityId: ebookDownloadId, secret: "test-capability-secret" }));
-
-    await expect(fulfillErasureRequest(asAdmin, { confirmed: true, email: "reader@example.com" })).resolves.toStrictEqual({
-      outcome: "completed",
-    });
-    await expect(inspectSubject(asAdmin, { email: "reader@example.com" })).resolves.toMatchObject({
-      privacyState: {
-        audits: [
-          { kind: "erasure", outcome: "completed" },
-          { kind: "verification", outcome: "completed", requestKind: "erasure" },
-        ],
-      },
-      profile: null,
-      welcomeEbookAccess: { issuances: [] },
-    });
-    const retained = await convex.run(async (ctx) => ({
-      deleteTasks: await ctx.db
-        .query("loopsTasks")
-        .filter((q) => q.eq(q.field("kind"), "deleteContact"))
-        .collect(),
-      downloads: await ctx.db.query("ebookDownloads").collect(),
-      issuances: await ctx.db.query("ebookIssuances").collect(),
-      reader: await ctx.db
-        .query("profiles")
-        .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
-        .unique(),
-    }));
-    expect(retained).toMatchObject({
-      deleteTasks: [{ email: "reader@example.com", kind: "deleteContact" }],
-      downloads: [],
-      issuances: [],
-      reader: null,
-    });
-    const erasedEbookResponse = await convex.fetch(`/newsletter/ebook?token=${ebookToken}`);
-    expect({ location: erasedEbookResponse.headers.get("location"), status: erasedEbookResponse.status }).toStrictEqual({
-      location: "https://www.elianacorre.com/newsletter/ebook",
-      status: 302,
-    });
-
-    const [deleteTask] = retained.deleteTasks;
-    if (!deleteTask) throw new Error("Delete-contact task was not found");
-    await convex.mutation(internal.loops.markTaskSucceeded, { loopsTaskId: deleteTask._id });
-    await expect(convex.run(async (ctx) => await ctx.db.get("loopsTasks", deleteTask._id))).resolves.toMatchObject({
-      email: null,
-      kind: "deleteContact",
-      status: "succeeded",
-    });
-  });
-
-  it("rejects subscriber erasure for a Profile with a member relationship", async () => {
-    const convex = createBackend();
-    const asAdmin = await createIdentity(convex, "admin");
-    await createIdentity(convex, "member");
-    await verifyRequest(asAdmin, "erasure", "member@example.com");
-
-    await expect(fulfillErasureRequest(asAdmin, { confirmed: true, email: "member@example.com" })).resolves.toStrictEqual({
-      outcome: "rejected",
-    });
-    await expect(inspectSubject(asAdmin, { email: "member@example.com" })).resolves.toMatchObject({
-      privacyState: {
-        audits: [
-          { kind: "erasure", outcome: "rejected" },
-          { kind: "verification", outcome: "completed", requestKind: "erasure" },
-        ],
-      },
-      profile: { email: "member@example.com", role: "member" },
-    });
+    const state = await newsletterState(convex);
+    expect(state.subscriptions).toMatchObject([{ unsubscribedAt: NOW }]);
+    expect(state.restrictions).toMatchObject([{ reason: "permanentBounce", restrictedAt: NOW + 1 }]);
   });
 });

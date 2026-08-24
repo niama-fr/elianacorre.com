@@ -1,8 +1,9 @@
 import { FunctionSpec, GroupSpec } from "@confect/core";
-import { TravelPackFailure, TravelPackNotFound } from "@ec/domain/errors/travel-packs";
+import { TravelPackNotFound } from "@ec/domain/errors/travel-packs";
+import { ValidationFailure } from "@ec/domain/errors/utils";
 import { sAuthError } from "@ec/domain/schemas/auth";
-import { sTravelPackCreate, sTravelPackDto, sTravelPackError, sTravelPackTitle, sTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
-import { sPaginationOptions } from "@ec/domain/schemas/utils";
+import { sTravelPackCreate, sTravelPackDto, sTravelPackIssue, sTravelPackUpdate } from "@ec/domain/schemas/travel-packs";
+import { sPaginationOptions, sTrimRequired, sValidationIssue } from "@ec/domain/schemas/utils";
 import { Schema as S } from "effect";
 
 import { Id } from "./_generated/id";
@@ -35,8 +36,8 @@ export default GroupSpec.make()
   )
   .addFunction(
     FunctionSpec.publicQuery({
-      args: () => S.Struct({ title: sTravelPackTitle, travelPackId: S.NullOr(Id("travelPacks")) }),
-      error: () => S.Union([sAuthError, TravelPackFailure]),
+      args: () => S.Struct({ title: sTrimRequired, travelPackId: S.NullOr(Id("travelPacks")) }),
+      error: () => S.Union([sAuthError, ValidationFailure]),
       name: "suggestSlug",
       returns: () => S.String,
     })
@@ -47,7 +48,7 @@ export default GroupSpec.make()
       args: () => sTravelPackCreate,
       error: () => sAuthError,
       name: "create",
-      returns: () => S.Union([S.Struct({ data: Id("travelPacks") }), S.Struct({ error: sTravelPackError })]),
+      returns: () => S.Union([S.Struct({ data: Id("travelPacks") }), S.Struct({ error: S.Union([sTravelPackIssue, sValidationIssue]) })]),
     })
   )
   .addFunction(
@@ -55,6 +56,7 @@ export default GroupSpec.make()
       args: () => sTravelPackUpdate,
       error: () => S.Union([sAuthError, TravelPackNotFound]),
       name: "update",
-      returns: () => S.Union([S.Struct({ data: S.Struct({ slug: S.String }) }), S.Struct({ error: sTravelPackError })]),
+      returns: () =>
+        S.Union([S.Struct({ data: S.Struct({ slug: S.String }) }), S.Struct({ error: S.Union([sTravelPackIssue, sValidationIssue]) })]),
     })
   );

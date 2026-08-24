@@ -1,11 +1,10 @@
 # Schema and type architecture
 
-Read this document before changing `@ec/domain` schemas, backend DTO projections, Entity hydration, or frontend form schemas. Effect Schema is the canonical first-party schema system. During migration, Zod schemas remain authoritative only for areas not yet migrated. Derive TypeScript types from their schema values instead of duplicating them manually.
+Read this document before changing `@ec/domain` schemas, backend DTO projections, Entity hydration, or frontend form schemas. Effect Schema is the canonical first-party schema system. Derive TypeScript types from schema values instead of duplicating them manually.
 
 Schema values are named by implementation:
 
 - Effect Schema values use an `s` prefix: `sProfileFields`, `sTravelPackDto`, `sCanonicalEmail`.
-- Zod schema values use the existing `z` prefix: `zTravelPackFields`, `zCanonicalEmail`.
 
 The prefix applies to runtime schema values, not derived TypeScript types or domain namespaces. Do not use bare names such as `ProfileFields` for Effect Schema values.
 
@@ -69,7 +68,7 @@ Use the correct date representation at each boundary. Keep Convex-compatible val
 
 Application/domain code does not adopt Confect's decoded-Doc terminology. An Effect transform that produces `Date`, `Option`, nested Entities, or another hydrated value belongs at the appropriate `Dto → Entity` boundary. Persisted `Doc` remains the raw Convex-compatible representation.
 
-Not every feature needs every representation. A DTO schema may be a legitimate shared domain contract even when it is not persisted. When DTO and Entity are identical, alias their schemas (`zEbook = zEbookDto`) without adding an identity runtime transform. Do not create DTOs or hydration functions solely for naming symmetry.
+Not every feature needs every representation. A DTO schema may be a legitimate shared domain contract even when it is not persisted. When DTO and Entity are identical, alias their schemas (`sEbook = sEbookDto`) without adding an identity runtime transform. Do not create DTOs or hydration functions solely for naming symmetry.
 
 ## Naming and migration
 
@@ -108,7 +107,7 @@ Shared domain schemas may expose stable validation error identifiers when applic
 Define one canonical error vocabulary per feature instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
 
 ```ts
-export const TRAVEL_PACK_ERROR = {
+export const TRAVEL_PACK_ISSUE = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
   slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
@@ -116,33 +115,33 @@ export const TRAVEL_PACK_ERROR = {
   titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
 } as const;
 
-export const sTravelPackTitle = Schema.Trim.check(Schema.isMinLength(1, { message: TRAVEL_PACK_ERROR.titleRequired }));
+export const sTravelPackTitle = Schema.Trim.check(Schema.isMinLength(1, { message: TRAVEL_PACK_ISSUE.titleRequired }));
 ```
 
-If runtime validation of an error identifier is useful, derive a Zod schema from the same canonical vocabulary rather than maintaining a second list:
+If runtime validation of an error identifier is useful, derive an Effect Schema from the same canonical vocabulary rather than maintaining a second list:
 
 ```ts
-export const sTravelPackError = Schema.Literals(Object.values(TRAVEL_PACK_ERROR));
-export type TravelPackError = typeof sTravelPackError.Type;
+export const sTravelPackIssue = Schema.Literals(Object.values(TRAVEL_PACK_ISSUE));
+export type TravelPackError = typeof sTravelPackIssue.Type;
 ```
 
 Do not create operation-specific error arrays or schemas merely to document which exceptions a function may throw. Ordinary TypeScript `throw` is not typed, so such declarations can silently drift from the implementation. Introduce narrower error schemas only when they validate a genuine runtime boundary.
 
-Not every Zod issue needs a custom domain identifier. Use a stable identifier when the application needs specific copy, the failure crosses package boundaries, multiple consumers need to recognize it, or it represents a meaningful domain/application condition. Generic Zod issues may remain generic when no application-specific distinction is required.
+Not every validation issue needs a custom domain identifier. Use a stable identifier when the application needs specific copy, the failure crosses package boundaries, multiple consumers need to recognize it, or it represents a meaningful domain/application condition. Generic issues may remain generic when no application-specific distinction is required.
 
 ### Application localization
 
 Domain error identifiers remain independent from translated application copy. A frontend feature owns the mapping from its domain validation identifiers to Paraglide message functions in `features/<feature>/validation.ts`:
 
 ```ts
-import { TRAVEL_PACK_ERROR } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ISSUE } from "@ec/domain/schemas/travel-packs";
 
 import * as m from "@/paraglide/messages";
 
 export const TRAVEL_PACK_VALIDATION_MESSAGES = {
-  [TRAVEL_PACK_ERROR.slugInvalid]: m.some_slug_invalid_message,
-  [TRAVEL_PACK_ERROR.slugRequired]: m.some_slug_required_message,
-  [TRAVEL_PACK_ERROR.titleRequired]: m.some_title_required_message,
+  [TRAVEL_PACK_ISSUE.slugInvalid]: m.some_slug_invalid_message,
+  [TRAVEL_PACK_ISSUE.slugRequired]: m.some_slug_required_message,
+  [TRAVEL_PACK_ISSUE.titleRequired]: m.some_title_required_message,
 } as const;
 ```
 
@@ -191,12 +190,4 @@ Frontend-only schemas must not embed Paraglide copy in validation issues. Reuse 
 
 When a frontend form schema transforms browser input into a domain representation, such as `""` to `null`, submission must use the parsed schema output before crossing the backend boundary. TanStack Form validation does not imply that the stored form value has been replaced by the schema's transformed output.
 
-## Validation infrastructure
-
-`@ec/validation` owns genuinely generic validation infrastructure. During migration it still contains shared Zod configuration for unmigrated features; generic Effect Schema infrastructure may replace that configuration when the broader migration reaches it. The package is not a bucket for feature form schemas and does not establish a centralized cross-application forms layer.
-
-```text
-@ec/domain     → canonical business/data/application schemas
-@ec/validation → generic validation infrastructure
-frontend       → UI/form-specific schemas and localized validation presentation
-```
+Standard Schema is an adapter, not a canonical schema representation. Call `Schema.toStandardSchemaV1(...)` only where a consumer requires that protocol.

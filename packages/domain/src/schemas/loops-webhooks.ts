@@ -1,6 +1,6 @@
 import { SystemFields } from "@confect/core";
 import { sCanonicalEmail } from "@ec/domain/schemas/utils";
-import { Schema as S, SchemaTransformation as ST } from "effect";
+import { Schema as S, SchemaTransformation as ST, Struct } from "effect";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const kinds = ["email.hardBounced", "email.resubscribed", "email.spamReported", "email.unsubscribed"] as const;
@@ -21,6 +21,9 @@ export const sLoopsWebhookDoc = sLoopsWebhookFields.pipe(S.fieldsAssign(SystemFi
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const sLoopsWebhookCreate = sLoopsWebhookFields;
+
+// PATCH -----------------------------------------------------------------------------------------------------------------------------------
+export const sLoopsWebhookPatch = sLoopsWebhookFields.mapFields(Struct.pick(["email"]));
 
 // VALUES ----------------------------------------------------------------------------------------------------------------------------------
 export const sLoopsWebhookValues = S.Struct({
@@ -59,5 +62,6 @@ export type LoopsWebhooks = {
   Doc: typeof sLoopsWebhookDoc.Type;
   Fields: typeof sLoopsWebhookFields.Type;
   Kind: typeof sLoopsWebhookKind.Type;
+  Patch: typeof sLoopsWebhookPatch.Type;
   Values: typeof sLoopsWebhookValues.Type;
 };

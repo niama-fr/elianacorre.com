@@ -1,14 +1,14 @@
 import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
-import { z } from "@ec/validation/zod";
 import { createFileRoute } from "@tanstack/react-router";
+import { Schema as S } from "effect";
 
-import { confirmNewsletter } from "@/lib/newsletter/newsletter.functions";
-import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
+import { confirmNewsletter } from "@/features/newsletter/newsletter.functions";
+import { getEbookDownloadUrl } from "@/features/newsletter/urls";
 import { noindexHead } from "@/seo/head";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-const zSearch = z.object({ token: z.string().optional() });
+const sSearch = S.Struct({ token: S.optionalKey(S.String) });
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 // oxlint-disable-next-line sort-keys
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/newsletter/confirmation")({
     if (!token) return { confirmed: false, downloadToken: null } as const;
     return await confirmNewsletter({ data: { token } });
   },
-  validateSearch: zSearch,
+  validateSearch: S.toStandardSchemaV1(sSearch),
 });
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------

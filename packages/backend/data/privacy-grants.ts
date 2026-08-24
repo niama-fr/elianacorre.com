@@ -1,11 +1,10 @@
-import { env } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { PrivacyAudits } from "@ec/domain/schemas/privacy-audits";
 import type { PrivacyGrants } from "@ec/domain/schemas/privacy-grants";
 import type { WithNow } from "@ec/domain/schemas/utils";
 import { ConvexError } from "convex/values";
-import { Effect as E, Option as O } from "effect";
+import { Config, Effect as E, Option as O } from "effect";
 
 import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
 import { dieOnDecodeError, dieOnEncodeError, optionByIndex } from "./confect";
@@ -13,25 +12,27 @@ import { dieOnDecodeError, dieOnEncodeError, optionByIndex } from "./confect";
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getPrivacyGrant = E.fn(function* ({ email, requestKind }: GrantRef) {
   const reader = yield* DatabaseReader;
-  const subjectHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const subjectHash = yield* hashCanonicalEmail({ email, secret });
   return yield* reader.table("privacyGrants").get("by_subject_hash_and_request_kind", subjectHash, requestKind).pipe(optionByIndex);
 });
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const listActivePrivacyGrants = E.fn(function* ({ email, now }: WithNow<{ email: string }>) {
+export const listPrivacyGrantsByEmail = E.fn(function* (email: string) {
   const reader = yield* DatabaseReader;
-  const subjectHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  const grants = yield* reader
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const subjectHash = yield* hashCanonicalEmail({ email, secret });
+  return yield* reader
     .table("privacyGrants")
     .index("by_subject_hash_and_request_kind", (q) => q.eq("subjectHash", subjectHash))
     .collect()
     .pipe(dieOnDecodeError);
-  return grants.filter(({ expiresAt }) => expiresAt > now);
 });
 
 export const listPrivacyGrantsByRequestKind = E.fn(function* ({ email, requestKind }: GrantRef) {
   const reader = yield* DatabaseReader;
-  const subjectHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const subjectHash = yield* hashCanonicalEmail({ email, secret });
   return yield* reader
     .table("privacyGrants")
     .index("by_subject_hash_and_request_kind", (q) => q.eq("subjectHash", subjectHash).eq("requestKind", requestKind))
@@ -54,7 +55,8 @@ export const revokePrivacyGrant = E.fn(function* ({ email, requestKind }: GrantR
 // REPLACE ---------------------------------------------------------------------------------------------------------------------------------
 export const replacePrivacyGrant = E.fn(function* ({ email, ...create }: PrivacyGrants["Create"]) {
   const writer = yield* DatabaseWriter;
-  const subjectHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const subjectHash = yield* hashCanonicalEmail({ email, secret });
   yield* revokePrivacyGrant({ email, requestKind: create.requestKind });
   return yield* writer
     .table("privacyGrants")

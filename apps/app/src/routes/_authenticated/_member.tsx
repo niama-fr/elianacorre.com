@@ -5,8 +5,8 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { signOutAndReload } from "@/lib/auth/client";
-import { getAuthenticatedLanding } from "@/lib/auth/redirects";
+import { signOutAndReload } from "@/infra/auth/client";
+import { getAuthenticatedLanding } from "@/infra/auth/redirects";
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/_member")({

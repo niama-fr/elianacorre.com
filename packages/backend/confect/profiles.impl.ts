@@ -1,7 +1,7 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
 import { Effect as E, Layer as L } from "effect";
 
-import { CurrentProfile, currentProfileLayer } from "../runtime/current-profile";
+import { CurrentProfile, currentProfileLayer } from "../infra/current-profile";
 import databaseSchema from "./_generated/schema";
 import { QueryCtx } from "./_generated/services";
 import spec from "./profiles.spec";

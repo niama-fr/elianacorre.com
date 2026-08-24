@@ -12,16 +12,14 @@
   },
   "dependencies": {
     "@confect/core": "10.0.0-next.17",
-    "@ec/validation": "workspace:*",
-    "@effect/vitest": "^4.0.0-beta.107",
     "@unpic/placeholder": "^0.1.2",
     "convex": "1.45.0",
     "convex-helpers": "^0.1.123",
-    "effect": "4.0.0-rc.110",
-    "jose": "^6.2.10",
-    "zod": "^4.4.3"
+    "effect": "4.0.0-rc.111",
+    "jose": "^6.2.10"
   },
   "devDependencies": {
+    "@effect/vitest": "4.0.0-rc.111",
     "vitest": "^4.1.11"
   }
 }

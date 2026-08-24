@@ -1,6 +1,6 @@
 import { FunctionSpec, GroupSpec } from "@confect/core";
 
-import type { getAuthUser, onCreate, onDelete, onUpdate } from "../runtime/better-auth";
+import type { getAuthUser, onCreate, onDelete, onUpdate } from "../infra/better-auth";
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupSpec.make()

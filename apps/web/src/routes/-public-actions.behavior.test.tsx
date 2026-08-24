@@ -5,15 +5,15 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createContactRequest } from "@/lib/contact-requests/contact-requests.functions";
-import { requestEbookRecovery } from "@/lib/ebooks/ebooks.functions";
+import { createContactRequest } from "@/features/contact-requests/contact-requests.functions";
+import { requestEbookRecovery } from "@/features/ebooks/ebooks.functions";
 import { ContactForm } from "@/routes/contact/-form";
 import { EbookRecoveryFormDialog } from "@/routes/newsletter/-ebook-recovery-form-dialog";
 
 vi.mock(import("canvas-confetti"), { spy: true });
 vi.mock(import("sonner"), { spy: true });
-vi.mock(import("@/lib/contact-requests/contact-requests.functions"), { spy: true });
-vi.mock(import("@/lib/ebooks/ebooks.functions"), { spy: true });
+vi.mock(import("@/features/contact-requests/contact-requests.functions"), { spy: true });
+vi.mock(import("@/features/ebooks/ebooks.functions"), { spy: true });
 
 describe("public form actions", () => {
   beforeEach(() => {

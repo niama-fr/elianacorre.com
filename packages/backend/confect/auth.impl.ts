@@ -1,7 +1,7 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
 import { Layer as L } from "effect";
 
-import { getAuthUser, onCreate, onDelete, onUpdate } from "../runtime/better-auth";
+import { getAuthUser, onCreate, onDelete, onUpdate } from "../infra/better-auth";
 import databaseSchema from "./_generated/schema";
 import spec from "./auth.spec";
 

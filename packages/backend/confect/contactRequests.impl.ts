@@ -1,17 +1,19 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
-import * as E from "effect/Effect";
-import * as L from "effect/Layer";
+import { Effect as E, Layer as L } from "effect";
 
-import { createContactRequest } from "../data/contact-requests";
-import { ensureContactProfileId } from "../data/profiles";
+import { submitContactRequest } from "../features/contact-requests";
+import { getRequestIp } from "../infra/request-metadata";
 import databaseSchema from "./_generated/schema";
 import spec from "./contactRequests.spec";
 
 // MUTATIONS -------------------------------------------------------------------------------------------------------------------------------
-const create = FunctionImpl.make(databaseSchema, spec, "create", ({ email, firstName, message }) =>
+const create = FunctionImpl.make(databaseSchema, spec, "create", (args) =>
   E.gen(function* () {
-    const profileId = yield* ensureContactProfileId({ email, firstName });
-    return yield* createContactRequest({ message, profileId });
+    const requestIp = yield* getRequestIp();
+    yield* submitContactRequest({ ...args, now: Date.now(), requestIp }).pipe(
+      E.catchTags({ HoneypotTriggered: () => E.void, RateLimitExceeded: () => E.void })
+    );
+    return null;
   })
 );
 

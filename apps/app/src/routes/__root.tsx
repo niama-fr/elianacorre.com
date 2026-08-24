@@ -8,8 +8,8 @@ import { CSPProvider } from "@ec/ui/providers/csp";
 import type { QueryClient } from "@tanstack/react-query";
 import { HeadContent, Scripts, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 
-import { fetchToken } from "@/lib/auth/auth.functions";
-import { authClient } from "@/lib/auth/client";
+import { fetchToken } from "@/infra/auth/auth.functions";
+import { authClient } from "@/infra/auth/client";
 import * as m from "@/paraglide/messages";
 import { getLocale } from "@/paraglide/runtime";
 

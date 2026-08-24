@@ -13,9 +13,9 @@ import { cva } from "class-variance-authority";
 import { Schema as S } from "effect";
 import { toast } from "sonner";
 
-import { sTravelPackCreateValues, sTravelPackSearch } from "@/features/travel-packs/schemas";
+import { sTravelPackCreate, sTravelPackSearch } from "@/features/travel-packs/travel-packs.schemas";
 import { useAppForm } from "@/form/hook";
-import { usePaginatedQuery } from "@/lib/confect/helpers";
+import { usePaginatedQuery } from "@/infra/confect/helpers";
 import * as m from "@/paraglide/messages";
 
 import { features, getColumns } from "./-table-features";
@@ -153,7 +153,7 @@ function TravelPackCreateDialogRoute() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackCreateValues.fields.title) }}>
+            <form.AppField name="title" validators={{ onChange: sTravelPackCreate.fields.title }}>
               {(field) => <field.InputField autoFocus label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
             <DialogFooter>

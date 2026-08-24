@@ -1,3 +1,4 @@
+import { start } from "@convex-dev/workflow";
 import { createCapabilityToken } from "@ec/domain/helpers/capabilities";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
 import type { TestConvex } from "convex-test";
@@ -619,6 +620,7 @@ describe("privacy administration", () => {
         version: 1,
       });
       const ebookIssuanceId = await ctx.db.insert("ebookIssuances", { ebookId, kind: "initial", profileId });
+      for (let index = 0; index < 55; index += 1) await ctx.db.insert("contactRequests", { message: `Message ${index}`, profileId });
       return await ctx.db.insert("ebookDownloads", { ebookIssuanceId });
     });
     const ebookToken = await E.runPromise(createCapabilityToken({ capabilityId: ebookDownloadId, secret: "test-capability-secret" }));
@@ -626,8 +628,42 @@ describe("privacy administration", () => {
     await expect(
       asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "reader@example.com" })
     ).resolves.toStrictEqual({
-      outcome: "completed",
+      outcome: "pending",
     });
+    const pendingAudit = await convex.run(
+      async (ctx) =>
+        await ctx.db
+          .query("privacyAudits")
+          .filter((q) => q.and(q.eq(q.field("kind"), "erasure"), q.eq(q.field("outcome"), "pending")))
+          .unique()
+    );
+    if (!pendingAudit) throw new Error("Pending erasure audit was not created");
+    const erasureArgs = { email: "reader@example.com", privacyAuditId: pendingAudit._id, profileId };
+    const phases = [
+      "ebookIssuances",
+      "newsSubscriptions",
+      "contactRequests",
+      "identities",
+      "loopsTasks",
+      "loopsWebhooks",
+      "newsRestrictions",
+    ] as const;
+    for (const phase of phases) {
+      let done = false;
+      while (!done) ({ done } = await convex.mutation(internal.privacy.eraseBatch, { ...erasureArgs, phase }));
+    }
+    await convex.run(async (ctx) => {
+      await ctx.db.insert("contactRequests", { message: "Arrived while erasure was running", profileId });
+    });
+    const completionBlockedByConcurrentWrite = await convex.mutation(internal.privacy.completeErasure, erasureArgs);
+    let contactRequestsDone = false;
+    while (!contactRequestsDone)
+      ({ done: contactRequestsDone } = await convex.mutation(internal.privacy.eraseBatch, {
+        ...erasureArgs,
+        phase: "contactRequests",
+      }));
+    const completed = await convex.mutation(internal.privacy.completeErasure, erasureArgs);
+    const completedRetry = await convex.mutation(internal.privacy.completeErasure, erasureArgs);
     await expect(asAdmin.query(api.privacy.inspectSubject, { email: "reader@example.com" })).resolves.toMatchObject({
       privacyState: {
         audits: [
@@ -650,7 +686,10 @@ describe("privacy administration", () => {
         .withIndex("by_email", (query) => query.eq("email", "reader@example.com"))
         .unique(),
     }));
-    expect(retained).toMatchObject({
+    expect({ ...retained, completed, completedRetry, completionBlockedByConcurrentWrite }).toMatchObject({
+      completed: true,
+      completedRetry: true,
+      completionBlockedByConcurrentWrite: false,
       deleteTasks: [{ email: "reader@example.com", kind: "deleteContact" }],
       downloads: [],
       issuances: [],
@@ -669,6 +708,31 @@ describe("privacy administration", () => {
       email: null,
       kind: "deleteContact",
       status: "succeeded",
+    });
+  });
+
+  it("reuses a pending erasure without consuming another grant or starting another workflow", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    await createSubscriber(convex);
+    await verifyRequest(asAdmin, "erasure");
+    const workflowStartsBefore = vi.mocked(start).mock.calls.length;
+
+    const first = await asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "reader@example.com" });
+    const retry = await asAdmin.mutation(api.privacy.fulfillErasureRequest, { confirmed: true, email: "reader@example.com" });
+    const pendingAudits = await convex.run(
+      async (ctx) =>
+        await ctx.db
+          .query("privacyAudits")
+          .filter((q) => q.and(q.eq(q.field("kind"), "erasure"), q.eq(q.field("outcome"), "pending")))
+          .collect()
+    );
+
+    expect({ first, pendingAudits, retry, workflowStarts: vi.mocked(start).mock.calls.length - workflowStartsBefore }).toMatchObject({
+      first: { outcome: "pending" },
+      pendingAudits: [{}],
+      retry: { outcome: "pending" },
+      workflowStarts: 1,
     });
   });
 

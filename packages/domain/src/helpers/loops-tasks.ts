@@ -1,7 +1,7 @@
 import { ConvexError } from "convex/values";
-import z from "zod";
+import { Option as O, Schema as S } from "effect";
 
-import { loopsTaskRetryableFailures, type LoopsTasks, zLoopsTaskFailure } from "../schemas/loops-tasks";
+import { loopsTaskRetryableFailures, type LoopsTasks, sLoopsTaskFailure } from "../schemas/loops-tasks";
 
 // IDEMPOTENCY -----------------------------------------------------------------------------------------------------------------------------
 export const getLoopsTaskDeliveryIdempotencyKey = ({ idempotencyKey, replayCount }: DeliveryIdempotencyOpts): string =>
@@ -24,8 +24,8 @@ export const isLoopsTaskRetryable = (failure: LoopsTasks["Failure"]): boolean =>
 // FAILURE ---------------------------------------------------------------------------------------------------------------------------------
 export const classifyLoopsTaskFailure = (error: unknown): LoopsTasks["Failure"] => {
   if (!(error instanceof ConvexError)) return "unknown";
-  const r = z.object({ code: z.literal("LOOPS_REQUEST_FAILED"), failure: zLoopsTaskFailure }).safeParse(error.data);
-  return r.success ? r.data.failure : "unknown";
+  const parsed = S.decodeUnknownOption(S.Struct({ code: S.Literal("LOOPS_REQUEST_FAILED"), failure: sLoopsTaskFailure }))(error.data);
+  return O.isSome(parsed) ? parsed.value.failure : "unknown";
 };
 
 // STATUS ----------------------------------------------------------------------------------------------------------------------------------

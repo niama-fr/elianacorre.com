@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. The Profiles architecture gate was approved under [NIA-74](https://linear.app/niama/issue/NIA-74/adopt-effect-4-through-a-reusable-effexconfect-foundation) on 2026-08-18.
+Superseded by [ADR 0015](0015-adopt-confect-and-effect-schema-architecture.md). The Profiles architecture gate was originally approved under [NIA-74](https://linear.app/niama/issue/NIA-74/adopt-effect-4-through-a-reusable-effexconfect-foundation) on 2026-08-18.
 
 ## Decision
 

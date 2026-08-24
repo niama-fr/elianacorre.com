@@ -1,9 +1,9 @@
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ORPHAN_STORAGE_GRACE_MS } from "../../business/storage";
 import { internal } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
+import { ORPHAN_STORAGE_GRACE_MS } from "../../features/storage";
 import { modules } from "./test.setup";
 
 const NOW = Date.UTC(2026, 7, 17, 12);

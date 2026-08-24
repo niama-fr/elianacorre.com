@@ -55,7 +55,7 @@ export const createNewsSubscription = E.fn(function* (payload: NewsSubscriptions
 });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchNewsSubscription = E.fn(function* (id: Id<"newsSubscriptions">, patch: Partial<NewsSubscriptions["Fields"]>) {
+export const patchNewsSubscription = E.fn(function* (id: Id<"newsSubscriptions">, patch: NewsSubscriptions["Patch"]) {
   const writer = yield* DatabaseWriter;
   yield* writer.table("newsSubscriptions").patch(id, patch).pipe(dieOnPatchError);
 });

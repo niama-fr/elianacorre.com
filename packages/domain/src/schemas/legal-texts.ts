@@ -1,19 +1,17 @@
 import { GenericId, SystemFields } from "@confect/core";
 import { Schema as S } from "effect";
 
+import { sTrimRequired } from "./utils";
+
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sProfileId = GenericId.GenericId("profiles");
 
 // KIND ------------------------------------------------------------------------------------------------------------------------------------
 export const sLegalTextKind = S.Literal("privacyNotice");
 
-// CONTENT ---------------------------------------------------------------------------------------------------------------------------------
-// Nonblank CommonMark Markdown; raw HTML is not part of the supported rendering contract.
-export const sMarkdownContent = S.Trim.check(S.isMinLength(1));
-
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 export const sLegalTextFields = S.Struct({
-  content: sMarkdownContent,
+  content: sTrimRequired,
   kind: sLegalTextKind,
   publishedAt: S.Finite,
   publishedBy: sProfileId,

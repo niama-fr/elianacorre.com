@@ -8,6 +8,7 @@
       "outputs": ["dist/**"]
     },
     "check": {},
+    "codegen": { "cache": false },
     "dev": { "cache": false, "persistent": true },
     "fix": {
       "cache": false

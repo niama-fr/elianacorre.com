@@ -1,9 +1,10 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
-import { Effect as E, Layer as L, Option as O } from "effect";
+import { Effect as E, Layer as L } from "effect";
 
-import { publishEbook, requestEbookRecovery, resolveEbookIssuanceFromToken } from "../business/ebooks";
-import { createEbook, getEbook, listEbooks } from "../data/ebooks";
-import { currentAdminLayer } from "../runtime/current-profile";
+import { createEbook, listEbooks } from "../data/ebooks";
+import { publishEbook, requestEbookRecovery, resolveEbookDownloadFacts } from "../features/ebooks";
+import { currentAdminLayer } from "../infra/current-profile";
+import { getRequestIp } from "../infra/request-metadata";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";
 import spec from "./ebooks.spec";
@@ -33,16 +34,15 @@ const publish = FunctionImpl.make(databaseSchema, spec, "publish", ({ ebookId })
 );
 
 const requestRecovery = FunctionImpl.make(databaseSchema, spec, "requestRecovery", (args) =>
-  requestEbookRecovery({ now: Date.now(), ...args }).pipe(E.as(null))
+  E.gen(function* () {
+    const requestIp = yield* getRequestIp();
+    yield* requestEbookRecovery({ ...args, now: Date.now(), requestIp }).pipe(E.catchTags({ RateLimitExceeded: () => E.void }));
+    return null;
+  })
 );
 
 // INTERNAL QUERIES ------------------------------------------------------------------------------------------------------------------------
-const resolveDownload = FunctionImpl.make(databaseSchema, spec, "resolveDownload", ({ token }) =>
-  E.gen(function* () {
-    const issuance = yield* resolveEbookIssuanceFromToken({ now: Date.now(), token });
-    return issuance ? O.getOrNull(yield* getEbook(issuance.ebookId)) : null;
-  })
-);
+const resolveDownload = FunctionImpl.make(databaseSchema, spec, "resolveDownload", ({ token }) => resolveEbookDownloadFacts(token));
 
 // IMPL ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupImpl.make(databaseSchema, spec).pipe(

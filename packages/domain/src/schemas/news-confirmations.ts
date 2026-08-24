@@ -1,6 +1,8 @@
 import { GenericId, SystemFields } from "@confect/core";
 import { Schema as S } from "effect";
 
+import { sStrictNatural } from "./utils";
+
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const kinds = ["subscription", "reactivation"] as const;
 
@@ -14,14 +16,14 @@ export const sNewsConfirmationKind = S.Literals(kinds);
 const sSubscriptionFields = S.Struct({
   kind: S.Literal(kinds[0]),
   restrictionId: S.NullOr(sRestrictionId),
-  restrictionVersion: S.NullOr(S.Finite),
+  restrictionVersion: S.NullOr(sStrictNatural),
   subscriptionId: sSubscriptionId,
 });
 
 const sReactivationFields = S.Struct({
   kind: S.Literal(kinds[1]),
   restrictionId: sRestrictionId,
-  restrictionVersion: S.Finite,
+  restrictionVersion: sStrictNatural,
   subscriptionId: sSubscriptionId,
 });
 

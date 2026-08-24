@@ -69,91 +69,153 @@ export const ensureContactProfileId = E.fn(function* (create: Profiles["Create"]
 });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchProfile = E.fn(function* (id: Id<"profiles">, patch: Partial<Profiles["Fields"]>) {
+export const patchProfile = E.fn(function* (id: Id<"profiles">, patch: Profiles["Patch"]) {
   const writer = yield* DatabaseWriter;
   return yield* writer.table("profiles").patch(id, patch).pipe(dieOnPatchError);
 });
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
-export const deleteProfileWithRelations = E.fn(function* (id: Id<"profiles">) {
+const ERASURE_BATCH_SIZE = 50;
+
+export const eraseProfileRelationsBatch = E.fn(function* ({ email, phase, profileId }: EraseProfileRelationsBatchOpts) {
   const reader = yield* DatabaseReader;
   const writer = yield* DatabaseWriter;
 
-  const { _id: profileId, email } = yield* requireProfile(id).pipe(E.orDie);
-
-  const contactRequests = yield* reader
-    .table("contactRequests")
-    .index("by_profile_id", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  const ebookIssuances = yield* reader
-    .table("ebookIssuances")
-    .index("by_profile_id", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  const identities = yield* reader
-    .table("identities")
-    .index("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  const loopsTasks = yield* reader
-    .table("loopsTasks")
-    .index("by_profile_id", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  const loopsWebhooks = email
-    ? yield* reader
-        .table("loopsWebhooks")
-        .index("by_email", (q) => q.eq("email", email))
-        .collect()
-        .pipe(dieOnDecodeError)
-    : [];
-
-  const restrictions = yield* reader
-    .table("newsRestrictions")
-    .index("by_profile_id_and_resolved_at", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  const subscriptions = yield* reader
-    .table("newsSubscriptions")
-    .index("by_profile_id_and_unsubscribed_at", (q) => q.eq("profileId", profileId))
-    .collect()
-    .pipe(dieOnDecodeError);
-
-  for (const issuance of ebookIssuances) {
+  if (phase === "ebookIssuances") {
+    const issuance = yield* reader
+      .table("ebookIssuances")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError);
+    if (O.isNone(issuance)) return { done: true };
     const downloads = yield* reader
       .table("ebookDownloads")
-      .index("by_ebook_issuance_id", (q) => q.eq("ebookIssuanceId", issuance._id))
-      .collect()
+      .index("by_ebook_issuance_id", (q) => q.eq("ebookIssuanceId", issuance.value._id))
+      .take(ERASURE_BATCH_SIZE)
       .pipe(dieOnDecodeError);
-
     for (const download of downloads) yield* writer.table("ebookDownloads").delete(download._id);
-
-    yield* writer.table("ebookIssuances").delete(issuance._id);
+    if (downloads.length === 0) yield* writer.table("ebookIssuances").delete(issuance.value._id);
+    return { done: false };
   }
 
-  for (const subscription of subscriptions) {
+  if (phase === "newsSubscriptions") {
+    const subscription = yield* reader
+      .table("newsSubscriptions")
+      .index("by_profile_id_and_unsubscribed_at", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError);
+    if (O.isNone(subscription)) return { done: true };
     const confirmations = yield* reader
       .table("newsConfirmations")
-      .index("by_subscription_id", (q) => q.eq("subscriptionId", subscription._id))
-      .collect()
+      .index("by_subscription_id", (q) => q.eq("subscriptionId", subscription.value._id))
+      .take(ERASURE_BATCH_SIZE)
       .pipe(dieOnDecodeError);
-
     for (const confirmation of confirmations) yield* writer.table("newsConfirmations").delete(confirmation._id);
-
-    yield* writer.table("newsSubscriptions").delete(subscription._id);
+    if (confirmations.length === 0) yield* writer.table("newsSubscriptions").delete(subscription.value._id);
+    return { done: false };
   }
 
-  for (const contactRequest of contactRequests) yield* writer.table("contactRequests").delete(contactRequest._id);
-  for (const identity of identities) yield* writer.table("identities").delete(identity._id);
-  for (const task of loopsTasks) yield* writer.table("loopsTasks").delete(task._id);
-  for (const webhook of loopsWebhooks) yield* writer.table("loopsWebhooks").delete(webhook._id);
-  for (const restriction of restrictions) yield* writer.table("newsRestrictions").delete(restriction._id);
-
-  yield* writer.table("profiles").delete(profileId);
+  if (phase === "contactRequests") {
+    const docs = yield* reader
+      .table("contactRequests")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .take(ERASURE_BATCH_SIZE)
+      .pipe(dieOnDecodeError);
+    for (const doc of docs) yield* writer.table("contactRequests").delete(doc._id);
+    return { done: docs.length === 0 };
+  }
+  if (phase === "identities") {
+    const docs = yield* reader
+      .table("identities")
+      .index("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId))
+      .take(ERASURE_BATCH_SIZE)
+      .pipe(dieOnDecodeError);
+    for (const doc of docs) yield* writer.table("identities").delete(doc._id);
+    return { done: docs.length === 0 };
+  }
+  if (phase === "loopsTasks") {
+    const docs = yield* reader
+      .table("loopsTasks")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .take(ERASURE_BATCH_SIZE)
+      .pipe(dieOnDecodeError);
+    for (const doc of docs) yield* writer.table("loopsTasks").delete(doc._id);
+    return { done: docs.length === 0 };
+  }
+  if (phase === "loopsWebhooks") {
+    const docs = yield* reader
+      .table("loopsWebhooks")
+      .index("by_email", (q) => q.eq("email", email))
+      .take(ERASURE_BATCH_SIZE)
+      .pipe(dieOnDecodeError);
+    for (const doc of docs) yield* writer.table("loopsWebhooks").delete(doc._id);
+    return { done: docs.length === 0 };
+  }
+  const docs = yield* reader
+    .table("newsRestrictions")
+    .index("by_profile_id_and_resolved_at", (q) => q.eq("profileId", profileId))
+    .take(ERASURE_BATCH_SIZE)
+    .pipe(dieOnDecodeError);
+  for (const doc of docs) yield* writer.table("newsRestrictions").delete(doc._id);
+  return { done: docs.length === 0 };
 });
+
+export const hasProfileRelations = E.fn(function* ({ email, profileId }: { email: string; profileId: Id<"profiles"> }) {
+  const reader = yield* DatabaseReader;
+  const [contactRequest, ebookIssuance, identity, loopsTask, loopsWebhook, newsRestriction, newsSubscription] = yield* E.all([
+    reader
+      .table("contactRequests")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("ebookIssuances")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("identities")
+      .index("by_profile_id_and_adapter", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("loopsTasks")
+      .index("by_profile_id", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("loopsWebhooks")
+      .index("by_email", (q) => q.eq("email", email))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("newsRestrictions")
+      .index("by_profile_id_and_resolved_at", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+    reader
+      .table("newsSubscriptions")
+      .index("by_profile_id_and_unsubscribed_at", (q) => q.eq("profileId", profileId))
+      .first()
+      .pipe(dieOnDecodeError),
+  ]);
+  return (
+    O.isSome(contactRequest) ||
+    O.isSome(ebookIssuance) ||
+    O.isSome(identity) ||
+    O.isSome(loopsTask) ||
+    O.isSome(loopsWebhook) ||
+    O.isSome(newsRestriction) ||
+    O.isSome(newsSubscription)
+  );
+});
+
+export type ProfileErasurePhase =
+  | "contactRequests"
+  | "ebookIssuances"
+  | "identities"
+  | "loopsTasks"
+  | "loopsWebhooks"
+  | "newsRestrictions"
+  | "newsSubscriptions";
+type EraseProfileRelationsBatchOpts = { email: string; phase: ProfileErasurePhase; profileId: Id<"profiles"> };

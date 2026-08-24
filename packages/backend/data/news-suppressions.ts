@@ -1,6 +1,5 @@
-import { env } from "@ec/backend/server";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
-import { Effect as E, Option as O } from "effect";
+import { Config, Effect as E, Option as O } from "effect";
 
 import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
 import { dieOnDecodeError, dieOnEncodeError, optionByIndex } from "./confect";
@@ -8,7 +7,8 @@ import { dieOnDecodeError, dieOnEncodeError, optionByIndex } from "./confect";
 // GET -------------------------------------------------------------------------------------------------------------------------------------
 export const getNewsSuppressionByEmail = E.fn(function* (email: string) {
   const reader = yield* DatabaseReader;
-  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret });
   return yield* reader.table("newsSuppressions").get("by_canonical_email_hash", canonicalEmailHash).pipe(optionByIndex);
 });
 
@@ -23,7 +23,8 @@ export const ensureNewsSuppression = E.fn(function* (email: string) {
   const writer = yield* DatabaseWriter;
   const existing = yield* getNewsSuppressionByEmail(email);
   if (O.isSome(existing)) return existing.value._id;
-  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret });
   return yield* writer.table("newsSuppressions").insert({ canonicalEmailHash }).pipe(dieOnEncodeError);
 });
 

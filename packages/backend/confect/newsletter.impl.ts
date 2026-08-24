@@ -1,18 +1,19 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
 import { Effect as E, Layer as L } from "effect";
 
-import { confirmNewsletter, subscribeToNewsletter } from "../business/newsletter";
-import { createNewsletterDataExport } from "../business/newsletter-export";
-import { currentAdminLayer } from "../runtime/current-profile";
+import { confirmNewsletter, subscribeToNewsletter } from "../features/newsletter";
+import { createNewsletterDataExport } from "../features/newsletter-export";
+import { currentAdminLayer } from "../infra/current-profile";
+import { getRequestIp } from "../infra/request-metadata";
 import databaseSchema from "./_generated/schema";
 import { QueryCtx } from "./_generated/services";
 import spec from "./newsletter.spec";
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-const exportData = FunctionImpl.make(databaseSchema, spec, "exportData", ({ format }) =>
+const exportData = FunctionImpl.make(databaseSchema, spec, "exportData", ({ exportedAt, format }) =>
   E.gen(function* () {
     const ctx = yield* QueryCtx;
-    return yield* createNewsletterDataExport(format).pipe(E.provide(currentAdminLayer(ctx)));
+    return yield* createNewsletterDataExport(format, exportedAt).pipe(E.provide(currentAdminLayer(ctx)));
   })
 );
 
@@ -21,7 +22,8 @@ const confirm = FunctionImpl.make(databaseSchema, spec, "confirm", ({ token }) =
 
 const subscribe = FunctionImpl.make(databaseSchema, spec, "subscribe", (args) =>
   E.gen(function* () {
-    yield* subscribeToNewsletter({ now: Date.now(), ...args });
+    const requestIp = yield* getRequestIp();
+    yield* subscribeToNewsletter({ ...args, now: Date.now(), requestIp }).pipe(E.catchTags({ RateLimitExceeded: () => E.void }));
     return null;
   })
 );

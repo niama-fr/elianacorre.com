@@ -1,4 +1,5 @@
 import { FunctionSpec, GroupSpec } from "@confect/core";
+import { LoopsTaskNotFailed, LoopsTaskNotFound } from "@ec/domain/errors/loops-tasks";
 import { sAuthError } from "@ec/domain/schemas/auth";
 import { sLoopsTaskFailure, sLoopsTaskKind } from "@ec/domain/schemas/loops-tasks";
 import { sLoopsWebhookCreate } from "@ec/domain/schemas/loops-webhooks";
@@ -26,7 +27,7 @@ export default GroupSpec.make()
             failure: sLoopsTaskFailure,
             finishedAt: S.Int,
             kind: sLoopsTaskKind,
-            replayCount: S.Int,
+            replayCount: S.Natural,
             workflowIds: S.Array(S.String),
           })
         ),
@@ -36,7 +37,7 @@ export default GroupSpec.make()
   .addFunction(
     FunctionSpec.publicMutation({
       args: () => S.Struct({ loopsTaskId: Id("loopsTasks") }),
-      error: () => sAuthError,
+      error: () => S.Union([sAuthError, LoopsTaskNotFound, LoopsTaskNotFailed]),
       name: "acknowledgeFailedTask",
       returns: () => S.Null,
     })
@@ -44,7 +45,7 @@ export default GroupSpec.make()
   .addFunction(
     FunctionSpec.publicMutation({
       args: () => S.Struct({ loopsTaskId: Id("loopsTasks") }),
-      error: () => sAuthError,
+      error: () => S.Union([sAuthError, LoopsTaskNotFound, LoopsTaskNotFailed]),
       name: "replayFailedTask",
       returns: () => S.String,
     })

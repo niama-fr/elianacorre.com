@@ -6,7 +6,7 @@ import type { WithNow } from "@ec/domain/schemas/utils";
 import { Effect as E, Option as O } from "effect";
 
 import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
-import { CurrentAdmin } from "../runtime/current-profile";
+import { CurrentAdmin } from "../infra/current-profile";
 import { dieOnPatchError, dieOnDecodeError, dieOnEncodeError, optionById, optionByIndex } from "./confect";
 import { getStorageDoc, getStorageUrl } from "./storage";
 
@@ -84,7 +84,7 @@ export const createEbook = E.fn(function* ({ now, ...create }: WithNow<Ebooks["C
 });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchEbook = E.fn(function* (id: Id<"ebooks">, patch: Partial<Ebooks["Fields"]>) {
+const patchEbook = E.fn(function* (id: Id<"ebooks">, patch: Ebooks["Patch"]) {
   const writer = yield* DatabaseWriter;
   return yield* writer.table("ebooks").patch(id, patch).pipe(dieOnPatchError);
 });

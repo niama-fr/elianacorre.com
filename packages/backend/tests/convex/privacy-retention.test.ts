@@ -3,6 +3,8 @@ import { convexTest, type TestConvex } from "convex-test";
 import { Effect as E } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import databaseSchema from "../../confect/_generated/schema";
+import schema from "../../convex/schema";
 import {
   enforcePrivacyRetentionBatch,
   getContactRequestCutoff,
@@ -10,9 +12,7 @@ import {
   PENDING_RETENTION_MS,
   TECHNICAL_RETENTION_MS,
   type PrivacyRetentionBatchResult,
-} from "../../business/privacy-retention";
-import databaseSchema from "../../confect/_generated/schema";
-import schema from "../../convex/schema";
+} from "../../features/privacy-retention";
 import { modules } from "./test.setup";
 
 const NOW = Date.UTC(2026, 6, 15);

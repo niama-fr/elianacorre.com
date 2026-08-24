@@ -1,9 +1,9 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
 import { Duration as D, Effect as E, Layer as L } from "effect";
 
-import { ORPHAN_STORAGE_GRACE_MS, purgeOrphanStorageBatch } from "../business/storage";
 import { generateStorageUploadUrl } from "../data/storage";
-import { currentAdminLayer } from "../runtime/current-profile";
+import { ORPHAN_STORAGE_GRACE_MS, purgeOrphanStorageBatch } from "../features/storage";
+import { currentAdminLayer } from "../infra/current-profile";
 import refs from "./_generated/refs";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, Scheduler } from "./_generated/services";

@@ -11,7 +11,7 @@ import { useTable, FlexRender } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 import { toast } from "sonner";
 
-import { zEbookCreateValues, type EbookCreateValues } from "@/features/ebooks/schemas";
+import { sEbookCreate, type EbookCreate } from "@/features/ebooks/ebooks.schemas";
 import { useAppForm } from "@/form/hook";
 
 import { features, getColumns } from "./-table-features";
@@ -22,7 +22,7 @@ const ebooksQuery = convexQuery(api.ebooks.list);
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/admin/ebooks/")({
   component: EbooksPage,
-  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(ebooksQuery),
+  loader: async ({ context: { queryClient } }) => await queryClient.query({ ...ebooksQuery, staleTime: "static" }),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ function EbookForm() {
   const generateUploadUrl = useMutation({ mutationFn: useConvexMutation(api.storage.generateUploadUrl) });
   const create = useMutation({ mutationFn: useConvexMutation(api.ebooks.create) });
 
-  const defaultValues: EbookCreateValues = { file: null, title: "" };
+  const defaultValues: EbookCreate = { file: null, title: "" };
 
   const form = useAppForm({
     defaultValues,
@@ -113,10 +113,10 @@ function EbookForm() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: zEbookCreateValues.shape.title }}>
+            <form.AppField name="title" validators={{ onChange: sEbookCreate.fields.title }}>
               {(f) => <f.InputField label="Titre" type="text" />}
             </form.AppField>
-            <form.AppField name="file" validators={{ onChange: zEbookCreateValues.shape.file }}>
+            <form.AppField name="file" validators={{ onChange: sEbookCreate.fields.file }}>
               {(f) => <f.FileInputField label="Fichier" removeLabel="Supprimer le fichier" accept="application/pdf,.pdf" />}
             </form.AppField>
             <form.Submit label="Enregistrer le brouillon" icon="icon-[tabler--circle-plus]" />

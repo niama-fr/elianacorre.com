@@ -11,7 +11,7 @@
     "./specs/newsletter": "./confect/newsletter.spec.ts"
   },
   "scripts": {
-    "codegen": "convex codegen",
+    "codegen": "confect codegen && convex codegen",
     "db:reset:dev": "bun scripts/reset-dev-database.ts",
     "deploy": "convex deploy",
     "deploy:production": "convex deploy --env-file .env.production.local",
@@ -29,11 +29,10 @@
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
-    "@ec/validation": "workspace:*",
     "better-auth": "1.6.29",
     "convex": "1.45.0",
     "convex-helpers": "^0.1.123",
-    "effect": "4.0.0-rc.110",
+    "effect": "4.0.0-rc.111",
     "jose": "^6.2.10",
     "standardwebhooks": "^1.0.0",
     "typescript": "^7.0.2"
@@ -46,7 +45,6 @@
     "@types/node": "^26.2.0",
     "convex-test": "^0.0.56",
     "vite": "^8.2.2",
-    "vitest": "^4.1.11",
-    "zod": "^4.4.3"
+    "vitest": "^4.1.11"
   }
 }

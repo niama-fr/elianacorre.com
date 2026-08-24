@@ -53,11 +53,11 @@ export default GroupSpec.make()
       name: "runBatch",
       returns: () =>
         S.Struct({
-          anonymizedFormerProfiles: S.Finite,
-          anonymizedPendingProfiles: S.Finite,
+          anonymizedFormerProfiles: S.Natural,
+          anonymizedPendingProfiles: S.Natural,
           cursor: S.NullOr(S.String),
-          deletedDownloads: S.Finite,
-          deletedTechnicalLogs: S.Finite,
+          deletedDownloads: S.Natural,
+          deletedTechnicalLogs: S.Natural,
           done: S.Boolean,
           phase: sRetentionRunFailurePhase,
         }),

@@ -1,11 +1,11 @@
-import { sContactRequestCreateValues } from "@ec/domain/schemas/contact-requests";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
 import { useRef } from "react";
 import { toast } from "sonner";
 
+import { createContactRequest } from "@/features/contact-requests/contact-requests.functions";
+import { sContactRequestCreate } from "@/features/contact-requests/contact-requests.schemas";
 import { useAppForm } from "@/form/hook";
-import { createContactRequest } from "@/lib/contact-requests/contact-requests.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 export const FORM = {
@@ -18,7 +18,7 @@ export function ContactForm() {
   const submitRef = useRef<HTMLButtonElement>(null);
 
   const form = useAppForm({
-    defaultValues: { email: "", firstName: "", message: "" },
+    defaultValues: { email: "", firstName: "", message: "", website: "" },
     onSubmit: async ({ value: data }) => {
       try {
         await createContactRequest({ data });
@@ -50,14 +50,21 @@ export function ContactForm() {
       }}
     >
       <form.AppForm>
-        <form.AppField name="firstName" validators={{ onChange: sContactRequestCreateValues.fields.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: sContactRequestCreate.fields.firstName }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: sContactRequestCreateValues.fields.email }}>
+        <form.AppField name="email" validators={{ onChange: sContactRequestCreate.fields.email }}>
           {(f) => <f.InputField label="Courriel" type="email" />}
         </form.AppField>
-        <form.AppField name="message" validators={{ onChange: sContactRequestCreateValues.fields.message }}>
+        <form.AppField name="message" validators={{ onChange: sContactRequestCreate.fields.message }}>
           {(f) => <f.TextareaField label="Message" />}
+        </form.AppField>
+        <form.AppField name="website" validators={{ onChange: sContactRequestCreate.fields.website }}>
+          {(f) => (
+            <div aria-hidden="true" className="sr-only">
+              <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />
+            </div>
+          )}
         </form.AppField>
         <form.Submit ref={submitRef} icon="icon-[tabler--send-2]" className={FORM.submit()} />
       </form.AppForm>

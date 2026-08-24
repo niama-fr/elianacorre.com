@@ -1,6 +1,8 @@
 import { GenericId, SystemFields } from "@confect/core";
 import { Schema as S, Struct } from "effect";
 
+import { sStrictNatural } from "./utils";
+
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sProfileId = GenericId.GenericId("profiles");
 
@@ -22,7 +24,7 @@ export const sNewsRestrictionFields = S.Struct({
   resolvedBy: S.NullOr(sNewsRestrictionResolvedBy),
   restrictedAt: S.Finite,
   restrictedBy: sNewsRestrictionRestrictedBy,
-  version: S.Finite,
+  version: sStrictNatural,
 });
 
 export const sNewsRestrictionDoc = sNewsRestrictionFields.pipe(S.fieldsAssign(SystemFields.SystemFields("newsRestrictions").fields));
@@ -30,10 +32,17 @@ export const sNewsRestrictionDoc = sNewsRestrictionFields.pipe(S.fieldsAssign(Sy
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const sNewsRestrictionCreate = sNewsRestrictionFields.mapFields(Struct.pick(["lastOccurredAt", "profileId", "reason"]));
 
+// PATCH -----------------------------------------------------------------------------------------------------------------------------------
+export const sNewsRestrictionPatch = S.Union([
+  sNewsRestrictionFields.mapFields(Struct.pick(["lastOccurredAt", "reason", "restrictedBy", "version"])),
+  sNewsRestrictionFields.mapFields(Struct.pick(["resolvedAt", "resolvedBy"])),
+]);
+
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsRestrictions = {
   Create: typeof sNewsRestrictionCreate.Type;
   Doc: typeof sNewsRestrictionDoc.Type;
   Fields: typeof sNewsRestrictionFields.Type;
+  Patch: typeof sNewsRestrictionPatch.Type;
   Reason: typeof sNewsRestrictionReason.Type;
 };

@@ -1,12 +1,11 @@
 /* oxlint-disable unicorn/throw-new-error -- Effect's S.TaggedError factory is not a thrown Error construction. */
 import { GenericId, SystemFields } from "@confect/core";
-import { Schema as S, SchemaGetter, Struct } from "effect";
+import { Schema as S, SchemaGetter as SG, Struct } from "effect";
 
-// STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackStatus = S.Literals(["archived", "draft", "published"]);
+import { sSlug, sTrimRequired } from "./utils";
 
-// ERRORS ----------------------------------------------------------------------------------------------------------------------------------
-export const TRAVEL_PACK_ERROR = {
+// ISSUES ----------------------------------------------------------------------------------------------------------------------------------
+export const TRAVEL_PACK_ISSUE = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
   coverMimeTypeInvalid: "TRAVEL_PACK_COVER_MIME_TYPE_INVALID",
   coverSizeInvalid: "TRAVEL_PACK_COVER_SIZE_INVALID",
@@ -14,23 +13,15 @@ export const TRAVEL_PACK_ERROR = {
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
   pdfMimeTypeInvalid: "TRAVEL_PACK_PDF_MIME_TYPE_INVALID",
   pdfSizeInvalid: "TRAVEL_PACK_PDF_SIZE_INVALID",
-  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
-  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
-  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
   unknown: "TRAVEL_PACK_UNKNOWN",
   youtubeUrlInvalid: "TRAVEL_PACK_YOUTUBE_URL_INVALID",
 } as const;
+export const sTravelPackIssue = S.Literals(Object.values(TRAVEL_PACK_ISSUE));
 
-export const sTravelPackError = S.Literals(Object.values(TRAVEL_PACK_ERROR));
+// STATUS ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackStatus = S.Literals(["archived", "draft", "published"]);
 
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
-const sTravelPackFileName = S.String.check(S.isMinLength(1));
-
-export const sTravelPackDescription = S.String;
-export const sTravelPackDestination = S.Trim;
-export const sTravelPackExcerpt = S.Trim;
-export const sTravelPackTitle = S.Trim.check(S.isMinLength(1, { message: TRAVEL_PACK_ERROR.titleRequired }));
-
 const sTravelPackYoutubeUrlValue = S.String.check(
   S.makeFilter((value) => {
     try {
@@ -38,10 +29,10 @@ const sTravelPackYoutubeUrlValue = S.String.check(
       return (
         ((url.protocol === "http:" || url.protocol === "https:") &&
           (url.hostname === "youtube.com" || url.hostname === "www.youtube.com" || url.hostname === "youtu.be")) ||
-        TRAVEL_PACK_ERROR.youtubeUrlInvalid
+        TRAVEL_PACK_ISSUE.youtubeUrlInvalid
       );
     } catch {
-      return TRAVEL_PACK_ERROR.youtubeUrlInvalid;
+      return TRAVEL_PACK_ISSUE.youtubeUrlInvalid;
     }
   })
 );
@@ -50,14 +41,9 @@ export const sTravelPackYoutubeUrl = S.Union([sTravelPackYoutubeUrlValue, S.Null
 
 export const sTravelPackYoutubeUrlFromForm = S.String.pipe(
   S.decodeTo(sTravelPackYoutubeUrl, {
-    decode: SchemaGetter.transform((value) => value.trim() || null),
-    encode: SchemaGetter.transform((value) => value ?? ""),
+    decode: SG.transform((value) => value.trim() || null),
+    encode: SG.transform((value) => value ?? ""),
   })
-);
-
-export const sTravelPackSlug = S.String.check(
-  S.isMinLength(1, { message: TRAVEL_PACK_ERROR.slugRequired }),
-  S.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, { message: TRAVEL_PACK_ERROR.slugInvalid })
 );
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
@@ -65,22 +51,21 @@ const sStorageId = GenericId.GenericId("_storage");
 const sProfileId = GenericId.GenericId("profiles");
 
 export const sTravelPackFields = S.Struct({
-  coverFileName: S.NullOr(sTravelPackFileName),
+  coverFileName: S.NullOr(sTrimRequired),
   coverStorageId: S.NullOr(sStorageId),
   createdBy: sProfileId,
-  description: sTravelPackDescription,
-  destination: sTravelPackDestination,
-  excerpt: sTravelPackExcerpt,
-  pdfFileName: S.NullOr(sTravelPackFileName),
+  description: S.String,
+  destination: S.Trim,
+  excerpt: S.Trim,
+  pdfFileName: S.NullOr(sTrimRequired),
   pdfStorageId: S.NullOr(sStorageId),
-  slug: sTravelPackSlug,
+  slug: sSlug,
   status: sTravelPackStatus,
-  title: sTravelPackTitle,
+  title: sTrimRequired,
   updatedAt: S.Finite,
   updatedBy: sProfileId,
   youtubeUrl: sTravelPackYoutubeUrl,
 });
-export const sTravelPackPatch = sTravelPackFields.mapFields(Struct.map(S.optionalKey));
 export const sTravelPackDoc = sTravelPackFields.pipe(S.fieldsAssign(SystemFields.SystemFields("travelPacks").fields));
 
 // DTO / ENTITY ---------------------------------------------------------------------------------------------------------------------------
@@ -92,24 +77,14 @@ export const sTravelPackDto = sTravelPackDoc.pipe(
   })
 );
 
-// Travel Packs currently have no hydrated representation beyond their serialized DTO.
 export const sTravelPack = sTravelPackDto;
 
-// CONTRACTS -------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackCreate = S.Struct({ title: sTravelPackTitle });
-export const sTravelPackUpdate = S.Struct({
-  _id: GenericId.GenericId("travelPacks"),
-  coverFileName: S.NullOr(sTravelPackFileName),
-  coverStorageId: S.NullOr(sStorageId),
-  description: sTravelPackDescription,
-  destination: sTravelPackDestination,
-  excerpt: sTravelPackExcerpt,
-  pdfFileName: S.NullOr(sTravelPackFileName),
-  pdfStorageId: S.NullOr(sStorageId),
-  slug: sTravelPackSlug,
-  title: sTravelPackTitle,
-  youtubeUrl: sTravelPackYoutubeUrl,
-});
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackCreate = sTravelPackFields.mapFields(Struct.pick(["title"]));
+
+// UPDATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackPatch = sTravelPackFields.mapFields(Struct.omit(["createdBy", "status"])).mapFields(Struct.map(S.optionalKey));
+export const sTravelPackUpdate = sTravelPackDoc.mapFields(Struct.omit(["_creationTime", "createdBy", "status", "updatedAt", "updatedBy"]));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type TravelPacks = {
@@ -117,8 +92,9 @@ export type TravelPacks = {
   Doc: typeof sTravelPackDoc.Type;
   Dto: typeof sTravelPackDto.Type;
   Entity: typeof sTravelPack.Type;
-  Error: typeof sTravelPackError.Type;
   Fields: typeof sTravelPackFields.Type;
+  Issue: typeof sTravelPackIssue.Type;
+  Patch: typeof sTravelPackPatch.Type;
   Status: typeof sTravelPackStatus.Type;
   Update: typeof sTravelPackUpdate.Type;
 };

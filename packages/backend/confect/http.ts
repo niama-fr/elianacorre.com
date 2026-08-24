@@ -5,7 +5,8 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { Webhook, WebhookVerificationError } from "standardwebhooks";
 
-import { authComponent, createAuth } from "../runtime/better-auth";
+import { isEbookDownloadAuthorized } from "../features/ebooks";
+import { authComponent, createAuth } from "../infra/better-auth";
 import refs from "./_generated/refs";
 import { MutationRunner, QueryRunner, StorageActionWriter } from "./_generated/services";
 
@@ -49,16 +50,16 @@ const ebookDownloadRoute = HttpRouter.add("GET", "/newsletter/ebook", (request) 
     if (token === null) return yield* redirectToEbookRecovery;
 
     const runQuery = yield* QueryRunner;
-    const ebook = yield* runQuery(refs.internal.ebooks.resolveDownload, { token }).pipe(E.orDie);
+    const facts = yield* runQuery(refs.internal.ebooks.resolveDownload, { token }).pipe(E.orDie);
 
-    if (ebook === null) return yield* redirectToEbookRecovery;
+    if (facts === null || !isEbookDownloadAuthorized(facts, Date.now())) return yield* redirectToEbookRecovery;
 
     const storage = yield* StorageActionWriter;
-    const file = yield* storage.get(ebook.storageId).pipe(E.catchTag("BlobNotFoundError", () => E.succeed(null)));
+    const file = yield* storage.get(facts.ebook.storageId).pipe(E.catchTag("BlobNotFoundError", () => E.succeed(null)));
 
     if (file === null) return yield* redirectToEbookRecovery;
 
-    const fileName = ebook.fileName.replaceAll('"', "");
+    const fileName = facts.ebook.fileName.replaceAll('"', "");
 
     return HttpServerResponse.raw(file, {
       contentLength: file.size,

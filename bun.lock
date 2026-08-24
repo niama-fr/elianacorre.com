@@ -20,15 +20,14 @@
       "name": "@ec/app",
       "version": "0.0.0",
       "dependencies": {
-        "@confect/core": "^10.0.0-next.17",
-        "@confect/react": "^10.0.0-next.17",
+        "@confect/core": "10.0.0-next.17",
+        "@confect/react": "10.0.0-next.17",
         "@convex-dev/better-auth": "^0.12.5",
         "@convex-dev/react-query": "^0.1.0",
         "@ec/backend": "workspace:*",
         "@ec/domain": "workspace:*",
         "@ec/http": "workspace:*",
         "@ec/ui": "workspace:*",
-        "@ec/validation": "workspace:*",
         "@fontsource-variable/dancing-script": "^5.3.0",
         "@fontsource-variable/lexend": "^5.3.0",
         "@iconify/json": "^2.2.519",
@@ -44,7 +43,7 @@
         "better-auth": "1.6.29",
         "class-variance-authority": "^0.7.1",
         "convex": "1.45.0",
-        "effect": "4.0.0-rc.110",
+        "effect": "4.0.0-rc.111",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
         "sonner": "^2.0.7",
@@ -76,7 +75,6 @@
         "@ec/domain": "workspace:*",
         "@ec/http": "workspace:*",
         "@ec/ui": "workspace:*",
-        "@ec/validation": "workspace:*",
         "@fontsource-variable/dancing-script": "^5.3.0",
         "@fontsource-variable/lexend": "^5.3.0",
         "@iconify/json": "^2.2.519",
@@ -94,7 +92,7 @@
         "canvas-confetti": "^1.9.4",
         "class-variance-authority": "^0.7.1",
         "convex": "1.45.0",
-        "effect": "4.0.0-rc.110",
+        "effect": "4.0.0-rc.111",
         "lucide-react": "^1.33.0",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
@@ -131,11 +129,10 @@
         "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
         "@ec/domain": "workspace:*",
         "@ec/http": "workspace:*",
-        "@ec/validation": "workspace:*",
         "better-auth": "1.6.29",
         "convex": "1.45.0",
         "convex-helpers": "^0.1.123",
-        "effect": "4.0.0-rc.110",
+        "effect": "4.0.0-rc.111",
         "jose": "^6.2.10",
         "standardwebhooks": "^1.0.0",
         "typescript": "^7.0.2",
@@ -149,7 +146,6 @@
         "convex-test": "^0.0.56",
         "vite": "^8.2.2",
         "vitest": "^4.1.11",
-        "zod": "^4.4.3",
       },
     },
     "packages/domain": {
@@ -157,16 +153,14 @@
       "version": "0.0.0",
       "dependencies": {
         "@confect/core": "10.0.0-next.17",
-        "@ec/validation": "workspace:*",
-        "@effect/vitest": "^4.0.0-beta.107",
         "@unpic/placeholder": "^0.1.2",
         "convex": "1.45.0",
         "convex-helpers": "^0.1.123",
-        "effect": "4.0.0-rc.110",
+        "effect": "4.0.0-rc.111",
         "jose": "^6.2.10",
-        "zod": "^4.4.3",
       },
       "devDependencies": {
+        "@effect/vitest": "4.0.0-rc.111",
         "vitest": "^4.1.11",
       },
     },
@@ -200,7 +194,6 @@
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.6.0",
         "tw-animate-css": "^1.4.0",
-        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@tailwindcss/vite": "^4.3.3",
@@ -217,16 +210,6 @@
       "peerDependencies": {
         "@tanstack/react-query": "^5.102.0",
         "@tanstack/react-router": "^1.170.32",
-      },
-    },
-    "packages/validation": {
-      "name": "@ec/validation",
-      "version": "0.0.0",
-      "dependencies": {
-        "zod": "^4.4.3",
-      },
-      "devDependencies": {
-        "typescript": "^7.0.2",
       },
     },
   },
@@ -391,8 +374,6 @@
 
     "@ec/ui": ["@ec/ui@workspace:packages/ui"],
 
-    "@ec/validation": ["@ec/validation@workspace:packages/validation"],
-
     "@ec/web": ["@ec/web@workspace:apps/web"],
 
     "@ecies/ciphers": ["@ecies/ciphers@0.2.6", "", { "peerDependencies": { "@noble/ciphers": "^1.0.0" } }, "sha512-patgsRPKGkhhoBjETV4XxD0En4ui5fbX0hzayqI3M8tvNMGUoUvmyYAIWwlxBc1KX5cturfqByYdj5bYGRpN9g=="],
@@ -421,7 +402,7 @@
 
     "@effect/tsgo-win32-x64": ["@effect/tsgo-win32-x64@0.36.5", "", { "os": "win32", "cpu": "x64" }, "sha512-pmaKwdYAIs9GFpMV9glIUks0UZDHE1/xwP6+GCGhSFxB76cDLMnrHr/IBt5VfGddT65SK+Dyw/vAtcX7fRp4KA=="],
 
-    "@effect/vitest": ["@effect/vitest@4.0.0-beta.107", "", { "peerDependencies": { "effect": "^4.0.0-beta.107", "vitest": ">=4.1.0 <5.0.0" } }, "sha512-n4/qsx4DnT4dEI/wNgMivxyUeJoeiU1TCSz0WnoHWk/dny40Oxjip2P9IXGQDgPb9fsYVnerF0QRA6nPUuExQA=="],
+    "@effect/vitest": ["@effect/vitest@4.0.0-rc.111", "", { "peerDependencies": { "effect": "^4.0.0-rc.111", "vitest": ">=4.1.0 <5.0.0" } }, "sha512-YDaEVT+grREBVMzykRNFtJwGxy02achzT0WXZYwMJA4ukzuB9krkgQ5roc3N6zhC3NQq/j4IyM32/Pcov7AhHw=="],
 
     "@emnapi/core": ["@emnapi/core@2.0.0-alpha.3", "", { "dependencies": { "@emnapi/wasi-threads": "2.0.1", "tslib": "^2.4.0" } }, "sha512-AZypUeJ/yByuxyS7BlSNRDOMLMlROYtjYdIAuBmJssVz1UJDSeYxLrdizhXCFYhedC5bqd/ASy8EuNXbVVXp9g=="],
 
@@ -1317,7 +1298,7 @@
 
     "ee-first": ["ee-first@1.1.1", "", {}, "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow=="],
 
-    "effect": ["effect@4.0.0-rc.110", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.9.0", "msgpackr": "^2.0.4" } }, "sha512-ega6FTJ8CS2of7tHZiADvgyJyV999Q6tZ9juE56V81O0jw6flRwydaPNtyfvP2a5LL9PZrse8A1jnNUD5sWVHg=="],
+    "effect": ["effect@4.0.0-rc.111", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.9.0", "msgpackr": "^2.0.5" } }, "sha512-ASd5L58EIR0CUNueZNKKjSsyOCd+2alxOAIaTcHaqkJkPsaYSsw5Cg/cfANk5K4Jr2YsX756xvX11shzqsreWA=="],
 
     "electron-to-chromium": ["electron-to-chromium@1.5.363", "", {}, "sha512-VjUKPyWzGnT1fujlkEGC/BvN70Hh70KXtAqcmniXviYlJC/ivcT+BWGPyxWVbJZLfvtKR6dqg1L7T7pgAMBtWA=="],
 

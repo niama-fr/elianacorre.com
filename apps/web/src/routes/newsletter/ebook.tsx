@@ -2,24 +2,24 @@ import { CACHE_ROUTE_HEADERS } from "@ec/http/cache-policy";
 import { Button } from "@ec/ui/components/button";
 import { HeroInfo, type HeroInfoProps } from "@ec/ui/components/hero-info";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ec/ui/components/tooltip";
-import { z } from "@ec/validation/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Schema as S } from "effect";
 import { useEffect } from "react";
 
-import { getEbookDownloadUrl } from "@/lib/newsletter/urls";
+import { getEbookDownloadUrl } from "@/features/newsletter/urls";
 import { noindexHead } from "@/seo/head";
 
 import { EbookRecoveryFormDialog } from "./-ebook-recovery-form-dialog";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-const zSearch = z.object({ token: z.string().optional() });
+const sSearch = S.Struct({ token: S.optionalKey(S.String) });
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/newsletter/ebook")({
   component: NewsletterEbookPage,
   head: () => noindexHead("Votre e-book — Eliana Corré"),
   headers: () => CACHE_ROUTE_HEADERS.private,
-  validateSearch: zSearch,
+  validateSearch: S.toStandardSchemaV1(sSearch),
 });
 
 // PAGE ------------------------------------------------------------------------------------------------------------------------------------

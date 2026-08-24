@@ -4,12 +4,14 @@ import { Schema as S, Struct } from "effect";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const requestKinds = ["access", "erasure", "export", "objection", "rectification", "suppressionRemoval", "unsubscription"] as const;
+const finalRequestKinds = ["access", "export", "objection", "rectification", "suppressionRemoval", "unsubscription"] as const;
 
 const kinds = [...requestKinds, "verification"] as const;
 
 const verificationMethods = ["additionalEvidence", "emailChallenge"] as const;
 
-const outcomes = ["completed", "rejected"] as const;
+const finalOutcomes = ["completed", "rejected"] as const;
+const outcomes = [...finalOutcomes, "pending"] as const;
 
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sPrivacyAuditId = GenericId.GenericId("privacyAudits");
@@ -24,17 +26,26 @@ export const sPrivacyAuditVerificationMethod = S.Literals(verificationMethods);
 
 // OUTCOME ---------------------------------------------------------------------------------------------------------------------------------
 export const sPrivacyAuditOutcome = S.Literals(outcomes);
+export const sPrivacyAuditFinalOutcome = S.Literals(finalOutcomes);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
 const sCommonFields = S.Struct({
-  outcome: sPrivacyAuditOutcome,
   performedBy: sProfileId,
   subjectHash: S.String,
 });
 
-const sRequestFields = sCommonFields.pipe(
+const sFinalRequestFields = sCommonFields.pipe(
   S.fieldsAssign({
-    kind: sPrivacyAuditRequestKind,
+    kind: S.Literals(finalRequestKinds),
+    outcome: sPrivacyAuditFinalOutcome,
+    verificationAuditId: sPrivacyAuditId,
+  })
+);
+
+const sErasureRequestFields = sCommonFields.pipe(
+  S.fieldsAssign({
+    kind: S.Literal("erasure"),
+    outcome: sPrivacyAuditOutcome,
     verificationAuditId: sPrivacyAuditId,
   })
 );
@@ -43,34 +54,38 @@ const sVerificationFields = sCommonFields.pipe(
   S.fieldsAssign({
     kind: S.Literal("verification"),
     method: sPrivacyAuditVerificationMethod,
+    outcome: sPrivacyAuditFinalOutcome,
     requestKind: sPrivacyAuditRequestKind,
   })
 );
 
-export const sPrivacyAuditFields = S.Union([sRequestFields, sVerificationFields]);
+export const sPrivacyAuditFields = S.Union([sFinalRequestFields, sErasureRequestFields, sVerificationFields]);
 
 // DOC -------------------------------------------------------------------------------------------------------------------------------------
 const sSystemFields = SystemFields.SystemFields("privacyAudits").fields;
 
-const sRequestDoc = sRequestFields.pipe(S.fieldsAssign(sSystemFields));
+const sFinalRequestDoc = sFinalRequestFields.pipe(S.fieldsAssign(sSystemFields));
+
+const sErasureRequestDoc = sErasureRequestFields.pipe(S.fieldsAssign(sSystemFields));
 
 const sVerificationDoc = sVerificationFields.pipe(S.fieldsAssign(sSystemFields));
 
-export const sPrivacyAuditDoc = S.Union([sRequestDoc, sVerificationDoc]);
+export const sPrivacyAuditDoc = S.Union([sFinalRequestDoc, sErasureRequestDoc, sVerificationDoc]);
 
 // ENTRY -----------------------------------------------------------------------------------------------------------------------------------
-const sRequestEntry = sRequestDoc.mapFields(Struct.omit(["subjectHash"]));
+const sFinalRequestEntry = sFinalRequestDoc.mapFields(Struct.omit(["subjectHash"]));
+
+const sErasureRequestEntry = sErasureRequestDoc.mapFields(Struct.omit(["subjectHash"]));
 
 const sVerificationEntry = sVerificationDoc.mapFields(Struct.omit(["subjectHash"]));
 
-export const sPrivacyAuditEntry = S.Union([sRequestEntry, sVerificationEntry]);
+export const sPrivacyAuditEntry = S.Union([sFinalRequestEntry, sErasureRequestEntry, sVerificationEntry]);
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sPrivacyAuditRequestCreate = sRequestFields.mapFields(Struct.omit(["subjectHash"])).pipe(
-  S.fieldsAssign({
-    email: sCanonicalEmail,
-  })
-);
+export const sPrivacyAuditRequestCreate = S.Union([
+  sFinalRequestFields.mapFields(Struct.omit(["subjectHash"])).pipe(S.fieldsAssign({ email: sCanonicalEmail })),
+  sErasureRequestFields.mapFields(Struct.omit(["subjectHash"])).pipe(S.fieldsAssign({ email: sCanonicalEmail })),
+]);
 
 export const sPrivacyAuditVerificationCreate = sVerificationFields.mapFields(Struct.omit(["kind", "subjectHash"])).pipe(
   S.fieldsAssign({
@@ -85,6 +100,7 @@ export type PrivacyAudits = {
   Fields: typeof sPrivacyAuditFields.Type;
   Kind: typeof sPrivacyAuditKind.Type;
   Outcome: typeof sPrivacyAuditOutcome.Type;
+  FinalOutcome: typeof sPrivacyAuditFinalOutcome.Type;
   RequestCreate: typeof sPrivacyAuditRequestCreate.Type;
   RequestKind: typeof sPrivacyAuditRequestKind.Type;
   VerificationCreate: typeof sPrivacyAuditVerificationCreate.Type;

@@ -1,6 +1,11 @@
 import { GenericId, SystemFields } from "@confect/core";
-import { sCanonicalEmail, sCanonicalEmailValue, sOptionalTrim } from "@ec/domain/schemas/utils";
+import { sCanonicalEmail, sTrimOptional } from "@ec/domain/schemas/utils";
 import { Effect as E, Schema as S, Struct } from "effect";
+
+// ISSUES ------------------------------------------------------------------------------------------------------------------------------
+export const NEWS_SUBSCRIPTION_ISSUE = {
+  consentRequired: "NEWS_SUBSCRIPTION_CONSENT_REQUIRED",
+} as const;
 
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sLegalTextId = GenericId.GenericId("legalTexts");
@@ -24,25 +29,25 @@ export const sNewsSubscriptionDoc = sNewsSubscriptionFields.pipe(S.fieldsAssign(
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const sNewsSubscriptionCreate = sNewsSubscriptionFields.mapFields(Struct.pick(["privacyNoticeId", "profileId", "requestedAt"]));
 
+// PATCH -----------------------------------------------------------------------------------------------------------------------------------
+export const sNewsSubscriptionPatch = sNewsSubscriptionFields
+  .mapFields(Struct.pick(["confirmedAt", "confirmedFrom", "privacyNoticeId", "requestedAt", "unsubscribedAt"]))
+  .mapFields(Struct.map(S.optionalKey));
+
 // UPSERT ----------------------------------------------------------------------------------------------------------------------------------
-export const sNewsSubscriptionUpsertValues = S.toStandardSchemaV1(
-  S.Struct({
-    consent: S.toStandardSchemaV1(
-      S.Boolean.check(S.makeFilter((value) => value, { message: "Vous devez accepter de recevoir la lettre" }))
-    ),
-    email: S.toStandardSchemaV1(sCanonicalEmailValue),
-    firstName: S.toStandardSchemaV1(S.Trim),
-    privacyNoticeId: S.toStandardSchemaV1(sLegalTextId),
-    website: S.toStandardSchemaV1(S.Trim),
-  })
-);
+export const sNewsSubscriptionUpsertValues = S.Struct({
+  consent: S.Boolean.check(S.makeFilter((value) => value, { message: NEWS_SUBSCRIPTION_ISSUE.consentRequired })),
+  email: sCanonicalEmail,
+  firstName: S.Trim,
+  privacyNoticeId: sLegalTextId,
+  website: S.Trim,
+});
 
 export const sNewsSubscriptionUpsert = S.Struct({
   consent: S.Boolean.check(S.makeFilter((value): value is true => value)),
   email: sCanonicalEmail,
-  firstName: sOptionalTrim,
+  firstName: sTrimOptional,
   privacyNoticeId: sLegalTextId,
-  requestIp: S.Trim.check(S.isNonEmpty()),
   website: S.Trim.pipe(S.withDecodingDefault(E.succeed(""))),
 });
 
@@ -52,6 +57,7 @@ export type NewsSubscriptions = {
   Create: typeof sNewsSubscriptionCreate.Type;
   Doc: typeof sNewsSubscriptionDoc.Type;
   Fields: typeof sNewsSubscriptionFields.Type;
+  Patch: typeof sNewsSubscriptionPatch.Type;
   Upsert: typeof sNewsSubscriptionUpsert.Type;
   UpsertValues: typeof sNewsSubscriptionUpsertValues.Type;
 };

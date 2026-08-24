@@ -22,3 +22,4 @@ Exploration and evolving notes may remain in the Niama Obsidian vault. When a re
 - [0012: Separate public and authenticated applications](0012-separate-public-and-authenticated-applications.md)
 - [0013: Apply security policy per application](0013-application-specific-security-policies.md)
 - [0014: Adopt Effect Schema through effex and public Confect primitives](0014-adopt-effect-schema-through-effex-confect-primitives.md)
+- [0015: Adopt Confect and Effect Schema architecture](0015-adopt-confect-and-effect-schema-architecture.md)

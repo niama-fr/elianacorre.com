@@ -1,14 +1,16 @@
 import { register as registerBetterAuth } from "@convex-dev/better-auth/test";
-import { z } from "@ec/validation/zod";
+import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
+import { sCanonicalEmail } from "@ec/domain/schemas/utils";
 import { convexTest, type TestConvex } from "convex-test";
+import { Schema as S } from "effect";
 import { vi } from "vitest";
 
 import { components } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
 import { modules } from "./test.setup";
 
-const zAuthUser = z.object({ _id: z.string(), email: z.email() });
-const zAuthSession = z.object({ _id: z.string() });
+const sAuthUser = S.Struct({ _id: S.String, email: sCanonicalEmail });
+const sAuthSession = S.Struct({ _id: S.String });
 
 export const createBackend = () => {
   vi.stubEnv("APP_SITE_URL", "https://app.example.com");
@@ -17,6 +19,7 @@ export const createBackend = () => {
   vi.stubEnv("SUPPRESSION_HASH_SECRET", "test-suppression-secret");
   const convex = convexTest(schema, modules);
   registerBetterAuth(convex);
+  registerRateLimiter(convex);
   return convex;
 };
 
@@ -26,7 +29,7 @@ export const createIdentity = async (
   { emailVerified = true }: { emailVerified?: boolean } = {}
 ) => {
   const now = Date.now();
-  const user = zAuthUser.parse(
+  const user = S.decodeUnknownSync(sAuthUser)(
     await convex.mutation(components.betterAuth.adapter.create, {
       input: {
         data: { createdAt: now, email: `${role}@example.com`, emailVerified, name: role, updatedAt: now },
@@ -34,7 +37,7 @@ export const createIdentity = async (
       },
     })
   );
-  const session = zAuthSession.parse(
+  const session = S.decodeUnknownSync(sAuthSession)(
     await convex.mutation(components.betterAuth.adapter.create, {
       input: {
         data: { createdAt: now, expiresAt: now + 60_000, token: `${role}-session`, updatedAt: now, userId: user._id },

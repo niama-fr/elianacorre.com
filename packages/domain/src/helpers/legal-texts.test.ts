@@ -1,7 +1,7 @@
 import { Schema as S } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { sMarkdownContent } from "../schemas/legal-texts";
+import { sTrimRequired } from "../schemas/utils";
 import { PRIVACY_NOTICE } from "./legal-texts";
 
 describe("newsletter privacy notice", () => {
@@ -32,6 +32,6 @@ describe("newsletter privacy notice", () => {
   });
 
   it("rejects blank Markdown at the storage boundary", () => {
-    expect(S.is(sMarkdownContent)("   ")).toBeFalsy();
+    expect(S.is(sTrimRequired)("   ")).toBeFalsy();
   });
 });

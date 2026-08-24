@@ -2,15 +2,16 @@ import { FunctionImpl, GroupImpl } from "@confect/server";
 import { classifyLoopsTaskFailure, isLoopsTaskPending, isLoopsTaskRetryable } from "@ec/domain/helpers/loops-tasks";
 import { Cause as C, Effect as E, Layer as L, Option as O } from "effect";
 
+import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded, requireLoopsTask, takeFailedLoopsTasks } from "../data/loops-tasks";
+import { getNewsConfirmation } from "../data/news-confirmations";
+import { getProfile } from "../data/profiles";
 import {
   acknowledgeFailedLoopsTask,
   executeLoopsTask,
   processLoopsWebhook as processLoopsWebhookBusiness,
   replayFailedLoopsTask,
-} from "../business/loops";
-import { getLoopsTask, markLoopsTaskFailed, markLoopsTaskSucceeded, takeFailedLoopsTasks } from "../data/loops-tasks";
-import { getProfile } from "../data/profiles";
-import { currentAdminLayer } from "../runtime/current-profile";
+} from "../features/loops";
+import { currentAdminLayer } from "../infra/current-profile";
 import refs from "./_generated/refs";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx, QueryRunner } from "./_generated/services";
@@ -48,7 +49,7 @@ const acknowledgeFailedTask = FunctionImpl.make(databaseSchema, spec, "acknowled
   E.gen(function* () {
     const ctx = yield* MutationCtx;
 
-    return yield* acknowledgeFailedLoopsTask(loopsTaskId, Date.now()).pipe(E.orDie, E.as(null), E.provide(currentAdminLayer(ctx)));
+    return yield* acknowledgeFailedLoopsTask(loopsTaskId, Date.now()).pipe(E.as(null), E.provide(currentAdminLayer(ctx)));
   })
 );
 
@@ -57,11 +58,8 @@ const replayFailedTask = FunctionImpl.make(databaseSchema, spec, "replayFailedTa
     const ctx = yield* MutationCtx;
 
     return yield* E.gen(function* () {
-      const task = yield* getLoopsTask(loopsTaskId);
-
-      if (O.isNone(task)) return yield* E.die(new Error("UNKNOWN_LOOPS_TASK"));
-
-      return yield* replayFailedLoopsTask(task.value).pipe(E.orDie);
+      const task = yield* requireLoopsTask(loopsTaskId);
+      return yield* replayFailedLoopsTask(task);
     }).pipe(E.provide(currentAdminLayer(ctx)));
   })
 );
@@ -75,6 +73,7 @@ const getExecutionPayload = FunctionImpl.make(databaseSchema, spec, "getExecutio
     if (task.value.status === "succeeded") return null;
     if (task.value.status === "failed") return yield* E.die(new Error("LOOPS_TASK_ALREADY_FAILED"));
     if (task.value.kind === "deleteContact") return { profile: null, task: task.value };
+    if (task.value.kind === "sendConfirmationEmail" && O.isNone(yield* getNewsConfirmation(task.value.newsConfirmationId))) return null;
 
     const profile = yield* getProfile(task.value.profileId);
 

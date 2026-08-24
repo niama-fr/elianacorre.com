@@ -1,11 +1,11 @@
 import { GenericId, SystemFields } from "@confect/core";
 import { Schema as S, Struct } from "effect";
 
+import { sStrictNatural, sTrimRequired } from "./utils";
+
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
 const sProfileId = GenericId.GenericId("profiles");
 const sStorageId = GenericId.GenericId("_storage");
-
-const sEbookTitle = S.Trim.check(S.isMinLength(1));
 
 const sEbookUrl = S.String.check(S.makeFilter((value) => URL.canParse(value)));
 
@@ -19,10 +19,10 @@ export const sEbookFields = S.Struct({
   publishedBy: S.NullOr(sProfileId),
   status: sEbookStatus,
   storageId: sStorageId,
-  title: sEbookTitle,
+  title: sTrimRequired,
   updatedAt: S.Finite,
   uploadedBy: sProfileId,
-  version: S.Finite,
+  version: sStrictNatural,
 });
 
 export const sEbookDoc = sEbookFields.pipe(S.fieldsAssign(SystemFields.SystemFields("ebooks").fields));
@@ -41,6 +41,12 @@ export const sEbook = sEbookDto;
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
 export const sEbookCreate = sEbookFields.mapFields(Struct.pick(["fileName", "storageId", "title"]));
 
+// PATCH -----------------------------------------------------------------------------------------------------------------------------------
+export const sEbookPatch = S.Union([
+  sEbookFields.mapFields(Struct.pick(["updatedAt"])).pipe(S.fieldsAssign({ status: S.Literal("archived") })),
+  sEbookFields.mapFields(Struct.pick(["publishedAt", "publishedBy", "updatedAt"])).pipe(S.fieldsAssign({ status: S.Literal("published") })),
+]);
+
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Ebooks = {
   Create: typeof sEbookCreate.Type;
@@ -48,5 +54,6 @@ export type Ebooks = {
   Dto: typeof sEbookDto.Type;
   Entity: typeof sEbook.Type;
   Fields: typeof sEbookFields.Type;
+  Patch: typeof sEbookPatch.Type;
   Status: typeof sEbookStatus.Type;
 };

@@ -5,6 +5,16 @@ import { Effect as E } from "effect";
 import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
 import { dieOnDecodeError, dieOnEncodeError } from "./confect";
 
+// GET =------------------------------------------------------------------------------------------------------------------------------------
+export const getLatestProfileContactRequest = E.fn(function* (profileId: Id<"profiles">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("contactRequests")
+    .index("by_profile_id", (q) => q.eq("profileId", profileId), "desc")
+    .first()
+    .pipe(dieOnDecodeError);
+});
+
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
 export const takeProfileContactRequests = E.fn(function* (limit: number, profileId: Id<"profiles">) {
   const reader = yield* DatabaseReader;

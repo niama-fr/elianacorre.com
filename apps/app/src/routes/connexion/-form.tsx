@@ -5,7 +5,7 @@ import { cva } from "class-variance-authority";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth/client";
+import { authClient } from "@/infra/auth/client";
 import * as m from "@/paraglide/messages";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------

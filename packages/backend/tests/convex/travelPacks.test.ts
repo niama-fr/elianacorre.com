@@ -1,5 +1,5 @@
 import type { Id } from "@ec/backend/types";
-import { TRAVEL_PACK_ERROR, type TravelPacks } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ISSUE, type TravelPacks } from "@ec/domain/schemas/travel-packs";
 import type { TestConvex } from "convex-test";
 import { describe, expect, it } from "vitest";
 
@@ -188,7 +188,7 @@ describe("Travel Pack administration", () => {
         })
       )
     ).resolves.toStrictEqual({
-      error: TRAVEL_PACK_ERROR.notEditable,
+      error: TRAVEL_PACK_ISSUE.notEditable,
     });
   });
 
@@ -209,7 +209,7 @@ describe("Travel Pack administration", () => {
         })
       )
     ).resolves.toStrictEqual({
-      error: TRAVEL_PACK_ERROR.coverInvalid,
+      error: TRAVEL_PACK_ISSUE.coverInvalid,
     });
   });
 
@@ -230,7 +230,7 @@ describe("Travel Pack administration", () => {
         })
       )
     ).resolves.toStrictEqual({
-      error: TRAVEL_PACK_ERROR.pdfInvalid,
+      error: TRAVEL_PACK_ISSUE.pdfInvalid,
     });
   });
 
@@ -361,7 +361,7 @@ describe("Travel Pack administration", () => {
         })
       )
     ).resolves.toStrictEqual({
-      error: TRAVEL_PACK_ERROR.coverInvalid,
+      error: TRAVEL_PACK_ISSUE.coverInvalid,
     });
 
     await expect(getPack(asAdmin, travelPackId)).resolves.toMatchObject({
@@ -386,7 +386,7 @@ describe("Travel Pack administration", () => {
         })
       )
     ).resolves.toStrictEqual({
-      error: TRAVEL_PACK_ERROR.pdfInvalid,
+      error: TRAVEL_PACK_ISSUE.pdfInvalid,
     });
 
     await expect(getPack(asAdmin, travelPackId)).resolves.toMatchObject({

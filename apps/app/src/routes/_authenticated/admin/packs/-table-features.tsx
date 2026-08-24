@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { createColumnHelper, tableFeatures } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
 
-import { TravelPackStatusBadge } from "@/features/travel-packs/status-badge";
+import { TravelPackStatusBadge } from "@/features/travel-packs/components/status-badge";
 import * as m from "@/paraglide/messages";
 
 // FEATURES --------------------------------------------------------------------------------------------------------------------------------

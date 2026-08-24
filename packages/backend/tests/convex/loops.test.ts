@@ -55,21 +55,23 @@ const listFailedTasks = async (convex: QueryCaller) =>
     })
   );
 
+const acknowledgeFailedTaskEffect = (convex: MutationCaller, args: Ref.Args<typeof refs.public.loops.acknowledgeFailedTask>) =>
+  Ref.runWithCodec(refs.public.loops.acknowledgeFailedTask, args, async (functionReference, encodedArgs): Promise<unknown> => {
+    const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
+    return encodedReturns;
+  });
+
 const acknowledgeFailedTask = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.loops.acknowledgeFailedTask>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.loops.acknowledgeFailedTask, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
+  await E.runPromise(acknowledgeFailedTaskEffect(convex, args));
+
+const replayFailedTaskEffect = (convex: MutationCaller, args: Ref.Args<typeof refs.public.loops.replayFailedTask>) =>
+  Ref.runWithCodec(refs.public.loops.replayFailedTask, args, async (functionReference, encodedArgs): Promise<unknown> => {
+    const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
+    return encodedReturns;
+  });
 
 const replayFailedTask = async (convex: MutationCaller, args: Ref.Args<typeof refs.public.loops.replayFailedTask>) =>
-  await E.runPromise(
-    Ref.runWithCodec(refs.public.loops.replayFailedTask, args, async (functionReference, encodedArgs): Promise<unknown> => {
-      const encodedReturns: unknown = await convex.mutation(functionReference, encodedArgs as never);
-      return encodedReturns;
-    })
-  );
+  await E.runPromise(replayFailedTaskEffect(convex, args));
 
 const inspectPrivacySubject = async (convex: QueryCaller, args: Ref.Args<typeof refs.public.privacy.inspectSubject>) =>
   await E.runPromise(
@@ -136,6 +138,37 @@ describe("Loops delivery administration", () => {
       replayCount: 1,
       status: "pending",
       workflowIds: ["test-workflow-1", "workflow-original"],
+    });
+  });
+
+  it("transports expected missing and non-failed task states through Confect", async () => {
+    const convex = createBackend();
+    const asAdmin = await createIdentity(convex, "admin");
+    const { deletedTaskId, pendingTaskId } = await convex.run(async (ctx) => {
+      const profileId = await ctx.db.insert("profiles", { email: "reader@example.com", role: "contact" });
+      const create = {
+        acknowledgedAt: null,
+        failure: null,
+        finishedAt: null,
+        idempotencyKey: "typed-error-test",
+        kind: "syncContact" as const,
+        profileId,
+        replayCount: 0,
+        status: "pending" as const,
+        subscribed: true,
+        workflowIds: [],
+      };
+      const createdPendingTaskId = await ctx.db.insert("loopsTasks", create);
+      const createdDeletedTaskId = await ctx.db.insert("loopsTasks", { ...create, idempotencyKey: "deleted-task" });
+      await ctx.db.delete(createdDeletedTaskId);
+      return { deletedTaskId: createdDeletedTaskId, pendingTaskId: createdPendingTaskId };
+    });
+
+    await expect(E.runPromise(E.flip(acknowledgeFailedTaskEffect(asAdmin, { loopsTaskId: deletedTaskId })))).resolves.toMatchObject({
+      _tag: "LoopsTaskNotFound",
+    });
+    await expect(E.runPromise(E.flip(replayFailedTaskEffect(asAdmin, { loopsTaskId: pendingTaskId })))).resolves.toMatchObject({
+      _tag: "LoopsTaskNotFailed",
     });
   });
 });

@@ -1,6 +1,5 @@
 import { SystemFields } from "@confect/core";
 import { Schema as S } from "effect";
-import { z } from "zod";
 
 // FAILURE PHASE ---------------------------------------------------------------------------------------------------------------------------
 export const retentionRunFailurePhases = ["downloads", "profiles", "tasks", "webhooks"] as const;
@@ -14,10 +13,10 @@ export const sRetentionRunStatus = S.Literals(statuses);
 
 // COUNTS ----------------------------------------------------------------------------------------------------------------------------------
 export const sRetentionRunCounts = S.Struct({
-  anonymizedFormerProfiles: S.Finite,
-  anonymizedPendingProfiles: S.Finite,
-  deletedDownloads: S.Finite,
-  deletedTechnicalLogs: S.Finite,
+  anonymizedFormerProfiles: S.Natural,
+  anonymizedPendingProfiles: S.Natural,
+  deletedDownloads: S.Natural,
+  deletedTechnicalLogs: S.Natural,
 });
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
@@ -32,10 +31,6 @@ export const sRetentionRunFields = sRetentionRunCounts.pipe(
 );
 
 export const sRetentionRunDoc = sRetentionRunFields.pipe(S.fieldsAssign(SystemFields.SystemFields("retentionRuns").fields));
-
-// LEGACY ----------------------------------------------------------------------------------------------------------------------------------
-// Temporary while convex/retention.ts still uses Zod function arguments.
-export const zRetentionRunFailurePhase = z.literal(retentionRunFailurePhases);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type RetentionRuns = {

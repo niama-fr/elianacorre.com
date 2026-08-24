@@ -5,18 +5,26 @@ import { sNewsRestrictionDoc } from "@ec/domain/schemas/news-restrictions";
 import { sNewsSubscriptionDoc } from "@ec/domain/schemas/news-subscriptions";
 import {
   sPrivacyAuditEntry,
+  sPrivacyAuditFinalOutcome,
   sPrivacyAuditOutcome,
   sPrivacyAuditRequestKind,
   sPrivacyAuditVerificationCreate,
 } from "@ec/domain/schemas/privacy-audits";
 import { sProfile } from "@ec/domain/schemas/profiles";
-import { sCanonicalEmail, sConfirmedEmailPayload, sOptionalTrim } from "@ec/domain/schemas/utils";
+import { sCanonicalEmail, sConfirmedEmailPayload, sTrimOptional } from "@ec/domain/schemas/utils";
 import { Schema as S, Struct } from "effect";
 
 import { Id } from "./_generated/id";
+import type { erasureWorkflow } from "./privacy-erasure";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-const sOutcomeResult = S.Struct({ outcome: S.Literals(["completed", "rejected"]) });
+const sOutcomeResult = S.Struct({ outcome: sPrivacyAuditFinalOutcome });
+const sErasureOutcomeResult = S.Struct({ outcome: sPrivacyAuditOutcome });
+const sErasureArgs = S.Struct({
+  email: sCanonicalEmail,
+  privacyAuditId: Id("privacyAudits"),
+  profileId: Id("profiles"),
+});
 
 export const sPrivacySubject = S.Struct({
   deliveryEligibility: S.Struct({
@@ -47,7 +55,7 @@ export const sPrivacySubjectReturn = S.NullOr(sPrivacySubject);
 
 export const sPrivacyDataRequestReturn = S.Struct({
   data: S.NullOr(sPrivacySubject),
-  outcome: sPrivacyAuditOutcome,
+  outcome: sPrivacyAuditFinalOutcome,
 });
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
@@ -76,7 +84,7 @@ export default GroupSpec.make()
       args: () => sConfirmedEmailPayload,
       error: () => sAuthError,
       name: "fulfillErasureRequest",
-      returns: () => sOutcomeResult,
+      returns: () => sErasureOutcomeResult,
     })
   )
   .addFunction(
@@ -97,7 +105,7 @@ export default GroupSpec.make()
   )
   .addFunction(
     FunctionSpec.publicMutation({
-      args: () => sConfirmedEmailPayload.pipe(S.fieldsAssign({ firstName: sOptionalTrim })),
+      args: () => sConfirmedEmailPayload.pipe(S.fieldsAssign({ firstName: sTrimOptional })),
       error: () => sAuthError,
       name: "fulfillRectificationRequest",
       returns: () => sOutcomeResult,
@@ -129,6 +137,34 @@ export default GroupSpec.make()
   )
 
   // INTERNAL MUTATIONS ---------------------------------------------------------------------------------------------------------------------
+  .addFunction(FunctionSpec.convexInternalMutation<typeof erasureWorkflow>()("erasureWorkflow"))
+  .addFunction(
+    FunctionSpec.internalMutation({
+      args: () => sErasureArgs,
+      name: "completeErasure",
+      returns: () => S.Boolean,
+    })
+  )
+  .addFunction(
+    FunctionSpec.internalMutation({
+      args: () =>
+        sErasureArgs.pipe(
+          S.fieldsAssign({
+            phase: S.Literals([
+              "contactRequests",
+              "ebookIssuances",
+              "identities",
+              "loopsTasks",
+              "loopsWebhooks",
+              "newsRestrictions",
+              "newsSubscriptions",
+            ]),
+          })
+        ),
+      name: "eraseBatch",
+      returns: () => S.Struct({ done: S.Boolean }),
+    })
+  )
   .addFunction(
     FunctionSpec.internalMutation({
       args: () => S.Struct({ privacyGrantId: Id("privacyGrants") }),

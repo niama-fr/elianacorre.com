@@ -1,5 +1,6 @@
+import { sCanonicalEmail } from "@ec/domain/schemas/utils";
+import { Schema as S } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
 
 import { components } from "../../convex/_generated/api";
 import { createBackend } from "./test.auth";
@@ -9,9 +10,9 @@ const AUTH_SECRET = "test-better-auth-secret-at-least-32-bytes";
 const SESSION_COOKIE_NAME = "__Secure-better-auth.session_token";
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-const zAuthResponse = z.object({ url: z.url() });
-const zAuthUser = z.object({ _id: z.string(), email: z.email() });
-const zAuthSession = z.object({ _id: z.string(), token: z.string(), updatedAt: z.number() });
+const sAuthResponse = S.Struct({ url: S.String.check(S.makeFilter((value) => URL.canParse(value))) });
+const sAuthUser = S.Struct({ _id: S.String, email: sCanonicalEmail });
+const sAuthSession = S.Struct({ _id: S.String, token: S.String, updatedAt: S.Finite });
 
 type Backend = ReturnType<typeof createBackend>;
 
@@ -25,7 +26,7 @@ const createSignedSessionCookie = async (token: string): Promise<string> => {
 };
 
 const createPersistedSession = async (backend: Backend, expiresAt: number, updatedAt: number) => {
-  const user = zAuthUser.parse(
+  const user = S.decodeUnknownSync(sAuthUser)(
     await backend.mutation(components.betterAuth.adapter.create, {
       input: {
         data: { createdAt: updatedAt, email: "admin@example.com", emailVerified: true, name: "Admin", updatedAt },
@@ -33,7 +34,7 @@ const createPersistedSession = async (backend: Backend, expiresAt: number, updat
       },
     })
   );
-  const session = zAuthSession.parse(
+  const session = S.decodeUnknownSync(sAuthSession)(
     await backend.mutation(components.betterAuth.adapter.create, {
       input: {
         data: { createdAt: updatedAt, expiresAt, token: "persisted-session", updatedAt, userId: user._id },
@@ -95,7 +96,7 @@ describe("Better Auth HTTP boundary", () => {
     });
 
     expect(response.status).toBe(200);
-    const body = zAuthResponse.parse(await response.json());
+    const body = S.decodeUnknownSync(sAuthResponse)(await response.json());
     const authorizationUrl = new URL(body.url);
     expect(authorizationUrl.origin).toBe(authorizationOrigin);
     expect(authorizationUrl.searchParams.get("redirect_uri")).toBe(redirectURI);
@@ -130,7 +131,7 @@ describe("Better Auth HTTP boundary", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ user: { email: user.email } });
-    const refreshedSession = zAuthSession.parse(await findSession(backend, session._id));
+    const refreshedSession = S.decodeUnknownSync(sAuthSession)(await findSession(backend, session._id));
     expect(refreshedSession.updatedAt).toBeGreaterThan(staleUpdatedAt);
   });
 

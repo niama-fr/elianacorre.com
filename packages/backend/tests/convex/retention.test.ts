@@ -1,15 +1,15 @@
 import { Ref } from "@confect/core";
 import { getStatus } from "@convex-dev/workflow";
-import type { PrivacyRetentionBatchResult } from "@ec/backend/business/privacy-retention";
+import type { PrivacyRetentionBatchResult } from "@ec/backend/features/privacy-retention";
 import refs from "@ec/backend/refs";
 import type { TestConvex } from "convex-test";
 import { convexTest } from "convex-test";
 import { Effect as E } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { executeRetentionWorkflow } from "../../business/privacy-retention";
 import { internal } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
+import { executeRetentionWorkflow } from "../../features/privacy-retention";
 import { createBackend, createIdentity } from "./test.auth";
 import { modules } from "./test.setup";
 

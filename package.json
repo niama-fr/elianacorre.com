@@ -10,6 +10,7 @@
   "scripts": {
     "build": "turbo build",
     "check": "bun run --filter @ec/app paraglide:compile && oxfmt --check . && oxlint .",
+    "codegen": "turbo codegen",
     "delivery:report": "bun run scripts/report-client-javascript.ts",
     "dev": "turbo dev",
     "fix": "oxfmt --write . && oxlint --fix .",

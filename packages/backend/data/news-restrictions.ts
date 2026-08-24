@@ -42,7 +42,7 @@ export const createProviderNewsRestriction = E.fn(function* (payload: NewsRestri
 });
 
 // PATCH ----------------------------------------------------------------------------------------------------------------------------------
-export const patchNewsRestriction = E.fn(function* (id: Id<"newsRestrictions">, patch: Partial<NewsRestrictions["Fields"]>) {
+export const patchNewsRestriction = E.fn(function* (id: Id<"newsRestrictions">, patch: NewsRestrictions["Patch"]) {
   const writer = yield* DatabaseWriter;
   return yield* writer.table("newsRestrictions").patch(id, patch).pipe(dieOnPatchError);
 });

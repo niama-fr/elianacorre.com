@@ -7,8 +7,8 @@ import {
   requireTravelPackDto,
   suggestTravelPackSlug,
   updateTravelPackDraft,
-} from "../business/travel-packs";
-import { currentAdminLayer } from "../runtime/current-profile";
+} from "../features/travel-packs";
+import { currentAdminLayer } from "../infra/current-profile";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";
 import spec from "./travelPacks.spec";
@@ -42,7 +42,9 @@ const create = FunctionImpl.make(databaseSchema, spec, "create", ({ title }) =>
 
     return yield* createTravelPackDraft(title, Date.now()).pipe(
       E.map((data) => ({ data }) as const),
-      E.catchTag("TravelPackFailure", ({ code }) => E.succeed({ error: code } as const)),
+      E.catchTags({
+        ValidationFailure: ({ code }) => E.succeed({ error: code } as const),
+      }),
       E.provide(currentAdminLayer(ctx))
     );
   })
@@ -54,7 +56,10 @@ const update = FunctionImpl.make(databaseSchema, spec, "update", (args) =>
 
     return yield* updateTravelPackDraft(args, Date.now()).pipe(
       E.map((slug) => ({ data: { slug } }) as const),
-      E.catchTag("TravelPackFailure", ({ code }) => E.succeed({ error: code } as const)),
+      E.catchTags({
+        TravelPackFailure: ({ code }) => E.succeed({ error: code } as const),
+        ValidationFailure: ({ code }) => E.succeed({ error: code } as const),
+      }),
       E.provide(currentAdminLayer(ctx))
     );
   })

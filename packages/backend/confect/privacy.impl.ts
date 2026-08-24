@@ -1,7 +1,13 @@
 import { FunctionImpl, GroupImpl } from "@confect/server";
+import { start } from "@convex-dev/workflow";
+import type { Id } from "@ec/backend/types";
+import { anyApi, type FunctionReference } from "convex/server";
 import { Effect as E, Layer as L } from "effect";
 
+import { deletePrivacyGrant } from "../data/privacy-grants";
 import {
+  completePrivacyErasure,
+  erasePrivacySubjectBatch,
   inspectPrivacySubject,
   processPrivacyAccess,
   processPrivacyErasure,
@@ -11,12 +17,21 @@ import {
   processPrivacySuppressionRemoval,
   processPrivacyUnsubscription,
   processPrivacyVerification,
-} from "../business/privacy";
-import { deletePrivacyGrant } from "../data/privacy-grants";
-import { currentAdminLayer } from "../runtime/current-profile";
+} from "../features/privacy";
+import { currentAdminLayer } from "../infra/current-profile";
 import databaseSchema from "./_generated/schema";
 import { MutationCtx, QueryCtx } from "./_generated/services";
+import { erasureWorkflow } from "./privacy-erasure";
 import spec from "./privacy.spec";
+
+const erasureWorkflowImpl = FunctionImpl.make(databaseSchema, spec, "erasureWorkflow", erasureWorkflow);
+type ErasureWorkflowArgs = {
+  email: string;
+  privacyAuditId: Id<"privacyAudits">;
+  profileId: Id<"profiles">;
+};
+// A same-module generated ref creates a recursive inferred type. The explicit annotation keeps this internal boundary typed.
+const erasureWorkflowRef: FunctionReference<"mutation", "internal", ErasureWorkflowArgs, void> = anyApi.privacy.erasureWorkflow;
 
 // QUERIES ---------------------------------------------------------------------------------------------------------------------------------
 const inspectSubject = FunctionImpl.make(databaseSchema, spec, "inspectSubject", ({ email }) =>
@@ -37,7 +52,9 @@ const fulfillAccessRequest = FunctionImpl.make(databaseSchema, spec, "fulfillAcc
 const fulfillErasureRequest = FunctionImpl.make(databaseSchema, spec, "fulfillErasureRequest", ({ email }) =>
   E.gen(function* () {
     const ctx = yield* MutationCtx;
-    return yield* processPrivacyErasure(email).pipe(E.provide(currentAdminLayer(ctx)));
+    const result = yield* processPrivacyErasure(email).pipe(E.provide(currentAdminLayer(ctx)));
+    if ("erasure" in result) yield* E.promise(async () => await start(ctx, erasureWorkflowRef, result.erasure));
+    return { outcome: result.outcome };
   })
 );
 
@@ -91,8 +108,13 @@ const expireGrant = FunctionImpl.make(databaseSchema, spec, "expireGrant", ({ pr
   })
 );
 
+const eraseBatch = FunctionImpl.make(databaseSchema, spec, "eraseBatch", (args) => erasePrivacySubjectBatch(args));
+
+const completeErasure = FunctionImpl.make(databaseSchema, spec, "completeErasure", (args) => completePrivacyErasure(args));
+
 // IMPL ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupImpl.make(databaseSchema, spec).pipe(
+  L.provide(erasureWorkflowImpl),
   L.provide(inspectSubject),
   L.provide(fulfillAccessRequest),
   L.provide(fulfillErasureRequest),
@@ -102,6 +124,8 @@ export default GroupImpl.make(databaseSchema, spec).pipe(
   L.provide(fulfillSuppressionRemovalRequest),
   L.provide(fulfillUnsubscriptionRequest),
   L.provide(recordVerification),
+  L.provide(eraseBatch),
+  L.provide(completeErasure),
   L.provide(expireGrant),
   GroupImpl.finalize
 );

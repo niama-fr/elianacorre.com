@@ -1,3 +1,3 @@
 import { Schema as S } from "effect";
 
-export class PrivacyNoticeNotFound extends S.TaggedError<PrivacyNoticeNotFound>()("ProfileNotFound", {}) {}
+export class PrivacyNoticeNotFound extends S.TaggedError<PrivacyNoticeNotFound>()("PrivacyNoticeNotFound", {}) {}

@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../convex/_generated/api";
 import { createBackend, createIdentity } from "./test.auth";
 
+const EXPORTED_AT = Date.UTC(2026, 7, 23);
+
 describe("newsletter portability export", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -14,9 +16,9 @@ describe("newsletter portability export", () => {
     const asAdmin = await createIdentity(convex, "admin");
     const asMember = await createIdentity(convex, "member");
 
-    await expect(convex.query(api.newsletter.exportData, { format: "json" })).rejects.toThrow("Unauthenticated");
-    await expect(asMember.query(api.newsletter.exportData, { format: "csv" })).rejects.toThrow("Unauthorized");
-    await expect(asAdmin.query(api.newsletter.exportData, { format: "json" })).resolves.toMatchObject({
+    await expect(convex.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" })).rejects.toThrow("Unauthenticated");
+    await expect(asMember.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "csv" })).rejects.toThrow("Unauthorized");
+    await expect(asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" })).resolves.toMatchObject({
       contentType: "application/json",
     });
   });
@@ -91,8 +93,8 @@ describe("newsletter portability export", () => {
     });
 
     const result = {
-      csv: await asAdmin.query(api.newsletter.exportData, { format: "csv" }),
-      json: await asAdmin.query(api.newsletter.exportData, { format: "json" }),
+      csv: await asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "csv" }),
+      json: await asAdmin.query(api.newsletter.exportData, { exportedAt: EXPORTED_AT, format: "json" }),
     };
 
     expect({

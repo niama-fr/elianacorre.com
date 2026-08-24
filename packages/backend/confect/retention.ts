@@ -2,7 +2,7 @@ import { internal } from "@ec/backend/api";
 import { v } from "convex/values";
 import { Effect as E } from "effect";
 
-import { executeRetentionWorkflow } from "../business/privacy-retention";
+import { executeRetentionWorkflow } from "../features/privacy-retention";
 import { workflowManager } from "./workflow";
 
 // WORKFLOWS -------------------------------------------------------------------------------------------------------------------------------

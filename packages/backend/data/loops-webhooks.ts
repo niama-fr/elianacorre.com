@@ -38,7 +38,7 @@ export const createLoopsWebhook = E.fn(function* (create: LoopsWebhooks["Create"
 });
 
 // PATCH ----------------------------------------------------------------------------------------------------------------------------------
-export const patchLoopsWebhook = E.fn(function* (id: Id<"loopsWebhooks">, patch: Partial<LoopsWebhooks["Fields"]>) {
+export const patchLoopsWebhook = E.fn(function* (id: Id<"loopsWebhooks">, patch: LoopsWebhooks["Patch"]) {
   const writer = yield* DatabaseWriter;
   yield* writer.table("loopsWebhooks").patch(id, patch).pipe(dieOnPatchError);
 });

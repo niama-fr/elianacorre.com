@@ -1,7 +1,6 @@
 import { GenericId, SystemFields } from "@confect/core";
 import { sCanonicalEmail } from "@ec/domain/schemas/utils";
 import { Schema as S } from "effect";
-import { z } from "zod";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
 const kinds = ["deleteContact", "sendConfirmationEmail", "sendEbookEmail", "syncContact"] as const;
@@ -34,7 +33,7 @@ const sTerminalWorkflowIds = sWorkflowIds.check(S.isMinLength(1));
 // STATE FIELDS ----------------------------------------------------------------------------------------------------------------------------
 const commonFields = {
   idempotencyKey: S.String,
-  replayCount: S.Finite,
+  replayCount: S.Natural,
 };
 
 const pendingFields = {
@@ -227,10 +226,6 @@ const sSyncContactCreate = S.Struct({
 });
 
 export const sLoopsTaskCreate = S.Union([sDeleteContactCreate, sSendConfirmationEmailCreate, sSendEbookEmailCreate, sSyncContactCreate]);
-
-// LEGACY ----------------------------------------------------------------------------------------------------------------------------------
-// Temporary while convex/loops.ts and classifyLoopsTaskFailure still use Zod.
-export const zLoopsTaskFailure = z.literal(loopsTaskFailures);
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type LoopsTaskDoc = typeof sLoopsTaskDoc.Type;

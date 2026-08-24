@@ -7,12 +7,12 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { subscribeToNewsletter } from "@/lib/newsletter/newsletter.functions";
+import { subscribeToNewsletter } from "@/features/newsletter/newsletter.functions";
 import { NewsletterForm } from "@/routes/-newsletter.form";
 
 vi.mock(import("canvas-confetti"), { spy: true });
 vi.mock(import("sonner"), { spy: true });
-vi.mock(import("@/lib/newsletter/newsletter.functions"), { spy: true });
+vi.mock(import("@/features/newsletter/newsletter.functions"), { spy: true });
 
 const ACTIVE_PRIVACY_NOTICE_ID = "k170e5dj9c8heby7eah6c4mr6h7a7tw5" as Id<"legalTexts">;
 

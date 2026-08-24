@@ -1,17 +1,18 @@
-import { z } from "@ec/validation/zod";
+import { sUrlString } from "@ec/domain/schemas/utils";
 import { createServerOnlyFn } from "@tanstack/react-start";
+import { Effect as E, Schema as S } from "effect";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-const zPublicEnv = z.object({
-  VITE_CONVEX_SITE_URL: z.url(),
-  VITE_CONVEX_URL: z.url(),
+const sPublicEnv = S.Struct({
+  VITE_CONVEX_SITE_URL: sUrlString,
+  VITE_CONVEX_URL: sUrlString,
 });
 
-const zServerEnv = z.object({
-  CSP_MODE: z.literal(["enforce", "report-only"]).default("report-only"),
+const sServerEnv = S.Struct({
+  CSP_MODE: S.optionalKey(S.Literals(["enforce", "report-only"])).pipe(S.withDecodingDefaultTypeKey(E.succeed("report-only"))),
 });
 
 // ENV -------------------------------------------------------------------------------------------------------------------------------------
-export const publicEnv = zPublicEnv.parse(import.meta.env);
+export const publicEnv = S.decodeSync(sPublicEnv)(import.meta.env);
 
-export const getServerEnv = createServerOnlyFn(() => zServerEnv.parse(process.env));
+export const getServerEnv = createServerOnlyFn(() => S.decodeSync(sServerEnv)(process.env));

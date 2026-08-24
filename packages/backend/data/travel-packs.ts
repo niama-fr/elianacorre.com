@@ -49,7 +49,7 @@ export const createTravelPack = E.fn(function* (fields: TravelPacks["Fields"]) {
 });
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchTravelPack = E.fn(function* (id: Id<"travelPacks">, patch: Partial<TravelPacks["Fields"]>) {
+export const patchTravelPack = E.fn(function* (id: Id<"travelPacks">, patch: TravelPacks["Patch"]) {
   const writer = yield* DatabaseWriter;
   yield* writer.table("travelPacks").patch(id, patch).pipe(dieOnPatchError);
 });
