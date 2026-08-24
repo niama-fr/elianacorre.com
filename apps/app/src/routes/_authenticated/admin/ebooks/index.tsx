@@ -82,7 +82,8 @@ function EbookForm() {
 
   const form = useAppForm({
     defaultValues,
-    onSubmit: async ({ value: { file, title } }) => {
+    onSubmit: async ({ value }) => {
+      const { file, title } = S.decodeSync(sEbookCreateForm)(value);
       if (file === null) return;
 
       try {

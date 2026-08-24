@@ -119,7 +119,8 @@ function TravelPackCreateDialogRoute() {
     defaultValues: { title: "" },
     onSubmit: async ({ value }) => {
       try {
-        const result = await createDraft.mutateAsync(value);
+        const decoded = S.decodeSync(sTravelPackCreateForm)(value);
+        const result = await createDraft.mutateAsync(decoded);
         if ("error" in result) throw new Error(result.error);
         form.reset();
         await navigate({ params: { packId: result.data }, to: "/admin/packs/$packId" });
