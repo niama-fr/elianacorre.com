@@ -8,7 +8,7 @@
       "outputs": ["dist/**"]
     },
     "check": {},
-    "codegen": { "cache": false },
+    "codegen": { "cache": false, "passThroughEnv": ["CONVEX_DEPLOY_KEY"] },
     "dev": { "cache": false, "persistent": true },
     "fix": {
       "cache": false
