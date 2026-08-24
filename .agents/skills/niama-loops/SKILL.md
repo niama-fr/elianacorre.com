@@ -29,7 +29,7 @@ import loops from "@devwithbobby/loops/convex.config";
 
 The application-level provider boundary is:
 
-`packages/backend/business/loops.ts`
+`packages/backend/features/loops.ts`
 
 It creates:
 

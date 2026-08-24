@@ -1,30 +1,23 @@
 // @vitest-environment jsdom
 
-import { zLegalText } from "@ec/domain/schemas/legal-texts";
+import type { Id } from "@ec/backend/types";
 import { initialFormState } from "@tanstack/react-form-start";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { subscribeToNewsletter } from "@/lib/newsletter/newsletter.functions";
+import { subscribeToNewsletter } from "@/features/newsletter/newsletter.functions";
 import { NewsletterForm } from "@/routes/-newsletter.form";
 
 vi.mock(import("canvas-confetti"), { spy: true });
 vi.mock(import("sonner"), { spy: true });
-vi.mock(import("@/lib/newsletter/newsletter.functions"), { spy: true });
+vi.mock(import("@/features/newsletter/newsletter.functions"), { spy: true });
 
-const ACTIVE_PRIVACY_NOTICE = zLegalText.parse({
-  _creationTime: 1,
-  _id: "k170e5dj9c8heby7eah6c4mr6h7a7tw5",
-  content: "Notice de confidentialité.",
-  kind: "privacyNotice",
-  publishedAt: 1,
-  publishedBy: "k170e5dj9c8heby7eah6c4mr6h7a7tw5",
-});
+const ACTIVE_PRIVACY_NOTICE_ID = "k170e5dj9c8heby7eah6c4mr6h7a7tw5" as Id<"legalTexts">;
 
 const renderValidNewsletterForm = () => {
-  const view = render(<NewsletterForm privacyNoticeId={ACTIVE_PRIVACY_NOTICE._id} formState={initialFormState} />);
+  const view = render(<NewsletterForm privacyNoticeId={ACTIVE_PRIVACY_NOTICE_ID} formState={initialFormState} />);
 
   fireEvent.change(screen.getByPlaceholderText("Adresse e-mail"), { target: { value: "reader@example.com" } });
   fireEvent.click(screen.getByRole("checkbox"));

@@ -1,30 +1,38 @@
-import { env, type MutationCtx, type QueryCtx } from "@ec/backend/server";
 import { hashCanonicalEmail } from "@ec/domain/helpers/suppressions";
+import { Config, Effect as E, Option as O } from "effect";
+
+import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
+import { dieOnDecodeError, dieOnEncodeError, optionByIndex } from "./confect";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getNewsSuppressionByEmail = async (ctx: QueryCtx, email: string) => {
-  const canonicalEmailHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  return await ctx.db
-    .query("newsSuppressions")
-    .withIndex("by_canonical_email_hash", (q) => q.eq("canonicalEmailHash", canonicalEmailHash))
-    .unique();
-};
+export const getNewsSuppressionByEmail = E.fn(function* (email: string) {
+  const reader = yield* DatabaseReader;
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret });
+  return yield* reader.table("newsSuppressions").get("by_canonical_email_hash", canonicalEmailHash).pipe(optionByIndex);
+});
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const takeNewsSuppressions = async (ctx: QueryCtx, limit: number) => await ctx.db.query("newsSuppressions").take(limit);
+export const takeNewsSuppressions = E.fn(function* (limit: number) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("newsSuppressions").index("by_creation_time").take(limit).pipe(dieOnDecodeError);
+});
 
 // ENSURE ----------------------------------------------------------------------------------------------------------------------------------
-export const ensureNewsSuppression = async (ctx: MutationCtx, email: string) => {
-  const existing = await getNewsSuppressionByEmail(ctx, email);
-  if (existing) return existing._id;
-  const canonicalEmailHash = await hashCanonicalEmail({ email, secret: env.SUPPRESSION_HASH_SECRET });
-  return await ctx.db.insert("newsSuppressions", { canonicalEmailHash });
-};
+export const ensureNewsSuppression = E.fn(function* (email: string) {
+  const writer = yield* DatabaseWriter;
+  const existing = yield* getNewsSuppressionByEmail(email);
+  if (O.isSome(existing)) return existing.value._id;
+  const secret = yield* Config.string("SUPPRESSION_HASH_SECRET").pipe(E.orDie);
+  const canonicalEmailHash = yield* hashCanonicalEmail({ email, secret });
+  return yield* writer.table("newsSuppressions").insert({ canonicalEmailHash }).pipe(dieOnEncodeError);
+});
 
 // DELETE ----------------------------------------------------------------------------------------------------------------------------------
-export const deleteNewsSuppressionByEmail = async (ctx: MutationCtx, email: string) => {
-  const existing = await getNewsSuppressionByEmail(ctx, email);
-  if (!existing) return false;
-  await ctx.db.delete("newsSuppressions", existing._id);
+export const deleteNewsSuppressionByEmail = E.fn(function* (email: string) {
+  const writer = yield* DatabaseWriter;
+  const existing = yield* getNewsSuppressionByEmail(email);
+  if (O.isNone(existing)) return false;
+  yield* writer.table("newsSuppressions").delete(existing.value._id);
   return true;
-};
+});

@@ -5,12 +5,12 @@
   "type": "module",
   "exports": {
     "./api": "./convex/_generated/api.js",
+    "./refs": "./confect/_generated/refs.ts",
     "./server": "./convex/_generated/server.js",
-    "./types": "./convex/_generated/dataModel.d.ts",
-    "./*": "./*.ts"
+    "./types": "./convex/_generated/dataModel.d.ts"
   },
   "scripts": {
-    "codegen": "convex codegen",
+    "codegen": "confect codegen && convex codegen",
     "db:reset:dev": "bun scripts/reset-dev-database.ts",
     "deploy": "convex deploy",
     "deploy:production": "convex deploy --env-file .env.production.local",
@@ -20,28 +20,30 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
+    "@confect/core": "10.0.0-next.17",
+    "@confect/server": "10.0.0-next.17",
     "@convex-dev/better-auth": "^0.12.5",
     "@convex-dev/rate-limiter": "^0.3.2",
-    "@convex-dev/workflow": "^0.4.5",
+    "@convex-dev/workflow": "^0.4.6",
     "@devwithbobby/loops": "npm:@niama/loops@0.2.1",
     "@ec/domain": "workspace:*",
     "@ec/http": "workspace:*",
-    "@ec/validation": "workspace:*",
-    "better-auth": "~1.6.29",
-    "convex": "1.44.0",
+    "better-auth": "1.6.29",
+    "convex": "1.45.0",
     "convex-helpers": "^0.1.123",
-    "jose": "^6.2.9",
+    "effect": "4.0.0-rc.111",
+    "jose": "^6.2.10",
     "standardwebhooks": "^1.0.0",
     "typescript": "^7.0.2"
   },
   "devDependencies": {
+    "@confect/cli": "10.0.0-next.17",
     "@convex-dev/aggregate": "0.2.2",
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
     "@types/node": "^26.2.0",
-    "convex-test": "^0.0.55",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10",
-    "zod": "^4.4.3"
+    "convex-test": "^0.0.56",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

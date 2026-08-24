@@ -8,7 +8,7 @@ const currentProfileQuery = convexQuery(api.profiles.current);
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context: { queryClient, token }, location: { href } }) => {
     if (token === undefined) redirect({ search: { redirect: href }, throw: true, to: "/connexion" });
-    return { profile: await queryClient.ensureQueryData(currentProfileQuery) };
+    return { profile: await queryClient.query({ ...currentProfileQuery, staleTime: "static" }) };
   },
   component: AuthenticatedBoundary,
 });

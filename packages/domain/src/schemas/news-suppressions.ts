@@ -1,18 +1,19 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import z from "zod";
+import { SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSuppressionFields = z.object({
-  canonicalEmailHash: z.string(),
+export const sNewsSuppressionFields = S.Struct({
+  canonicalEmailHash: S.String,
 });
-export const zNewsSuppressionDoc = z.object({ ...zDocCommon("newsSuppressions").shape, ...zNewsSuppressionFields.shape });
+
+export const sNewsSuppressionDoc = sNewsSuppressionFields.pipe(S.fieldsAssign(SystemFields.SystemFields("newsSuppressions").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zNewsSuppressionCreate = zNewsSuppressionFields;
+export const sNewsSuppressionCreate = sNewsSuppressionFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type NewsSuppressions = {
-  Create: z.infer<typeof zNewsSuppressionCreate>;
-  Doc: z.infer<typeof zNewsSuppressionDoc>;
-  Fields: z.infer<typeof zNewsSuppressionFields>;
+  Create: typeof sNewsSuppressionCreate.Type;
+  Doc: typeof sNewsSuppressionDoc.Type;
+  Fields: typeof sNewsSuppressionFields.Type;
 };

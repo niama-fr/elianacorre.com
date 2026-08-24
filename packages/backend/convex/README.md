@@ -16,7 +16,7 @@ packages/backend/convex/
         │ authorization
         │ public/internal API boundary
         ▼
-packages/backend/business/
+packages/backend/features/
         │
         │ application policy
         │ lifecycle decisions
@@ -47,18 +47,15 @@ Examples:
 
 Keep application policy out of entry-point handlers when it can live behind a business function.
 
-A typical entry point should look conceptually like:
+A typical Confect implementation should look conceptually like:
 
 ```ts
-export const subscribe = zMutation({
-  args: zNewsSubscriptionUpsert,
-  handler: async (ctx, args) => {
-    await subscribeToNewsletter(ctx, { now: Date.now(), ...args });
-  },
-});
+const subscribe = FunctionImpl.make(databaseSchema, spec, "subscribe", (args) =>
+  subscribeToNewsletter({ ...args, now: Date.now() })
+);
 ```
 
-### `../business/`
+### `../features/`
 
 Owns application behavior and policy.
 
@@ -97,7 +94,7 @@ Start from the public or internal API used by the caller, then follow the depend
 ```text
 convex/<feature>.ts
         ↓
-business/<feature>.ts
+features/<feature>.ts
         ↓
 data/<table>.ts
 ```
@@ -108,10 +105,10 @@ Use `CONTEXT.md` for canonical domain terminology and read relevant ADRs when a 
 
 ## Tests
 
-Backend behavior is primarily exercised through tests next to the Convex entry points:
+Backend behavior is primarily exercised through Convex integration tests:
 
 ```text
-convex/*.test.ts
+tests/convex/*.test.ts
 ```
 
 Prefer tests through durable public/internal interfaces when possible rather than coupling tests to individual data helpers.

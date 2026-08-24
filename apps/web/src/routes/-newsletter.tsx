@@ -5,7 +5,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 import { useOnInView } from "react-intersection-observer";
 
-import type { ServerFormState } from "@/lib/form/form.functions";
+import type { ServerFormState } from "@/infra/form/form.functions";
 import { NewsletterForm } from "@/routes/-newsletter.form";
 
 export const getNewsletterHashNavigation = (inView: boolean) => ({

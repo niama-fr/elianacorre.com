@@ -1,24 +1,34 @@
+import { Ref } from "@confect/core";
+import { QueryResult, useQuery } from "@confect/react";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { api } from "@ec/backend/api";
+import refs from "@ec/backend/refs";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Input } from "@ec/ui/components/input";
 import { Item, ItemContent, ItemHeader, ItemTitle } from "@ec/ui/components/item";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation as useTanStackMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useConvex, useQuery as useConvexQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
+import { useConvex } from "convex/react";
+import type { FunctionReference } from "convex/server";
+import { Effect as E } from "effect";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-const retentionRunsQuery = convexQuery(api.retention.listRecentRuns, {});
+const retentionRunsRef = refs.public.retention.listRecentRuns;
+const retentionRunsFunctionRef = Ref.getFunctionReference(retentionRunsRef) as FunctionReference<
+  "query",
+  "public",
+  Record<string, never>,
+  unknown
+>;
+const retentionRunsQuery = convexQuery(retentionRunsFunctionRef, {});
 
 export const Route = createFileRoute("/_authenticated/admin/privacy/")({
   component: AdminPrivacyPage,
-  loader: async ({ context: { queryClient } }) => await queryClient.ensureQueryData(retentionRunsQuery),
+  loader: async ({ context: { queryClient } }) => await queryClient.query({ ...retentionRunsQuery, staleTime: "static" }),
 });
 
-type PrivacySubject = NonNullable<FunctionReturnType<typeof api.privacy.inspectSubject>>;
+type PrivacySubject = NonNullable<Ref.Returns<typeof refs.public.privacy.inspectSubject>>;
 type Operation = "access" | "erasure" | "export" | "objection" | "rectification" | "suppressionRemoval" | "unsubscription";
 type VerificationMethod = "additionalEvidence" | "emailChallenge";
 
@@ -41,14 +51,26 @@ function AdminPrivacyPage() {
   const convex = useConvex();
   const [emailInput, setEmailInput] = useState("");
   const [exporting, setExporting] = useState<"csv" | "json">();
+  const [observedAt, setObservedAt] = useState(0);
   const [searchedEmail, setSearchedEmail] = useState<string>();
-  const subject = useConvexQuery(api.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
-  const { data: retentionRuns } = useSuspenseQuery(retentionRunsQuery);
+
+  const queriedSubject = useQuery(refs.public.privacy.inspectSubject, searchedEmail ? { email: searchedEmail } : "skip");
+  const subject = activePrivacySubject(QueryResult.isSuccess(queriedSubject) ? queriedSubject.value : undefined, observedAt);
+
+  const { data: encodedRetentionRuns } = useSuspenseQuery(retentionRunsQuery);
+  const retentionRuns = Ref.decodeReturnsSync(retentionRunsRef, encodedRetentionRuns);
 
   const downloadPortabilityExport = async (format: "csv" | "json") => {
     setExporting(format);
     try {
-      const result = await convex.query(api.newsletter.exportData, { format });
+      const ref = refs.public.newsletter.exportData;
+
+      const result = await E.runPromise(
+        Ref.runWithCodec(ref, { format }, async (functionReference, encodedArgs): Promise<unknown> => {
+          const encodedReturns: unknown = await convex.query(functionReference, encodedArgs as never);
+          return encodedReturns;
+        })
+      );
       const url = URL.createObjectURL(new Blob([result.content], { type: result.contentType }));
       const link = document.createElement("a");
       link.download = `newsletter-portability-${new Date().toISOString()}.${format}`;
@@ -125,6 +147,7 @@ function AdminPrivacyPage() {
         className="bg-card flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-end"
         onSubmit={(event) => {
           event.preventDefault();
+          setObservedAt(Date.now());
           setSearchedEmail(emailInput);
         }}
       >
@@ -143,13 +166,34 @@ function AdminPrivacyPage() {
         <Button type="submit">Rechercher</Button>
       </form>
 
-      {searchedEmail && subject === undefined && <p className="text-muted-foreground text-sm">Recherche en cours…</p>}
-      {searchedEmail && subject === null && (
+      {searchedEmail && QueryResult.isLoading(queriedSubject) && !queriedSubject.skipped && (
+        <p className="text-muted-foreground text-sm">Recherche en cours…</p>
+      )}
+
+      {searchedEmail && QueryResult.isFailure(queriedSubject) && (
+        <p className="text-destructive rounded-2xl border p-4 text-sm">La recherche a échoué.</p>
+      )}
+
+      {searchedEmail && QueryResult.isSuccess(queriedSubject) && subject === null && (
         <p className="text-muted-foreground rounded-2xl border p-4 text-sm">Aucune donnée connue pour cette adresse.</p>
       )}
-      {searchedEmail && subject && <PrivacySubjectView key={searchedEmail} email={searchedEmail} subject={subject} />}
+
+      {searchedEmail && QueryResult.isSuccess(queriedSubject) && subject !== null && subject !== undefined && (
+        <PrivacySubjectView key={searchedEmail} email={searchedEmail} subject={subject} />
+      )}
     </section>
   );
+}
+
+function activePrivacySubject(subject: PrivacySubject | null | undefined, observedAt: number): PrivacySubject | null | undefined {
+  if (subject === undefined || subject === null) return subject;
+  return {
+    ...subject,
+    privacyState: {
+      ...subject.privacyState,
+      grants: subject.privacyState.grants.filter(({ expiresAt }) => expiresAt > observedAt),
+    },
+  };
 }
 
 function PrivacySubjectView({ email, subject }: { email: string; subject: PrivacySubject }) {
@@ -221,6 +265,7 @@ function DeliverySection({ subject }: { subject: PrivacySubject }) {
         <Detail label="État" value={subject.deliveryEligibility.status} />
         <Detail label="Suppression" value={subject.privacyState.suppressed ? "Active" : "Absente"} />
       </dl>
+
       {subject.deliveryEligibility.restriction && (
         <p className="mt-3 text-sm">
           Restriction : {subject.deliveryEligibility.restriction.reason} · origine {subject.deliveryEligibility.restriction.restrictedBy}
@@ -276,10 +321,11 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
   const [method, setMethod] = useState<VerificationMethod>("emailChallenge");
   const [requestKind, setRequestKind] = useState<Operation>("access");
   const [outcome, setOutcome] = useState<"completed" | "rejected">();
-  const verification = useMutation({ mutationFn: useConvexMutation(api.privacy.recordVerification) });
+  const verification = useConfectTanStackMutation(refs.public.privacy.recordVerification);
 
   const confirm = async () => {
     if (outcome === undefined) return;
+
     try {
       await verification.mutateAsync({ email, method, outcome, requestKind });
       toast.success("Résultat de vérification enregistré.");
@@ -294,6 +340,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
       <p className="text-muted-foreground mb-4 text-sm">
         Enregistrez uniquement la catégorie de méthode et son résultat, jamais les preuves.
       </p>
+
       {subject.privacyState.grants.length > 0 && (
         <ul className="mb-4 flex flex-col gap-1 text-sm">
           {subject.privacyState.grants.map((grant) => (
@@ -303,6 +350,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
           ))}
         </ul>
       )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-2 text-sm">
           Demande concernée
@@ -320,6 +368,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
             ))}
           </select>
         </label>
+
         <label className="flex flex-col gap-2 text-sm">
           Méthode
           <select
@@ -334,6 +383,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
           </select>
         </label>
       </div>
+
       <div className="mt-4 flex flex-wrap gap-3">
         <Button
           type="button"
@@ -343,6 +393,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
         >
           Enregistrer comme vérifiée
         </Button>
+
         <Button
           type="button"
           variant="outline"
@@ -353,6 +404,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
           Enregistrer comme non vérifiée
         </Button>
       </div>
+
       <Dialog
         open={outcome !== undefined}
         onOpenChange={(open) => {
@@ -366,6 +418,7 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
               Enregistrer la demande {requestKind} pour {email} comme {outcome === "completed" ? "vérifiée" : "non vérifiée"}.
             </DialogDescription>
           </DialogHeader>
+
           <DialogFooter showCloseButton>
             <Button
               disabled={verification.isPending}
@@ -385,21 +438,26 @@ function VerificationSection({ email, subject }: { email: string; subject: Priva
 function PrivacyOperations({ email, subject }: { email: string; subject: PrivacySubject }) {
   const [operation, setOperation] = useState<Operation>();
   const [firstName, setFirstName] = useState(subject.profile?.firstName ?? "");
-  const access = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillAccessRequest) });
-  const erase = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillErasureRequest) });
-  const exportData = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillExportRequest) });
-  const object = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillObjectionRequest) });
-  const rectify = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillRectificationRequest) });
-  const removeSuppression = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillSuppressionRemovalRequest) });
-  const unsubscribe = useMutation({ mutationFn: useConvexMutation(api.privacy.fulfillUnsubscriptionRequest) });
+
+  const access = useConfectTanStackMutation(refs.public.privacy.fulfillAccessRequest);
+  const erase = useConfectTanStackMutation(refs.public.privacy.fulfillErasureRequest);
+  const exportData = useConfectTanStackMutation(refs.public.privacy.fulfillExportRequest);
+  const object = useConfectTanStackMutation(refs.public.privacy.fulfillObjectionRequest);
+  const rectify = useConfectTanStackMutation(refs.public.privacy.fulfillRectificationRequest);
+  const removeSuppression = useConfectTanStackMutation(refs.public.privacy.fulfillSuppressionRemovalRequest);
+  const unsubscribe = useConfectTanStackMutation(refs.public.privacy.fulfillUnsubscriptionRequest);
+
   const isPending = [access, erase, exportData, object, rectify, removeSuppression, unsubscribe].some(({ isPending: pending }) => pending);
+
   const isAuthorized = (requestKind: Operation) => subject.privacyState.grants.some((grant) => grant.requestKind === requestKind);
 
   const confirmOperation = async () => {
     if (!operation) return;
+
     try {
       const payload = { confirmed: true as const, email };
-      let outcome: "completed" | "rejected";
+      let outcome: "completed" | "pending" | "rejected";
+
       if (operation === "access") ({ outcome } = await access.mutateAsync(payload));
       else if (operation === "export") {
         const result = await exportData.mutateAsync(payload);
@@ -412,7 +470,9 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
       else ({ outcome } = await erase.mutateAsync(payload));
 
       if (outcome === "completed") toast.success("Opération enregistrée.");
+      else if (outcome === "pending") toast.success("L’effacement a été lancé et se poursuivra en arrière-plan.");
       else toast.error("L’opération a été rejetée.");
+
       setOperation(undefined);
     } catch {
       toast.error("L’opération a échoué. Aucun résultat n’a été confirmé.");
@@ -424,6 +484,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
       <p className="text-muted-foreground mb-4 text-sm">
         Chaque opération exige une vérification correspondante, indépendante, confirmée et à usage unique.
       </p>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <OperationButton
           disabled={!isAuthorized("access")}
@@ -432,6 +493,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             setOperation("access");
           }}
         />
+
         <OperationButton
           disabled={!isAuthorized("export")}
           label={OPERATION_LABELS.export}
@@ -439,6 +501,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             setOperation("export");
           }}
         />
+
         <div className="flex gap-2">
           <Input
             aria-label="Nouveau prénom"
@@ -447,6 +510,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
               setFirstName(event.target.value);
             }}
           />
+
           <OperationButton
             disabled={!isAuthorized("rectification")}
             label={OPERATION_LABELS.rectification}
@@ -455,6 +519,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             }}
           />
         </div>
+
         <OperationButton
           disabled={!isAuthorized("unsubscription")}
           label={OPERATION_LABELS.unsubscription}
@@ -462,6 +527,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             setOperation("unsubscription");
           }}
         />
+
         <OperationButton
           disabled={!isAuthorized("objection")}
           label={OPERATION_LABELS.objection}
@@ -469,6 +535,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             setOperation("objection");
           }}
         />
+
         <OperationButton
           disabled={!isAuthorized("suppressionRemoval")}
           label={OPERATION_LABELS.suppressionRemoval}
@@ -476,6 +543,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
             setOperation("suppressionRemoval");
           }}
         />
+
         <OperationButton
           destructive
           disabled={!isAuthorized("erasure")}
@@ -499,6 +567,7 @@ function PrivacyOperations({ email, subject }: { email: string; subject: Privacy
               {operation ? OPERATION_LABELS[operation] : "Opération"} pour {email}. Cette confirmation sera auditée.
             </DialogDescription>
           </DialogHeader>
+
           <DialogFooter showCloseButton>
             <Button
               disabled={isPending}
@@ -552,6 +621,22 @@ function OperationButton({
       {label}
     </Button>
   );
+}
+
+type PublicMutationRef = Ref.Ref<{ readonly runtime: "Convex"; readonly functionType: "mutation" }, "public", unknown, unknown, unknown>;
+
+function useConfectTanStackMutation<const Mutation extends PublicMutationRef>(ref: Mutation) {
+  const mutation = useConvexMutation(Ref.getFunctionReference(ref));
+
+  return useTanStackMutation<Ref.Returns<Mutation>, unknown, Ref.Args<Mutation>>({
+    mutationFn: async (args) =>
+      await E.runPromise(
+        Ref.runWithCodec(ref, args, async (_functionReference, encodedArgs): Promise<unknown> => {
+          const encodedReturns: unknown = await mutation(encodedArgs as never);
+          return encodedReturns;
+        })
+      ),
+  });
 }
 
 function downloadJson(data: unknown, email: string) {

@@ -1,22 +1,20 @@
-import { zCanonicalEmailValue } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import { z } from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zContactRequestFields = z.object({
-  message: z.string(),
-  profileId: zid("profiles"),
+export const sContactRequestFields = S.Struct({
+  message: S.String,
+  profileId: GenericId.GenericId("profiles"),
 });
 
-// VALUES ----------------------------------------------------------------------------------------------------------------------------------
-export const zContactRequestCreateValues = z.object({
-  email: zCanonicalEmailValue,
-  firstName: z.string().trim().min(1, "Ce champ est requis"),
-  message: z.string().trim().min(1, "Ce champ est requis"),
-});
+export const sContactRequestDoc = sContactRequestFields.pipe(S.fieldsAssign(SystemFields.SystemFields("contactRequests").fields));
+
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sContactRequestCreate = sContactRequestFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type ContactRequests = {
-  CreateValues: z.infer<typeof zContactRequestCreateValues>;
-  RequestFields: z.infer<typeof zContactRequestFields>;
+  Create: typeof sContactRequestCreate.Type;
+  Doc: typeof sContactRequestDoc.Type;
+  Fields: typeof sContactRequestFields.Type;
 };

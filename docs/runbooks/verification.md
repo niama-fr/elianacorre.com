@@ -7,6 +7,7 @@ Run these commands from the repository root before opening or merging a pull req
 | `bun run test` | Both applications plus domain validation and isolated Convex authorization, contact, draft, publication, and rollback behavior |
 | `bun run typecheck` | Both React applications and first-party domain, backend, and UI packages |
 | `bun run check` | Ultracite policy through Oxfmt formatting and Oxlint static-analysis rules |
+| `bun run codegen` | Confect registrations and schemas, followed by Convex TypeScript bindings |
 | `bun run build` | Both production React clients, TanStack Start servers, and Cloudflare Worker bundles |
 | `bun run delivery:report` | Independent total emitted client JavaScript file count plus raw, gzip, and Brotli sizes for `apps/web` and `apps/app` after a build |
 
@@ -17,6 +18,12 @@ Backend tests use `convex-test` with the Better Auth component registered. They 
 The Convex Workflow component is not currently exercised end to end because of an open upstream `convex-test` compatibility issue. Newsletter tests mock Workflow startup and drive the application task execution, provider failure, stable idempotency key, and outcome mutations directly. When upstream compatibility is restored, register `@convex-dev/workflow/test` and replace this seam with scheduled Workflow execution and retry coverage.
 
 Domain tests verify contact validation independently from persistence. Backend coverage verifies unauthenticated and unauthorized rejection, administrator bootstrap assumptions, contact persistence, and the e-book draft-to-published lifecycle.
+
+## Generated code
+
+Run `bun run codegen` from the repository root after changing a Confect Spec, implementation, table, native Convex function, or component registration. The command requires the same Convex deployment selection used by the CLI, through `packages/backend/.env.local` locally or `CONVEX_DEPLOY_KEY` in CI. It first regenerates Confect-owned registrations and then regenerates Convex bindings. The expected result is that a second run produces no tracked diff.
+
+Pull-request CI repeats the command and fails on any generated-code drift. Generated files must not be edited manually. If generation fails before writing files, restore the deployment selection and retry. If it stops after changing files, rerun the full command; only revert generated output when the corresponding source change is also being reverted. Deployment credentials stay in local ignored environment files or GitHub secrets and must never be placed in command arguments or committed configuration.
 
 ## Type-check scope
 
@@ -39,7 +46,7 @@ Prerequisites are Bun 1.3.10, a clean issue branch, and permission to edit the r
 1. Pin Ultracite, Oxfmt, Oxlint, and oxlint-tsgolint exactly in the root `devDependencies`.
 2. Keep formatter ownership in `oxfmt.config.ts` and linter ownership in `oxlint.config.ts`.
 3. Run `bun install`, `bun run fix`, and the complete verification table above.
-4. If a GitHub job name changes, open **Settings → Rules → Rulesets → Protect main** and replace only the matching required status-check context. Verify that `Quality`, `Typecheck`, `Tests`, and `Build` remain required.
+4. If a GitHub job name changes, open **Settings → Rules → Rulesets → Protect main** and replace only the matching required status-check context. Verify that `Generated code`, `Quality`, `Typecheck`, `Tests`, and `Build` remain required.
 5. Confirm a clean installation with `bun install --frozen-lockfile`.
 
 The expected result is a zero-error local check and a pull request whose `Quality` job satisfies branch protection. No credentials belong in configuration files or command arguments.

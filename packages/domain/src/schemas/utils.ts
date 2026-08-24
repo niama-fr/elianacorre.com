@@ -1,34 +1,48 @@
-import { zid } from "convex-helpers/server/zod4";
-import { z } from "zod";
+import { Schema as S, SchemaTransformation as ST } from "effect";
+
+// ISSUES ----------------------------------------------------------------------------------------------------------------------------------
+export const VALIDATION_ISSUE = {
+  emailInvalid: "EMAIL_INVALID",
+  required: "REQUIRED",
+  slugInvalid: "SLUG_INVALID",
+} as const;
+export const sValidationIssue = S.Literals(Object.values(VALIDATION_ISSUE));
+
+// STRINGS ---------------------------------------------------------------------------------------------------------------------------------
+export const sTrimOptional = S.Trim.pipe(
+  S.decodeTo(S.UndefinedOr(S.Trimmed), ST.transform({ decode: (s) => (s === "" ? undefined : s), encode: (s) => s ?? "" }))
+);
+
+export const sTrimRequired = S.Trim.check(S.isMinLength(1, { message: VALIDATION_ISSUE.required }));
+
+export const sSlug = sTrimRequired.check(S.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, { message: VALIDATION_ISSUE.slugInvalid }));
+
+export const sUrlString = S.String.check(S.makeFilter((value) => URL.canParse(value)));
+
+// NUMBERS ---------------------------------------------------------------------------------------------------------------------------------
+export const sStrictNatural = S.Natural.check(S.isGreaterThan(0));
 
 // EMAILS ----------------------------------------------------------------------------------------------------------------------------------
-export const zCanonicalEmail = z.string().trim().toLowerCase().pipe(z.email());
-export const zCanonicalEmailValue = z.string().trim().toLowerCase().pipe(z.email("Ce courriel est invalide"));
-export const zConfirmedEmailPayload = z.object({ confirmed: z.literal(true), email: zCanonicalEmail });
+const EMAIL_PATTERN = /^(?!\.)(?!.*\.\.)(?<local>[A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@(?<domain>[A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/u;
 
-// REFS ------------------------------------------------------------------------------------------------------------------------------------
-export const zDocRef = <T extends string>(tableName: T) => z.object({ _id: zid(tableName) });
-export const zStorageRef = z.object({ storageId: zid("_storage") });
+export const sCanonicalEmail = S.Trim.pipe(S.decode(ST.toLowerCase())).check(
+  S.isPattern(EMAIL_PATTERN, { message: VALIDATION_ISSUE.emailInvalid })
+);
 
-// PAGINATION ------------------------------------------------------------------------------------------------------------------------------
-export const zPaginationOptions = z.object({
-  cursor: z.string().nullable(),
-  endCursor: z.string().nullable().optional(),
-  id: z.number().optional(),
-  maximumBytesRead: z.number().optional(),
-  maximumRowsRead: z.number().optional(),
-  numItems: z.number(),
+export const sConfirmedEmailPayload = S.Struct({
+  confirmed: S.Literal(true),
+  email: sCanonicalEmail,
 });
 
-// COMMON ----------------------------------------------------------------------------------------------------------------------------------
-export const zDocCommon = <T extends string>(tableName: T) =>
-  z.object({
-    ...zDocRef(tableName).shape,
-    _creationTime: z.number(),
-  });
+// PAGINATION ------------------------------------------------------------------------------------------------------------------------------
+export const sPaginationOptions = S.Struct({
+  cursor: S.NullOr(S.String),
+  endCursor: S.optionalKey(S.NullOr(S.String)),
+  id: S.optionalKey(S.Natural),
+  maximumBytesRead: S.optionalKey(S.Natural),
+  maximumRowsRead: S.optionalKey(S.Natural),
+  numItems: S.Natural,
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
-export type DocCommon<T extends string> = z.infer<ReturnType<typeof zDocCommon<T>>>;
-export type DocRef<T extends string> = z.infer<ReturnType<typeof zDocRef<T>>>;
-export type StorageRef = z.infer<typeof zStorageRef>;
 export type WithNow<T = object> = { now: number } & T;

@@ -1,91 +1,130 @@
-import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
+import { LoopsTaskNotFound } from "@ec/domain/errors/loops-tasks";
 import type { LoopsTasks } from "@ec/domain/schemas/loops-tasks";
 import type { WithNow } from "@ec/domain/schemas/utils";
 import type { PaginationOptions } from "convex/server";
-import { ConvexError } from "convex/values";
+import { Effect as E, Option as O } from "effect";
+
+import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
+import { dieOnPatchError, dieOnDecodeError, dieOnEncodeError, optionById, optionByIndex } from "./confect";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">): Promise<LoopsTasks["Doc"] | null> =>
-  await ctx.db.get("loopsTasks", id);
+export const getLoopsTask = E.fn(function* (id: Id<"loopsTasks">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("loopsTasks").get(id).pipe(optionById);
+});
 
-export const getLoopsTaskByEbookDownload = async (ctx: QueryCtx, downloadId: Id<"ebookDownloads">) =>
-  await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_ebook_download_id", (q) => q.eq("ebookDownloadId", downloadId))
-    .unique();
+export const getLoopsTaskByEbookDownload = E.fn(function* (downloadId: Id<"ebookDownloads">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("loopsTasks").get("by_ebook_download_id", downloadId).pipe(optionByIndex);
+});
 
 // REQUIRE ---------------------------------------------------------------------------------------------------------------------------------
-export const requireLoopsTask = async (ctx: QueryCtx, id: Id<"loopsTasks">) => {
-  const doc = await getLoopsTask(ctx, id);
-  if (!doc) throw new ConvexError("UNKNOWN_LOOPS_TASK");
-  return doc;
-};
+export const requireLoopsTask = E.fn(function* (id: Id<"loopsTasks">) {
+  return yield* O.match(yield* getLoopsTask(id), {
+    onNone: () => new LoopsTaskNotFound(),
+    onSome: E.succeed,
+  });
+});
 
 // LIST ------------------------------------------------------------------------------------------------------------------------------------
-export const paginateExpiredLoopsTasks = async (ctx: MutationCtx, pagination: PaginationOptions, before: number) =>
-  await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_finished_at", (q) => q.lte("finishedAt", before))
-    .paginate(pagination);
+export const paginateExpiredLoopsTasks = E.fn(function* (pagination: PaginationOptions, before: number) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("loopsTasks")
+    .index("by_finished_at", (q) => q.lte("finishedAt", before))
+    .paginate(pagination)
+    .pipe(dieOnDecodeError);
+});
 
-export const takeProfileLoopsTasks = async (ctx: QueryCtx, limit: number, profileId: Id<"profiles">) =>
-  await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_profile_id", (q) => q.eq("profileId", profileId))
-    .take(limit);
+export const takeProfileLoopsTasks = E.fn(function* (limit: number, profileId: Id<"profiles">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("loopsTasks")
+    .index("by_profile_id", (q) => q.eq("profileId", profileId))
+    .take(limit)
+    .pipe(dieOnDecodeError);
+});
 
-export const takeFailedLoopsTasks = async (ctx: QueryCtx, limit: number) =>
-  (await ctx.db
-    .query("loopsTasks")
-    .withIndex("by_status_and_finished_at", (q) => q.eq("status", "failed"))
-    .order("desc")
-    .take(limit)) as LoopsTasks["FailedDoc"][];
+export const takeFailedLoopsTasks = E.fn(function* (limit: number) {
+  const reader = yield* DatabaseReader;
+  return (yield* reader
+    .table("loopsTasks")
+    .index("by_status_and_finished_at", (q) => q.eq("status", "failed"), "desc")
+    .take(limit)
+    .pipe(dieOnDecodeError)) as LoopsTasks["FailedDoc"][];
+});
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createLoopsTask = async (ctx: MutationCtx, create: LoopsTasks["Create"]) =>
-  await ctx.db.insert("loopsTasks", {
-    ...create,
-    acknowledgedAt: null,
-    failure: null,
-    finishedAt: null,
-    replayCount: 0,
-    status: "pending",
-    workflowIds: [],
-  });
+export const createLoopsTask = E.fn(function* (create: LoopsTasks["Create"]) {
+  const writer = yield* DatabaseWriter;
+  return yield* writer
+    .table("loopsTasks")
+    .insert({
+      ...create,
+      acknowledgedAt: null,
+      failure: null,
+      finishedAt: null,
+      replayCount: 0,
+      status: "pending",
+      workflowIds: [],
+    })
+    .pipe(dieOnEncodeError);
+});
 
 // PATCH -----------------------------------------------------------------------------------------------------------------------------------
-export const patchLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">, patch: Partial<LoopsTasks["Fields"]>) => {
-  await ctx.db.patch("loopsTasks", id, patch);
-};
+export const replaceLoopsTaskWorkflows = E.fn(function* (id: Id<"loopsTasks">, workflowId: string) {
+  const writer = yield* DatabaseWriter;
+  yield* writer
+    .table("loopsTasks")
+    .patch(id, { workflowIds: [workflowId] })
+    .pipe(dieOnPatchError);
+});
 
-export const replaceLoopsTaskWorkflows = async (ctx: MutationCtx, id: Id<"loopsTasks">, workflowId: string) => {
-  await patchLoopsTask(ctx, id, { workflowIds: [workflowId] });
-};
+export const setLoopsTaskAcknowledgedAt = E.fn(function* (id: Id<"loopsTasks">, now: number) {
+  const writer = yield* DatabaseWriter;
+  yield* writer.table("loopsTasks").patch(id, { acknowledgedAt: now }).pipe(dieOnPatchError);
+});
 
-export const setLoopsTaskAcknowledgedAt = async (ctx: MutationCtx, id: Id<"loopsTasks">, now: number) => {
-  await patchLoopsTask(ctx, id, { acknowledgedAt: now });
-};
-
-export const markLoopsTaskFailed = async (ctx: MutationCtx, task: TaskRef, { failure, now }: MarkFailedOpts) => {
-  await patchLoopsTask(ctx, task._id, { acknowledgedAt: null, failure, finishedAt: now, status: "failed" });
-};
+export const markLoopsTaskFailed = E.fn(function* (task: TaskRef, { failure, now }: MarkFailedOpts) {
+  const writer = yield* DatabaseWriter;
+  yield* writer
+    .table("loopsTasks")
+    .patch(task._id, { acknowledgedAt: null, failure, finishedAt: now, status: "failed" })
+    .pipe(dieOnPatchError);
+});
 type MarkFailedOpts = WithNow<{ failure: LoopsTasks["Failure"] }>;
 
-export const resetLoopsTaskForReplay = async (ctx: MutationCtx, task: TaskRef, patch: ResetForReplayOpts) => {
-  await patchLoopsTask(ctx, task._id, { ...patch, acknowledgedAt: null, failure: null, finishedAt: null, status: "pending" });
-};
+export const resetLoopsTaskForReplay = E.fn(function* (task: TaskRef, patch: ResetForReplayOpts) {
+  const writer = yield* DatabaseWriter;
+  yield* writer
+    .table("loopsTasks")
+    .patch(task._id, {
+      acknowledgedAt: null,
+      failure: null,
+      finishedAt: null,
+      replayCount: patch.replayCount,
+      status: "pending",
+      workflowIds: [...patch.workflowIds],
+    })
+    .pipe(dieOnPatchError);
+});
 type ResetForReplayOpts = Pick<LoopsTasks["PendingDoc"], "replayCount" | "workflowIds">;
 
-export const markLoopsTaskSucceeded = async (ctx: MutationCtx, task: TaskRef, { now }: WithNow) => {
-  const extra = task.kind === "deleteContact" ? { email: null } : {};
-  await patchLoopsTask(ctx, task._id, { finishedAt: now, status: "succeeded", ...extra });
-};
+export const markLoopsTaskSucceeded = E.fn(function* (task: TaskRef, { now }: WithNow) {
+  const writer = yield* DatabaseWriter;
+  if (task.kind === "deleteContact") {
+    yield* writer.table("loopsTasks").patch(task._id, { email: null, finishedAt: now, status: "succeeded" }).pipe(dieOnPatchError);
+    return;
+  }
+  yield* writer.table("loopsTasks").patch(task._id, { finishedAt: now, status: "succeeded" }).pipe(dieOnPatchError);
+});
 
 // DELETE -----------------------------------------------------------------------------------------------------------------------------------
-export const deleteLoopsTask = async (ctx: MutationCtx, id: Id<"loopsTasks">) => {
-  await ctx.db.delete("loopsTasks", id);
-};
+export const deleteLoopsTask = E.fn(function* (id: Id<"loopsTasks">) {
+  const writer = yield* DatabaseWriter;
+  yield* writer.table("loopsTasks").delete(id);
+});
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 type TaskRef = Pick<LoopsTasks["PendingDoc"], "_id" | "kind">;

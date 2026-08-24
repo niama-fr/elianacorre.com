@@ -1,16 +1,17 @@
 import type { Id } from "@ec/backend/types";
-import { zNewsSubscriptionUpsertValues } from "@ec/domain/schemas/news-subscriptions";
 import { cn } from "@ec/ui/lib/utils";
 import { mergeForm, useTransform } from "@tanstack/react-form-start";
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
+import { Schema as S } from "effect";
 import { useRef } from "react";
 import { toast } from "sonner";
 
+import { newsletterFormOptions } from "@/features/newsletter/newsletter.form";
+import { submitNewsletterSubscribeForm, subscribeToNewsletter } from "@/features/newsletter/newsletter.functions";
+import { sNewsletterSubscribeForm } from "@/features/newsletter/newsletter.schemas";
 import { useAppForm } from "@/form/hook";
-import type { ServerFormState } from "@/lib/form/form.functions";
-import { newsletterFormOptions } from "@/lib/newsletter/newsletter.form";
-import { submitNewsletterSubscribeForm, subscribeToNewsletter } from "@/lib/newsletter/newsletter.functions";
+import type { ServerFormState } from "@/infra/form/form.functions";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FORM = {
@@ -72,20 +73,20 @@ export function NewsletterForm({ className, formState, privacyNoticeId }: Newsle
             </div>
           )}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.email }}>
+        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.email) }}>
           {(f) => <f.InputField label="Adresse e-mail" type="email" />}
         </form.AppField>
-        <form.AppField name="firstName" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.firstName) }}>
           {(f) => <f.InputField label="Prénom (facultatif)" type="text" />}
         </form.AppField>
-        <form.AppField name="website" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.website }}>
+        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.website) }}>
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />
             </div>
           )}
         </form.AppField>
-        <form.AppField name="consent" validators={{ onChange: zNewsSubscriptionUpsertValues.shape.consent }}>
+        <form.AppField name="consent" validators={{ onChange: S.toStandardSchemaV1(sNewsletterSubscribeForm.fields.consent) }}>
           {(f) => (
             <f.CheckboxField label="Je souhaite recevoir par e-mail la gazette itinérante. Je pourrai retirer mon consentement à tout moment grâce au lien de désinscription présent dans chaque lettre." />
           )}

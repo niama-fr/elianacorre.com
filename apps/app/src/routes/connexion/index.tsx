@@ -3,7 +3,7 @@ import { Image } from "@ec/ui/components/image";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
 
-import { getSafeAuthRedirect } from "@/lib/auth/redirects";
+import { getSafeAuthRedirect } from "@/infra/auth/redirects";
 import { noindexHead } from "@/seo/head";
 
 import { SigninForm } from "./-form";

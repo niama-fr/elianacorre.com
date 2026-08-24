@@ -8,8 +8,8 @@ import { Hydrate } from "@tanstack/react-start";
 import { visible } from "@tanstack/react-start/hydration";
 import { useEffect, useState } from "react";
 
-import { getServerFormState } from "@/lib/form/form.functions";
-import { requireActivePrivacyNotice } from "@/lib/legal-texts/legal-texts.functions";
+import { requireActivePrivacyNotice } from "@/features/legal-texts/legal-texts.functions";
+import { getServerFormState } from "@/infra/form/form.functions";
 import { Footer } from "@/routes/-footer";
 import { Header } from "@/routes/-header";
 import { Newsletter } from "@/routes/-newsletter";

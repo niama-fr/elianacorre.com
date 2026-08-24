@@ -1,7 +1,3 @@
-import { zAuthenticatedQuery } from "./zod";
+import registeredFunctions from "../confect/_generated/registeredFunctions/profiles";
 
-// QUERIES ---------------------------------------------------------------------------------------------------------------------------------
-export const current = zAuthenticatedQuery({
-  args: {},
-  handler: (ctx) => ctx.profile,
-});
+export const current = registeredFunctions.current;

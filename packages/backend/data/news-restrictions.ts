@@ -1,35 +1,48 @@
-import type { MutationCtx, QueryCtx } from "@ec/backend/server";
 import type { Id } from "@ec/backend/types";
 import type { NewsRestrictions } from "@ec/domain/schemas/news-restrictions";
+import { Effect as E } from "effect";
+
+import { DatabaseReader, DatabaseWriter } from "../confect/_generated/services";
+import { dieOnPatchError, dieOnDecodeError, dieOnEncodeError, optionById, optionByIndex } from "./confect";
 
 // GET -------------------------------------------------------------------------------------------------------------------------------------
-export const getNewsRestriction = async (ctx: QueryCtx, id: Id<"newsRestrictions">) => await ctx.db.get("newsRestrictions", id);
+export const getNewsRestriction = E.fn(function* (id: Id<"newsRestrictions">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("newsRestrictions").get(id).pipe(optionById);
+});
 
-export const getActiveNewsRestriction = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
-  await ctx.db
-    .query("newsRestrictions")
-    .withIndex("by_profile_id_and_resolved_at", (q) => q.eq("profileId", profileId).eq("resolvedAt", null))
-    .unique();
+export const getActiveNewsRestriction = E.fn(function* (profileId: Id<"profiles">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader.table("newsRestrictions").get("by_profile_id_and_resolved_at", profileId, null).pipe(optionByIndex);
+});
 
-export const getLatestNewsRestriction = async (ctx: QueryCtx, profileId: Id<"profiles">) =>
-  await ctx.db
-    .query("newsRestrictions")
-    .withIndex("by_profile_id_and_restricted_at", (q) => q.eq("profileId", profileId))
-    .order("desc")
-    .first();
+export const getLatestNewsRestriction = E.fn(function* (profileId: Id<"profiles">) {
+  const reader = yield* DatabaseReader;
+  return yield* reader
+    .table("newsRestrictions")
+    .index("by_profile_id_and_restricted_at", (q) => q.eq("profileId", profileId), "desc")
+    .first()
+    .pipe(dieOnDecodeError);
+});
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const createProviderNewsRestriction = async (ctx: MutationCtx, payload: NewsRestrictions["Create"]) =>
-  await ctx.db.insert("newsRestrictions", {
-    ...payload,
-    resolvedAt: null,
-    resolvedBy: null,
-    restrictedAt: payload.lastOccurredAt,
-    restrictedBy: "provider",
-    version: 1,
-  });
+export const createProviderNewsRestriction = E.fn(function* (payload: NewsRestrictions["Create"]) {
+  const writer = yield* DatabaseWriter;
+  return yield* writer
+    .table("newsRestrictions")
+    .insert({
+      ...payload,
+      resolvedAt: null,
+      resolvedBy: null,
+      restrictedAt: payload.lastOccurredAt,
+      restrictedBy: "provider",
+      version: 1,
+    })
+    .pipe(dieOnEncodeError);
+});
 
 // PATCH ----------------------------------------------------------------------------------------------------------------------------------
-export const patchNewsRestriction = async (ctx: MutationCtx, id: Id<"newsRestrictions">, patch: Partial<NewsRestrictions["Fields"]>) => {
-  await ctx.db.patch("newsRestrictions", id, patch);
-};
+export const patchNewsRestriction = E.fn(function* (id: Id<"newsRestrictions">, patch: NewsRestrictions["Patch"]) {
+  const writer = yield* DatabaseWriter;
+  return yield* writer.table("newsRestrictions").patch(id, patch).pipe(dieOnPatchError);
+});

@@ -1,31 +1,32 @@
+import { PaginatedQueryResult } from "@confect/react";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@ec/backend/api";
+import refs from "@ec/backend/refs";
 import { Alert } from "@ec/ui/components/alert";
 import { Button } from "@ec/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@ec/ui/components/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ec/ui/components/table";
-import { z } from "@ec/validation/zod";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FlexRender, useTable } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
-import { usePaginatedQuery } from "convex/react";
+import { Schema as S } from "effect";
 import { toast } from "sonner";
 
-import { zTravelPackCreateValues } from "@/features/travel-packs/schemas";
+import { sTravelPackCreateForm, sTravelPackSearch } from "@/features/travel-packs/travel-packs.schemas";
 import { useAppForm } from "@/form/hook";
+import { usePaginatedQuery } from "@/infra/confect/helpers";
 import * as m from "@/paraglide/messages";
 
 import { features, getColumns } from "./-table-features";
 
 // CONSTS ----------------------------------------------------------------------------------------------------------------------------------
-const searchSchema = z.object({ create: z.boolean().optional() });
 const PAGE_SIZE = 25;
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const Route = createFileRoute("/_authenticated/admin/packs/")({
   component: TravelPacksPage,
-  validateSearch: searchSchema,
+  validateSearch: S.toStandardSchemaV1(sTravelPackSearch),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -56,8 +57,8 @@ function TravelPacksPage() {
 
 // COMPONENTS ------------------------------------------------------------------------------------------------------------------------------
 export function TravelPackTable() {
-  const { loadMore, results, status } = usePaginatedQuery(api.travelPacks.list, {}, { initialNumItems: PAGE_SIZE });
-  const table = useTable({ columns: getColumns(), data: results, features });
+  const query = usePaginatedQuery(refs.public.travelPacks.list, {}, { initialNumItems: PAGE_SIZE });
+  const table = useTable({ columns: getColumns(), data: query.results, features });
   const { rows } = table.getRowModel();
   const columnCount = table.getAllLeafColumns().length;
 
@@ -94,12 +95,12 @@ export function TravelPackTable() {
           )}
         </TableBody>
       </Table>
-      {status === "CanLoadMore" && (
+      {PaginatedQueryResult.isCanLoadMore(query) && (
         <Button
           type="button"
           variant="ghost"
           onClick={() => {
-            loadMore(PAGE_SIZE);
+            query.loadMore(PAGE_SIZE);
           }}
         >
           {m.warm_taxis_smile()}
@@ -118,8 +119,9 @@ function TravelPackCreateDialogRoute() {
     defaultValues: { title: "" },
     onSubmit: async ({ value }) => {
       try {
-        const result = await createDraft.mutateAsync(value);
-        if (result.error) throw new Error(result.error);
+        const decoded = S.decodeSync(sTravelPackCreateForm)(value);
+        const result = await createDraft.mutateAsync(decoded);
+        if ("error" in result) throw new Error(result.error);
         form.reset();
         await navigate({ params: { packId: result.data }, to: "/admin/packs/$packId" });
       } catch {
@@ -152,7 +154,7 @@ function TravelPackCreateDialogRoute() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: zTravelPackCreateValues.shape.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackCreateForm.fields.title) }}>
               {(field) => <field.InputField autoFocus label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
             <DialogFooter>

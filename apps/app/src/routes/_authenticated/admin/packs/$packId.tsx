@@ -7,10 +7,11 @@ import { Item, ItemContent, ItemDescription, ItemHeader, ItemTitle } from "@ec/u
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouteContext, useRouter } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
+import { Schema as S } from "effect";
 import { toast } from "sonner";
 
-import { type TravelPackUpdateValues, zTravelPackUpdateValues } from "@/features/travel-packs/schemas";
-import { TravelPackStatusBadge } from "@/features/travel-packs/status-badge";
+import { TravelPackStatusBadge } from "@/features/travel-packs/components/status-badge";
+import { sTravelPackUpdateForm, type TravelPackUpdateFormValues } from "@/features/travel-packs/travel-packs.schemas";
 import { useAppForm } from "@/form/hook";
 import * as m from "@/paraglide/messages";
 
@@ -18,7 +19,10 @@ import * as m from "@/paraglide/messages";
 export const Route = createFileRoute("/_authenticated/admin/packs/$packId")({
   component: TravelPackDetailPage,
   loader: async ({ context: { queryClient }, params: { packId } }) =>
-    await queryClient.ensureQueryData(convexQuery(api.travelPacks.get, { travelPackId: packId })),
+    await queryClient.query({
+      ...convexQuery(api.travelPacks.get, { travelPackId: packId as Id<"travelPacks"> }),
+      staleTime: "static",
+    }),
 });
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +55,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
   const { convexQueryClient } = useRouteContext({ from: "__root__" });
   const router = useRouter();
 
-  const defaultValues: TravelPackUpdateValues = {
+  const defaultValues: TravelPackUpdateFormValues = {
     cover: null,
     description: data.description,
     destination: data.destination,
@@ -66,7 +70,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
     defaultValues,
     onSubmit: async ({ value }) => {
       try {
-        const { cover, pdf, ...patch } = zTravelPackUpdateValues.parse(value);
+        const { cover, pdf, ...patch } = S.decodeSync(sTravelPackUpdateForm)(value);
         const [coverStorageId, pdfStorageId] = await Promise.all([
           cover ? uploadFile(cover, async () => await generateUploadUrl({})) : data.coverStorageId,
           pdf ? uploadFile(pdf, async () => await generateUploadUrl({})) : data.pdfStorageId,
@@ -79,7 +83,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
           pdfStorageId,
           ...patch,
         });
-        if (result.error) throw new Error(result.error);
+        if ("error" in result) throw new Error(result.error);
         form.setFieldValue("slug", result.data.slug);
         form.setFieldValue("cover", null);
         form.setFieldValue("pdf", null);
@@ -125,10 +129,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: zTravelPackUpdateValues.shape.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.title) }}>
               {(f) => <f.InputField label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
-            <form.AppField name="slug" validators={{ onChange: zTravelPackUpdateValues.shape.slug }}>
+            <form.AppField name="slug" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.slug) }}>
               {(f) => (
                 <f.InputGroupField readOnly label={m.nice_bats_travel()} type="text">
                   <InputGroupAddon align="inline-end">
@@ -147,13 +151,13 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 </f.InputGroupField>
               )}
             </form.AppField>
-            <form.AppField name="destination" validators={{ onChange: zTravelPackUpdateValues.shape.destination }}>
+            <form.AppField name="destination" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.destination) }}>
               {(field) => <field.InputField label={m.many_ties_know()} type="text" />}
             </form.AppField>
-            <form.AppField name="excerpt" validators={{ onChange: zTravelPackUpdateValues.shape.excerpt }}>
+            <form.AppField name="excerpt" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.excerpt) }}>
               {(field) => <field.TextareaField label={m.hungry_hounds_fly()} description={m.mighty_boats_hug()} />}
             </form.AppField>
-            <form.AppField name="description" validators={{ onChange: zTravelPackUpdateValues.shape.description }}>
+            <form.AppField name="description" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.description) }}>
               {(field) => (
                 <field.MarkdownField
                   description={m.goofy_suits_enjoy()}
@@ -164,10 +168,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 />
               )}
             </form.AppField>
-            <form.AppField name="youtubeUrl" validators={{ onChange: zTravelPackUpdateValues.shape.youtubeUrl }}>
+            <form.AppField name="youtubeUrl" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.youtubeUrl) }}>
               {(field) => <field.InputField label={m.free_ideas_cut()} type="url" />}
             </form.AppField>
-            <form.AppField name="cover" validators={{ onChange: zTravelPackUpdateValues.shape.cover }}>
+            <form.AppField name="cover" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.cover) }}>
               {(field) => (
                 <field.FileInputField
                   accept="image/jpeg,image/png,image/webp"
@@ -176,7 +180,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 />
               )}
             </form.AppField>
-            <form.AppField name="pdf" validators={{ onChange: zTravelPackUpdateValues.shape.pdf }}>
+            <form.AppField name="pdf" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdateForm.fields.pdf) }}>
               {(field) => (
                 <field.FileInputField accept="application/pdf,.pdf" label={m.salty_points_tickle()} removeLabel={m.hot_friends_hunt()} />
               )}

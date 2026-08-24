@@ -4,6 +4,7 @@ import { cn } from "@ec/ui/lib/utils";
 import { cva } from "class-variance-authority";
 
 import { useFieldContext } from "./context";
+import { validationMessage } from "./validation";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
 const FIELD = {
@@ -34,7 +35,14 @@ export type FieldProps = Omit<FieldNativeProps, "children"> & { children: (isInv
 // ERROR -----------------------------------------------------------------------------------------------------------------------------------
 export function FieldError() {
   const { state } = useFieldContext<string>();
-  return <FieldErrorNative className={FIELD.error()} errors={state.meta.errors} />;
+  const errors = (state.meta.errors as readonly unknown[]).map(fieldError);
+  return <FieldErrorNative className={FIELD.error()} errors={errors} />;
+}
+
+function fieldError(error: unknown) {
+  if (typeof error === "string") return { message: validationMessage(error) };
+  if (typeof error !== "object" || error === null || !("message" in error) || typeof error.message !== "string") return;
+  return { message: validationMessage(error.message) };
 }
 
 // LABEL -----------------------------------------------------------------------------------------------------------------------------------

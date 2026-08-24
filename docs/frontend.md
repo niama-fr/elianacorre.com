@@ -276,7 +276,7 @@ apps/<app>/src/form
     ↓ application-specific TanStack Form integration
 
 features/<domain>/components
-    ↓ reusable business/domain UI
+    ↓ reusable features/domain UI
 
 PAGE / LAYOUT / COMPONENT
     ↓ screen or resource implementation
@@ -324,7 +324,7 @@ Start domain-aware UI inside its feature. Promote it to a shared domain package 
 Used only in this file?
 → Keep it under COMPONENTS.
 
-Reusable and understands one business/domain feature?
+Reusable and understands one features/domain feature?
 → Place it under features/<domain>/components.
 
 Reusable across applications and completely domain-agnostic?
@@ -408,7 +408,7 @@ Prefer an existing shadcn/Base UI primitive from `@ec/ui` before adding feature-
 
 Markdown editing uses the native-textarea editing model and `@tanstack/markdown` for preview rendering. Form state and persistence always hold raw Markdown; generated HTML is presentation output only. A TanStack Form-aware Markdown field belongs in the application's form layer unless a lower-level controlled editor is genuinely shared.
 
-Canonical business/data schemas belong in `@ec/domain`; the complete representation and transform convention lives in [`schema-types.md`](schema-types.md). Reuse a domain schema when form and boundary representations match. A frontend feature owns schemas introduced specifically for browser `File` values, temporary empty or partial inputs, UI-only fields, form defaults, or editing-only validation. Derive form `Values` and `DefaultValues` beside that frontend schema. Keep `@ec/validation` focused on generic Zod infrastructure rather than feature forms.
+Reusable semantic and domain schemas belong in `@ec/domain`; the complete ownership and representation convention lives in [`schema-types.md`](schema-types.md). A frontend feature owns the raw Effect Schema for each TanStack form, even when its object shape currently matches a backend request. Compose its fields from domain-owned semantic schemas instead of importing a Confect spec or moving the whole form struct into the domain package. Derive form values and default-value types beside that frontend schema. Name actual form schemas `sFooForm`. Convert Effect Schema to Standard Schema only at the form, router, or server-function consumer that requires it.
 
 ### Form validation messages
 

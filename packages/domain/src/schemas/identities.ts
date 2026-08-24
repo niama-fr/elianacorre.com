@@ -1,18 +1,18 @@
-import { zAuthAdapter } from "@ec/domain/schemas/auth";
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
+
+import { sAuthAdapter } from "./auth";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zIdentityFields = z.object({
-  adapter: zAuthAdapter,
-  adapterId: z.string(),
-  profileId: zid("profiles"),
+export const sIdentityFields = S.Struct({
+  adapter: sAuthAdapter,
+  adapterId: S.String,
+  profileId: GenericId.GenericId("profiles"),
 });
-export const zIdentityDoc = z.object({ ...zDocCommon("identities").shape, ...zIdentityFields.shape });
+export const sIdentityDoc = sIdentityFields.pipe(S.fieldsAssign(SystemFields.SystemFields("identities").fields));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type Identities = {
-  Doc: z.infer<typeof zIdentityDoc>;
-  Fields: z.infer<typeof zIdentityFields>;
+  Doc: typeof sIdentityDoc.Type;
+  Fields: typeof sIdentityFields.Type;
 };

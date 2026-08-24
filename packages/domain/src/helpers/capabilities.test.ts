@@ -1,22 +1,36 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "@effect/vitest";
+import { Effect as E, Option as O } from "effect";
 
 import { createCapabilityToken, verifyCapabilityToken } from "./capabilities";
 
+const capabilityId = "j57a8f9d2e3";
+const secret = "test-capability-secret";
+
 describe("capability tokens", () => {
-  it("verifies a signed capability identifier without persisting a bearer token", async () => {
-    const token = await createCapabilityToken({ capabilityId: "j57a8f9d2e3", secret: "test-capability-secret" });
+  it.effect("verifies a signed capability identifier without persisting a bearer token", ({ expect }) =>
+    E.gen(function* () {
+      const token = yield* createCapabilityToken({ capabilityId, secret });
+      const result = yield* verifyCapabilityToken({ secret, token });
 
-    await expect(verifyCapabilityToken({ secret: "test-capability-secret", token })).resolves.toBe("j57a8f9d2e3");
-  });
+      expect(result).toStrictEqual(O.some(capabilityId));
+    })
+  );
 
-  it("rejects a modified capability token", async () => {
-    const token = await createCapabilityToken({ capabilityId: "j57a8f9d2e3", secret: "test-capability-secret" });
-    const [header, payload, signature] = token.split(".");
-    if (!header || !payload || !signature) throw new Error("Expected a compact JWS token");
-    const modifiedSignature = `${signature.startsWith("A") ? "B" : "A"}${signature.slice(1)}`;
+  it.effect("rejects a modified capability token", ({ expect }) =>
+    E.gen(function* () {
+      const token = yield* createCapabilityToken({ capabilityId, secret });
 
-    await expect(
-      verifyCapabilityToken({ secret: "test-capability-secret", token: `${header}.${payload}.${modifiedSignature}` })
-    ).resolves.toBeNull();
-  });
+      const signatureIndex = token.lastIndexOf(".") + 1;
+      const signature = token.slice(signatureIndex);
+      const modifiedSignature = `${signature.startsWith("A") ? "B" : "A"}${signature.slice(1)}`;
+      const modifiedToken = `${token.slice(0, signatureIndex)}${modifiedSignature}`;
+
+      const result = yield* verifyCapabilityToken({
+        secret,
+        token: modifiedToken,
+      });
+
+      expect(result).toBe(O.none());
+    })
+  );
 });

@@ -1,19 +1,19 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import z from "zod";
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S } from "effect";
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookDownloadFields = z.object({
-  ebookIssuanceId: zid("ebookIssuances"),
+export const sEbookDownloadFields = S.Struct({
+  ebookIssuanceId: GenericId.GenericId("ebookIssuances"),
 });
-export const zEbookDownloadDoc = z.object({ ...zDocCommon("ebookDownloads").shape, ...zEbookDownloadFields.shape });
+
+export const sEbookDownloadDoc = sEbookDownloadFields.pipe(S.fieldsAssign(SystemFields.SystemFields("ebookDownloads").fields));
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const zEbookDownloadCreate = zEbookDownloadFields;
+export const sEbookDownloadCreate = sEbookDownloadFields;
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type EbookDownloads = {
-  Create: z.infer<typeof zEbookDownloadCreate>;
-  Doc: z.infer<typeof zEbookDownloadDoc>;
-  Fields: z.infer<typeof zEbookDownloadFields>;
+  Create: typeof sEbookDownloadCreate.Type;
+  Doc: typeof sEbookDownloadDoc.Type;
+  Fields: typeof sEbookDownloadFields.Type;
 };

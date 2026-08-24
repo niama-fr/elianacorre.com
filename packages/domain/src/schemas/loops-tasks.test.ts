@@ -1,9 +1,7 @@
-import { zodOutputToConvex } from "convex-helpers/server/zod4";
+import { Schema as S } from "effect";
 import { describe, expect, expectTypeOf, it } from "vitest";
-import { z } from "zod";
 
-import type { zLoopsTaskFailure } from "./loops-tasks";
-import { zLoopsTaskFields } from "./loops-tasks";
+import { type LoopsTasks, sLoopsTaskFields } from "./loops-tasks";
 
 const common = {
   acknowledgedAt: null,
@@ -15,16 +13,8 @@ const common = {
 } as const;
 
 describe("Loops task state", () => {
-  it("converts to a flat Convex table union", () => {
-    const validator = z
-      .object({ type: z.literal("union"), value: z.array(z.looseObject({ type: z.string() })) })
-      .parse(Reflect.get(zodOutputToConvex(zLoopsTaskFields), "json"));
-
-    expect(validator.value.every((member) => member.type === "object")).toBeTruthy();
-  });
-
   it("narrows state-dependent fields from the status discriminator", () => {
-    const task = zLoopsTaskFields.parse({
+    const task: unknown = {
       ...common,
       failure: "server",
       finishedAt: 10,
@@ -32,10 +22,13 @@ describe("Loops task state", () => {
       profileId: "000000000000000000000000profiles",
       status: "failed",
       subscribed: true,
-    });
+    };
+
+    if (!S.is(sLoopsTaskFields)(task)) throw new Error("Expected a valid Loops task");
 
     if (task.status === "failed") {
-      expectTypeOf(task.failure).toEqualTypeOf<z.output<typeof zLoopsTaskFailure>>();
+      expectTypeOf(task.failure).toEqualTypeOf<LoopsTasks["Failure"]>();
+
       expectTypeOf(task.finishedAt).toEqualTypeOf<number>();
     }
   });
@@ -50,8 +43,8 @@ describe("Loops task state", () => {
     };
 
     expect({
-      invalid: zLoopsTaskFields.safeParse({ ...pendingTask, failure: "server" }).success,
-      valid: zLoopsTaskFields.safeParse(pendingTask).success,
+      invalid: S.is(sLoopsTaskFields)({ ...pendingTask, failure: "server" }),
+      valid: S.is(sLoopsTaskFields)(pendingTask),
     }).toStrictEqual({ invalid: false, valid: true });
   });
 
@@ -67,8 +60,8 @@ describe("Loops task state", () => {
     };
 
     expect({
-      invalid: zLoopsTaskFields.safeParse({ ...failedTask, failure: null }).success,
-      valid: zLoopsTaskFields.safeParse(failedTask).success,
+      invalid: S.is(sLoopsTaskFields)({ ...failedTask, failure: null }),
+      valid: S.is(sLoopsTaskFields)(failedTask),
     }).toStrictEqual({ invalid: false, valid: true });
   });
 
@@ -81,8 +74,8 @@ describe("Loops task state", () => {
     };
 
     expect({
-      invalid: zLoopsTaskFields.safeParse({ ...succeededTask, email: "reader@example.com" }).success,
-      valid: zLoopsTaskFields.safeParse({ ...succeededTask, email: null }).success,
+      invalid: S.is(sLoopsTaskFields)({ ...succeededTask, email: "reader@example.com" }),
+      valid: S.is(sLoopsTaskFields)({ ...succeededTask, email: null }),
     }).toStrictEqual({ invalid: false, valid: true });
   });
 
@@ -90,19 +83,19 @@ describe("Loops task state", () => {
     const deletionTask = { ...common, email: null, kind: "deleteContact" };
 
     expect({
-      failed: zLoopsTaskFields.safeParse({
+      failed: S.is(sLoopsTaskFields)({
         ...deletionTask,
         failure: "server",
         finishedAt: 10,
         status: "failed",
-      }).success,
-      pending: zLoopsTaskFields.safeParse({ ...deletionTask, status: "pending" }).success,
+      }),
+      pending: S.is(sLoopsTaskFields)({ ...deletionTask, status: "pending" }),
     }).toStrictEqual({ failed: false, pending: false });
   });
 
   it("requires a terminal task to retain at least one Workflow identifier", () => {
     expect(
-      zLoopsTaskFields.safeParse({
+      S.is(sLoopsTaskFields)({
         ...common,
         failure: "server",
         finishedAt: 10,
@@ -111,7 +104,7 @@ describe("Loops task state", () => {
         status: "failed",
         subscribed: true,
         workflowIds: [],
-      }).success
+      })
     ).toBeFalsy();
   });
 });

@@ -1,6 +1,20 @@
 # Schema and type architecture
 
-Read this document before changing `@ec/domain` schemas, backend DTO projections, Entity hydration, or frontend form schemas. Zod schemas are the source of truth; derive TypeScript types with `z.infer` or `z.input` instead of duplicating them manually.
+Read this document before changing `@ec/domain` schemas, backend DTO projections, Entity hydration, or frontend form schemas. Effect Schema is the canonical first-party schema system. Derive TypeScript types from schema values instead of duplicating them manually.
+
+Schema values are named by implementation:
+
+- Effect Schema values use an `s` prefix: `sProfileFields`, `sTravelPackDto`, `sCanonicalEmail`.
+
+The prefix applies to runtime schema values, not derived TypeScript types or domain namespaces. Do not use bare names such as `ProfileFields` for Effect Schema values.
+
+In first-party Effect code, import the primary namespaces as `E`, `S`, and `L`:
+
+```ts
+import { Effect as E, Layer as L, Schema as S } from "effect";
+```
+
+Use `E.fn` for functions whose boundary directly returns a generator-based Effect. Keep `E.gen` for effect values, inline programs, and cases where wrapping a callback in `E.fn` would obscure an external API boundary. Prefer Effect Schema field composition such as `S.fieldsAssign` and `mapFields` over spreading or reconstructing `.fields`. Use Confect's public `GenericId.GenericId(tableName)` for Convex ID schemas; reserve `SystemFields.SystemFields(tableName)` for complete raw Doc system fields.
 
 ## Canonical representations
 
@@ -8,12 +22,22 @@ Group related derived types under their feature namespace and expose only repres
 
 ```ts
 export type TravelPacks = {
-  Create: z.infer<typeof zTravelPackCreate>;
-  Doc: z.infer<typeof zTravelPackDoc>;
-  Dto: z.infer<typeof zTravelPackDto>;
-  Entity: z.infer<typeof zTravelPack>;
-  Fields: z.infer<typeof zTravelPackFields>;
-  Status: z.infer<typeof zTravelPackStatus>;
+  Create: typeof sTravelPackCreate.Type;
+  Doc: typeof sTravelPackDoc.Type;
+  Dto: typeof sTravelPackDto.Type;
+  Entity: typeof sTravelPack.Type;
+  Fields: typeof sTravelPackFields.Type;
+  Status: typeof sTravelPackStatus.Type;
+};
+```
+
+For an Effect Schema feature, use the same namespace shape with schema-derived `Type` values:
+
+```ts
+export type Profiles = {
+  Doc: typeof sProfileDoc.Type;
+  Entity: typeof sProfile.Type;
+  Fields: typeof sProfileFields.Type;
 };
 ```
 
@@ -42,7 +66,9 @@ DB     wire    app       UI
 
 Use the correct date representation at each boundary. Keep Convex-compatible values in `Doc`, explicit serialized values in `Dto`, richer values such as `Date` in `Entity`, and localized strings in `DISPLAY`.
 
-Not every feature needs every representation. A DTO schema may be a legitimate shared domain contract even when it is not persisted. When DTO and Entity are identical, alias their schemas (`zEbook = zEbookDto`) without adding an identity runtime transform. Do not create DTOs or hydration functions solely for naming symmetry.
+Application/domain code does not adopt Confect's decoded-Doc terminology. An Effect transform that produces `Date`, `Option`, nested Entities, or another hydrated value belongs at the appropriate `Dto → Entity` boundary. Persisted `Doc` remains the raw Convex-compatible representation.
+
+Not every feature needs every representation. A DTO schema may be a legitimate shared domain contract even when it is not persisted. When DTO and Entity are identical, alias their schemas (`sEbook = sEbookDto`) without adding an identity runtime transform. Do not create DTOs or hydration functions solely for naming symmetry.
 
 ## Naming and migration
 
@@ -66,7 +92,24 @@ function travelPackFrom(dto: TravelPacks["Dto"]): TravelPacks["Entity"] {
 
 ## Domain schema ownership
 
-`@ec/domain` owns canonical business, persistence, and application contracts: field primitives, `Fields`, `Doc`, operation payloads, `Dto`, `Entity`, statuses, and authoritative storage metadata. Centralize these schemas by feature under `packages/domain/src/schemas`.
+`@ec/domain` owns reusable semantic and business invariants, persistence contracts, `Fields`, `Doc`, `Dto`, `Entity`, statuses, authoritative storage metadata, and genuine shared domain commands. Centralize these schemas by feature under `packages/domain/src/schemas`.
+
+The application and backend own their separate untrusted boundaries:
+
+```text
+TanStack feature
+  owns the Form and browser application OUT contract
+
+Confect spec
+  owns the public backend Args and IN contract
+
+@ec/domain
+  owns the semantic field schemas and genuine shared domain contracts used to compose both
+```
+
+An identical object shape does not make two trust boundaries one contract. Do not import Confect specs into frontend code. Do not move a complete Form or API request struct into `@ec/domain` merely to remove structural duplication. Share meaning through schemas such as `sCanonicalEmail`, `sTrimRequired`, `sTrimOptional`, domain IDs, and stable validation issue identifiers. Each untrusted boundary must apply its own trimming, canonicalization, and runtime validation. Frontend validation does not make backend validation redundant because direct Confect callers bypass the form.
+
+A stable command may still belong in `@ec/domain` when it represents one genuine domain contract rather than a browser or transport shape. E-book creation is one example. Its browser form contains a `File`, while the domain and backend create command contains storage metadata and IDs. The domain command remains useful even though the form has a separate schema.
 
 Compose schemas from canonical definitions with `.pick()`, `.omit()`, `.extend()`, or shape composition. Prefer explicit patch contracts when `.partial()` would weaken business semantics.
 
@@ -78,46 +121,46 @@ Use Convex `_creationTime` unless a distinct business creation timestamp exists.
 
 Shared domain schemas may expose stable validation error identifiers when application code needs to distinguish validation failures independently from presentation copy. Validation identifiers belong to the domain and must never contain localized or user-facing text.
 
-Define one canonical error vocabulary per feature instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
+Define one canonical error vocabulary for each meaningful domain or application concern instead of repeating literal strings across schemas, business logic, Convex functions, or frontend code:
 
 ```ts
-export const TRAVEL_PACK_ERROR = {
-  coverInvalid: "TRAVEL_PACK_COVER_INVALID",
-  pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
-  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
-  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
-  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
+export const VALIDATION_ISSUE = {
+  required: "REQUIRED",
+  slugInvalid: "SLUG_INVALID",
 } as const;
 
-export const zTravelPackTitle = z.string().trim().min(1, {
-  error: TRAVEL_PACK_ERROR.titleRequired,
-});
+export const TRAVEL_PACK_ISSUE = {
+  coverInvalid: "TRAVEL_PACK_COVER_INVALID",
+  pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
+} as const;
+
+export const sTrimRequired = Schema.Trim.check(Schema.isMinLength(1, { message: VALIDATION_ISSUE.required }));
 ```
 
-If runtime validation of an error identifier is useful, derive a Zod schema from the same canonical vocabulary rather than maintaining a second list:
+If runtime validation of an error identifier is useful, derive an Effect Schema from the same canonical vocabulary rather than maintaining a second list:
 
 ```ts
-export const zTravelPackError = z.enum(TRAVEL_PACK_ERROR);
-export type TravelPackError = z.infer<typeof zTravelPackError>;
+export const sTravelPackIssue = Schema.Literals(Object.values(TRAVEL_PACK_ISSUE));
+export type TravelPackError = typeof sTravelPackIssue.Type;
 ```
 
 Do not create operation-specific error arrays or schemas merely to document which exceptions a function may throw. Ordinary TypeScript `throw` is not typed, so such declarations can silently drift from the implementation. Introduce narrower error schemas only when they validate a genuine runtime boundary.
 
-Not every Zod issue needs a custom domain identifier. Use a stable identifier when the application needs specific copy, the failure crosses package boundaries, multiple consumers need to recognize it, or it represents a meaningful domain/application condition. Generic Zod issues may remain generic when no application-specific distinction is required.
+Not every validation issue needs a custom domain identifier. Use a stable identifier when the application needs specific copy, the failure crosses package boundaries, multiple consumers need to recognize it, or it represents a meaningful domain/application condition. Generic issues may remain generic when no application-specific distinction is required.
 
 ### Application localization
 
 Domain error identifiers remain independent from translated application copy. A frontend feature owns the mapping from its domain validation identifiers to Paraglide message functions in `features/<feature>/validation.ts`:
 
 ```ts
-import { TRAVEL_PACK_ERROR } from "@ec/domain/schemas/travel-packs";
+import { TRAVEL_PACK_ISSUE } from "@ec/domain/schemas/travel-packs";
 
 import * as m from "@/paraglide/messages";
 
 export const TRAVEL_PACK_VALIDATION_MESSAGES = {
-  [TRAVEL_PACK_ERROR.slugInvalid]: m.some_slug_invalid_message,
-  [TRAVEL_PACK_ERROR.slugRequired]: m.some_slug_required_message,
-  [TRAVEL_PACK_ERROR.titleRequired]: m.some_title_required_message,
+  [TRAVEL_PACK_ISSUE.slugInvalid]: m.some_slug_invalid_message,
+  [TRAVEL_PACK_ISSUE.slugRequired]: m.some_slug_required_message,
+  [TRAVEL_PACK_ISSUE.titleRequired]: m.some_title_required_message,
 } as const;
 ```
 
@@ -128,7 +171,7 @@ domain error identifier
         ↓
 domain / feature schema
         ↓
-Zod issue
+Standard Schema issue
         ↓
 TanStack Form
         ↓
@@ -150,9 +193,9 @@ Never put Paraglide imports or localized copy in `@ec/domain`, duplicate domain 
 
 ## Frontend form schemas
 
-Frontend features own schemas whose shape exists because of browser or editing behavior: `File`, temporary empty strings, UI-only or confirmation fields, formatted inputs, partially typed URLs, form-specific null/default semantics, and editing-only cross-field validation.
+Frontend features own the raw Effect Schema for each actual TanStack form. This is the application OUT contract. It includes the complete form object, including ordinary semantic fields and browser-specific values such as `File`, temporary empty strings, UI-only or confirmation fields, formatted inputs, partially typed URLs, form-specific null/default semantics, and editing-only cross-field validation.
 
-Reuse a domain schema directly when its representation is identical. Create a form schema only for a real representation difference, and derive its `Values` and `DefaultValues` types beside that frontend schema. These form-specific types do not belong in a domain feature namespace.
+Compose form fields from domain-owned semantic schemas where their meaning matches. Do not reuse a complete Confect Args schema or promote a form struct into `@ec/domain` solely because another boundary currently has the same fields. Derive form values and default-value types beside the frontend schema. These form-specific types do not belong in a domain feature namespace.
 
 ```text
 browser File
@@ -162,16 +205,10 @@ storageId + original fileName
 domain/backend Create contract
 ```
 
-Frontend-only schemas must not embed Paraglide copy in Zod issues. Reuse canonical domain identifiers where the constraint is domain-owned; when a validation exists only for a browser/form representation, define an application validation identifier and map it to Paraglide copy through the same feature `validation.ts` boundary. Prefer reusing canonical field schemas without duplicating constraints.
+Frontend-only schemas must not embed Paraglide copy in validation issues. Reuse canonical domain identifiers where the constraint is domain-owned; when a validation exists only for a browser/form representation, define an application validation identifier and map it to Paraglide copy through the same feature `validation.ts` boundary. Prefer reusing canonical field schemas without duplicating constraints. Pass Effect schemas to TanStack Form through `Schema.toStandardSchemaV1(...)`.
 
 When a frontend form schema transforms browser input into a domain representation, such as `""` to `null`, submission must use the parsed schema output before crossing the backend boundary. TanStack Form validation does not imply that the stored form value has been replaced by the schema's transformed output.
 
-## Validation infrastructure
+Standard Schema is an adapter, not a canonical schema representation. Call `Schema.toStandardSchemaV1(...)` only where a consumer requires that protocol.
 
-`@ec/validation` owns shared Zod configuration and genuinely generic validation utilities. It is not a bucket for feature form schemas and does not establish a centralized cross-application forms layer.
-
-```text
-@ec/domain     → canonical business/data/application schemas
-@ec/validation → generic Zod/validation infrastructure
-frontend       → UI/form-specific schemas and localized validation presentation
-```
+Use `sFooForm` for the raw Effect Schema owned by an actual form. Use `sFooArgs` for a Confect endpoint argument schema, normally local to its spec. A named Standard Schema adapter uses a name such as `fooValidator`, never an `s` prefix. Do not add `Form` or `Args` to route-search, persistence, DTO, Entity, or other schemas that do not own those boundaries.

@@ -1,12 +1,11 @@
-import { zDocCommon } from "@ec/domain/schemas/utils";
-import { zid } from "convex-helpers/server/zod4";
-import { z } from "zod";
+/* oxlint-disable unicorn/throw-new-error -- Effect's S.TaggedError factory is not a thrown Error construction. */
+import { GenericId, SystemFields } from "@confect/core";
+import { Schema as S, SchemaGetter as SG, Struct } from "effect";
 
-// STATUS ----------------------------------------------------------------------------------------------------------------------------------
-export const zTravelPackStatus = z.literal(["archived", "draft", "published"]);
+import { sSlug, sTrimRequired } from "./utils";
 
-// ERRORS ----------------------------------------------------------------------------------------------------------------------------------
-export const TRAVEL_PACK_ERROR = {
+// ISSUES ----------------------------------------------------------------------------------------------------------------------------------
+export const TRAVEL_PACK_ISSUE = {
   coverInvalid: "TRAVEL_PACK_COVER_INVALID",
   coverMimeTypeInvalid: "TRAVEL_PACK_COVER_MIME_TYPE_INVALID",
   coverSizeInvalid: "TRAVEL_PACK_COVER_SIZE_INVALID",
@@ -14,85 +13,88 @@ export const TRAVEL_PACK_ERROR = {
   pdfInvalid: "TRAVEL_PACK_PDF_INVALID",
   pdfMimeTypeInvalid: "TRAVEL_PACK_PDF_MIME_TYPE_INVALID",
   pdfSizeInvalid: "TRAVEL_PACK_PDF_SIZE_INVALID",
-  slugInvalid: "TRAVEL_PACK_SLUG_INVALID",
-  slugRequired: "TRAVEL_PACK_SLUG_REQUIRED",
-  titleRequired: "TRAVEL_PACK_TITLE_REQUIRED",
   unknown: "TRAVEL_PACK_UNKNOWN",
   youtubeUrlInvalid: "TRAVEL_PACK_YOUTUBE_URL_INVALID",
 } as const;
+export const sTravelPackIssue = S.Literals(Object.values(TRAVEL_PACK_ISSUE));
 
-export const zTravelPackError = z.enum(TRAVEL_PACK_ERROR);
+// STATUS ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackStatus = S.Literals(["archived", "draft", "published"]);
 
 // PRIMITIVES ------------------------------------------------------------------------------------------------------------------------------
-const zTravelPackFileName = z.string().min(1);
-
-export const zTravelPackDescription = z.string();
-export const zTravelPackDestination = z.string().trim();
-export const zTravelPackExcerpt = z.string().trim();
-export const zTravelPackTitle = z.string().trim().min(1, { error: TRAVEL_PACK_ERROR.titleRequired });
-
-export const zTravelPackYoutubeUrl = z
-  .url({
-    error: TRAVEL_PACK_ERROR.youtubeUrlInvalid,
-    hostname: /^(?:www\.)?(?:youtube\.com|youtu\.be)$/u,
-    protocol: /^https?$/u,
+const sTravelPackYoutubeUrlValue = S.String.check(
+  S.makeFilter((value) => {
+    try {
+      const url = new URL(value);
+      return (
+        ((url.protocol === "http:" || url.protocol === "https:") &&
+          (url.hostname === "youtube.com" || url.hostname === "www.youtube.com" || url.hostname === "youtu.be")) ||
+        TRAVEL_PACK_ISSUE.youtubeUrlInvalid
+      );
+    } catch {
+      return TRAVEL_PACK_ISSUE.youtubeUrlInvalid;
+    }
   })
-  .nullable();
+);
 
-export const zTravelPackSlug = z
-  .string()
-  .min(1, { error: TRAVEL_PACK_ERROR.slugRequired })
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, { error: TRAVEL_PACK_ERROR.slugInvalid });
+export const sTravelPackYoutubeUrl = S.Union([sTravelPackYoutubeUrlValue, S.Null]);
+
+export const sTravelPackYoutubeUrlFromForm = S.String.pipe(
+  S.decodeTo(sTravelPackYoutubeUrl, {
+    decode: SG.transform((value) => value.trim() || null),
+    encode: SG.transform((value) => value ?? ""),
+  })
+);
 
 // FIELDS ----------------------------------------------------------------------------------------------------------------------------------
-export const zTravelPackFields = z.object({
-  coverFileName: zTravelPackFileName.nullable(),
-  coverStorageId: zid("_storage").nullable(),
-  createdBy: zid("profiles"),
-  description: zTravelPackDescription,
-  destination: zTravelPackDestination,
-  excerpt: zTravelPackExcerpt,
-  pdfFileName: zTravelPackFileName.nullable(),
-  pdfStorageId: zid("_storage").nullable(),
-  slug: zTravelPackSlug,
-  status: zTravelPackStatus,
-  title: zTravelPackTitle,
-  updatedAt: z.number(),
-  updatedBy: zid("profiles"),
-  youtubeUrl: zTravelPackYoutubeUrl,
+const sStorageId = GenericId.GenericId("_storage");
+const sProfileId = GenericId.GenericId("profiles");
+
+export const sTravelPackFields = S.Struct({
+  coverFileName: S.NullOr(sTrimRequired),
+  coverStorageId: S.NullOr(sStorageId),
+  createdBy: sProfileId,
+  description: S.String,
+  destination: S.Trim,
+  excerpt: S.Trim,
+  pdfFileName: S.NullOr(sTrimRequired),
+  pdfStorageId: S.NullOr(sStorageId),
+  slug: sSlug,
+  status: sTravelPackStatus,
+  title: sTrimRequired,
+  updatedAt: S.Finite,
+  updatedBy: sProfileId,
+  youtubeUrl: sTravelPackYoutubeUrl,
 });
-export const zTravelPackDoc = z.object({ ...zDocCommon("travelPacks").shape, ...zTravelPackFields.shape });
+export const sTravelPackDoc = sTravelPackFields.pipe(S.fieldsAssign(SystemFields.SystemFields("travelPacks").fields));
 
-// DTO -------------------------------------------------------------------------------------------------------------------------------------
-export const zTravelPackDto = z.object({
-  ...zTravelPackDoc.shape,
-  coverUrl: z.url().nullable(),
-  pdfSize: z.int().nonnegative().nullable(),
-  pdfUrl: z.url().nullable(),
-});
+// DTO / ENTITY ---------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackDto = sTravelPackDoc.pipe(
+  S.fieldsAssign({
+    coverUrl: S.NullOr(S.String),
+    pdfSize: S.NullOr(S.Natural),
+    pdfUrl: S.NullOr(S.String),
+  })
+);
 
-// ENTITY ----------------------------------------------------------------------------------------------------------------------------------
-export const zTravelPack = zTravelPackDto;
+export const sTravelPack = sTravelPackDto;
 
-// PAYLOADS --------------------------------------------------------------------------------------------------------------------------------
-export const zTravelPackCreate = zTravelPackFields.pick({ title: true });
+// CREATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackCreate = sTravelPackFields.mapFields(Struct.pick(["title"]));
 
-export const zTravelPackUpdate = zTravelPackDoc.omit({
-  _creationTime: true,
-  createdBy: true,
-  status: true,
-  updatedAt: true,
-  updatedBy: true,
-});
+// UPDATE ----------------------------------------------------------------------------------------------------------------------------------
+export const sTravelPackPatch = sTravelPackFields.mapFields(Struct.omit(["createdBy", "status"])).mapFields(Struct.map(S.optionalKey));
+export const sTravelPackUpdate = sTravelPackDoc.mapFields(Struct.omit(["_creationTime", "createdBy", "status", "updatedAt", "updatedBy"]));
 
 // TYPES -----------------------------------------------------------------------------------------------------------------------------------
 export type TravelPacks = {
-  Create: z.infer<typeof zTravelPackCreate>;
-  Doc: z.infer<typeof zTravelPackDoc>;
-  Dto: z.infer<typeof zTravelPackDto>;
-  Entity: z.infer<typeof zTravelPack>;
-  Error: z.infer<typeof zTravelPackError>;
-  Fields: z.infer<typeof zTravelPackFields>;
-  Status: z.infer<typeof zTravelPackStatus>;
-  Update: z.infer<typeof zTravelPackUpdate>;
+  Create: typeof sTravelPackCreate.Type;
+  Doc: typeof sTravelPackDoc.Type;
+  Dto: typeof sTravelPackDto.Type;
+  Entity: typeof sTravelPack.Type;
+  Fields: typeof sTravelPackFields.Type;
+  Issue: typeof sTravelPackIssue.Type;
+  Patch: typeof sTravelPackPatch.Type;
+  Status: typeof sTravelPackStatus.Type;
+  Update: typeof sTravelPackUpdate.Type;
 };

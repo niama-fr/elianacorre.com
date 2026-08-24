@@ -7,8 +7,8 @@ import { cva } from "class-variance-authority";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { signOutAndReload } from "@/lib/auth/client";
-import { getAuthenticatedLanding } from "@/lib/auth/redirects";
+import { signOutAndReload } from "@/infra/auth/client";
+import { getAuthenticatedLanding } from "@/infra/auth/redirects";
 import * as m from "@/paraglide/messages";
 import { AdminHeader } from "@/routes/_authenticated/admin/-header";
 import { AdminSidebar } from "@/routes/_authenticated/admin/-sidebar";

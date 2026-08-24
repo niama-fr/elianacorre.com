@@ -10,18 +10,22 @@
   "scripts": {
     "build": "turbo build",
     "check": "bun run --filter @ec/app paraglide:compile && oxfmt --check . && oxlint .",
+    "codegen": "turbo codegen",
     "delivery:report": "bun run scripts/report-client-javascript.ts",
     "dev": "turbo dev",
     "fix": "oxfmt --write . && oxlint --fix .",
     "test": "turbo test",
-    "typecheck": "turbo typecheck && tsc --noEmit -p scripts/tsconfig.json"
+    "typecheck": "turbo typecheck && tsc --noEmit -p scripts/tsconfig.json",
+    "prepare": "effect-tsgo patch --typescript --oxlint"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.36.5",
     "@types/node": "^26.2.0",
-    "oxfmt": "0.63.0",
+    "oxfmt": "0.64.0",
     "oxlint": "1.78.0",
+    "oxlint-plugin-effect": "^0.11.0",
     "oxlint-tsgolint": "7.0.2001",
-    "turbo": "^2.10.10",
+    "turbo": "^2.10.11",
     "typescript": "^7.0.2",
     "ultracite": "7.10.5"
   },
