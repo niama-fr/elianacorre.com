@@ -28,7 +28,14 @@ jobs:
       - name: Regenerate Confect and Convex bindings
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: bun run codegen
+        run: |
+          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
+            echo "CONVEX_DEPLOY_KEY is EMPTY"
+            exit 1
+          fi
+
+          echo "CONVEX_DEPLOY_KEY is available"  
+          bun run codegen
       - name: Reject generated-code drift
         run: |
           git diff --exit-code
