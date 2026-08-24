@@ -14,6 +14,7 @@ import { getActiveNewsRestriction } from "../data/news-restrictions";
 import { getLatestConfirmedNewsSubscription } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
 import { getProfile, getProfileIdByEmail } from "../data/profiles";
+import { HoneypotTriggered } from "../infra/anti-abuse";
 import { CurrentAdmin } from "../infra/current-profile";
 import { makeRateLimiter } from "../infra/rate-limiter";
 import { enqueueSendEbookEmail } from "./loops";
@@ -63,7 +64,7 @@ export const publishEbook = E.fn(function* (id: Id<"ebooks">, { now }: WithNow) 
 
 // REQUEST RECOVERY ------------------------------------------------------------------------------------------------------------------------
 export const requestEbookRecovery = E.fn(function* ({ email, now, requestIp, website }: RequestRecoveryOpts) {
-  if (website !== "") return;
+  if (website !== "") return yield* new HoneypotTriggered();
 
   yield* E.all([rateLimiter.limit("ebookRecoveryByEmail", email), rateLimiter.limit("ebookRecoveryByIp", requestIp)]);
 

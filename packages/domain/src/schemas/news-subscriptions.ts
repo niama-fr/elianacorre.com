@@ -35,14 +35,6 @@ export const sNewsSubscriptionPatch = sNewsSubscriptionFields
   .mapFields(Struct.map(S.optionalKey));
 
 // UPSERT ----------------------------------------------------------------------------------------------------------------------------------
-export const sNewsSubscriptionUpsertValues = S.Struct({
-  consent: S.Boolean.check(S.makeFilter((value) => value, { message: NEWS_SUBSCRIPTION_ISSUE.consentRequired })),
-  email: sCanonicalEmail,
-  firstName: S.Trim,
-  privacyNoticeId: sLegalTextId,
-  website: S.Trim,
-});
-
 export const sNewsSubscriptionUpsert = S.Struct({
   consent: S.Boolean.check(S.makeFilter((value): value is true => value)),
   email: sCanonicalEmail,
@@ -59,5 +51,4 @@ export type NewsSubscriptions = {
   Fields: typeof sNewsSubscriptionFields.Type;
   Patch: typeof sNewsSubscriptionPatch.Type;
   Upsert: typeof sNewsSubscriptionUpsert.Type;
-  UpsertValues: typeof sNewsSubscriptionUpsertValues.Type;
 };

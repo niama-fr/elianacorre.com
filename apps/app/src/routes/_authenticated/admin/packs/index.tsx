@@ -153,7 +153,7 @@ function TravelPackCreateDialogRoute() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: sTravelPackCreate.fields.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackCreate.fields.title) }}>
               {(field) => <field.InputField autoFocus label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
             <DialogFooter>

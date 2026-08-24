@@ -1,13 +1,16 @@
 import type { Ref } from "@confect/core";
 import { HttpClient } from "@confect/js";
 import refs from "@ec/backend/refs";
-import { NewsSubscriptionValidationFailure } from "@ec/domain/errors/news-subscriptions";
-import { sNewsSubscriptionUpsertValues, type NewsSubscriptions } from "@ec/domain/schemas/news-subscriptions";
 import { createServerValidate, ServerValidateError } from "@tanstack/react-form-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { Effect as E, Option as O, Schema as S } from "effect";
 
 import { newsletterFormOptions } from "./newsletter.form";
+import { sNewsletterSubscribe, type NewsletterSubscribe } from "./newsletter.schemas";
+
+// ERRORS ----------------------------------------------------------------------------------------------------------------------------------
+// oxlint-disable-next-line typescript/no-unsafe-call unicorn/throw-new-error
+class ValidationFailure extends S.TaggedError<ValidationFailure>()("ValidationFailure", { cause: S.Unknown }) {}
 
 // CONFIRM ---------------------------------------------------------------------------------------------------------------------------------
 export const executeNewsletterConfirm = E.fn(function* (data: Ref.Args<typeof refs.public.newsletter.confirm>) {
@@ -19,18 +22,18 @@ export const executeNewsletterConfirm = E.fn(function* (data: Ref.Args<typeof re
 // SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
 const validateNewsletterSubscribeForm = createServerValidate({
   ...newsletterFormOptions,
-  onServerValidate: S.toStandardSchemaV1(sNewsSubscriptionUpsertValues),
+  onServerValidate: S.toStandardSchemaV1(sNewsletterSubscribe),
 });
 
-export const executeNewsletterSubscribe = E.fn(function* (values: NewsSubscriptions["UpsertValues"]) {
+export const executeNewsletterSubscribe = E.fn(function* (data: Ref.Args<typeof refs.public.newsletter.subscribe>) {
   const client = yield* HttpClient.HttpClient;
-  return yield* client.mutation(refs.public.newsletter.subscribe, values);
+  return yield* client.mutation(refs.public.newsletter.subscribe, data);
 });
 
 export const executeNewsletterSubscribeForm = E.fn(function* (data: FormData) {
   const values = yield* E.tryPromise({
-    catch: (error) => (error instanceof ServerValidateError ? error : new NewsSubscriptionValidationFailure({ cause: error })),
-    try: async () => (await validateNewsletterSubscribeForm(data, { booleans: ["consent"] })) as NewsSubscriptions["UpsertValues"],
+    catch: (error) => (error instanceof ServerValidateError ? error : new ValidationFailure({ cause: error })),
+    try: async () => (await validateNewsletterSubscribeForm(data, { booleans: ["consent"] })) as NewsletterSubscribe,
   });
   yield* executeNewsletterSubscribe(values);
   return new Response(null, { headers: { Location: getRequestHeader("referer") ?? "/" }, status: 303 });

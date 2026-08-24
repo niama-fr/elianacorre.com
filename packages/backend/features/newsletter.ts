@@ -24,6 +24,7 @@ import {
 } from "../data/news-subscriptions";
 import { getNewsSuppressionByEmail } from "../data/news-suppressions";
 import { createContactProfile, getProfile, getProfileIdByEmail } from "../data/profiles";
+import { HoneypotTriggered } from "../infra/anti-abuse";
 import { makeRateLimiter } from "../infra/rate-limiter";
 import { issueInitialEbookDownload, issueRecentReplacementEbookDownload, issueReplacementEbookDownload } from "./ebooks";
 import { resolveEmailDeliveryRestrictionByConfirmation } from "./email-delivery-restrictions";
@@ -54,7 +55,8 @@ export const confirmNewsletter = E.fn(function* ({ now, token }: WithNow<{ token
 // SUBSCRIBE -------------------------------------------------------------------------------------------------------------------------------
 export const subscribeToNewsletter = E.fn("subscribeToNewsletter")(function* (opts: SubscribeToNewsletterOpts) {
   const { email, firstName, now, requestIp, website } = opts;
-  if (website !== "" || O.isSome(yield* getNewsSuppressionByEmail(email))) return;
+  if (website !== "") return yield* new HoneypotTriggered();
+  if (O.isSome(yield* getNewsSuppressionByEmail(email))) return;
   yield* requirePrivacyNotice(opts.privacyNoticeId);
   const profileIdOpt = yield* getProfileIdByEmail(email);
   const subscription = O.isSome(profileIdOpt) ? yield* getCurrentNewsSubscription(profileIdOpt.value) : O.none();

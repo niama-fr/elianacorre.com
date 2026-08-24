@@ -5,29 +5,28 @@ import { sNewsSubscriptionUpsert } from "@ec/domain/schemas/news-subscriptions";
 import { Schema as S } from "effect";
 
 // SCHEMAS ---------------------------------------------------------------------------------------------------------------------------------
-export const sNewsletterConfirmArgs = S.Struct({ token: S.String });
+const sConfirmArgs = S.Struct({ token: S.String });
+const sConfirmReturns = S.Struct({ confirmed: S.Boolean, downloadToken: S.OptionFromNullOr(S.String) });
+const sExportDataArgs = S.Struct({ exportedAt: S.Int, format: S.Literals(["csv", "json"]) });
+const sExportDataReturns = S.Struct({ content: S.String, contentType: S.Literals(["application/json", "text/csv"]) });
 
 // SPEC ------------------------------------------------------------------------------------------------------------------------------------
 export default GroupSpec.make()
   // QUERIES -------------------------------------------------------------------------------------------------------------------------------
   .addFunction(
     FunctionSpec.publicQuery({
-      args: () => S.Struct({ exportedAt: S.Int, format: S.Literals(["csv", "json"]) }),
+      args: () => sExportDataArgs,
       error: () => sAuthError,
       name: "exportData",
-      returns: () => S.Struct({ content: S.String, contentType: S.Literals(["application/json", "text/csv"]) }),
+      returns: () => sExportDataReturns,
     })
   )
   // MUTATION ------------------------------------------------------------------------------------------------------------------------------
   .addFunction(
     FunctionSpec.publicMutation({
-      args: () => sNewsletterConfirmArgs,
+      args: () => sConfirmArgs,
       name: "confirm",
-      returns: () =>
-        S.Struct({
-          confirmed: S.Boolean,
-          downloadToken: S.OptionFromNullOr(S.String),
-        }),
+      returns: () => sConfirmReturns,
     })
   )
   .addFunction(

@@ -1,24 +1,11 @@
 import { describe, it } from "@effect/vitest";
 import { Effect as E, Schema as S } from "effect";
 
-import { sNewsSubscriptionUpsert, sNewsSubscriptionUpsertValues } from "./news-subscriptions";
+import { sNewsSubscriptionUpsert } from "./news-subscriptions";
 
 const decodeUpsert = S.decodeUnknownEffect(sNewsSubscriptionUpsert);
-const decodeUpsertValues = S.decodeUnknownEffect(sNewsSubscriptionUpsertValues);
 
 describe("newsletter subscription", () => {
-  it.effect("requires explicit newsletter consent", ({ expect }) =>
-    E.gen(function* () {
-      const error = yield* decodeUpsertValues({
-        consent: false,
-        email: "eliana@example.com",
-        website: "",
-      }).pipe(E.flip);
-
-      expect(error.message).toContain("NEWS_SUBSCRIPTION_CONSENT_REQUIRED");
-    })
-  );
-
   it.effect("accepts an empty honeypot field in the server payload", ({ expect }) =>
     E.gen(function* () {
       const result = yield* decodeUpsert({

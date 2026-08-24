@@ -5,6 +5,7 @@ import { NEWSLETTER_VALIDATION_MESSAGES } from "@/features/newsletter/newsletter
 const validationMessages = {
   ...NEWSLETTER_VALIDATION_MESSAGES,
   [VALIDATION_ISSUE.emailInvalid]: "Ce courriel est invalide",
+  [VALIDATION_ISSUE.required]: "Ce champ est requis",
 } as const;
 
 export function validationMessage(error: string) {

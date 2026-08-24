@@ -23,26 +23,20 @@ const fileWith = (acceptedTypes: readonly string[], mimeError: string, sizeError
   );
 
 // UPDATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackUpdate = S.toStandardSchemaV1(
-  S.Struct({
-    cover: S.toStandardSchemaV1(
-      S.NullOr(fileWith(IMAGE_ACCEPTED_TYPES, TRAVEL_PACK_ISSUE.coverMimeTypeInvalid, TRAVEL_PACK_ISSUE.coverSizeInvalid))
-    ),
-    description: S.toStandardSchemaV1(S.String),
-    destination: S.toStandardSchemaV1(S.Trim),
-    excerpt: S.toStandardSchemaV1(S.Trim),
-    pdf: S.toStandardSchemaV1(
-      S.NullOr(fileWith(PDF_ACCEPTED_TYPES, TRAVEL_PACK_ISSUE.pdfMimeTypeInvalid, TRAVEL_PACK_ISSUE.pdfSizeInvalid))
-    ),
-    slug: S.toStandardSchemaV1(sSlug),
-    title: S.toStandardSchemaV1(sTrimRequired),
-    youtubeUrl: S.toStandardSchemaV1(sTravelPackYoutubeUrlFromForm),
-  })
-);
+export const sTravelPackUpdate = S.Struct({
+  cover: S.NullOr(fileWith(IMAGE_ACCEPTED_TYPES, TRAVEL_PACK_ISSUE.coverMimeTypeInvalid, TRAVEL_PACK_ISSUE.coverSizeInvalid)),
+  description: S.String,
+  destination: S.Trim,
+  excerpt: S.Trim,
+  pdf: S.NullOr(fileWith(PDF_ACCEPTED_TYPES, TRAVEL_PACK_ISSUE.pdfMimeTypeInvalid, TRAVEL_PACK_ISSUE.pdfSizeInvalid)),
+  slug: sSlug,
+  title: sTrimRequired,
+  youtubeUrl: sTravelPackYoutubeUrlFromForm,
+});
 export type TravelPackUpdateValues = typeof sTravelPackUpdate.Encoded;
 
 // CREATE ----------------------------------------------------------------------------------------------------------------------------------
-export const sTravelPackCreate = S.toStandardSchemaV1(S.Struct({ title: S.toStandardSchemaV1(sTrimRequired) }));
+export const sTravelPackCreate = S.Struct({ title: sTrimRequired });
 
 // ROUTE -----------------------------------------------------------------------------------------------------------------------------------
 export const sTravelPackSearch = S.Struct({ create: S.optionalKey(S.Boolean) });

@@ -9,6 +9,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTable, FlexRender } from "@tanstack/react-table";
 import { cva } from "class-variance-authority";
+import { Schema as S } from "effect";
 import { toast } from "sonner";
 
 import { sEbookCreate, type EbookCreate } from "@/features/ebooks/ebooks.schemas";
@@ -113,10 +114,10 @@ function EbookForm() {
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: sEbookCreate.fields.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sEbookCreate.fields.title) }}>
               {(f) => <f.InputField label="Titre" type="text" />}
             </form.AppField>
-            <form.AppField name="file" validators={{ onChange: sEbookCreate.fields.file }}>
+            <form.AppField name="file" validators={{ onChange: S.toStandardSchemaV1(sEbookCreate.fields.file) }}>
               {(f) => <f.FileInputField label="Fichier" removeLabel="Supprimer le fichier" accept="application/pdf,.pdf" />}
             </form.AppField>
             <form.Submit label="Enregistrer le brouillon" icon="icon-[tabler--circle-plus]" />

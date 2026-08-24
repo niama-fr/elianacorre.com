@@ -1,5 +1,6 @@
 import confetti from "canvas-confetti";
 import { cva } from "class-variance-authority";
+import { Schema as S } from "effect";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -50,16 +51,16 @@ export function ContactForm() {
       }}
     >
       <form.AppForm>
-        <form.AppField name="firstName" validators={{ onChange: sContactRequestCreate.fields.firstName }}>
+        <form.AppField name="firstName" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.firstName) }}>
           {(f) => <f.InputField label="Prénom" type="text" />}
         </form.AppField>
-        <form.AppField name="email" validators={{ onChange: sContactRequestCreate.fields.email }}>
+        <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.email) }}>
           {(f) => <f.InputField label="Courriel" type="email" />}
         </form.AppField>
-        <form.AppField name="message" validators={{ onChange: sContactRequestCreate.fields.message }}>
+        <form.AppField name="message" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.message) }}>
           {(f) => <f.TextareaField label="Message" />}
         </form.AppField>
-        <form.AppField name="website" validators={{ onChange: sContactRequestCreate.fields.website }}>
+        <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sContactRequestCreate.fields.website) }}>
           {(f) => (
             <div aria-hidden="true" className="sr-only">
               <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />

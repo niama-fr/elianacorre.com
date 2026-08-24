@@ -23,7 +23,9 @@ const confirm = FunctionImpl.make(databaseSchema, spec, "confirm", ({ token }) =
 const subscribe = FunctionImpl.make(databaseSchema, spec, "subscribe", (args) =>
   E.gen(function* () {
     const requestIp = yield* getRequestIp();
-    yield* subscribeToNewsletter({ ...args, now: Date.now(), requestIp }).pipe(E.catchTags({ RateLimitExceeded: () => E.void }));
+    yield* subscribeToNewsletter({ ...args, now: Date.now(), requestIp }).pipe(
+      E.catchTags({ HoneypotTriggered: () => E.void, RateLimitExceeded: () => E.void })
+    );
     return null;
   })
 );

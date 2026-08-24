@@ -1,4 +1,3 @@
-import { sEbookRecoveryRequestValues } from "@ec/domain/schemas/ebook-recoveries";
 import { Alert, AlertDescription } from "@ec/ui/components/alert";
 import { Btn } from "@ec/ui/components/btn";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ec/ui/components/dialog";
@@ -8,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { requestEbookRecovery } from "@/features/ebooks/ebooks.functions";
+import { sEbookRequestRecovery } from "@/features/ebooks/ebooks.schemas";
 import { useAppForm } from "@/form/hook";
 
 // STYLES ----------------------------------------------------------------------------------------------------------------------------------
@@ -68,10 +68,10 @@ export function EbookRecoveryFormDialog() {
                 Si vous avez déjà été inscrit·e à ma gazette itinérante, vous pouvez recevoir un nouveau lien vers l’e-book de bienvenue.
               </DialogDescription>
             </DialogHeader>
-            <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sEbookRecoveryRequestValues.fields.email) }}>
+            <form.AppField name="email" validators={{ onChange: S.toStandardSchemaV1(sEbookRequestRecovery.fields.email) }}>
               {(f) => <f.InputField label="Adresse e-mail" type="email" />}
             </form.AppField>
-            <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sEbookRecoveryRequestValues.fields.website) }}>
+            <form.AppField name="website" validators={{ onChange: S.toStandardSchemaV1(sEbookRequestRecovery.fields.website) }}>
               {(f) => (
                 <div aria-hidden="true" className="sr-only">
                   <f.InputField autoComplete="off" label="Laissez ce champ vide" tabIndex={-1} type="text" />

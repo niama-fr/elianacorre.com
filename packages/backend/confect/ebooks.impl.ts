@@ -36,7 +36,9 @@ const publish = FunctionImpl.make(databaseSchema, spec, "publish", ({ ebookId })
 const requestRecovery = FunctionImpl.make(databaseSchema, spec, "requestRecovery", (args) =>
   E.gen(function* () {
     const requestIp = yield* getRequestIp();
-    yield* requestEbookRecovery({ ...args, now: Date.now(), requestIp }).pipe(E.catchTags({ RateLimitExceeded: () => E.void }));
+    yield* requestEbookRecovery({ ...args, now: Date.now(), requestIp }).pipe(
+      E.catchTags({ HoneypotTriggered: () => E.void, RateLimitExceeded: () => E.void })
+    );
     return null;
   })
 );

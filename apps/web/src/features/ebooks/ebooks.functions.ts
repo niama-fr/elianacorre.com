@@ -1,4 +1,4 @@
-import { sEbookRecoveryRequestValues } from "@ec/domain/schemas/ebook-recoveries";
+import { sEbookRecoveryRequest } from "@ec/domain/schemas/ebook-recoveries";
 import { createServerFn } from "@tanstack/react-start";
 import { Effect as E, Schema as S } from "effect";
 
@@ -8,5 +8,5 @@ import { executeEbooksRequestRecovery } from "./ebooks.server";
 
 // REQUEST RECOVERY ------------------------------------------------------------------------------------------------------------------------
 export const requestEbookRecovery = createServerFn({ method: "POST" })
-  .validator(S.toStandardSchemaV1(sEbookRecoveryRequestValues))
+  .validator(S.toStandardSchemaV1(sEbookRecoveryRequest))
   .handler(async ({ data }) => await E.runPromise(executeEbooksRequestRecovery(data).pipe(E.provide(HttpClientLive))));

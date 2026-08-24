@@ -129,10 +129,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
           }}
         >
           <form.AppForm>
-            <form.AppField name="title" validators={{ onChange: sTravelPackUpdate.fields.title }}>
+            <form.AppField name="title" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.title) }}>
               {(f) => <f.InputField label={m.strong_aliens_flash()} type="text" />}
             </form.AppField>
-            <form.AppField name="slug" validators={{ onChange: sTravelPackUpdate.fields.slug }}>
+            <form.AppField name="slug" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.slug) }}>
               {(f) => (
                 <f.InputGroupField readOnly label={m.nice_bats_travel()} type="text">
                   <InputGroupAddon align="inline-end">
@@ -151,13 +151,13 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 </f.InputGroupField>
               )}
             </form.AppField>
-            <form.AppField name="destination" validators={{ onChange: sTravelPackUpdate.fields.destination }}>
+            <form.AppField name="destination" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.destination) }}>
               {(field) => <field.InputField label={m.many_ties_know()} type="text" />}
             </form.AppField>
-            <form.AppField name="excerpt" validators={{ onChange: sTravelPackUpdate.fields.excerpt }}>
+            <form.AppField name="excerpt" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.excerpt) }}>
               {(field) => <field.TextareaField label={m.hungry_hounds_fly()} description={m.mighty_boats_hug()} />}
             </form.AppField>
-            <form.AppField name="description" validators={{ onChange: sTravelPackUpdate.fields.description }}>
+            <form.AppField name="description" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.description) }}>
               {(field) => (
                 <field.MarkdownField
                   description={m.goofy_suits_enjoy()}
@@ -168,10 +168,10 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 />
               )}
             </form.AppField>
-            <form.AppField name="youtubeUrl" validators={{ onChange: sTravelPackUpdate.fields.youtubeUrl }}>
+            <form.AppField name="youtubeUrl" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.youtubeUrl) }}>
               {(field) => <field.InputField label={m.free_ideas_cut()} type="url" />}
             </form.AppField>
-            <form.AppField name="cover" validators={{ onChange: sTravelPackUpdate.fields.cover }}>
+            <form.AppField name="cover" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.cover) }}>
               {(field) => (
                 <field.FileInputField
                   accept="image/jpeg,image/png,image/webp"
@@ -180,7 +180,7 @@ function TravelPackUpdateForm({ data, travelPackId }: TravelPackUpdateFormProps)
                 />
               )}
             </form.AppField>
-            <form.AppField name="pdf" validators={{ onChange: sTravelPackUpdate.fields.pdf }}>
+            <form.AppField name="pdf" validators={{ onChange: S.toStandardSchemaV1(sTravelPackUpdate.fields.pdf) }}>
               {(field) => (
                 <field.FileInputField accept="application/pdf,.pdf" label={m.salty_points_tickle()} removeLabel={m.hot_friends_hunt()} />
               )}
